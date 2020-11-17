@@ -45,7 +45,7 @@ def test_bodywork_project_config_returns_correct_data(
 ):
     project_data = BodyworkProject(project_repo_location / PROJECT_CONFIG_FILENAME)
     assert project_data.name == 'bodywork-test-project'
-    assert project_data.docker_image == 'alexioannides/bodywork:latest'
+    assert project_data.docker_image == 'bodyworkml/bodywork-core:latest'
     assert project_data.dag == 'stage_1_good >> stage_4_good,stage_5_good'
     assert project_data.log_level == 'INFO'
 
@@ -121,7 +121,7 @@ def test_image_exists_on_dockerhub_handles_connection_error(
 ):
     mock_requests_session().get.side_effect = requests.exceptions.ConnectionError
     with raises(RuntimeError, match='cannot connect to'):
-        image_exists_on_dockerhub('alexioannides/bodywork', 'latest')
+        image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'latest')
 
 
 @patch('requests.Session')
@@ -131,10 +131,10 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
     mock_requests_session().get.return_value = requests.Response()
 
     mock_requests_session().get.return_value.status_code = 200
-    assert image_exists_on_dockerhub('alexioannides/bodywork', 'v1') is True
+    assert image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'v1') is True
 
     mock_requests_session().get.return_value.status_code = 404
-    assert image_exists_on_dockerhub('alexioannides/bodywork', 'x') is False
+    assert image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'x') is False
 
 
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
@@ -142,15 +142,15 @@ def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
         ValueError,
         match=f'invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}'
     ):
-        parse_dockerhub_image_string('alexioannides-bodywork-stage-runner:latest')
-        parse_dockerhub_image_string('alexioannides/bodywork:lat:st')
+        parse_dockerhub_image_string('bodyworkml-bodywork-stage-runner:latest')
+        parse_dockerhub_image_string('bodyworkml/bodywork-core:lat:st')
 
 
 def test_parse_dockerhub_image_string_parses_valid_strings():
-    assert (parse_dockerhub_image_string('alexioannides/bodywork:0.0.1')
-            == ('alexioannides/bodywork', '0.0.1'))
-    assert (parse_dockerhub_image_string('alexioannides/bodywork')
-            == ('alexioannides/bodywork', 'latest'))
+    assert (parse_dockerhub_image_string('bodyworkml/bodywork-core:0.0.1')
+            == ('bodyworkml/bodywork-core', '0.0.1'))
+    assert (parse_dockerhub_image_string('bodyworkml/bodywork-core')
+            == ('bodyworkml/bodywork-core', 'latest'))
 
 
 @patch('bodywork.workflow.k8s')
