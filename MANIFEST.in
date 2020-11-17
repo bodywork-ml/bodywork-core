@@ -1,0 +1,3 @@
+include VERSION
+include requirements_pkg.txt
+include requirements_dev.txt

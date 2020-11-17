@@ -1,0 +1,8 @@
+pytest==5.4.3
+pytest-cov==2.10.0
+mypy==0.782
+flake8==3.8.3
+tox==3.20.1
+twine==3.2.0
+wheel==0.34.2
+mkdocs==1.1.2

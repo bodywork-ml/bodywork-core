@@ -1,0 +1,98 @@
+version: 2.1
+orbs:
+  aws-eks: circleci/aws-eks@1.0.0
+jobs:
+  run-unit-and-functional-tests-and-static-code-analysis:
+    docker: 
+      - image: circleci/python:3
+    steps:
+      - checkout
+      - run:
+          name: Configure Git
+          command: | 
+            git config --global user.name "Alex Ioannides"
+            git config --global user.email "alex.ioannides@icloud.com"
+      - run:
+          name: Installing Python dependencies
+          command: pip install -r requirements_dev.txt
+      - run: 
+          name: Running tests
+          command: tox -e unit_and_functional_tests,static_code_analysis -- -s -vv
+  run-k8s-integration-tests:
+    executor: aws-eks/python3
+    steps:
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: bodywork-dev
+      - checkout
+      - run:
+          name: Installing Python dependencies
+          command: pip install -r requirements_dev.txt
+      - run: 
+          name: Running tests
+          command: tox -e k8s_integration_tests -- -s -vv
+  build-dev-docker-image-push-to-dockerhub:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: |
+            docker build . -t alexioannides/bodywork:$(cat VERSION)-dev
+            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+            docker push alexioannides/bodywork
+  build-master-docker-image-push-to-dockerhub:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Build image
+          command: |
+            docker build . -t alexioannides/bodywork:$(cat VERSION) -t alexioannides/bodywork:latest
+            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+            docker push alexioannides/bodywork
+  ensure-package-version-number-incremented:
+    docker: 
+      - image: circleci/python:3
+    steps:
+      - checkout
+      - run: 
+          name: Check that VERSION has been bumped
+          command: |
+            if [ ${CIRCLE_BRANCH} != "master" ]; then
+              git clone --depth 1 --single-branch $CIRCLE_REPOSITORY_URL master-clone
+              export VERSION_MASTER=$(cat master-clone/VERSION)
+              export VERSION_BRANCH=$(cat VERSION)
+              if [ $VERSION_BRANCH == $VERSION_MASTER ]; then
+                echo "Version on branch '${CIRCLE_BRANCH}' (v${VERSION_BRANCH}) is the same as on 'master' - please bump version in VERSION file."
+                exit 1
+              else
+                echo "Branch '${CIRCLE_BRANCH}' (v${VERSION_BRANCH}) has passed all tests and can be merged."
+              fi
+            else
+              echo "Merging into master branch."
+            fi
+
+workflows:
+  version: 2
+  test-build-deploy:
+    jobs:
+      - ensure-package-version-number-incremented
+      - run-unit-and-functional-tests-and-static-code-analysis:
+          requires:
+            - ensure-package-version-number-incremented
+          filters:
+            branches:
+              ignore: master
+      - build-dev-docker-image-push-to-dockerhub:
+          requires:
+            - run-unit-and-functional-tests-and-static-code-analysis
+          filters:
+            branches:
+              ignore: master
+      - run-k8s-integration-tests:
+          requires:
+            - build-dev-docker-image-push-to-dockerhub
+      - build-master-docker-image-push-to-dockerhub:
+          filters:
+            branches:
+              only: master
