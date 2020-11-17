@@ -59,7 +59,7 @@ def test_configure_batch_stage_job():
         namespace='bodywork-dev',
         stage_name='train',
         project_name='bodywork-test-project',
-        project_repo_url='alexioannides/bodywork-test-project',
+        project_repo_url='bodywork-ml/bodywork-test-project',
         project_repo_branch='dev',
         image='bodyworkml/bodywork-core:0.0.7',
         cpu_request=1,
@@ -70,7 +70,7 @@ def test_configure_batch_stage_job():
     assert job.metadata.name == 'bodywork-test-project--train'
     assert job.spec.backoff_limit == 2
     assert (job.spec.template.spec.containers[0].args
-            == ['alexioannides/bodywork-test-project', 'dev', 'train'])
+            == ['bodywork-ml/bodywork-test-project', 'dev', 'train'])
     assert (job.spec.template.spec.containers[0].image
             == 'bodyworkml/bodywork-core:0.0.7')
     assert job.spec.template.spec.containers[0].resources.requests['cpu'] == '1'

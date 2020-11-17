@@ -65,7 +65,7 @@ def test_configure_batch_stage_cronjob():
         cron_schedule='0,30 * * * *',
         namespace='bodywork-dev',
         project_name='bodywork-test-project',
-        project_repo_url='alexioannides/bodywork-test-project',
+        project_repo_url='bodywork-ml/bodywork-test-project',
         project_repo_branch='dev',
         retries=2,
         successful_jobs_history_limit=2,
@@ -79,7 +79,7 @@ def test_configure_batch_stage_cronjob():
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
     assert cronjob_definition.spec.job_template.spec.backoff_limit == 2
     assert (cronjob_definition.spec.job_template.spec.template.spec.containers[0].args
-            == ['--namespace=bodywork-dev', 'alexioannides/bodywork-test-project', 'dev'])
+            == ['--namespace=bodywork-dev', 'bodywork-ml/bodywork-test-project', 'dev'])
     assert (cronjob_definition.spec.job_template.spec.template.spec.containers[0].image
             == 'bodyworkml/bodywork-core:0.0.7')
 

@@ -39,7 +39,7 @@ jobs:
           command: |
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION)-dev
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            docker push alexioannides/bodywork
+            docker push bodyworkml/bodywork-core
   build-master-docker-image-push-to-dockerhub:
     machine: true
     steps:
@@ -49,7 +49,7 @@ jobs:
           command: |
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION) -t bodyworkml/bodywork-core:latest
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            docker push alexioannides/bodywork
+            docker push bodyworkml/bodywork-core
   ensure-package-version-number-incremented:
     docker: 
       - image: circleci/python:3

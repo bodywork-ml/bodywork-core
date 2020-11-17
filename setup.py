@@ -24,7 +24,7 @@ setup(
     version=version,
     license='Apache 2.0',
     author='Alex Ioannides',
-    url='https://github.com/AlexIoannides/bodywork',
+    url='https://github.com/bodywork-ml/bodywork',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     include_package_data=True,
