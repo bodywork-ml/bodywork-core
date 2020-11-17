@@ -254,11 +254,11 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
             f'--namespace={test_namespace}',
             'https://github.com/bodywork-ml/bodywork-test-project',
             'master',
-            '--bodywork-docker-image=alexloannides/bodywork-stage-runner:latest'],
+            '--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest'],
         encoding='utf-8',
         capture_output=True
     )
-    assert ('cannot locate alexloannides/bodywork-stage-runner:latest on DockerHub'
+    assert ('cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub'
             in process_two.stdout)
     assert process_two.returncode == 1
 
