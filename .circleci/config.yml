@@ -37,7 +37,7 @@ jobs:
       - run:
           name: Build image
           command: |
-            docker build . -t alexioannides/bodywork:$(cat VERSION)-dev
+            docker build . -t bodyworkml/bodywork-core:$(cat VERSION)-dev
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
             docker push alexioannides/bodywork
   build-master-docker-image-push-to-dockerhub:
@@ -47,7 +47,7 @@ jobs:
       - run:
           name: Build image
           command: |
-            docker build . -t alexioannides/bodywork:$(cat VERSION) -t alexioannides/bodywork:latest
+            docker build . -t bodyworkml/bodywork-core:$(cat VERSION) -t bodyworkml/bodywork-core:latest
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
             docker push alexioannides/bodywork
   ensure-package-version-number-incremented:

@@ -25,7 +25,7 @@ def batch_stage_job_object() -> kubernetes.client.V1Job:
     )
     container = kubernetes.client.V1Container(
         name='bodywork',
-        image='alexioannides/bodywork:latest',
+        image='bodyworkml/bodywork-core:latest',
         image_pull_policy='Always',
         resources=container_resources,
         command=['bodywork', 'stage'],
@@ -61,7 +61,7 @@ def test_configure_batch_stage_job():
         project_name='bodywork-test-project',
         project_repo_url='alexioannides/bodywork-test-project',
         project_repo_branch='dev',
-        image='alexioannides/bodywork:0.0.7',
+        image='bodyworkml/bodywork-core:0.0.7',
         cpu_request=1,
         memory_request=100,
         retries=2
@@ -72,7 +72,7 @@ def test_configure_batch_stage_job():
     assert (job.spec.template.spec.containers[0].args
             == ['alexioannides/bodywork-test-project', 'dev', 'train'])
     assert (job.spec.template.spec.containers[0].image
-            == 'alexioannides/bodywork:0.0.7')
+            == 'bodyworkml/bodywork-core:0.0.7')
     assert job.spec.template.spec.containers[0].resources.requests['cpu'] == '1'
     assert job.spec.template.spec.containers[0].resources.requests['memory'] == '100M'
 

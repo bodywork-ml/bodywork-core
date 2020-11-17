@@ -240,7 +240,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
             f'--namespace={test_namespace}',
             'https://github.com/AlexIoannides/bodywork-test-project',
             'master',
-            '--bodywork-docker-image=bad:alexioannides/bodywork:0.0.0'],
+            '--bodywork-docker-image=bad:bodyworkml/bodywork-core:0.0.0'],
         encoding='utf-8',
         capture_output=True
     )

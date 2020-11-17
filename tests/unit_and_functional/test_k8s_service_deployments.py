@@ -34,7 +34,7 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
     )
     container = kubernetes.client.V1Container(
         name='bodywork',
-        image='alexioannides/bodywork:latest',
+        image='bodyworkml/bodywork-core:latest',
         image_pull_policy='Always',
         resources=container_resources,
         command=['bodywork', 'stage'],
@@ -75,7 +75,7 @@ def test_configure_service_stage_deployment():
         project_name='bodywork-test-project',
         project_repo_url='alexioannides/bodywork-test-project',
         project_repo_branch='dev',
-        image='alexioannides/bodywork:latest',
+        image='bodyworkml/bodywork-core:latest',
         replicas=2,
         cpu_request=1,
         memory_request=100,
@@ -87,7 +87,7 @@ def test_configure_service_stage_deployment():
     assert (deployment.spec.template.spec.containers[0].args
             == ['alexioannides/bodywork-test-project', 'dev', 'serve'])
     assert (deployment.spec.template.spec.containers[0].image
-            == 'alexioannides/bodywork:latest')
+            == 'bodyworkml/bodywork-core:latest')
     assert (deployment.spec.template.spec.containers[0].resources.requests['cpu']
             == '1')
     assert (deployment.spec.template.spec.containers[0].resources.requests['memory']

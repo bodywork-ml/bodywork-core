@@ -45,7 +45,7 @@ def test_bodywork_project_config_returns_correct_data(
 ):
     project_data = BodyworkProject(project_repo_location / PROJECT_CONFIG_FILENAME)
     assert project_data.name == 'bodywork-test-project'
-    assert project_data.docker_image == 'alexioannides/bodywork:latest'
+    assert project_data.docker_image == 'bodyworkml/bodywork-core:latest'
     assert project_data.dag == 'stage_1_good >> stage_4_good,stage_5_good'
     assert project_data.log_level == 'INFO'
 
@@ -143,11 +143,11 @@ def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
         match=f'invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}'
     ):
         parse_dockerhub_image_string('alexioannides-bodywork-stage-runner:latest')
-        parse_dockerhub_image_string('alexioannides/bodywork:lat:st')
+        parse_dockerhub_image_string('bodyworkml/bodywork-core:lat:st')
 
 
 def test_parse_dockerhub_image_string_parses_valid_strings():
-    assert (parse_dockerhub_image_string('alexioannides/bodywork:0.0.1')
+    assert (parse_dockerhub_image_string('bodyworkml/bodywork-core:0.0.1')
             == ('alexioannides/bodywork', '0.0.1'))
     assert (parse_dockerhub_image_string('alexioannides/bodywork')
             == ('alexioannides/bodywork', 'latest'))
