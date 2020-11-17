@@ -6,7 +6,7 @@ inconsistencies.
 """
 from pathlib import Path
 
-BODYWORK_DOCKERHUB_IMAGE_REPO = 'alexioannides/bodywork'
+BODYWORK_DOCKERHUB_IMAGE_REPO = 'bodyworkml/bodywork-core'
 BODYWORK_DOCKER_IMAGE = f'{BODYWORK_DOCKERHUB_IMAGE_REPO}:latest'
 BODYWORK_WORKFLOW_CLUSTER_ROLE = 'bodywork-workflow-controller'
 BODYWORK_WORKFLOW_SERVICE_ACCOUNT = 'bodywork-workflow-controller'

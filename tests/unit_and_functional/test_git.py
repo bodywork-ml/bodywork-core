@@ -37,10 +37,10 @@ def test_that_git_project_clone_raises_exceptions():
 
 
 def test_get_remote_repo_host_identifies_remote_hosts():
-    conn_str_1 = 'https://github.com/AlexIoannides/bodywork-test-project'
+    conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'
     assert get_remote_repo_host(conn_str_1) is GitRepoHost.GITHUB
 
-    conn_str_2 = 'git@github.com:AlexIoannides/bodywork-test-project.git'
+    conn_str_2 = 'git@github.com:bodywork-ml/bodywork-test-project.git'
     assert get_remote_repo_host(conn_str_2) is GitRepoHost.GITHUB
 
 
@@ -51,10 +51,10 @@ def test_get_remote_repo_host_raises_exception_for_unknown_host():
 
 
 def test_get_connection_protocol_identifies_connection_protocols():
-    conn_str_1 = 'https://github.com/AlexIoannides/bodywork-test-project'
+    conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'
     assert get_connection_protocol(conn_str_1) is ConnectionPrototcol.HTTPS
 
-    conn_str_2 = 'git@github.com:AlexIoannides/bodywork-test-project.git'
+    conn_str_2 = 'git@github.com:bodywork-ml/bodywork-test-project.git'
     assert get_connection_protocol(conn_str_2) is ConnectionPrototcol.SSH
 
     conn_str_3 = 'file:///Users/alexioannides/Dropbox/data_science/workspace/python/bodywork'  # noqa
@@ -62,7 +62,7 @@ def test_get_connection_protocol_identifies_connection_protocols():
 
 
 def test_get_connection_protocol_raises_exception_for_unknown_protocol():
-    conn_str = 'http://github.com/AlexIoannides/bodywork-test-project'
+    conn_str = 'http://github.com/bodywork-ml/bodywork-test-project'
     with raises(RuntimeError, match='cannot identify connection protocol'):
         get_connection_protocol(conn_str)
 

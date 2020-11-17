@@ -21,7 +21,7 @@ from bodywork.k8s.cronjobs import (
 def cronjob_object() -> kubernetes.client.V1Job:
     container = kubernetes.client.V1Container(
         name='bodywork',
-        image='alexioannides/bodywork:latest',
+        image='bodyworkml/bodywork-core:latest',
         image_pull_policy='Always',
         command=['bodywork', 'workflow'],
         args=['bodywork-dev', 'project_repo_url', 'project_repo_branch']
@@ -65,12 +65,12 @@ def test_configure_batch_stage_cronjob():
         cron_schedule='0,30 * * * *',
         namespace='bodywork-dev',
         project_name='bodywork-test-project',
-        project_repo_url='alexioannides/bodywork-test-project',
+        project_repo_url='bodywork-ml/bodywork-test-project',
         project_repo_branch='dev',
         retries=2,
         successful_jobs_history_limit=2,
         failed_jobs_history_limit=2,
-        image='alexioannides/bodywork:0.0.7',
+        image='bodyworkml/bodywork-core:0.0.7',
     )
     assert cronjob_definition.metadata.namespace == 'bodywork-dev'
     assert cronjob_definition.metadata.name == 'bodywork-test-project'
@@ -79,9 +79,9 @@ def test_configure_batch_stage_cronjob():
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
     assert cronjob_definition.spec.job_template.spec.backoff_limit == 2
     assert (cronjob_definition.spec.job_template.spec.template.spec.containers[0].args
-            == ['--namespace=bodywork-dev', 'alexioannides/bodywork-test-project', 'dev'])
+            == ['--namespace=bodywork-dev', 'bodywork-ml/bodywork-test-project', 'dev'])
     assert (cronjob_definition.spec.job_template.spec.template.spec.containers[0].image
-            == 'alexioannides/bodywork:0.0.7')
+            == 'bodyworkml/bodywork-core:0.0.7')
 
 
 @patch('kubernetes.client.BatchV1beta1Api')

@@ -1,6 +1,6 @@
 """
 Test high-level k8s interaction with a k8s cluster to run stages and a
-demo repo at https://github.com/AlexIoannides/bodywork-test-project.
+demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 """
 import os
 from shutil import rmtree
@@ -63,7 +63,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             ['bodywork',
              'workflow',
              f'--namespace={random_test_namespace}',
-             'https://github.com/AlexIoannides/bodywork-test-project',
+             'https://github.com/bodywork-ml/bodywork-test-project',
              'master',
              f'--bodywork-docker-image={docker_image}'],
             encoding='utf-8',
@@ -71,13 +71,13 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         )
         expected_output_1 = (
             'attempting to run workflow for '
-            'project=https://github.com/AlexIoannides/bodywork-test-project on '
+            'project=https://github.com/bodywork-ml/bodywork-test-project on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
         expected_output_2 = 'successfully ran stage=stage-1'
         expected_output_3 = 'attempting to run stage=stage-4'
         expected_output_4 = (
             'successfully ran workflow for '
-            'project=https://github.com/AlexIoannides/bodywork-test-project on '
+            'project=https://github.com/bodywork-ml/bodywork-test-project on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
         expected_output_5 = 'successfully ran stage=stage-5'
         assert expected_output_1 in process_two.stdout
@@ -91,7 +91,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             ['bodywork',
              'workflow',
              f'--namespace={random_test_namespace}',
-             'https://github.com/AlexIoannides/bodywork-test-project',
+             'https://github.com/bodywork-ml/bodywork-test-project',
              'master',
              f'--bodywork-docker-image={docker_image}'],
             encoding='utf-8',
@@ -179,7 +179,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             ['bodywork',
              'workflow',
              f'--namespace={random_test_namespace}',
-             'https://github.com/AlexIoannides/bodywork-rollback-deployment-test-project',  # noqa
+             'https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project',  # noqa
              'master',
              f'--bodywork-docker-image={docker_image}'],
             encoding='utf-8',
@@ -193,7 +193,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             ['bodywork',
              'workflow',
              f'--namespace={random_test_namespace}',
-             'https://github.com/AlexIoannides/bodywork-rollback-deployment-test-project',  # noqa
+             'https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project',  # noqa
              'master',
              f'--bodywork-docker-image={docker_image}'],
             encoding='utf-8',
@@ -222,7 +222,7 @@ def test_workflow_will_not_run_if_namespace_is_not_setup_for_bodywork(
         ['bodywork',
             'workflow',
             f'--namespace={random_test_namespace}',
-            'https://github.com/AlexIoannides/bodywork-test-project',
+            'https://github.com/bodywork-ml/bodywork-test-project',
             'master'],
         encoding='utf-8',
         capture_output=True
@@ -238,9 +238,9 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
         ['bodywork',
             'workflow',
             f'--namespace={test_namespace}',
-            'https://github.com/AlexIoannides/bodywork-test-project',
+            'https://github.com/bodywork-ml/bodywork-test-project',
             'master',
-            '--bodywork-docker-image=bad:alexioannides/bodywork:0.0.0'],
+            '--bodywork-docker-image=bad:bodyworkml/bodywork-core:0.0.0'],
         encoding='utf-8',
         capture_output=True
     )
@@ -252,13 +252,13 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
         ['bodywork',
             'workflow',
             f'--namespace={test_namespace}',
-            'https://github.com/AlexIoannides/bodywork-test-project',
+            'https://github.com/bodywork-ml/bodywork-test-project',
             'master',
-            '--bodywork-docker-image=alexloannides/bodywork-stage-runner:latest'],
+            '--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest'],
         encoding='utf-8',
         capture_output=True
     )
-    assert ('cannot locate alexloannides/bodywork-stage-runner:latest on DockerHub'
+    assert ('cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub'
             in process_two.stdout)
     assert process_two.returncode == 1
 
@@ -313,7 +313,7 @@ def test_workflow_with_ssh_github_connectivity(
             ['bodywork',
              'workflow',
              f'--namespace={random_test_namespace}',
-             'git@github.com:AlexIoannides/bodywork-test-project.git',
+             'git@github.com:bodywork-ml/bodywork-test-project.git',
              'master',
              f'--bodywork-docker-image={docker_image}'],
             encoding='utf-8',
@@ -321,11 +321,11 @@ def test_workflow_with_ssh_github_connectivity(
         )
         expected_output_1 = (
             'attempting to run workflow for '
-            'project=git@github.com:AlexIoannides/bodywork-test-project.git on '
+            'project=git@github.com:bodywork-ml/bodywork-test-project.git on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
         expected_output_2 = (
             'successfully ran workflow for '
-            'project=git@github.com:AlexIoannides/bodywork-test-project.git on '
+            'project=git@github.com:bodywork-ml/bodywork-test-project.git on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
         expected_output_3 = 'successfully ran stage=stage-1'
         assert expected_output_1 in process_three.stdout
@@ -351,7 +351,7 @@ def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
             f'--namespace={random_test_namespace}',
             '--name=bodywork-test-project',
             '--schedule=0,30 * * * *',
-            '--git-repo-url=https://github.com/AlexIoannides/bodywork-test-project'],
+            '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
         encoding='utf-8',
         capture_output=True
     )
@@ -421,7 +421,7 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
          f'--namespace={test_namespace}',
          '--name=bodywork-test-project',
          '--schedule=0,30 * * * *',
-         '--git-repo-url=https://github.com/AlexIoannides/bodywork-test-project'],
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
         encoding='utf-8',
         capture_output=True
     )
@@ -438,7 +438,7 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
     )
     assert 'bodywork-test-project' in process_two.stdout
     assert '0,30 * * * *' in process_two.stdout
-    assert 'https://github.com/AlexIoannides/bodywork-test-project' in process_two.stdout
+    assert 'https://github.com/bodywork-ml/bodywork-test-project' in process_two.stdout
     assert 'master' in process_two.stdout
     assert process_two.returncode == 0
 
