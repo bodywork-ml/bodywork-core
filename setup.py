@@ -22,9 +22,10 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     version=version,
-    license='Apache 2.0',
-    author='Alex Ioannides',
-    url='https://github.com/bodywork-ml/bodywork',
+    license='AGPL 3.0',
+    author='Bodywork Machine Learning Ltd',
+    author_email='info@bodyworkml.com',
+    url='https://github.com/bodywork-ml/bodywork-core',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     include_package_data=True,
@@ -38,5 +39,10 @@ setup(
         'console_scripts': [
             'bodywork=bodywork.cli.cli:cli'
         ]
-    }
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: GNU Affero General Public License v3',
+        'Programming Language :: Python :: 3.7'
+    ]
 )
