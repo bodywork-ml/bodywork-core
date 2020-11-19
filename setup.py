@@ -1,3 +1,19 @@
+# bodywork - MLOps on Kubernetes.
+# Copyright (C) 2020  Bodywork Machine Learning Ltd.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from setuptools import find_packages, setup
 
 
@@ -22,9 +38,13 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     version=version,
-    license='Apache 2.0',
-    author='Alex Ioannides',
-    url='https://github.com/bodywork-ml/bodywork',
+    license='AGPL 3.0',
+    author='Bodywork Machine Learning Ltd',
+    author_email='info@bodyworkml.com',
+    url='https://github.com/bodywork-ml/bodywork-core',
+    project_urls={
+        'Source': 'https://github.com/bodywork-ml/bodywork-core'
+    },
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     include_package_data=True,
@@ -38,5 +58,10 @@ setup(
         'console_scripts': [
             'bodywork=bodywork.cli.cli:cli'
         ]
-    }
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: GNU Affero General Public License v3',
+        'Programming Language :: Python :: 3.7'
+    ]
 )
