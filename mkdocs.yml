@@ -1,5 +1,6 @@
 site_name: Bodywork
 nav:
   - Overview: index.md
-  - Concepts: concepts.md
+  - Installation: installation.md
+  - Concepts: key_concepts.md
 theme: readthedocs
