@@ -1,6 +1,6 @@
 # Installation
 
-Bodywork is a Python 3 package that exposes a Command Line Interface (CLI) for interacting with your Kubernetes (k8s) cluster to deploy Bodywork-compatible Machine Learning (ML) projects directly from Git repositories hosted on GitHub. It can be downloaded and installed from from PyPI with the following shell command,
+Bodywork is distributed as a Python 3 package that exposes a Command Line Interface (CLI) for interacting with your Kubernetes (k8s) cluster, to deploy Bodywork-compatible Machine Learning (ML) projects directly from Git repositories hosted on GitHub. It can be downloaded and installed from from PyPI with the following shell command,
 
 ```bash
 pip install bodywork
