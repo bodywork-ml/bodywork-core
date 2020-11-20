@@ -11,7 +11,7 @@ Containerising machine learning code using Docker, pushing the build artefacts t
 This is where Bodywork steps-in - to make sure that your code is delivered to the right place, at the right time, so that your models are trained, deployed and available to the rest of your team. Bodywork will:
 
 - automate the configuration of Kubernetes jobs and deployments to run complex machine learning workflows that result in machine learning service deployments.
-- continuously deliver machine learning code - for training models and defining model-scoring services - from your Git repository into running containers on Kubernetes.
+- continuously deliver machine learning code - for training models and defining model-scoring services - directly from your Git repository into running containers on Kubernetes.
 
 ## Prerequisites
 
@@ -20,4 +20,4 @@ Before you start exploring what Bodywork can do for you, you will need:
 - access to a Kubernetes cluster - either locally using [minikube](https://minikube.sigs.k8s.io/docs/) or [Docker-for-desktop](https://www.docker.com/products/docker-desktop), or as a managed service from a cloud provider, such as [EKS on AWS](https://aws.amazon.com/eks) or [AKS on Azure](https://azure.microsoft.com/en-us/services/kubernetes-service/).
 - a [GitHub](https://github.com) account.
 
-Familiarity with basic [Kubernetes concepts](https://kubernetes.io/docs/concepts/) and some exposure to the [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) command-line tool will make life easier. We recommend the first two introductory sections of Marko Lukša's excellent [Kubernetes in Action](https://www.manning.com/books/kubernetes-in-action?query=kubernetes), or the introductory article we wrote on [Deploying Python ML Models with Flask, Docker and Kubernetes](https://alexioannides.com/2019/01/10/deploying-python-ml-models-with-flask-docker-and-kubernetes/).
+Familiarity with basic [Kubernetes concepts](https://kubernetes.io/docs/concepts/) and some exposure to the [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) command-line tool will make life easier. We recommend the first two introductory sections of Marko Lukša's excellent book [Kubernetes in Action](https://www.manning.com/books/kubernetes-in-action?query=kubernetes), or the introductory article we wrote on [Deploying Python ML Models with Flask, Docker and Kubernetes](https://alexioannides.com/2019/01/10/deploying-python-ml-models-with-flask-docker-and-kubernetes/).
