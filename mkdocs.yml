@@ -1,5 +1,5 @@
 site_name: Bodywork
 nav:
-  - Introduction: index.md
-  - Getting Started: getting_started.md
+  - Overview: index.md
+  - Concepts: concepts.md
 theme: readthedocs
