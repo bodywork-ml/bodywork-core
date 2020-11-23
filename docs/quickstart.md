@@ -1,12 +1,12 @@
 # Train a Model and Deploy a Scoring Service
 
-This tutorial uses the example [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. 
+This tutorial uses the example [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 We **strongly** recommend that you find the five minutes required to read the [key concepts](key_concepts.md) that Bodywork relies on.
 
 ## A Machine Learning Task
 
-The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species using the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset). The [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/ml_prototype_work.ipynb) notebook found in the root of this repository, documents the trivial ML workflow used to train a Decision Tree classifier for this multi-class classification task, as well as to prototype some of the work that will be required to engineer and deploy the final prediction (or scoring) service.
+The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species using the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset). The [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/ml_prototype_work.ipynb) notebook found in the root of the [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) repository, documents the trivial ML workflow used to train a Decision Tree classifier for this multi-class classification task, as well as to prototype some of the work that will be required to engineer and deploy the final prediction (or scoring) service.
 
 ## Configuring a Bodywork Batch Stage for Training a Model
 
