@@ -4,7 +4,7 @@
 
 ![workflows](images/concepts_workflow.png)
 
-Each unit of code (Python modules) responsible for executing a specific ML task - e.g. training a model or starting a model-scoring service - is contained within its own stage. Bodywork will run each stage in its own container on Kubernetes.
+Each unit of code responsible for executing a specific ML task - e.g. training a model or starting a model-scoring service - is contained within an executable Python module that forms its own stage. Bodywork will run each of these stages in their own containers on Kubernetes.
 
 A step is a collection of stages that can be running at the same time (concurrently) - e.g. training multiple model types in parallel or starting multiple services at once. Stages that can only be executed after another has finished - e.g. serving a model after it has been trained - should be placed in different steps, in the correct order.
 
