@@ -6,8 +6,11 @@ nav:
   - Installation: installation.md
   - Key Concepts: key_concepts.md
   - Quickstart: quickstart.md
-  - Bodywork ML Projects User Guide: user_guide.md
+  - User Guide: user_guide.md
   - API Reference: api_reference.md
 theme: 
   name: readthedocs
   titles_only: false
+markdown_extensions:
+    - toc:
+        permalink: true
