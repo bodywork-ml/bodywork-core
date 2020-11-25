@@ -163,7 +163,7 @@ Where:
 - `REPLICAS`: the number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
 - `PORT`: the port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
 
-## Preparing a Kubernetes Namespace for use with Bodywork
+## Preparing a Namespace for use with Bodywork
 
 Each Bodywork project should operate within its own [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) in your k8s cluster. To setup a Bodywork compatible namespace, issue the following command from the CLI,
 
