@@ -38,7 +38,7 @@ bodywork stage \
     STAGE_NAME
 ```
 
-Clone the chosen branch of a remote Git repository that contains a Bodywork ML project and then execute a stage locally. This is equivalent to executing `python NAME_OF_EXECUTABLE_PYTHON_MODULE.py` as defined in the stage's `config.ini`, after installing all the 3rd party Python package requirements specified in the stage's `requirement.txt` file. See [Configuring Stages](user_guide.md#configuring-stages) for more information. 
+Clone the chosen branch of a remote Git repository that contains a Bodywork ML project and then execute a stage locally. This is equivalent to executing `python NAME_OF_EXECUTABLE_PYTHON_MODULE.py` as defined in the stage's `config.ini`, after installing all the 3rd party Python package requirements specified in the stage's `requirement.txt` file. See [Configuring Stages](user_guide.md#configuring-stages) for more information.
 
 **This command is intended for use by Bodywork containers and it is not recommended for use during Bodywork project development on your local machine.**
 
@@ -168,28 +168,26 @@ bodywork debug SECONDS
 Runs the Python `time.sleep` function for `SECONDS`. This is intended for use with the Bodywork image and kubectl, to deploy a container within a namespace, on which it is possible to open shell access for advanced debugging. For example, issuing the following command,
 
 ```bash
-kubectl create deployment \
-    -n YOUR_NAMESPACE DEBUG_DEPLOYMENT_NAME \
-    --image=bodyworkml/bodywork:latest \
+kubectl create deployment DEBUG_DEPLOYMENT_NAME \
+    -n YOUR_NAMESPACE \
+    --image=bodyworkml/bodywork-core:latest \
     -- bodywork debug SECONDS
 ```
 
 Will deploy the Bodywork container and run the `bodywork debug SECONDS` command within it. While it is sleeping, a shell to the pod in this deployment can be opened. To achieve this, first of all find the pod's name, using,
 
 ```bash
-kubectl -n YOUR_NAMESPACE get pods | grep DEBUG_DEPLOYMENT_NAME
+kubectl get pods -n YOUR_NAMESPACE | grep DEBUG_DEPLOYMENT_NAME
 ```
 
 And then [open a shell to the container](https://kubernetes.io/docs/tasks/debug-application-cluster/get-shell-running-container/#getting-a-shell-to-a-container) within this pod using,
 
 ```bash
-kubectl -n YOUR_NAMESPACE exec DEBUG_DEPLOYMENT_POD_NAME -it -- /bin/bash
+kubectl exec DEBUG_DEPLOYMENT_POD_NAME -n YOUR_NAMESPACE -it -- /bin/bash
 ```
 
 Once you're finished debugging, tear-down the deployment using,
 
 ```bash
-kubectl delete deployment
-    -n YOUR_NAMESPACE \
-    DEBUG_DEPLOYMENT_NAME
+kubectl delete deployment DEBUG_DEPLOYMENT_NAME -n YOUR_NAMESPACE
 ```
