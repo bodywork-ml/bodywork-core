@@ -1,4 +1,4 @@
-# Overview
+![bodywork](images/bodywork_logo.png)
 
 Bodywork is a simple framework for machine learning engineers to run model-training workloads and deploy model-scoring services on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes). It is built by machine learning engineers, for machine learning engineers. It automates the repetitive tasks that most machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), allowing them to focus their time on what they do best - machine learning.
 
