@@ -225,7 +225,7 @@ Workflows can be triggered locally from the command line, with the workflow-cont
 ```bash
 bodywork workflow \
     --namespace=my-classification-product \
-    https://github.com/my-github-username/my-classification-product.git \
+    https://github.com/my-github-username/my-classification-product \
     master
 ```
 
@@ -234,7 +234,7 @@ It is also possible to specify a branch from a local Git repository. A local ver
 ```bash
 bodywork workflow \
     --namespace=my-classification-product \
-    file:///absolute/path/to/my-classification-product.git \
+    file:///absolute/path/to/my-classification-product \
     dev
 ```
 
@@ -258,6 +258,30 @@ curl http://localhost:8001/api/v1/namespaces/my-classification-product/services/
 Should return the payload according to how you've defined your service in the executable Python module - e.g. in the `model_scoring_app.py` file found within the `model-scoring-service` stage's directory.
 
 We have explicitly left the task of enabling access to services, from requests originating outside the cluster, as there are multiple ways to achieve this - e.g. via load balancers or ingress controllers - and the choice will depend on your circumstances. Please refer to the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/) to learn more.
+
+### Deleting Redundant Service Deployments
+
+Once you have finished testing, you may want to delete any service deployments that have been created. To list all active service deployments within a namespace, issue the command,
+
+```bash
+bodywork service display \
+    --namespace=my-classification-project
+```
+
+Which should yield output similar to,
+
+```text
+SERVICE_URL                                                       EXPOSED   AVAILABLE_REPLICAS       UNAVAILABLE_REPLICAS
+http://my-classification-product--model-scoring-service:5000      true      2                        0
+```
+
+To delete the service deployment use,
+
+```bash
+bodywork service delete
+    --namespace=my-classification-project
+    --name=my-classification-product--model-scoring-service
+```
 
 ### Workflow-Controller Log Format
 
@@ -340,7 +364,7 @@ bodywork cronjob logs ... > log.txt
 
 To overwrite the existing contents of `log.txt`, or,
 
- ```bash
+```bash
 bodywork cronjob logs ... >> log.txt
 ```
 
