@@ -66,6 +66,19 @@ jobs:
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION) -t bodyworkml/bodywork-core:latest
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
             docker push bodyworkml/bodywork-core
+  build-python-package-push-to-pypi:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Installing Python dependencies
+          command: pip install -r requirements_dev.txt
+      - run:
+          name: Building wheel
+          command: python setup.py sdist bdist_wheel
+      - run:
+          name: Push to PyPI
+          command: twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD --verbose
   ensure-package-version-number-incremented:
     docker: 
       - image: circleci/python:3
@@ -109,6 +122,14 @@ workflows:
           requires:
             - build-dev-docker-image-push-to-dockerhub
       - build-master-docker-image-push-to-dockerhub:
+          requires:
+            - ensure-package-version-number-incremented
+          filters:
+            branches:
+              only: master
+      - build-python-package-push-to-pypi:
+          requires:
+            - build-master-docker-image-push-to-dockerhub
           filters:
             branches:
               only: master
