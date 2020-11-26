@@ -34,7 +34,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='bodywork',
-    description='Machine learning and statistical model deployment frameowrk.',
+    description='MLOps framework for running model-training workloads and deploying model-scoring services on Kubernetes.',
     long_description=readme,
     long_description_content_type='text/markdown',
     version=version,
@@ -43,7 +43,8 @@ setup(
     author_email='info@bodyworkml.com',
     url='https://github.com/bodywork-ml/bodywork-core',
     project_urls={
-        'Source': 'https://github.com/bodywork-ml/bodywork-core'
+        'Source': 'https://github.com/bodywork-ml/bodywork-core',
+        'Documentation': 'https://bodywork.readthedocs.io/en/latest/'
     },
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
