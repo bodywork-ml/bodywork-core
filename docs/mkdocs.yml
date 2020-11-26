@@ -1,0 +1,18 @@
+site_name: Bodywork
+copyright: Bodywork Machine Learning Ltd.
+repo_url: https://github.com/bodywork-ml
+docs_dir: .
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - Key Concepts: key_concepts.md
+  - Quickstart: quickstart.md
+  - User Guide: user_guide.md
+  - CLI Reference: cli_reference.md
+  - Contact Us: contact.md
+theme: 
+  name: readthedocs
+  titles_only: false
+markdown_extensions:
+    - toc:
+        permalink: true
