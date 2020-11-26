@@ -1,7 +1,7 @@
 site_name: Bodywork
 copyright: Bodywork Machine Learning Ltd.
 repo_url: https://github.com/bodywork-ml
-docs_dir: .
+docs_dir: docs
 nav:
   - Overview: index.md
   - Installation: installation.md
