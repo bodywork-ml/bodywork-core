@@ -144,7 +144,7 @@ RETRIES=2
 Where:
 
 - `MAX_COMPLETION_TIME_SECONDS`: sets the time to wait for the given task to run, before retrying or raising a workflow execution error.
-- `RETRIES`: sets the number of time to retry executing a failed stage, before raising a workflow execution error.
+- `RETRIES`: sets the number of times to retry executing a failed stage, before raising a workflow execution error.
 
 ### Service Deployment Stages
 
@@ -159,7 +159,7 @@ PORT=5000
 
 Where:
 
-- `MAX_STARTUP_TIME_SECONDS`: sets the time that the service needs to have been 'ready', without any errors having occurred, before it can be marked as 'successful'. If a service deployment stage fails to reach a ready state, then the deployment will be automatically rolled-back to the previous version.
+- `MAX_STARTUP_TIME_SECONDS`: sets the time limit for the service to reach the 'ready' state, without any errors having occurred, before it can be marked as 'successful'. If a service deployment stage fails to reach a ready state, then the deployment will be automatically rolled-back to the previous version.
 - `REPLICAS`: the number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
 - `PORT`: the port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
 
@@ -240,7 +240,7 @@ bodywork workflow \
 
 ### Testing Service Deployments
 
-Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine you will first of all need to start a [proxy server](https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/) to enable access to your cluster. This can be achieved by issue the following command,
+Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine you will first of all need to start a [proxy server](https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/) to enable access to your cluster. This can be achieved by issuing the following command,
 
 ```bash
 kubectl proxy
@@ -356,7 +356,7 @@ bodywork cronjob logs \
     --name=my-classification-product-1605214260
 ```
 
-Would stream the logs from the workflow execution attempt labelled `my-classification-product-1605214260`, directly to your terminal. This output stream could also redirected to a local file by using a shell redirection command such as,
+Would stream the logs from the workflow execution attempt labelled `my-classification-product-1605214260`, directly to your terminal. This output stream could also be redirected to a local file by using a shell redirection command such as,
 
 ```bash
 bodywork cronjob logs ... > log.txt
@@ -364,7 +364,7 @@ bodywork cronjob logs ... > log.txt
 
 To overwrite the existing contents of `log.txt`, or,
 
-```bash
+ ```bash
 bodywork cronjob logs ... >> log.txt
 ```
 
