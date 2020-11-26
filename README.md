@@ -26,7 +26,7 @@ Familiarity with basic [Kubernetes concepts](https://kubernetes.io/docs/concepts
 
 ## Documentation
 
-The official documentation for bodywork-core can be found at [readthedocs.io](https://bodywork.readthedocs.io/en/latest/). This is the best place to start.
+The official documentation for bodywork-core can be found [here](https://bodywork.readthedocs.io/en/latest/). This is the best place to start.
 
 ## Contacting Us
 
