@@ -1,4 +1,4 @@
-# API Reference
+# CLI Reference
 
 Bodywork is distributed as a Python 3 package that exposes a CLI for interacting with your k8s cluster, to deploy Bodywork-compatible ML projects directly from remotely hosted Git repositories (e.g. GitHub). This page is a reference for all Bodywork CLI commands.
 

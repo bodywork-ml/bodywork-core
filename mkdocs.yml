@@ -7,7 +7,7 @@ nav:
   - Key Concepts: key_concepts.md
   - Quickstart: quickstart.md
   - User Guide: user_guide.md
-  - API Reference: api_reference.md
+  - CLI Reference: cli_reference.md
   - Contact Us: contact.md
 theme: 
   name: readthedocs
