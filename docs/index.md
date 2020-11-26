@@ -8,7 +8,7 @@ Bodywork uses Kubernetes for running machine learning workloads and services, be
 
 ## What Problems Does Bodywork Solve?
 
-Containerising machine learning code using Docker, pushing the build artefacts to an image repository and then configuring Kuberentes to orchestrate these into batch jobs and services, requires skills and expertise that most machine learning engineers do not have the time (and often the desire) to learn.
+Containerising machine learning code using Docker, pushing the build artefacts to an image repository and then configuring Kubernetes to orchestrate these into batch jobs and services, requires skills and expertise that most machine learning engineers do not have the time (and often the desire) to learn.
 
 This is where Bodywork steps-in - to make sure that your code is delivered to the right place, at the right time, so that your models are trained, deployed and available to the rest of your team. Bodywork will:
 
