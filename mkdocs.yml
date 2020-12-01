@@ -1,6 +1,6 @@
 site_name: Bodywork
-copyright: Bodywork Machine Learning Ltd.
-repo_url: https://github.com/bodywork-ml
+copyright: Copyright &copy; 2020 Bodywork Machine Learning Ltd.
+repo_url: https://github.com/bodywork-ml/bodywork-core
 docs_dir: docs
 nav:
   - Overview: index.md
@@ -13,6 +13,11 @@ nav:
 theme: 
   name: readthedocs
   titles_only: false
+  hljs_languages:
+    - shell
+    - python
+    - text
 markdown_extensions:
-    - toc:
-        permalink: true
+  - smarty  
+  - toc:
+      permalink: true
