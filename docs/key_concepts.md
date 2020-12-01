@@ -31,7 +31,7 @@ Bodywork requires ML projects to be stored and distributed as Git repositories -
 
 The necessary Python modules and configuration files required for each stage have to be contained within their own directories in your repository. For the common train-and-deploy scenario, the required directory project structure would be similar to:
 
-```bash
+```text
 root/
  |-- stage-1-train-model/
      |-- train_model.py
