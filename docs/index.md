@@ -12,8 +12,8 @@ Containerising machine learning code using Docker, pushing the build artefacts t
 
 This is where Bodywork steps-in - to make sure that your code is delivered to the right place and executed at the right time, so that your models are trained, deployed and available to the rest of your team. Bodywork is a tool aimed at ML engineers to help them:
 
-- continuously deliver machine learning code - for training models and defining model-scoring services - by pulling it directly from your Git repository into running containers on Kubernetes; and,
-- automate the configuration of Kubernetes jobs and deployments to run complex machine learning workflows that result in machine learning service deployments.
+- continuously deliver code - for training models and defining model-scoring services - by having running containers on Kubernetes pull it directly from your project's Git repository; and,
+- automate the configuration of Kubernetes jobs and deployments to run complex ML workflows that result in ML service deployments.
 
 ## Prerequisites
 
