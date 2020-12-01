@@ -6,7 +6,7 @@ This is a comprehensive guide to developing and configuring ML projects for depl
 
 Bodywork compatible ML projects need to be structured in a specific way in order for the Bodywork workflow-controller to be able to identify the stages and run them in the required order. All of the files necessary for defining a stage must be contained within a directory dedicated to that stage, where the name given to the directory defines the name of the stage. Consider the following example directory structure,
 
-```bash
+```text
 root/
  |-- prepare-data/
      |-- prepare_data.py
@@ -47,14 +47,14 @@ All configuration for a workflow is contained within the `bodywork.ini` file, th
 
 ```ini
 [default]
-PROJECT_NAME=my_classification_project
-DOCKER_IMAGE=bodyworkml/bodywork-core:latest
+PROJECT_NAME="my_classification_project"
+DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG=prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service
+DAG="prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service"
 
 [logging]
-LOG_LEVEL=INFO
+LOG_LEVEL="INFO"
 ```
 
 Where each configuration parameter is used as follows:
@@ -69,7 +69,7 @@ Where each configuration parameter is used as follows:
 The `DAG` string is used to control the execution of the stages by assigning them to different steps of the workflow. Steps are separated using the `>>` operator and commas are used to delimit multiple stages within a single step (if this is required). Steps are executed from left to right. In the example above,
 
 ```ini
-prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service
+DAG="prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service"
 ```
 
 The workflow is interpreted as follows:
@@ -85,8 +85,8 @@ The behavior of each stage is controlled by the configuration parameters in the 
 
 ```ini
 [default]
-STAGE_TYPE=service
-EXECUTABLE_SCRIPT=model_scoring_app.py
+STAGE_TYPE="service"
+EXECUTABLE_SCRIPT="model_scoring_app.py"
 CPU_REQUEST=0.25
 MEMORY_REQUEST_MB=100
 
@@ -96,8 +96,8 @@ REPLICAS=1
 PORT=5000
 
 [secrets]
-USERNAME=my-classification-product-cloud-storage-credentials
-PASSWORD=my-classification-product-cloud-storage-credentials
+USERNAME="my-classification-product-cloud-storage-credentials"
+PASSWORD="my-classification-product-cloud-storage-credentials"
 ```
 
 The `[default]` section is common to all types of stage and the `[secrets]` section is optional. The remaining section must be one of `[batch]` or `[service]`. Each `[default]` configuration parameter is to be used as follows:
@@ -116,8 +116,8 @@ The second step is to configure the use of this secret with the `[secrets]` sect
 
 ```ini
 [secrets]
-USERNAME=my-classification-product-cloud-storage-credentials
-PASSWORD=my-classification-product-cloud-storage-credentials
+USERNAME="my-classification-product-cloud-storage-credentials"
+PASSWORD="my-classification-product-cloud-storage-credentials"
 ```
 
 Will look for values assigned to the keys `USERNAME` and `PASSWORD` within the k8s secret named `my-classification-product-cloud-storage-credentials` and then assign these secrets to environment variables within the container, called `USERNAME` and `PASSWORD`, respectively. These can then be accessed from within the stage's executable Python module - for example,
@@ -167,8 +167,8 @@ Where:
 
 Each Bodywork project should operate within its own [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) in your k8s cluster. To setup a Bodywork compatible namespace, issue the following command from the CLI,
 
-```bash
-bodywork setup-namespace my-classification-product
+```shell
+$ bodywork setup-namespace my-classification-product
 ```
 
 Which will yield the following output,
@@ -186,8 +186,8 @@ We can see that in addition to creating the namespace, two [service-accounts](ht
 
 Credentials will be required whenever you wish to pull data or persist models to cloud storage, or access private APIs from within a stage. We provide a secure mechanism for dynamically injecting secret credentials as environment variables into the container running a stage. Before a stage can be configured to inject a secret into its host container, the secret has to be placed within the k8s namespace that the workflow will be deployed to. This can be achieved from the command line - for example,
 
-```bash
-bodywork secret create \
+```shell
+$ bodywork secret create \
     --namespace=my-classification-product \
     --name=my-classification-product-cloud-storage-credentials \
     --data USERNAME=bodywork PASSWORD=bodywork123!
@@ -199,8 +199,8 @@ Will store `USERNAME` and `PASSWORD` within a [k8s secret resource](https://kube
 
 When working with remote Git repositories that are private, Bodywork will attempt to access them via [SSH](https://en.wikipedia.org/wiki/SSH_(Secure_Shell)). For example, to setup SSH access for use with GitHub, see [this article](https://devconnected.com/how-to-setup-ssh-keys-on-github/). This process will result in the creation of a private and public key-pair to use for authenticating with GitHub. The private key must be stored as a k8s secret in the project's namespace, using the following naming convention for the secret name and secret data key,
 
-```bash
-bodywork secret create \
+```shell
+$ bodywork secret create \
     --namespace=my-classification-product \
     --name=ssh-github-private-key \
     --data BODYWORK_GITHUB_SSH_PRIVATE_KEY=paste_your_private_key_here
@@ -208,13 +208,13 @@ bodywork secret create \
 
 When executing a workflow defined in a private Git repository, make sure to use the SSH protocol when specifying the `git-repo-url` - e.g. use,
 
-```bash
+```text
 git@github.com:bodywork-ml/bodywork-ml-ops-project.git
 ```
 
 As opposed to,
 
-```bash
+```text
 https://github.com/bodywork-ml/bodywork-ml-ops-project
 ```
 
@@ -222,8 +222,8 @@ https://github.com/bodywork-ml/bodywork-ml-ops-project
 
 Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but note that it will still clone your project from the specified branch of your remote Git repository (and delete it once it has completed). For the example project used throughout this user guide, the CLI command for triggering the workflow locally using the `master` branch of the remote Git repository, would be as follows,
 
-```bash
-bodywork workflow \
+```shell
+$ bodywork workflow \
     --namespace=my-classification-product \
     https://github.com/my-github-username/my-classification-product \
     master
@@ -231,8 +231,8 @@ bodywork workflow \
 
 It is also possible to specify a branch from a local Git repository. A local version of the above example - this time using the `dev` branch - could be as follows,
 
-```bash
-bodywork workflow \
+```shell
+$ bodywork workflow \
     --namespace=my-classification-product \
     file:///absolute/path/to/my-classification-product \
     dev
@@ -242,14 +242,14 @@ bodywork workflow \
 
 Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine you will first of all need to start a [proxy server](https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/) to enable access to your cluster. This can be achieved by issuing the following command,
 
-```bash
-kubectl proxy
+```shell
+$ kubectl proxy
 ```
 
 Then in a new shell, you can use the `curl` tool to test the service. For example, issuing,
 
-```bash
-curl http://localhost:8001/api/v1/namespaces/my-classification-product/services/my-classification-product--model-scoring-service/proxy \
+```shell
+$ curl http://localhost:8001/api/v1/namespaces/my-classification-product/services/my-classification-product--model-scoring-service/proxy \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{"x": 5.1, "y": 3.5}'
@@ -263,8 +263,8 @@ We have explicitly left the task of enabling access to services, from requests o
 
 Once you have finished testing, you may want to delete any service deployments that have been created. To list all active service deployments within a namespace, issue the command,
 
-```bash
-bodywork service display \
+```shell
+$ bodywork service display \
     --namespace=my-classification-project
 ```
 
@@ -277,8 +277,8 @@ http://my-classification-product--model-scoring-service:5000      true      2   
 
 To delete the service deployment use,
 
-```bash
-bodywork service delete
+```shell
+$ bodywork service delete
     --namespace=my-classification-project
     --name=my-classification-product--model-scoring-service
 ```
@@ -322,8 +322,8 @@ The aim of this log structure, is to provide a reliable way of debugging workflo
 
 If your workflows are executing successfully, then you can schedule the workflow-controller to operate remotely on the cluster as a [k8s cronjob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/). For example, issuing the following command from the CLI,
 
-```bash
-bodywork cronjob create \
+```shell
+$ bodywork cronjob create \
     --namespace=my-classification-product \
     --name=my-classification-product \
     --schedule="0,15,30,45 * * * *" \
@@ -333,15 +333,15 @@ bodywork cronjob create \
 
 Would schedule our example project to run every 15 minutes. The cronjob's execution history can be retrieved from the cluster using,
 
-```bash
-bodywork cronjob history \
+```shell
+$ bodywork cronjob history \
     --namespace=my-classification-product \
     --name=my-classification-product
 ```
 
 Which will yield output along the lines of,
 
-```bash
+```text
 JOB_NAME                                START_TIME                    COMPLETION_TIME               ACTIVE      SUCCEEDED       FAILED
 my-classification-product-1605214260    2020-11-12 20:51:04+00:00     2020-11-12 20:52:34+00:00     0           1               0
 ```
@@ -350,22 +350,22 @@ my-classification-product-1605214260    2020-11-12 20:51:04+00:00     2020-11-12
 
 The logs for each job executed by the cronjob are contained within the remote workflow-controller. The logs for a single workflow execution attempt can be retrieved by issuing the `bodywork cronjob logs` command on the CLI - for example,
 
-```bash
-bodywork cronjob logs \
+```shell
+$ bodywork cronjob logs \
     --namespace=my-classification-product-1605214260 \
     --name=my-classification-product-1605214260
 ```
 
 Would stream the logs from the workflow execution attempt labelled `my-classification-product-1605214260`, directly to your terminal. This output stream could also be redirected to a local file by using a shell redirection command such as,
 
-```bash
-bodywork cronjob logs ... > log.txt
+```shell
+$ bodywork cronjob logs ... > log.txt
 ```
 
 To overwrite the existing contents of `log.txt`, or,
 
- ```bash
-bodywork cronjob logs ... >> log.txt
+```shell
+$ bodywork cronjob logs ... >> log.txt
 ```
 
 To append to the existing contents of `log.txt`.
