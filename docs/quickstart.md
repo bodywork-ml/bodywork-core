@@ -1,39 +1,216 @@
 # Train a Model and Deploy a Scoring Service
 
+Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork relies on.
+
 This tutorial uses the example [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
-We **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork relies on.
+## What am I going to Learn?
+
+* How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a RESTful model-scoring API.
+* How to execute these 'train' and 'deploy' modules - that together form a simple ML pipeline (or workflow) - remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
+* How to interact-with and test the model-scoring service that has been deployed to Kubernetes.
+* How to run the train-and-deploy workflow on a schedule, so the model is periodically re-trained when new data is available, but without the manual intervention of an ML engineer.
 
 ## A Machine Learning Task
 
-The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species using the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset). The [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/ml_prototype_work.ipynb) notebook found in the root of the [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) repository, documents the trivial ML workflow used to train a Decision Tree classifier for this multi-class classification task, as well as to prototype some of the work that will be required to engineer and deploy the final prediction (or scoring) service.
+The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species using the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset) - a multi-class classification task.
+
+The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) repository, documents the trivial ML workflow used to arrive at a proposed solution to this task, by training a Decision Tree classifier and persisting the trained model to cloud storage. Take five minutes to read through it.
+
+## A Machine Learning Operations Task
+
+![train_and_deploy](images/concepts_train_and_deploy.png)
+
+Now that we have developed a solution to our chosen ML task, how do we get it into production - i.e. how can we split the Jupyter notebook into a 'train-model' stage that persists a trained model to cloud storage, and a separate 'deploy-scoring-service' stage that will load the persisted model and start a web service to expose a model-scoring API?
+
+The solution using Bodywork is contained within the [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository, whose root directory is as follows,
+
+```text
+root/
+ |-- stage-1-train-model/
+     |-- train_model.py
+     |-- requirements.txt
+     |-- config.ini
+ |-- stage-2-serve-model/
+     |-- serve_model.py
+     |-- requirements.txt
+     |-- config.ini
+ |-- bodywork.ini
+```
+
+The remainder of this tutorial is concerned with explaining what is contained within these files, and how to command Bodywork to work with them to operationalise the solution on Kubernetes.
 
 ## Configuring a Bodywork Batch Stage for Training a Model
 
 The `stage-1-train-model` directory contains the code and configuration required to train the model within a pre-built container on a k8s cluster, as a batch workload. Using the `ml_prototype_work.ipynb` notebook as a reference, the `train_model.py` module contains the code required to:
 
-- download data from an AWS S3 bucket;
-- pre-process the data (e.g. extract labels for supervised learning);
-- train the model and compute performance metrics; and,
-- persist the model to the same AWS S3 bucket that contains the original data.
+* download data from an AWS S3 bucket;
+* pre-process the data (e.g. extract labels for supervised learning);
+* train the model and compute performance metrics; and,
+* persist the model to the same AWS S3 bucket that contains the original data.
 
-The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the pre-built Bodywork host container, as required to run the `train_model.py` script. Finally, the `config.ini` file allows us to specify that this stage is a batch stage (as opposed to a service-deployment), that `train_model.py` should be the script that is run, as well as an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait and how many times to retry, etc.
+In essence, it can be summarised as,
+
+```python
+from datetime import datetime
+from urllib.request import urlopen
+
+# other imports
+# ...
+
+DATA_URL = ('http://bodywork-ml-ops-project.s3.eu-west-2.amazonaws.com'
+            '/data/iris_classification_data.csv')
+
+# other constants
+# ...
+
+
+def main() -> None:
+    """Main script to be executed."""
+    data = download_dataset(DATA_URL)
+    features, labels = pre_process_data(data)
+    trained_model = train_model(features, labels)
+    persist_model(trained_model)
+
+
+# other functions definitions used in main()
+# ...
+
+
+if __name__ == '__main__':
+    main()
+```
+
+We recommend that you spend five minutes familiarising yourself with the full contents of [train_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-1-train-model/train_model.py). When Bodywork runs the stage, it will do so in exactly the same way as if you were to run,
+
+```shell
+$ python train_model.py
+```
+
+And so everything defined in `main()` will be executed.
+
+The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the pre-built Bodywork host container, as required to run the `train_model.py` script. In this example we have,
+
+```text
+boto3==1.16.15
+joblib==0.17.0
+pandas==1.1.4
+scikit-learn==0.23.2
+```
+
+* `boto3` - for interacting with AWS;
+* `joblib` - for persisting models;
+* `pandas` - for manipulating the raw data; and,
+* `scikit-learn` - for training the model.
+
+Finally, the `config.ini` file allows us to configure the key parameters for the stage,
+
+```ini
+[default]
+STAGE_TYPE="batch"
+EXECUTABLE_SCRIPT="train_model.py"
+CPU_REQUEST=0.5
+MEMORY_REQUEST_MB=100
+
+[batch]
+MAX_COMPLETION_TIME_SECONDS=30
+RETRIES=2
+```
+
+From which it is clear to see that we have specified that this stage is a batch stage (as opposed to a service-deployment), that `train_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait and how many times to retry, etc.
 
 ## Configuring a Bodywork Service-Deployment Stage for Creating a ML Scoring Service
 
-The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it as part of the code for a RESTful API endpoint definition, that will accept a single instance (or row) of data encoded as JSON in a HTTP request, and return the model's prediction as JSON data in the corresponding HTTP response. We have decided to chose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server, which will be deployed to k8s and exposed as a service on the cluster, after this stage completes. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
+The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it as part of the code for a REST API endpoint definition, that will accept a single instance (or row) of data encoded as JSON in a HTTP request, and return the model's prediction as JSON data in the corresponding HTTP response.
 
-Within this stage's directory, `requirements.txt` lists the 3rd party Python packages that will be Pip-installed on the Bodywork host container in order to run `serve_model.py`, which defines the REST API server containing our ML scoring endpoint. The `config.ini` file allows us to specify that this stage is a service-deployment stage (as opposed to a batch stage), that `serve_model.py` should be the script that is run, as well as an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait for the service to start-up and be 'ready', which port to expose and how many instances (or replicas) of the server should be created to stand-behind the cluster-service.
+We have decided to choose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server, that will be deployed to k8s and exposed as a service on the cluster, after this stage completes. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
+
+Within this stage's directory, `serve_model.py` defines the REST API server containing our ML scoring endpoint. In essence, it can be summarised as,
+
+```python
+from urllib.request import urlopen
+from typing import Dict
+
+# other imports
+# ...
+
+MODEL_URL = ('http://bodywork-ml-ops-project.s3.eu-west-2.amazonaws.com/models'
+             '/iris_tree_classifier.joblib')
+
+# other constants
+# ...
+
+
+@app.route('/iris/v1/score', methods=['POST'])
+def score() -> Response:
+    """Iris species classification API endpoint"""
+    request_data = request.json
+    X = make_features_from_request_data(request_data)
+    model_output = model_predictions(X)
+    response_data = jsonify({**model_output, 'model_info': str(model)})
+    return make_response(response_data)
+
+
+# other functions definitions used in score() and below
+# ...
+
+
+if __name__ == '__main__':
+    model = get_model(MODEL_URL)
+    print(f'loaded model={model}')
+    print(f'starting API server')
+    app.run(host='0.0.0.0', port=5000)
+```
+
+We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` (note that this process has no scheduled end), that will expose the `/iris/v1/score` route that is being handled by `score()`.
+
+The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork host container, as required to run `serve_model.py`. In this example we have,
+
+```text
+Flask==1.1.2
+joblib==0.17.0
+numpy==1.19.4
+scikit-learn==0.23.2
+```
+
+* `Flask` - the framework upon which the REST API server is built;
+* `joblib` - for loading the persisted model;
+* `numpy` & `scikit-learn` - for working with the ML model.
+
+The `config.ini` file for this stage is,
+
+```ini
+[default]
+STAGE_TYPE="service"
+EXECUTABLE_SCRIPT="serve_model.py"
+CPU_REQUEST=0.25
+MEMORY_REQUEST_MB=100
+
+[service]
+MAX_STARTUP_TIME_SECONDS=30
+REPLICAS=2
+PORT=5000
+```
+
+From which it is clear to see that we have specified that this stage is a service-deployment stage (as opposed to a batch stage), that `serve_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait for the service to start-up and be 'ready', which port to expose and how many instances (or replicas) of the server should be created to stand-behind the cluster-service.
 
 ## Configuring the Complete Bodywork Workflow
 
-The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow - a workflow being a collection of stages, run in a specific order, that can be represented by a Directed Acyclic Graph (or DAG). The most important element is the specification of the workflow DAG, which in this instance is simple,
+The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow - a workflow being a collection of stages, run in a specific order, that can be represented by a Directed Acyclic Graph (or DAG). 
 
 ```ini
-DAG = "stage-1-train-model >> stage-2-deploy-scoring-service"
+[default]
+PROJECT_NAME="bodywork-ml-ops-project"
+DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
+
+[workflow]
+DAG="stage-1-train-model >> stage-2-deploy-scoring-service"
+
+[logging]
+LOG_LEVEL="INFO"
 ```
 
-i.e. train the model and then (if successful) deploy the scoring service.
+The most important element is the specification of the workflow DAG, which in this instance is simple and will instruct the Bodywork workflow-controller to train the model and then (if successful) deploy the scoring service.
 
 ## Testing the Workflow Locally
 

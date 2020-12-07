@@ -280,7 +280,7 @@ def debug(args: Namespace) -> None:
     """Debug command handler.
 
     Runs a blocking sleep process, for use with ad hoc images deployed
-    to a Kuberntes namespace that can then be logged onto using
+    to a kubernetes namespace that can then be logged onto using
     `kubectl exec NAME_OF_POD` for debugging from withint he a cluster.
 
     :param args: Arguments passed to the run command from the CLI.

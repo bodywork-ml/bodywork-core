@@ -4,7 +4,7 @@
 
 ![workflows](images/concepts_workflow.png)
 
-Each unit of code responsible for executing a specific ML task - e.g. training a model or starting a model-scoring service - is contained within an executable Python module that forms its own stage. Bodywork will run each of these stages in their own containers on Kubernetes.
+Each unit of code responsible for executing a specific ML task - e.g. training a model or starting a model-scoring service - is contained within an executable Python module that defines its own stage. Bodywork will run each of these stages in their own containers on Kubernetes.
 
 A step is a collection of stages that can be running at the same time (concurrently) - e.g. training multiple model types in parallel or starting multiple services at once. Stages that can only be executed after another has finished - e.g. serving a model after it has been trained - should be placed in different steps, in the correct order.
 
@@ -28,6 +28,8 @@ The majority of ML projects can be described by one model-training stage and one
 ## Deployment Directly from Git Repos
 
 Bodywork requires ML projects to be stored and distributed as Git repositories - e.g. on GitHub. It will pull the code required for managing workflows and executing stages directly from your project's Git repository. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
+
+![bodywork_diagram](images/bodywork_diagram.png)
 
 The necessary Python modules and configuration files required for each stage have to be contained within their own directories in your repository. For the common train-and-deploy scenario, the required directory project structure would be similar to:
 
