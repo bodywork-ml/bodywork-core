@@ -14,16 +14,16 @@ The process of containerising machine learning code using Docker to build images
 
 Scale this scenario to one where there are multiple models to worry about, all needing to be re-trained and re-deployed, and it is easy to see how quickly the management of these pipelines will become a large and undesirable burden.
 
-This is where the Bodywork MLOps framework steps-in - to take care of delivering your code to the right place and executing it at the right time, so that your models are always trained, deployed and available to the rest of your product team.
+This is where the Bodywork MLOps framework steps-in - to take care of delivering your code to the right place and executing it at the right time, so that your models are always trained, deployed and available.
 
 ![bodywork_diagram](images/bodywork_diagram.png)
 
 Bodywork is a tool built upon the Kubernetes container orchestration platform and is aimed at machine learning engineers to help them:
 
-- **continuously deliver code** - for training models and defining model-scoring services, by having running containers on Kubernetes pull it directly from your project's Git repository, and so removing the need to build-and-push container images; and,
-- **automate deployments** - of batch workloads and model-scoring services, using the Bodywork workflow-controller to orchestrate end-to-end machine learning workflows on Kubernetes.
+- **Continuously deliver code** - for training models and defining model-scoring services. Bodywork containers running on Kubernetes will pull code directly from your project's Git repository, removing the need to build-and-push your own container images.
+- **Automate deployments** - of batch workloads and model-scoring services, using the Bodywork workflow-controller to orchestrate end-to-end machine learning workflows on Kubernetes.
 
-Kuberetes is available as a managed service from all major cloud computing platforms.
+Kubernetes is available as a managed service from all major cloud computing platforms.
 
 ## Prerequisites
 
