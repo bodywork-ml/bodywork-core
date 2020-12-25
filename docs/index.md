@@ -2,26 +2,26 @@
 
 ![bodywork](images/bodywork_logo.png)
 
-Bodywork is a simple framework for machine learning engineers to run model-training workloads and deploy model-scoring services, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes). It is built by machine learning engineers, for machine learning engineers. It automates the repetitive tasks that most machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), allowing them to focus on what they do best - machine learning.
+Bodywork is a simple framework for machine learning engineers to run machine learning jobs and deploy model-scoring services, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes). It is built by machine learning engineers, for machine learning engineers. It automates the repetitive tasks that most machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), allowing them to focus on what they do best - machine learning.
 
-Bodywork uses Kubernetes for running machine learning workloads and services, because we believe that Kubernetes comes shipped with all the resources required for building an effective Machine Learning Operations ([MLOps](https://en.wikipedia.org/wiki/MLOps)) platform.
+Bodywork uses Kubernetes for running machine learning jobs and services, because we believe that Kubernetes comes shipped with all the resources required for building an effective Machine Learning Operations ([MLOps](https://en.wikipedia.org/wiki/MLOps)) platform.
 
 ## What Problems Does Bodywork Solve?
 
 Running machine learning code in containers has become a common pattern to guarantee reproducibility between what has been developed and what is deployed in production.
 
-The process of containerising machine learning code using Docker to build images, pushing the build artefacts to an image repository and then configuring a container orchestration platform to run batch workloads and deploy services, requires skills and expertise that most machine learning engineers do not have the time (and often the desire) to learn.
+The process of containerising machine learning code using Docker to build images, pushing the build artefacts to an image repository and then configuring a container orchestration platform to run batch jobs and deploy services, requires skills and expertise that most machine learning engineers do not have the time (and often the desire) to learn.
 
 Scale this scenario to one where there are multiple models to worry about, all needing to be re-trained and re-deployed, and it is easy to see how quickly the management of these pipelines will become a large and undesirable burden.
 
-This is where the Bodywork MLOps framework steps-in - to take care of delivering your code to the right place and executing it at the right time, so that your models are always trained, deployed and available.
+This is where the Bodywork MLOps framework steps-in - to take care of delivering your code to the right place and executing it at the right time, so that your models are always trained, deployed and generally available.
 
 ![bodywork_diagram](images/bodywork_diagram.png)
 
 Bodywork is a tool built upon the Kubernetes container orchestration platform and is aimed at machine learning engineers to help them:
 
-- **Continuously deliver code** - for training models and defining model-scoring services. Bodywork containers running on Kubernetes will pull code directly from your project's Git repository, removing the need to build-and-push your own container images.
-- **Automate deployments** - of batch workloads and model-scoring services, using the Bodywork workflow-controller to orchestrate end-to-end machine learning workflows on Kubernetes.
+- **Continuously deliver code** - for preparing features, training models, scoring data and defining model-scoring services. Bodywork containers running on Kubernetes will pull code directly from your project's Git repository, removing the need to build-and-push your own container images.
+- **Automate deployments** - of batch jobs and model-scoring services, using the Bodywork workflow-controller to orchestrate end-to-end machine learning workflows on Kubernetes.
 
 Kubernetes is available as a managed service from all major cloud computing platforms.
 

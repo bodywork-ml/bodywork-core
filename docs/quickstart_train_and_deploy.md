@@ -1,15 +1,15 @@
 # Train a Model and Deploy a Scoring Service
 
-Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork relies on.
+Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork is built upon. We also recommend that you familiarise yourself with the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials first, as this tutorial build upon these.
 
 This tutorial uses the example [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 ## What am I going to Learn?
 
-* How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a RESTful model-scoring API.
+* How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a model-scoring service with a REST API.
 * How to execute these 'train' and 'deploy' modules - that together form a simple ML pipeline (or workflow) - remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
 * How to interact-with and test the model-scoring service that has been deployed to Kubernetes.
-* How to run the train-and-deploy workflow on a schedule, so the model is periodically re-trained when new data is available, but without the manual intervention of an ML engineer.
+* How to run the train-and-deploy workflow on a schedule, so that the model is periodically re-trained and then re-deployed (when new data is available), but without the manual intervention of an ML engineer.
 
 ## A Machine Learning Task
 
@@ -38,7 +38,7 @@ root/
  |-- bodywork.ini
 ```
 
-The remainder of this tutorial is concerned with explaining what is contained within these files, and how to command Bodywork to work with them to operationalise the solution on Kubernetes.
+The remainder of this tutorial is concerned with explaining what is contained within these directories and their files, and how to command Bodywork to work with them to operationalise the solution on Kubernetes.
 
 ## Configuring a Bodywork Batch Stage for Training a Model
 
@@ -121,7 +121,7 @@ From which it is clear to see that we have specified that this stage is a batch 
 
 ## Configuring a Bodywork Service-Deployment Stage for Creating a ML Scoring Service
 
-The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it as part of the code for a REST API endpoint definition, that will accept a single instance (or row) of data encoded as JSON in a HTTP request, and return the model's prediction as JSON data in the corresponding HTTP response.
+The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it within the definition of a REST API endpoint, that will accept a single instance (or row) of data encoded as JSON in the request, and return the model's prediction as JSON data in the corresponding response.
 
 We have decided to choose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server, that will be deployed to k8s and exposed as a service on the cluster, after this stage completes. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
@@ -139,6 +139,8 @@ MODEL_URL = ('http://bodywork-ml-ops-project.s3.eu-west-2.amazonaws.com/models'
 
 # other constants
 # ...
+
+app = Flask(__name__)
 
 
 @app.route('/iris/v1/score', methods=['POST'])
@@ -162,7 +164,7 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` (note that this process has no scheduled end), that will expose the `/iris/v1/score` route that is being handled by `score()`.
+We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
 
 The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork host container, as required to run `serve_model.py`. In this example we have,
 
@@ -196,7 +198,7 @@ From which it is clear to see that we have specified that this stage is a servic
 
 ## Configuring the Complete Bodywork Workflow
 
-The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow - a workflow being a collection of stages, run in a specific order, that can be represented by a Directed Acyclic Graph (or DAG). 
+The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow - a workflow being a collection of stages, run in a specific order, that can be represented by a Directed Acyclic Graph (or DAG).
 
 ```ini
 [default]
@@ -212,7 +214,7 @@ LOG_LEVEL="INFO"
 
 The most important element is the specification of the workflow DAG, which in this instance is simple and will instruct the Bodywork workflow-controller to train the model and then (if successful) deploy the scoring service.
 
-## Testing the Workflow Locally
+## Testing the Workflow
 
 Firstly, make sure that the [bodywork](https://pypi.org/project/bodywork/) package has been Pip-installed into a local Python environment that is active. Then, make sure that there is a namespace setup for use by bodywork projects - e.g. `iris-classification` - by running the following at the command line,
 
@@ -229,7 +231,7 @@ creating cluster-role-binding=bodywork-workflow-controller--iris-classification
 creating service-account=bodywork-jobs-and-deployments in namespace=iris-classification
 ```
 
-Then, the workflow can be tested by running the workflow-controller locally using,
+Then, the workflow can be tested by running the workflow-controller locally (to orchestrate remote containers on k8s), using,
 
 ```shell
 $ bodywork workflow \

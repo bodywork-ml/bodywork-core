@@ -6,7 +6,9 @@ nav:
   - Overview: index.md
   - Installation: installation.md
   - Key Concepts: key_concepts.md
-  - Quickstart: quickstart.md
+  - Quickstart - Run Batch Job: quickstart_batch_job.md
+  - Quickstart - Serve Model: quickstart_serve_model.md
+  - Quickstart - Train and Deploy: quickstart_train_and_deploy.md
   - User Guide: user_guide.md
   - CLI Reference: cli_reference.md
   - Contact Us: contact.md
