@@ -11,6 +11,7 @@ nav:
   - Quickstart - Train and Deploy: quickstart_train_and_deploy.md
   - User Guide: user_guide.md
   - CLI Reference: cli_reference.md
+  - Template Projects: template_projects.md
   - Contact Us: contact.md
 theme: 
   name: readthedocs
