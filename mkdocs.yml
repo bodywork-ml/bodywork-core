@@ -8,7 +8,7 @@ nav:
   - Key Concepts: key_concepts.md
   - Quickstart - Run Batch Job: quickstart_batch_job.md
   - Quickstart - Serve Model: quickstart_serve_model.md
-  - Quickstart - Train and Deploy: quickstart_train_and_deploy.md
+  - Quickstart - Train and Deploy Pipeline: quickstart_train_and_deploy.md
   - User Guide: user_guide.md
   - CLI Reference: cli_reference.md
   - Template Projects: template_projects.md

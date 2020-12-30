@@ -31,7 +31,7 @@ Workflows need not be complex and often all that's required is for a simple batc
 
 Sometimes models are trained off-line or by separate platforms and all that's required is to deploy a service that exposes them. Bodywork handles this scenario as a workflow consisting of a single service stage, running within a single step.
 
-### Example: Train-and-Deploy
+### Example: Train-and-Deploy Pipeline
 
 ![train_and_deploy](images/concepts_train_and_deploy.png)
 
