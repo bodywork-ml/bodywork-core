@@ -213,13 +213,13 @@ $ bodywork secret create \
 When executing a workflow defined in a private Git repository, make sure to use the SSH protocol when specifying the `git-repo-url` - e.g. use,
 
 ```text
-git@github.com:bodywork-ml/bodywork-ml-ops-project.git
+git@github.com:my-github-username/my-classification-product.git
 ```
 
 As opposed to,
 
 ```text
-https://github.com/bodywork-ml/bodywork-ml-ops-project
+https://github.com/my-github-username/my-classification-product
 ```
 
 ## Testing Workflows Locally

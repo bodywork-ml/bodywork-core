@@ -2,7 +2,7 @@
 
 Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork is built upon. We also recommend that you familiarise yourself with the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials first, as this tutorial builds upon these.
 
-This tutorial uses the example [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
+This tutorial uses the example [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 ## What am I going to Learn?
 
@@ -15,7 +15,7 @@ This tutorial uses the example [bodywork-ml-ops-project](https://github.com/body
 
 The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species, given their physical dimensions. It uses the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset) and is an example of a multi-class classification task.
 
-The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [bodywork-ml-ops-project](https://github.com/bodywork-ml/bodywork-ml-ops-project) repository, documents the trivial ML workflow used to arrive at a proposed solution to this task, by training a Decision Tree classifier and persisting the trained model to cloud storage. Take five minutes to read through it.
+The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project) repository, documents the trivial ML workflow used to arrive at a proposed solution to this task, by training a Decision Tree classifier and persisting the trained model to cloud storage. Take five minutes to read through it.
 
 ## A Machine Learning Operations Task
 
@@ -23,7 +23,7 @@ The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywor
 
 Now that we have developed a solution to our chosen ML task, how do we get it into production - i.e. how can we split the Jupyter notebook into a 'train-model' stage that persists a trained model to cloud storage, and a separate 'deploy-scoring-service' stage that will load the persisted model and start a web service to expose a model-scoring API?
 
-The solution using Bodywork is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-ml-ops-project), whose root directory is as follows,
+The solution using Bodywork is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), whose root directory is as follows,
 
 ```text
 root/
@@ -58,7 +58,7 @@ from urllib.request import urlopen
 # other imports
 # ...
 
-DATA_URL = ('http://bodywork-ml-ops-project.s3.eu-west-2.amazonaws.com'
+DATA_URL = ('http://bodywork-ml-pipeline-project.s3.eu-west-2.amazonaws.com'
             '/data/iris_classification_data.csv')
 
 # other constants
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     main()
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [train_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-1-train-model/train_model.py). When Bodywork runs the stage, it will do so in exactly the same way as if you were to run,
+We recommend that you spend five minutes familiarising yourself with the full contents of [train_model.py](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/stage-1-train-model/train_model.py). When Bodywork runs the stage, it will do so in exactly the same way as if you were to run,
 
 ```shell
 $ python train_model.py
@@ -134,7 +134,7 @@ from typing import Dict
 # other imports
 # ...
 
-MODEL_URL = ('http://bodywork-ml-ops-project.s3.eu-west-2.amazonaws.com/models'
+MODEL_URL = ('http://bodywork-ml-pipeline-project.s3.eu-west-2.amazonaws.com/models'
              '/iris_tree_classifier.joblib')
 
 # other constants
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-ops-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
+We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
 
 The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork container, as required to run `serve_model.py`. In this example we have,
 
@@ -202,7 +202,7 @@ The `bodywork.ini` file in the root of this repository contains the configuratio
 
 ```ini
 [default]
-PROJECT_NAME="bodywork-ml-ops-project"
+PROJECT_NAME="bodywork-ml-pipeline-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
@@ -236,7 +236,7 @@ Then, the workflow can be tested by running the workflow-controller locally (to 
 ```shell
 $ bodywork workflow \
     --namespace=iris-classification \
-    https://github.com/bodywork-ml/bodywork-ml-ops-project \
+    https://github.com/bodywork-ml/bodywork-ml-pipeline-project \
     master
 ```
 
@@ -255,7 +255,7 @@ $ kubectl proxy
 Then in a new shell, you can use the curl tool to test the service. For example,
 
 ```shell
-$ curl http://localhost:8001/api/v1/namespaces/iris-classification/services/bodywork-ml-ops-project--stage-2-deploy-scoring-service/proxy/iris/v1/score \
+$ curl http://localhost:8001/api/v1/namespaces/iris-classification/services/bodywork-ml-pipeline-project--stage-2-deploy-scoring-service/proxy/iris/v1/score \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2}'
@@ -280,7 +280,7 @@ $ bodywork cronjob create \
     --namespace=iris-classification \
     --name=iris-classification \
     --schedule="0 * * * *" \
-    --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-ops-project
+    --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-pipeline-project
     --git-repo-branch=master
 ```
 

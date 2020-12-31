@@ -4,7 +4,7 @@ We maintain a set of template Bodywork projects for common use-cases, to acceler
 
 * [batch job](https://github.com/bodywork-ml/bodywork-batch-job-project)
 * [model-scoring REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
-* [train-and-deploy ML pipeline](https://github.com/bodywork-ml/bodywork-ml-ops-project)
+* [train-and-deploy ML pipeline](https://github.com/bodywork-ml/bodywork-ml-pipeline-project)
 
 ## Working with GitHub Template Repositories
 
