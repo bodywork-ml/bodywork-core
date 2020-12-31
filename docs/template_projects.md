@@ -1,14 +1,14 @@
 # Template Projects
 
-To accelerate the development of your projects, we have provided a set of Bodywork templates for the following deployment use-cases:
+We maintain a set of template Bodywork projects for common use-cases, to accelerate the development of your own projects:
 
 * [batch job](https://github.com/bodywork-ml/bodywork-batch-job-project)
 * [model-scoring REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
 * [train-and-deploy ML pipeline](https://github.com/bodywork-ml/bodywork-ml-ops-project)
 
-## Working with GitHub Template Projects
+## Working with GitHub Template Repositories
 
-Bodywork template projects are [GitHub template repositories](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) that can be automatically cloned directly into your own GitHub account by clicking the `Use this template` button as shown below.
+Bodywork template projects are [GitHub template repositories](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) that can be automatically copied into your own GitHub account by clicking the `Use this template` button as shown below.
 
 ![github_template_repo](images/github_template_project.png)
 

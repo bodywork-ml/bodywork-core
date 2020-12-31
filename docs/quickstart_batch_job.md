@@ -10,13 +10,13 @@ This tutorial uses the example [bodywork-batch-job-project](https://github.com/b
 * How to test the Bodywork batch job.
 * How to run the batch job on a schedule, without the manual intervention of an ML engineer.
 
-## An Example Batch Job - Score a Dataset with a Pre-Trained Model
+## A Batch Job - Scoring a Dataset with a Pre-Trained Model
 
 ![batch_job](images/concepts_batch_job.png)
 
-The example ML task that we want to run as a batch job with Bodywork, is to load a pre-trained ML model and use it to score a new dataset. The dataset will be downloaded from cloud storage (AWS S3), and we will include the pre-trained model in the same directory as the files configuring the stage, for convenience (not as best practice).
+The example ML task that we want to run as a batch job with Bodywork, is to load a pre-trained ML model and use it to score a dataset. The latest dataset will be downloaded from cloud storage (AWS S3) and the pre-trained model will be included in the same directory as the files configuring the stage, for convenience (not as best practice).
 
-The Bodywork project for this single-stage workflow is contained within the [bodywork-batch-job-project](https://github.com/bodywork-ml/bodywork-batch-job-project) GitHub repository, whose root directory is as follows,
+The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-batch-job-project), whose root directory is structured as follows,
 
 ```text
 root/
@@ -30,14 +30,14 @@ root/
 
 ## Configuring the Bodywork Batch Stage
 
-The `score-data` directory contains the code and configuration required to run the ML job within a pre-built container on a k8s cluster, as a batch workload. The `score.py` module is an executable Python module that contains the code required to:
+The `score-data` directory contains the code and configuration required to run the ML job within a pre-built container on a k8s cluster, as a batch workload. The `score.py` module is a standalone and executable Python module that contains the code required to:
 
 * download the new dataset from cloud storage (AWS S3);
 * load the pre-trained model `classification_model.joblib`;
 * score the dataset dataset; and,
 * save the results back to cloud storage (AWS S3).
 
-In essence, it can be summarised as,
+It can be summarised as,
 
 ```python
 from urllib.request import urlopen
@@ -76,7 +76,7 @@ $ python score.py
 
 And so everything defined in `main()` will be executed.
 
-The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the pre-built Bodywork host container, as required to run the `score.py` script. In this example we have,
+The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the pre-built Bodywork container, as required to run the `score.py` script. In this example we have,
 
 ```text
 boto3==1.16.15

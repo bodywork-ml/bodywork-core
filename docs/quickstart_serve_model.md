@@ -10,11 +10,13 @@ This tutorial uses the example [bodywork-serve-model-project](https://github.com
 * How to deploy the service.
 * How to test the deployed service.
 
-## An Example ML Scoring Service - Returning Predicted Class
+## A ML Scoring Service - Returning the Predicted Class
 
 ![batch_job](images/concepts_deploy_scoring_service.png)
 
-The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimension as inputs. For more information on this ML task see ['Quickstart - Train and deploy'](quickstart_train_and_deploy.md). The Bodywork project for this single-stage service-deployment workflow is contained within the [bodywork-serve-model-project](https://github.com/bodywork-ml/bodywork-serve-model-project) GitHub repository, whose root directory is as follows,
+The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimension as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
+
+The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-serve-model-project), whose root directory is structured as follows,
 
 ```text
 root/
@@ -32,7 +34,7 @@ We have included the pre-trained model as part of the Bodywork project, for conv
 
 The `scoring-service` directory contains the code and configuration required to load a pre-trained model and use it to score a single instance (or row) of data, sent as JSON data to a REST API endpoint. We have decided to choose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
-Within this stage's directory, `service.py` defines the REST API server containing our ML scoring endpoint. In essence, it can be summarised as,
+Within this stage's directory, `service.py` defines the REST API server containing our ML scoring endpoint. It can be summarised as,
 
 ```python
 from typing import Dict
@@ -77,7 +79,7 @@ $ python service.py
 
 And so it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
 
-The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork host container, as required to run `service.py`. In this example we have,
+The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork container, as required to run `service.py`. In this example we have,
 
 ```text
 Flask==1.1.2
