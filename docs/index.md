@@ -14,7 +14,7 @@ Developing and maintaining these deployment pipelines is time-consuming. If ther
 
 This is where the Bodywork framework steps-in - to take responsibility for pulling you machine learning projects into containers and deploying them to the Kubernetes container orchestration platform. Bodywork can ensure that your projects are always trained with the latest data, the most recent models are always deployed and your machine learning systems remain generally available.
 
-![bodywork_diagram](images/bodywork_diagram.png)
+![bodywork_diagram](images/ml_pipeline.png)
 
 More specifically, Bodywork helps machine learning engineers to:
 

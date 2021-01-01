@@ -39,7 +39,7 @@ Here we have five directories given names that relate to the ML tasks contained 
 
 ### Executing ML Tasks in Remote Python Environments
 
-![bodywork_diagram](images/bodywork_diagram.png)
+![bodywork_diagram](images/ml_pipeline.png)
 
 The Bodywork project must be packaged as a Git repository (e.g. on GitHub), that will be accessed directly by Bodywork when executing workflows. When the Bodywork workflow-controller executes a stage, it starts a new Python-enabled container in your k8s cluster and instructs it to pull the required directory from your project's Git repository. Then, it installs any 3rd party Python package requirements, before running the executable Python module.
 

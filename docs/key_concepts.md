@@ -39,7 +39,7 @@ Most ML projects can be described by one model-training stage and one service de
 
 Bodywork requires ML projects to be stored and distributed as Git repositories - e.g. on GitHub. It will pull the code required for managing workflows and executing stages directly from your project's Git repository. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
 
-![bodywork_diagram](images/bodywork_diagram.png)
+![bodywork_diagram](images/ml_pipeline.png)
 
 The necessary Python modules and configuration files required for each stage have to be contained within their own directories in your repository. For the common train-and-deploy scenario, the required directory project structure would be similar to:
 

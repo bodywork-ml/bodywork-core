@@ -2,6 +2,8 @@
 
 This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-serve-model-project](https://github.com/bodywork-ml/bodywork-serve-model-project). We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below. If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
+![serve_model](images/serve_model.png)
+
 ## What am I going to Learn?
 
 * How to configure a Bodywork project to deploy a pre-trained model, as a model-scoring service with a REST API, on Kubernetes.
@@ -9,8 +11,6 @@ This tutorial refers to files within a Bodywork project hosted on GitHub - see [
 * How to test the deployed service.
 
 ## A ML Scoring Service - Returning the Predicted Class
-
-![batch_job](images/concepts_deploy_scoring_service.png)
 
 The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimension as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
 

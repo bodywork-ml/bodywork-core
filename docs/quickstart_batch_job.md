@@ -2,6 +2,8 @@
 
 This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-batch-job-project](https://github.com/bodywork-ml/bodywork-batch-job-project). We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below. If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
+![batch_job](images/batch_job.png)
+
 ## What am I going to Learn?
 
 * How to take a unit of code defining a ML task (or job) and make it available for execution on Kubernetes, by configuring it as a Bodywork project.
@@ -9,8 +11,6 @@ This tutorial refers to files within a Bodywork project hosted on GitHub - see [
 * How to run the batch job on a schedule, without the manual intervention of an ML engineer.
 
 ## A Batch Job - Scoring a Dataset with a Pre-Trained Model
-
-![batch_job](images/concepts_batch_job.png)
 
 The example ML task that we want to run as a batch job with Bodywork, is to load a pre-trained ML model and use it to score a dataset. The latest dataset will be downloaded from cloud storage (AWS S3) and the pre-trained model will be included in the same directory as the files configuring the stage, for convenience (not as best practice).
 

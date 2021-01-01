@@ -4,6 +4,8 @@ This tutorial builds upon concepts introduced in the [Batch Job](quickstart_batc
 
 This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below. If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
+![ml_pipeline](images/ml_pipeline.png)
+
 ## What am I going to Learn?
 
 * How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a model-scoring service with a REST API.
@@ -18,8 +20,6 @@ The ML problem we have chosen to use for this example, is the classification of 
 The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project) repository, documents the trivial ML workflow used to arrive at a proposed solution to this task, by training a Decision Tree classifier and persisting the trained model to cloud storage. Take five minutes to read through it.
 
 ## A Machine Learning Operations Task
-
-![train_and_deploy](images/concepts_train_and_deploy.png)
 
 Now that we have developed a solution to our chosen ML task, how do we get it into production - i.e. how can we split the Jupyter notebook into a 'train-model' stage that persists a trained model to cloud storage, and a separate 'deploy-scoring-service' stage that will load the persisted model and start a web service to expose a model-scoring API?
 
