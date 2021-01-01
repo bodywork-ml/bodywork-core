@@ -1,15 +1,15 @@
-# Train a Model and Deploy a Scoring Service
+# Deploying a Machine Learning Pipeline
 
-Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork is built upon. We also recommend that you familiarise yourself with the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials first, as this tutorial builds upon these.
+This tutorial builds upon concepts introduced in the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials. It demonstrates how multi-stage ML pipelines can be deployed using Bodywork.
 
-This tutorial uses the example [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
+This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below. If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 ## What am I going to Learn?
 
 * How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a model-scoring service with a REST API.
-* How to execute these 'train' and 'deploy' modules - that together form a simple ML pipeline (or workflow) - remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
+* How to execute these `train` and `deploy` modules (that form a simple ML pipeline), remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
 * How to interact-with and test the model-scoring service that has been deployed to Kubernetes.
-* How to run the train-and-deploy workflow on a schedule, so that the model is periodically re-trained and then re-deployed (when new data is available), but without the manual intervention of an ML engineer.
+* How to run the pipeline on a schedule, so that the model is periodically re-trained and then re-deployed (when new data is available), without the manual intervention of an ML engineer.
 
 ## A Machine Learning Task
 
@@ -119,7 +119,7 @@ RETRIES=2
 
 From which it is clear to see that we have specified that this stage is a batch stage (as opposed to a service-deployment), that `train_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait and how many times to retry, etc.
 
-## Configuring a Bodywork Service-Deployment Stage for Creating a ML Scoring Service
+## Configuring a Bodywork Service Stage for Deploying a Model-Scoring Service
 
 The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it within the definition of a REST API endpoint, that will accept a single instance (or row) of data encoded as JSON in the request, and return the model's prediction as JSON data in the corresponding response.
 

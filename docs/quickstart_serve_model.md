@@ -1,8 +1,6 @@
-# Serve a Model
+# Deploying a Model-Scoring Service
 
-Before beginning to work-through this tutorial, we **strongly** recommend that you find the five minutes required to read about the [key concepts](key_concepts.md) that Bodywork is built upon.
-
-This tutorial uses the example [bodywork-serve-model-project](https://github.com/bodywork-ml/bodywork-serve-model-project) GitHub repository and refers to files within it. If you want to execute the examples below, then you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
+This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-serve-model-project](https://github.com/bodywork-ml/bodywork-serve-model-project). We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below. If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 ## What am I going to Learn?
 
