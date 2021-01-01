@@ -165,7 +165,7 @@ $ bodywork cronjob create \
     --namespace=bodywork-batch-jobs \
     --name=score-data \
     --schedule="0 * * * *" \
-    --git-repo-url=https://github.com/bodywork-ml/bodywork-batch-job-project
+    --git-repo-url=https://github.com/bodywork-ml/bodywork-batch-job-project \
     --git-repo-branch=master
 ```
 
@@ -176,7 +176,7 @@ To get the execution history for all `score-data` jobs use,
 ```shell
 $ bodywork cronjob history \
     --namespace=bodywork-batch-jobs \
-    --name=score-data \
+    --name=score-data
 ```
 
 Which should return output along the lines of,

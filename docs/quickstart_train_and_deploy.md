@@ -216,34 +216,34 @@ The most important element is the specification of the workflow DAG, which in th
 
 ## Testing the Workflow
 
-Firstly, make sure that the [bodywork](https://pypi.org/project/bodywork/) package has been Pip-installed into a local Python environment that is active. Then, make sure that there is a namespace setup for use by bodywork projects - e.g. `iris-classification` - by running the following at the command line,
+Firstly, make sure that the [bodywork](https://pypi.org/project/bodywork/) package has been Pip-installed into a local Python environment that is active. Then, make sure that there is a namespace setup for use by bodywork projects - e.g. `ml-pipeline` - by running the following at the command line,
 
 ```shell
-$ bodywork setup-namespace iris-classification
+$ bodywork setup-namespace ml-pipeline
 ```
 
 Which should result in the following output,
 
 ```text
-creating namespace=iris-classification
-creating service-account=bodywork-workflow-controller in namespace=iris-classification
-creating cluster-role-binding=bodywork-workflow-controller--iris-classification
-creating service-account=bodywork-jobs-and-deployments in namespace=iris-classification
+creating namespace=ml-pipeline
+creating service-account=bodywork-workflow-controller in namespace=ml-pipeline
+creating cluster-role-binding=bodywork-workflow-controller--ml-pipeline
+creating service-account=bodywork-jobs-and-deployments in namespace=ml-pipeline
 ```
 
 Then, the workflow can be tested by running the workflow-controller locally (to orchestrate remote containers on k8s), using,
 
 ```shell
 $ bodywork workflow \
-    --namespace=iris-classification \
+    --namespace=ml-pipeline \
     https://github.com/bodywork-ml/bodywork-ml-pipeline-project \
     master
 ```
 
-Which will run the workflow defined in the `master` branch of the project's remote GitHub repository, all within the `iris-classification` namespace. The logs from the workflow-controller and the containers nested within each constituent stage, will be streamed to the command-line to inform you on the precise state of the workflow, but you can also keep track of the current state of all k8s resources created by the workflow-controller in the `iris-classification` namespace, by using the kubectl CLI tool - e.g.,
+Which will run the workflow defined in the `master` branch of the project's remote GitHub repository, all within the `ml-pipeline` namespace. The logs from the workflow-controller and the containers nested within each constituent stage, will be streamed to the command-line to inform you on the precise state of the workflow, but you can also keep track of the current state of all k8s resources created by the workflow-controller in the `ml-pipeline` namespace, by using the kubectl CLI tool - e.g.,
 
 ```shell
-$ kubectl -n iris-classification get all
+$ kubectl -n ml-pipeline get all
 ```
 
 Once the workflow has completed, the ML scoring service deployed within your cluster will be ready for testing. Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test the service from your local machine you will first of all need to start a proxy server to enable access to your cluster. This can be achieved by issuing the following command,
@@ -255,7 +255,7 @@ $ kubectl proxy
 Then in a new shell, you can use the curl tool to test the service. For example,
 
 ```shell
-$ curl http://localhost:8001/api/v1/namespaces/iris-classification/services/bodywork-ml-pipeline-project--stage-2-deploy-scoring-service/proxy/iris/v1/score \
+$ curl http://localhost:8001/api/v1/namespaces/ml-pipeline/services/bodywork-ml-pipeline-project--stage-2-deploy-scoring-service/proxy/iris/v1/score \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2}'
@@ -277,36 +277,36 @@ If you're happy with the test results, then you can schedule the workflow-contro
 
 ```shell
 $ bodywork cronjob create \
-    --namespace=iris-classification \
-    --name=iris-classification \
+    --namespace=ml-pipeline \
+    --name=ml-pipeline \
     --schedule="0 * * * *" \
-    --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-pipeline-project
+    --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-pipeline-project \
     --git-repo-branch=master
 ```
 
 Each scheduled workflow will attempt to re-run the workflow, end-to-end, as defined by the state of this repository's `master` branch at the time of execution - performing rolling-updates to service-deployments and automatic roll-backs in the event of failure.
 
-To get the execution history for all `iris-classification` jobs use,
+To get the execution history for all `ml-pipeline` jobs use,
 
 ```shell
 $ bodywork cronjob history \
-    --namespace=iris-classification \
-    --name=iris-classification
+    --namespace=ml-pipeline \
+    --name=ml-pipeline
 ```
 
 Which should return output along the lines of,
 
 ```text
 JOB_NAME                                START_TIME                    COMPLETION_TIME               ACTIVE      SUCCEEDED       FAILED
-iris-classification-1605214260          2020-11-12 20:51:04+00:00     2020-11-12 20:52:34+00:00     0           1               0
+ml-pipeline-1605214260          2020-11-12 20:51:04+00:00     2020-11-12 20:52:34+00:00     0           1               0
 ```
 
 Then to stream the logs from any given cronjob run (e.g. to debug and/or monitor for errors), use,
 
 ```shell
 $ bodywork cronjob logs \
-    --namespace=iris-classification \
-    --name=iris-classification-1605214260
+    --namespace=ml-pipeline \
+    --name=ml-pipeline-1605214260
 ```
 
 ## Cleaning Up
@@ -314,5 +314,5 @@ $ bodywork cronjob logs \
 To clean-up the deployment in its entirety, delete the namespace using kubectl - e.g. by running,
 
 ```shell
-$ kubectl delete ns iris-classification
+$ kubectl delete ns ml-pipeline
 ```
