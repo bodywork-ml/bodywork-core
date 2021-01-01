@@ -1,6 +1,6 @@
 # Template Projects
 
-We maintain a set of template Bodywork projects for common use-cases, to accelerate the development of your own projects:
+To accelerate the development of your own projects, we maintain a set of template Bodywork projects for common use-cases:
 
 * [batch job](https://github.com/bodywork-ml/bodywork-batch-job-project)
 * [model-scoring REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
