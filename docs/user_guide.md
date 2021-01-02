@@ -1,10 +1,10 @@
 # User Guide
 
-This is a comprehensive guide to developing and configuring ML projects for deployment to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the [quickstart example](quickstart.md).
+This is a comprehensive guide to developing and configuring ML projects for deployment to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart examples.
 
 ## Bodywork Project Structure
 
-Bodywork compatible ML projects need to be structured in a specific way in order for the Bodywork workflow-controller to be able to identify the stages and run them in the required order. All of the files necessary for defining a stage must be contained within a directory dedicated to that stage, where the name given to the directory defines the name of the stage. Consider the following example directory structure,
+Bodywork-compatible ML projects need to be structured in a specific way. All the files necessary for defining a stage must be contained within a directory dedicated to that stage, where the name given to the directory defines the name of the stage. This enables the Bodywork workflow-controller to identify the stages and run them in the desired order. Consider the following example directory structure,
 
 ```text
 root/
@@ -31,59 +31,59 @@ root/
  |-- bodywork.ini
 ```
 
-Here we have five directories given names that relate to the ML tasks contained within them, together with a single workflow configuration file, `bodywork.ini`. Each directory must contain the following files:
+Here we have five directories given names that relate to the ML tasks contained within them. There is also a single workflow configuration file, `bodywork.ini`. Each directory must contain the following files:
 
-- `*.py` - an executable Python module that contains all the code required for the stage. For example, `prepare_data.py` should be capable of performing all data preparation steps when executed in isolation from the command line using `python prepare_data.py`.
+- `*.py` - an executable Python module that contains all the code required for the stage. For example, `prepare_data.py` should be capable of performing all data preparation steps when executed from the command line using `python prepare_data.py`.
 - `requirements.txt` - for listing 3rd party Python packages required by the executable Python module. This must follow the [format required by Pip](https://pip.pypa.io/en/stable/reference/pip_install/#requirements-file-format).
 - `config.ini` - containing stage configuration that will be discussed in more detail below.
 
 ### Executing ML Tasks in Remote Python Environments
 
-![bodywork_diagram](images/bodywork_diagram.png)
+![bodywork_diagram](images/ml_pipeline.png)
 
-The Bodywork project must be hosted on a remote Git repository (e.g. GitHub), that will accessed directly by Bodywork when executing workflows. When the Bodywork workflow-controller executes a stage, it starts a new Python-enabled container in your k8s cluster and instructs it to pull the required directory from your project's remote Git repository, install the requirements and run the executable Python module.
+The Bodywork project must be packaged as a Git repository (e.g. on GitHub), that will be accessed directly by Bodywork when executing workflows. When the Bodywork workflow-controller executes a stage, it starts a new Python-enabled container in your k8s cluster and instructs it to pull the required directory from your project's Git repository. Then, it installs any 3rd party Python package requirements, before running the executable Python module.
 
 ## Configuring Workflows
 
-All configuration for a workflow is contained within the `bodywork.ini` file, that must exist in the root directory of your project's remote Git repository. An example `bodywork.ini` file for the project structure detailed above could be,
+All configuration for a workflow is contained within the `bodywork.ini` file, that must exist in the root directory of your project's Git repository. An example `bodywork.ini` file for the project structure in the example above could be,
 
 ```ini
 [default]
-PROJECT_NAME="my_classification_project"
+PROJECT_NAME="my-classification-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG="prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service"
+DAG="prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service"
 
 [logging]
 LOG_LEVEL="INFO"
 ```
 
-Where each configuration parameter is used as follows:
+Each configuration parameter is used as follows:
 
 - `PROJECT_NAME`: this will be used to identify all k8s resources deployed for this project.
-- `DOCKER_IMAGE`: the Docker image to use for remote execution of Bodywork workflows and stages. This should be set to `bodyworkml/bodywork-core:latest`, which will be pulled from [DockerHub](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core).
+- `DOCKER_IMAGE`: the container image to use for remote execution of Bodywork workflows and stages. This should be set to `bodyworkml/bodywork-core:latest`, which will be pulled from [DockerHub](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core).
 - `DAG` - a description of the workflow structure - the stages to include in each step of the workflow - this will be discussed in more detail below.
 - `LOG_LEVEL`: must be one of: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Manages the types of log message to stream to the workflow-controller's standard output stream (stdout).
 
 ### Defining Workflow DAGs
 
-The `DAG` string is used to control the execution of the stages by assigning them to different steps of the workflow. Steps are separated using the `>>` operator and commas are used to delimit multiple stages within a single step (if this is required). Steps are executed from left to right. In the example above,
+The `DAG` string is used to control the execution of stages by assigning them to different steps of the workflow. Steps are separated using the `>>` operator and commas are used to delimit multiple stages within a single step (if this is required). Steps are executed from left to right. In the example above,
 
 ```ini
-DAG="prepare_data >> train_svm, train_random_forest >> choose_model >> model_scoring_service"
+DAG="prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service"
 ```
 
-The workflow is interpreted as follows:
+The workflow will be interpreted as follows:
 
-- **step 1**: run `prepare_data`; then,
-- **step 2**: run `train_svm` and `train_random_forest` in separate containers, in parallel; then,
-- **step 3**: run `choose_model`; and finally,
-- **step 4**: run `model_scoring_service`.
+- **step 1**: run `prepare-data`; then,
+- **step 2**: run `train-svm` and `train-random-forest` in separate containers, in parallel; then,
+- **step 3**: run `choose-model`; and finally,
+- **step 4**: run `model-scoring-service`.
 
 ## Configuring Stages
 
-The behavior of each stage is controlled by the configuration parameters in the `config.ini` file. For the `model_scoring_service` stage in our example project this could be,
+The behavior of each stage is controlled by the configuration parameters in the `config.ini` file. For the `model-scoring-service` stage in our example project this could be,
 
 ```ini
 [default]
@@ -102,36 +102,13 @@ USERNAME="my-classification-product-cloud-storage-credentials"
 PASSWORD="my-classification-product-cloud-storage-credentials"
 ```
 
-The `[default]` section is common to all types of stage and the `[secrets]` section is optional. The remaining section must be one of `[batch]` or `[service]`. Each `[default]` configuration parameter is to be used as follows:
+The `[default]` section is common to all types of stage and the `[secrets]` section is optional. The remaining section must be one of `[batch]` or `[service]`. 
 
-- `STAGE_TYPE`: one of `batch` or `service`. If `batch` is selected, then the executable script will be run as a discrete job (with a start and an end) and will be managed as a [k8s job](https://kubernetes.io/docs/concepts/workloads/controllers/job/). If `service` is selected, then the executable script will be run as part of a [k8s deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and will expose a [k8s cluster-ip service](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to enable access over HTTP, within the cluster.
+Each `[default]` configuration parameter is to be used as follows:
+
+- `STAGE_TYPE`: one of `batch` or `service`. If `batch` is selected, then the executable script will be run as a discrete job (with a start and an end), and will be managed as a [k8s job](https://kubernetes.io/docs/concepts/workloads/controllers/job/). If `service` is selected, then the executable script will be run as part of a [k8s deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and will expose a [k8s cluster-ip service](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to enable access over HTTP, within the cluster.
 - `EXECUTABLE_SCRIPT`: the name of the executable Python module to run, which must exist within the stage's directory. Executable means that executing `python model_scoring_app.py` from the CLI would cause the module (or script) to run.
 - `CPU_REQUEST` / `MEMORY_REQUEST`: the compute resources to request from the cluster in order to run the stage. For more information on the units used in these parameters [refer here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes).
-
-### Injecting Secrets into Stage Containers
-
-Credentials will be required whenever you wish to pull data or persist models to cloud storage, access private APIs, etc. We provide a secure mechanism for dynamically injecting credentials as environment variables within a container running a stage.
-
-The first step in this process is to store your project's secret credentials, securely within its namespace - see [Managing Credentials and Other Secrets](#managing-credentials-and-other-secrets) below for instructions on how to achieve this using Bodywork.
-
-The second step is to configure the use of this secret with the `[secrets]` section of `config.ini`. For example,
-
-```ini
-[secrets]
-USERNAME="my-classification-product-cloud-storage-credentials"
-PASSWORD="my-classification-product-cloud-storage-credentials"
-```
-
-Will look for values assigned to the keys `USERNAME` and `PASSWORD` within the k8s secret named `my-classification-product-cloud-storage-credentials` and then assign these secrets to environment variables within the container, called `USERNAME` and `PASSWORD`, respectively. These can then be accessed from within the stage's executable Python module - for example,
-
-```python
-import os
-
-
-if __name__ == '__main__':
-    username = os.environ['USERNAME']
-    password = os.environ['PASSWORD']
-```
 
 ### Batch Stages
 
@@ -161,9 +138,34 @@ PORT=5000
 
 Where:
 
-- `MAX_STARTUP_TIME_SECONDS`: sets the time limit for the service to reach the 'ready' state, without any errors having occurred, before it can be marked as 'successful'. If a service deployment stage fails to reach a ready state, then the deployment will be automatically rolled-back to the previous version.
+- `MAX_STARTUP_TIME_SECONDS`: sets the time to wait for the service to be 'ready' without any errors having occurred. When the service reaches the time limit without raising errors, then it will be marked as 'successful'. If a service deployment stage fails to be successful, then the deployment will be automatically rolled-back to the previous version.
 - `REPLICAS`: the number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
 - `PORT`: the port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
+
+### Injecting Secrets into Stage Containers
+
+Credentials will be required whenever you wish to pull data or persist models to cloud storage, access private APIs, etc. We provide a secure mechanism for dynamically injecting credentials as environment variables within the container running a stage.
+
+The first step in this process is to store your project's secret credentials, securely within its namespace - see [Managing Credentials and Other Secrets](#managing-credentials-and-other-secrets) below for instructions on how to achieve this using Bodywork.
+
+The second step is to configure the use of this secret with the `[secrets]` section of the stages's `config.ini` file. For example,
+
+```ini
+[secrets]
+USERNAME="my-classification-product-cloud-storage-credentials"
+PASSWORD="my-classification-product-cloud-storage-credentials"
+```
+
+Will instruct Bodywork to look for values assigned to the keys `USERNAME` and `PASSWORD` within the k8s secret named `my-classification-product-cloud-storage-credentials`. Bodywork will then assign these secrets to environment variables within the container, called `USERNAME` and `PASSWORD`, respectively. These can then be accessed from within the stage's executable Python module - for example,
+
+```python
+import os
+
+
+if __name__ == '__main__':
+    username = os.environ['USERNAME']
+    password = os.environ['PASSWORD']
+```
 
 ## Preparing a Namespace for use with Bodywork
 
@@ -182,7 +184,7 @@ creating cluster-role-binding=bodywork-workflow-controller--my-classification-pr
 creating service-account=bodywork-jobs-and-deployments in namespace=my-classification-product
 ```
 
-We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created, so that containers in `my-classification-product` are granted the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created, to enable containers to list namespaces on the cluster (note that the appropriate cluster-role will be created if it does not yet exist).
+We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created. This will grant containers in `my-classification-product` the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created. This will enable containers in the new namespace to list all available namespaces on the cluster. The appropriate cluster-role will be created if it does not yet exist.
 
 ## Managing Credentials and Other Secrets
 
@@ -211,18 +213,20 @@ $ bodywork secret create \
 When executing a workflow defined in a private Git repository, make sure to use the SSH protocol when specifying the `git-repo-url` - e.g. use,
 
 ```text
-git@github.com:bodywork-ml/bodywork-ml-ops-project.git
+git@github.com:my-github-username/my-classification-product.git
 ```
 
 As opposed to,
 
 ```text
-https://github.com/bodywork-ml/bodywork-ml-ops-project
+https://github.com/my-github-username/my-classification-product
 ```
 
 ## Testing Workflows Locally
 
-Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but note that it will still clone your project from the specified branch of your remote Git repository (and delete it once it has completed). For the example project used throughout this user guide, the CLI command for triggering the workflow locally using the `master` branch of the remote Git repository, would be as follows,
+Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but it is still orchestrating containers on k8s remotely. It will still clone your project from the specified branch of the Bodywork project's Git repository, and delete it once it has completed.
+
+For the example project used throughout this user guide, the CLI command for triggering the workflow locally using the `master` branch of the remote Git repository, would be as follows,
 
 ```shell
 $ bodywork workflow \
@@ -242,7 +246,7 @@ $ bodywork workflow \
 
 ### Testing Service Deployments
 
-Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine you will first of all need to start a [proxy server](https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/) to enable access to your cluster. This can be achieved by issuing the following command,
+Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine, you will need to start a local [proxy server](https://kubernetes.io/docs/tasks/extend-kubernetes/http-proxy-access-api/) to enable access to your cluster. This can be achieved by issuing the following command,
 
 ```shell
 $ kubectl proxy
@@ -259,7 +263,7 @@ $ curl http://localhost:8001/api/v1/namespaces/my-classification-product/service
 
 Should return the payload according to how you've defined your service in the executable Python module - e.g. in the `model_scoring_app.py` file found within the `model-scoring-service` stage's directory.
 
-We have explicitly left the task of enabling access to services, from requests originating outside the cluster, as there are multiple ways to achieve this - e.g. via load balancers or ingress controllers - and the choice will depend on your circumstances. Please refer to the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/) to learn more.
+We have explicitly excluded from Bodywork's scope, the task of enabling access to services from requests originating outside the cluster. There exist multiple patterns that can achieve this - e.g. via load balancers or ingress controllers - and the choice will depend on your project's specific requirements. Please refer to the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/) to learn more.
 
 ### Deleting Redundant Service Deployments
 
@@ -318,7 +322,7 @@ Collecting boto3==1.16.15
 ...
 ```
 
-The aim of this log structure, is to provide a reliable way of debugging workflows out-of-the-box, without forcing you to integrate a complete logging solution. This is not a replacement for a complete logging solution - e.g. one based on [Elasticsearch](https://www.elastic.co/observability) - it is intended as a temporary solution to get your ML projects operational.
+The aim of this log structure is to provide a useful way of debugging workflows out-of-the-box, without forcing you to integrate a complete logging solution. This is not a replacement for a complete logging solution - e.g. one based on [Elasticsearch](https://www.elastic.co/observability). It is intended as a temporary solution to get your ML projects operational, as quickly as possible.
 
 ## Running Workflows Remotely on a Schedule
 
@@ -358,7 +362,7 @@ $ bodywork cronjob logs \
     --name=my-classification-product-1605214260
 ```
 
-Would stream the logs from the workflow execution attempt labelled `my-classification-product-1605214260`, directly to your terminal. This output stream could also be redirected to a local file by using a shell redirection command such as,
+Would stream logs directly to your terminal, from the workflow execution attempt labelled `my-classification-product-1605214260`. This output stream could also be redirected to a local file by using a shell redirection command such as,
 
 ```shell
 $ bodywork cronjob logs ... > log.txt

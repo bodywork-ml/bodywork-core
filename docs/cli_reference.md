@@ -1,6 +1,6 @@
 # CLI Reference
 
-Bodywork is distributed as a Python 3 package that exposes a CLI for interacting with your k8s cluster, to deploy Bodywork-compatible ML projects directly from remotely hosted Git repositories (e.g. GitHub). This page is a reference for all Bodywork CLI commands.
+Bodywork is distributed as a Python 3 package that exposes a CLI for interacting with your k8s cluster. Using the Bodywork CLI you can deploy Bodywork-compatible ML projects packaged as Git repositories (e.g. on GitHub). This page is a reference for all Bodywork CLI commands.
 
 ## Get Version
 
@@ -27,7 +27,7 @@ $ bodywork workflow \
     REMOTE_GIT_REPO_BRANCH
 ```
 
-Clone the chosen branch of a remote Git repository that contains a Bodywork ML project and then execute the workflow, using a local workflow-controller. If you are working with private repositories you will need to use the SSH protocol and ensure that the appropriate private-key is available within a secret - see [Working with Private Git Repositories using SSH](user_guide.md#working-with-private-git-repositories-using-ssh) for more information.
+Clones the chosen branch of a Git repository containing a Bodywork ML project and then executes the workflow configured within it. This will start a Bodywork workflow-controller wherever the command is called. If you are working with private remote repositories you will need to use the SSH protocol and ensure that the appropriate private-key is available within a secret - see [Working with Private Git Repositories using SSH](user_guide.md#working-with-private-git-repositories-using-ssh) for more information.
 
 ## Run Stage
 
@@ -38,13 +38,13 @@ $ bodywork stage \
     STAGE_NAME
 ```
 
-Clone the chosen branch of a remote Git repository that contains a Bodywork ML project and then execute a stage locally. This is equivalent to executing `python NAME_OF_EXECUTABLE_PYTHON_MODULE.py` as defined in the stage's `config.ini`, after installing all the 3rd party Python package requirements specified in the stage's `requirement.txt` file. See [Configuring Stages](user_guide.md#configuring-stages) for more information.
+Clones the chosen branch of a Git repository containing a Bodywork ML project and then executes the named stage. This is equivalent to installing all the 3rd party Python package requirements specified in the stage's `requirement.txt` file, and then executing `python NAME_OF_EXECUTABLE_PYTHON_MODULE.py` as defined in the stage's `config.ini`. See [Configuring Stages](user_guide.md#configuring-stages) for more information. The Bodywork stage-runner will be started wherever the command is called.
 
 **This command is intended for use by Bodywork containers and it is not recommended for use during Bodywork project development on your local machine.**
 
 ## Manage Secrets
 
-Secrets are used to pass credentials to containers running workflow stages that require them to authenticate with a 3rd party service (e.g. a cloud storage provider). See [Managing Credentials and Other Secrets](user_guide.md#managing-credentials-and-other-secrets) and [Injecting Secrets into Stage Containers](user_guide.md#injecting-secrets-into-stage-containers) for more information.
+Secrets are used to pass credentials to containers running workflow stages that require authentication with 3rd party services (e.g. cloud storage providers). See [Managing Credentials and Other Secrets](user_guide.md#managing-credentials-and-other-secrets) and [Injecting Secrets into Stage Containers](user_guide.md#injecting-secrets-into-stage-containers) for more information.
 
 ### Create Secrets
 
@@ -96,8 +96,8 @@ Will list information on all active service deployments available in `YOUR_NAMES
 ### Delete Services
 
 ```shell
-$ bodywork service display \
-    --namespace=YOUR_NAMESPACE
+$ bodywork service delete \
+    --namespace=YOUR_NAMESPACE \
     --name=SERVICE_NAME
 ```
 
@@ -105,7 +105,7 @@ Delete an active service deployment - e.g. one that is no longer required for a 
 
 ## Manage Cronjobs
 
-Bodywork can schedule workflows to run periodically to a pre-defined schedule, using remote workflow-controllers.
+Workflows can be executed on a schedule using Bodywork cronjobs. Scheduled workflows will be managed by workflow-controllers that Bodywork starts automatically on your k8s cluster.
 
 ### Get Cronjobs
 
@@ -132,7 +132,7 @@ Will create a cronjob whose schedule must be a valid [cron expression](https://e
 ### Delete Cronjob
 
 ```shell
-$ bodywork cronjob create \
+$ bodywork cronjob delete \
     --namespace=YOUR_NAMESPACE \
     --name=CRONJOB_NAME
 ```
@@ -152,7 +152,7 @@ Display all workflow execution jobs that were created by a cronjob.
 ### Get Cronjob Workflow Logs
 
 ```shell
-$ bodywork cronjob history \
+$ bodywork cronjob logs \
     --namespace=YOUR_NAMESPACE \
     --name=HISTORICAL_CRONJOB_WORKFLOW_EXECUTION_JOB_NAME
 ```
@@ -165,7 +165,7 @@ Stream the workflow logs from a historical workflow execution job, to your termi
 $ bodywork debug SECONDS
 ```
 
-Runs the Python `time.sleep` function for `SECONDS`. This is intended for use with the Bodywork image and kubectl, to deploy a container within a namespace, on which it is possible to open shell access for advanced debugging. For example, issuing the following command,
+Runs the Python `time.sleep` function for `SECONDS`. This is intended for use with the Bodywork image and kubectl - for deploying a container on which to open shell access for advanced debugging. For example, issuing the following command,
 
 ```shell
 $ kubectl create deployment DEBUG_DEPLOYMENT_NAME \
@@ -174,7 +174,7 @@ $ kubectl create deployment DEBUG_DEPLOYMENT_NAME \
     -- bodywork debug SECONDS
 ```
 
-Will deploy the Bodywork container and run the `bodywork debug SECONDS` command within it. While it is sleeping, a shell to the pod in this deployment can be opened. To achieve this, first of all find the pod's name, using,
+Will deploy the Bodywork container and run the `bodywork debug SECONDS` command within it. While the container is sleeping, a shell on the container in this deployment can be started. To achieve this, first of all find the pod's name, using,
 
 ```shell
 $ kubectl get pods -n YOUR_NAMESPACE | grep DEBUG_DEPLOYMENT_NAME
@@ -186,7 +186,7 @@ And then [open a shell to the container](https://kubernetes.io/docs/tasks/debug-
 $ kubectl exec DEBUG_DEPLOYMENT_POD_NAME -n YOUR_NAMESPACE -it -- /bin/bash
 ```
 
-Once you're finished debugging, tear-down the deployment using,
+Once you're finished debugging, the deployment can be shut-down using,
 
 ```shell
 $ kubectl delete deployment DEBUG_DEPLOYMENT_NAME -n YOUR_NAMESPACE

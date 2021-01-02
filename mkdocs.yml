@@ -1,14 +1,17 @@
 site_name: Bodywork
-copyright: Copyright &copy; 2020 Bodywork Machine Learning Ltd.
+copyright: Copyright &copy; 2020-2021 Bodywork Machine Learning Ltd.
 repo_url: https://github.com/bodywork-ml/bodywork-core
 docs_dir: docs
 nav:
   - Overview: index.md
   - Installation: installation.md
   - Key Concepts: key_concepts.md
-  - Quickstart: quickstart.md
+  - Quickstart - Run Batch Job: quickstart_batch_job.md
+  - Quickstart - Serve Model: quickstart_serve_model.md
+  - Quickstart - Deploy ML Pipeline: quickstart_ml_pipeline.md
   - User Guide: user_guide.md
   - CLI Reference: cli_reference.md
+  - Template Projects: template_projects.md
   - Contact Us: contact.md
 theme: 
   name: readthedocs
