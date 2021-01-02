@@ -12,7 +12,7 @@ This tutorial refers to files within a Bodywork project hosted on GitHub - see [
 
 ## A ML Scoring Service - Returning the Predicted Class
 
-The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimension as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
+The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
 
 The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-serve-model-project), whose root directory is structured as follows,
 

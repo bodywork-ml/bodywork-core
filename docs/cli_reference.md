@@ -105,7 +105,7 @@ Delete an active service deployment - e.g. one that is no longer required for a 
 
 ## Manage Cronjobs
 
-Bodywork can schedule workflows to run periodically on a schedule. These workflows are managed by workflow-controllers started on your k8s cluster.
+Workflows can be executed on a schedule using Bodywork cronjobs. Scheduled workflows will be managed by workflow-controllers that Bodywork starts automatically on your k8s cluster.
 
 ### Get Cronjobs
 
