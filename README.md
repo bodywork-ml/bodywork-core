@@ -6,19 +6,9 @@ Bodywork is a Python framework that helps machine learning engineers run batch j
 
 It automates repetitive and time-consuming tasks that machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), letting them focus on what they do best - solving data problems with machine learning.
 
-## What Problems Does Bodywork Solve?
-
-Running machine learning code in containers has become a common pattern to guarantee reproducibility between what has been developed and what is deployed in production environments.
-
-Most machine learning engineers do not, however, have the time to develop the skills and expertise required to deliver and deploy containerised machine learning systems into production environments. This requires an understanding of how to build container images, how to push build artefacts to image repositories and how to configure a container orchestration platform to use these to execute batch jobs and deploy services.
-
-Developing and maintaining these deployment pipelines is time-consuming. If there are multiple projects, each requiring re-training and re-deployment, then the management of these pipelines will quickly become a large burden.
-
-This is where the Bodywork framework steps-in - to take responsibility for pulling you machine learning projects into containers and deploying them to the Kubernetes container orchestration platform. Bodywork can ensure that your projects are always trained with the latest data, the most recent models are always deployed and your machine learning systems remain generally available.
-
 ![bodywork_diagram](https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.png)
 
-More specifically, Bodywork helps machine learning engineers to:
+Bodywork helps machine learning engineers to:
 
 - **continuously deliver** - code for preparing features, training models, scoring data and defining model-scoring services. Bodywork containers running on Kubernetes will pull code directly from your project's Git repository, removing the need to build-and-push your own container images.
 - **continuously deploy** - batch jobs, model-scoring services and complex machine learning pipelines, using the Bodywork workflow-controller to orchestrate end-to-end machine learning workflows on Kubernetes.
