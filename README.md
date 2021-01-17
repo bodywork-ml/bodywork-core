@@ -4,8 +4,10 @@
 
 [![Downloads](https://pepy.tech/badge/bodywork)](https://pepy.tech/project/bodywork)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bodywork)](https://pypi.org/project/bodywork/)
-[![PyPI - Bodywork Version](https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white)](https://pypi.org/project/bodywork/)
-![GitHub](https://img.shields.io/github/license/bodywork-ml/bodywork-core)
+[![PyPI - Bodywork Version](https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success)](https://pypi.org/project/bodywork/)
+![GitHub](https://img.shields.io/github/license/bodywork-ml/bodywork-core?color=success)
+
+---
 
 Bodywork is a Python framework that helps machine learning engineers run batch jobs, serve models and deploy machine learning pipelines, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes).
 
