@@ -7,8 +7,6 @@
 [![PyPI - Bodywork Version](https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success)](https://pypi.org/project/bodywork/)
 ![GitHub](https://img.shields.io/github/license/bodywork-ml/bodywork-core?color=success)
 
----
-
 Bodywork is a Python framework that helps machine learning engineers run batch jobs, serve models and deploy machine learning pipelines, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes).
 
 It automates repetitive and time-consuming tasks that machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), letting them focus on what they do best - solving data problems with machine learning.
