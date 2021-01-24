@@ -206,7 +206,7 @@ PROJECT_NAME="bodywork-ml-pipeline-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG="stage-1-train-model >> stage-2-deploy-scoring-service"
+DAG=stage-1-train-model >> stage-2-deploy-scoring-service
 
 [logging]
 LOG_LEVEL="INFO"

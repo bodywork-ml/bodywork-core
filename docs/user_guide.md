@@ -53,7 +53,7 @@ PROJECT_NAME="my-classification-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG="prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service"
+DAG=prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service
 
 [logging]
 LOG_LEVEL="INFO"
@@ -71,7 +71,7 @@ Each configuration parameter is used as follows:
 The `DAG` string is used to control the execution of stages by assigning them to different steps of the workflow. Steps are separated using the `>>` operator and commas are used to delimit multiple stages within a single step (if this is required). Steps are executed from left to right. In the example above,
 
 ```ini
-DAG="prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service"
+DAG=prepare-data >> train-svm, train-random-forest >> choose-model >> model-scoring-service
 ```
 
 The workflow will be interpreted as follows:

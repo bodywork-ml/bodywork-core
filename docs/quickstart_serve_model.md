@@ -117,7 +117,7 @@ PROJECT_NAME="bodywork-serve-model-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG="scoring-service"
+DAG=scoring-service
 
 [logging]
 LOG_LEVEL="INFO"

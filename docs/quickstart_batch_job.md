@@ -114,7 +114,7 @@ PROJECT_NAME="bodywork-batch-job-project"
 DOCKER_IMAGE="bodyworkml/bodywork-core:latest"
 
 [workflow]
-DAG="score-data"
+DAG=score-data
 
 [logging]
 LOG_LEVEL="INFO"
