@@ -13,3 +13,5 @@ Bodywork template projects are [GitHub template repositories](https://docs.githu
 ![github_template_repo](images/github_template_project.png)
 
 From this point you will be able to deploy the Bodywork template project directly to Kubernetes using the steps in the project's `README`. You can then edit the files in the cloned template project to meet your own project's requirements.
+
+If you want to make these repositories private, then make sure to follow the necessary configuration steps as detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
