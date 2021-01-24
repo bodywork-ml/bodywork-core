@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
