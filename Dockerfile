@@ -30,7 +30,7 @@ RUN tox -e unit_and_functional_tests
 RUN python setup.py bdist_wheel
 
 FROM py37-base
-COPY --from=builder /home/app/dist .
+COPY --from=builder /home/app/dist/*.whl .
 RUN pip install *.whl
 ENTRYPOINT ["bodywork"]
 CMD ["debug", "900"]
