@@ -2,7 +2,7 @@
 
 Bodywork is a deployment automation framework for machine learning in Python. It helps you schedule batch jobs, serve models and deploy ML pipelines, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes).
 
-It automates repetitive and time-consuming tasks that machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), freeing them focus on what they do best - solving data problems with machine learning.
+It automates repetitive and time-consuming tasks that machine learning engineers think of as [DevOps](https://en.wikipedia.org/wiki/DevOps), freeing them to focus on what they do best - solving data problems with machine learning.
 
 ## What Problems Does Bodywork Solve?
 
