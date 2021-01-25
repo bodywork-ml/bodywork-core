@@ -62,3 +62,14 @@ These files will be discussed in more detail in subsequent parts of this documen
 - `requirements.txt` - 3rd party Python package requirements for each individual stage.
 - `config.ini` - stage configuration data, such as the type of stage (batch or serving), secret credentials that need to be retrieved from k8s, etc.
 - `bodywork.ini` - workflow configuration data, such as the DAG definition used to assign stages to steps and the order in which the steps will be executed.
+
+This project can be deployed to Kubernetes with one command,
+
+```shell
+$ bodywork workflow \
+    --namespace=NAME_OF_MY_PROJECT \
+    https://github.com/MY_USERNAME/NAME_OF_PROJECT_REPOSITORY \
+    master
+```
+
+Assuming that the repository is public. For more information on using private repositories, see [here](user_guide.md#working-with-private-git-repositories-using-ssh).
