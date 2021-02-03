@@ -1,10 +1,10 @@
 # Deploying a Model-Scoring Service
 
-This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-serve-model-project](https://github.com/bodywork-ml/bodywork-serve-model-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+![serve_model](images/serve_model.png)
+
+This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-serve-model-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
 
 We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below.
-
-![serve_model](images/serve_model.png)
 
 ## What am I going to Learn?
 
@@ -12,9 +12,9 @@ We **strongly** recommend that you find five minutes to read about the [key conc
 * How to deploy the service.
 * How to test the deployed service.
 
-## A ML Scoring Service - Returning the Predicted Class
+## A REST API Service that Returns Predicted Classes
 
-The example ML model that we want to expose as a service with a REST API, returns the predicted sub-species of an iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
+The example model that we want to serve returns the predicted sub-species of iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Train and Deploy Pipeline'](quickstart_train_and_deploy.md#a-machine-learning-task).
 
 The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-serve-model-project), whose root directory is structured as follows,
 
@@ -30,9 +30,9 @@ root/
 
 We have included the pre-trained model as part of the Bodywork project, for convenience (not as best practice).
 
-## Configuring the Bodywork Service Deployment Stage
+## Configuring the Service Stage
 
-The `scoring-service` directory contains the code and configuration required to load a pre-trained model and use it to score a single instance (or row) of data, sent as JSON data to a REST API endpoint. We have decided to choose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
+The `scoring-service` directory contains the code and configuration required to load a pre-trained model and use it to score a single instance (or row) of data, sent as JSON to a REST API endpoint. We have chosen to use the [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to engineer our REST API server application. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
 Within this stage's directory, `service.py` defines the REST API server containing our ML scoring endpoint. It can be summarised as,
 
@@ -77,7 +77,7 @@ We recommend that you spend five minutes familiarising yourself with the full co
 $ python service.py
 ```
 
-And so it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
+And so it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()`. Note, that this process has no scheduled end and the stage will be kept up-and-running until it is re-deployed or [deleted](user_guide.md#deleting-redundant-service-deployments).
 
 The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork container, as required to run `service.py`. In this example we have,
 
@@ -109,7 +109,7 @@ PORT=5000
 
 From which it is clear to see that we have specified that this stage is a service (deployment) stage (as opposed to a batch stage), that `service.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait for the service to start-up and be 'ready', which port to expose and how many instances (or replicas) of the server should be created to stand-behind the cluster-service.
 
-## Configuring the Bodywork Deployment Workflow
+## Configuring the Workflow
 
 The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow, which in this case consists of a single stage - `scoring-service`.
 
@@ -127,9 +127,9 @@ LOG_LEVEL="INFO"
 
 The most important element is the specification of the workflow DAG, which in this instance is simple and will instruct the Bodywork workflow-controller to run the `scoring-service` stage.
 
-## Testing the Service Deployment Workflow
+## Testing the Deployment
 
-Firstly, make sure that the [bodywork](https://pypi.org/project/bodywork/) package has been Pip-installed into a local Python environment that is active. Then, make sure that there is a namespace setup for use by bodywork projects - e.g. `scoring-service` - by running the following at the command line,
+Firstly, make sure that the [bodywork](https://pypi.org/project/bodywork/) package has been Pip-installed into a local Python environment that is active. Then, make sure that there is a namespace setup for use by Bodywork projects - e.g. `scoring-service` - by running the following at the command line,
 
 ```shell
 $ bodywork setup-namespace scoring-service

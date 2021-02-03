@@ -1,16 +1,16 @@
 # Deploying a Machine Learning Pipeline
 
+![ml_pipeline](images/ml_pipeline.svg)
+
 This tutorial builds upon concepts introduced in the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials. It demonstrates how multi-stage ML pipelines can be deployed using Bodywork.
 
-This tutorial refers to files within a Bodywork project hosted on GitHub - see [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
 
 We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below.
 
-![ml_pipeline](images/ml_pipeline.png)
-
 ## What am I going to Learn?
 
-* How to take a solution to a ML task as developed within a Jupyter notebook, and map it into two separate Python modules for training a model and then deploying the trained model as a model-scoring service with a REST API.
+* How to take a solution to a ML task developed within a Jupyter notebook, and map it into two separate Python modules: one for training a model and one for serving the trained model via a REST API endpoint.
 * How to execute these `train` and `deploy` modules (that form a simple ML pipeline), remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
 * How to interact-with and test the model-scoring service that has been deployed to Kubernetes.
 * How to run the pipeline on a schedule, so that the model is periodically re-trained and then re-deployed (when new data is available), without the manual intervention of an ML engineer.
@@ -19,7 +19,7 @@ We **strongly** recommend that you find five minutes to read about the [key conc
 
 The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species, given their physical dimensions. It uses the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset) and is an example of a multi-class classification task.
 
-The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [bodywork-ml-pipeline-project](https://github.com/bodywork-ml/bodywork-ml-pipeline-project) repository, documents the trivial ML workflow used to arrive at a proposed solution to this task, by training a Decision Tree classifier and persisting the trained model to cloud storage. Take five minutes to read through it.
+The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [project's GitHub reository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), documents the trivial ML workflow used to arrive at a proposed solution to this task. It trains a Decision Tree classifier and persists the trained model to cloud storage. Take five minutes to read through it.
 
 ## A Machine Learning Operations Task
 
@@ -40,11 +40,11 @@ root/
  |-- bodywork.ini
 ```
 
-The remainder of this tutorial is concerned with explaining what is contained within these directories and their files, and how to command Bodywork to work with them to operationalise the solution on Kubernetes.
+The remainder of this tutorial is concerned with explaining what is contained within these directories and their files and how to use Bodywork to to deploy the solution to Kubernetes.
 
-## Configuring a Bodywork Batch Stage for Training a Model
+## Configuring a Batch Stage for Training the Model
 
-The `stage-1-train-model` directory contains the code and configuration required to train the model within a pre-built container on a k8s cluster, as a batch workload. Using the `ml_prototype_work.ipynb` notebook as a reference, the `train_model.py` module contains the code required to:
+The `stage-1-train-model` directory contains the code and configuration required to train the model within a [pre-built Bodywork container](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core), as a batch workload. Using the `ml_prototype_work.ipynb` notebook as a reference, the `train_model.py` module contains the code required to:
 
 * download data from an AWS S3 bucket;
 * pre-process the data (e.g. extract labels for supervised learning);
@@ -91,7 +91,7 @@ $ python train_model.py
 
 And so everything defined in `main()` will be executed.
 
-The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the pre-built Bodywork container, as required to run the `train_model.py` script. In this example we have,
+The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the container, as required to run the `train_model.py` script. In this example we have,
 
 ```text
 boto3==1.16.15
@@ -121,13 +121,13 @@ RETRIES=2
 
 From which it is clear to see that we have specified that this stage is a batch stage (as opposed to a service-deployment), that `train_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait and how many times to retry, etc.
 
-## Configuring a Bodywork Service Stage for Deploying a Model-Scoring Service
+## Configuring a Service Stage for Serving the Model
 
-The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it within the definition of a REST API endpoint, that will accept a single instance (or row) of data encoded as JSON in the request, and return the model's prediction as JSON data in the corresponding response.
+The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it to score single instances (or rows) of data, sent to a REST API endpoint in JSON format. The model's score will be used to return the model's prediction as JSON data in the response.
 
-We have decided to choose the Python [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to create our REST API server. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
+We have choosen to use the [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to engineer our REST API server. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
-Within this stage's directory, `serve_model.py` defines the REST API server containing our ML scoring endpoint. It can be summarised as,
+Within this stage's directory, `serve_model.py` defines the REST API server application. It can be summarised as,
 
 ```python
 from urllib.request import urlopen
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()` (note that this process has no scheduled end).
+We recommend that you spend five minutes familiarising yourself with the full contents of [serve_model.py](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/stage-2-deploy-scoring-service/serve_model.py). When Bodywork runs the stage, it will start the server defined by `app` and expose the `/iris/v1/score` route that is being handled by `score()`. Note, that this process has no scheduled end and the stage will be kept up-and-running until it is re-deployed or [deleted](user_guide.md#deleting-redundant-service-deployments).
 
 The `requirements.txt` file lists the 3rd party Python packages that will be Pip-installed on the Bodywork container, as required to run `serve_model.py`. In this example we have,
 
@@ -198,7 +198,7 @@ PORT=5000
 
 From which it is clear to see that we have specified that this stage is a service-deployment stage (as opposed to a batch stage), that `serve_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait for the service to start-up and be 'ready', which port to expose and how many instances (or replicas) of the server should be created to stand-behind the cluster-service.
 
-## Configuring the Complete Bodywork Workflow
+## Configuring the Workflow
 
 The `bodywork.ini` file in the root of this repository contains the configuration for the whole workflow - a workflow being a collection of stages, run in a specific order, that can be represented by a Directed Acyclic Graph (or DAG).
 
@@ -248,7 +248,7 @@ Which will run the workflow defined in the `master` branch of the project's remo
 $ kubectl -n ml-pipeline get all
 ```
 
-Once the workflow has completed, the ML scoring service deployed within your cluster will be ready for testing. Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test the service from your local machine you will first of all need to start a proxy server to enable access to your cluster. This can be achieved by issuing the following command,
+Once the workflow has completed, the scoring service deployed within your cluster will be ready for testing. Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test the service from your local machine you will first of all need to start a proxy server to enable access to your cluster. This can be achieved by issuing the following command,
 
 ```shell
 $ kubectl proxy
@@ -281,7 +281,7 @@ If you're happy with the test results, then you can schedule the workflow-contro
 $ bodywork cronjob create \
     --namespace=ml-pipeline \
     --name=ml-pipeline \
-    --schedule="0 * * * *" \
+    --schedule="* 0 * * *" \
     --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-pipeline-project \
     --git-repo-branch=master
 ```
