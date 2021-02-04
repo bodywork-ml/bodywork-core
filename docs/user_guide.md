@@ -1,10 +1,10 @@
 # User Guide
 
-This is a comprehensive guide to developing and configuring ML projects for deployment to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart examples.
+This is a comprehensive guide to deploying ML projects to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart examples.
 
 ## Bodywork Project Structure
 
-Bodywork-compatible ML projects need to be structured in a specific way. All the files necessary for defining a stage must be contained within a directory dedicated to that stage, where the name given to the directory defines the name of the stage. This enables the Bodywork workflow-controller to identify the stages and run them in the desired order. Consider the following example directory structure,
+Bodywork-compatible ML projects need to be structured in a specific way. All the files necessary for defining a stage must be contained within a directory dedicated to that stage. The directory name defines the name of the stage. This enables the Bodywork workflow-controller to identify the stages and run them in the desired order. Consider the following example directory structure,
 
 ```text
 root/
@@ -39,9 +39,9 @@ Here we have five directories given names that relate to the ML tasks contained 
 
 ### Executing ML Tasks in Remote Python Environments
 
-![bodywork_diagram](images/ml_pipeline.png)
+![bodywork_diagram](images/ml_pipeline.svg)
 
-The Bodywork project must be packaged as a Git repository (e.g. on GitHub), that will be accessed directly by Bodywork when executing workflows. When the Bodywork workflow-controller executes a stage, it starts a new Python-enabled container in your k8s cluster and instructs it to pull the required directory from your project's Git repository. Then, it installs any 3rd party Python package requirements, before running the executable Python module.
+Bodywork projects must be packaged as a Git repositories (e.g. on GitHub), that will be cloned by Bodywork when executing workflows. When the Bodywork workflow-controller executes a stage, it starts a new [Python-enabled container](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) in your k8s cluster and instructs it to pull the required directory from your project's Git repository. Then, it installs any 3rd party Python package requirements, before running the executable Python module.
 
 ## Configuring Workflows
 
