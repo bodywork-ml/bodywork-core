@@ -1,10 +1,10 @@
 ![bodywork](images/bodywork_logo.png)
 
-Bodywork is a deployment framework for machine learning projects written in Python. It helps you to serve models, deploy ML pipelines and schedule batch jobs, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes).
+Bodywork is a deployment framework for machine learning projects developed in Python. It helps you to serve models, deploy pipelines and schedule batch jobs, in containers on [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes).
 
-It automates repetitive and time-consuming [DevOps](https://en.wikipedia.org/wiki/DevOps) tasks, freeing machine learning engineers to focus on what they do best - solving data problems with machine learning.
+By automating repetitive and time-consuming [DevOps](https://en.wikipedia.org/wiki/DevOps) tasks, Bodywork frees machine learning engineers to focus on what they do best - solving data problems with machine learning.
 
-## Where does Bodywork Fit in your Stack?
+## Where does Bodywork Fit?
 
 Bodywork is aimed at teams who deploy (or intend to deploy) their machine learning projects in containers, to the cloud. Bodywork handles the delivery of your project's Python modules into containers and manages their deployment.
 
@@ -38,7 +38,7 @@ Bodywork ensures that your projects are always trained with the latest data, the
 
 Bodywork brings DevOps to your machine learning projects and will form the basis of your [Machine Learning Operations (MLOps)](https://en.wikipedia.org/wiki/MLOps) platform.
 
-If this sounds good to you, then please give a ⭐️ to [Bodywork's GitHub repository](https://github.com/bodywork-ml/bodywork-core).
+If this sounds good to you, then please give a **GitHub Star ★** to [bodywork-core](https://github.com/bodywork-ml/bodywork-core).
 
 ## Requirements
 
