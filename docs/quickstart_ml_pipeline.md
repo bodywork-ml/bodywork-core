@@ -283,7 +283,8 @@ $ bodywork cronjob create \
     --name=ml-pipeline \
     --schedule="* 0 * * *" \
     --git-repo-url=https://github.com/bodywork-ml/bodywork-ml-pipeline-project \
-    --git-repo-branch=master
+    --git-repo-branch=master \
+    --retries=2
 ```
 
 Each scheduled workflow will attempt to re-run the workflow, end-to-end, as defined by the state of this repository's `master` branch at the time of execution - performing rolling-updates to service-deployments and automatic roll-backs in the event of failure.

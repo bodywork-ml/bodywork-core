@@ -333,8 +333,9 @@ $ bodywork cronjob create \
     --namespace=my-classification-product \
     --name=my-classification-product \
     --schedule="0,15,30,45 * * * *" \
-    --git-repo-url=https://github.com/my-github-username/my-classification-product
-    --git-repo-branch=master
+    --git-repo-url=https://github.com/my-github-username/my-classification-product \
+    --git-repo-branch=master \
+    --retries=2
 ```
 
 Would schedule our example project to run every 15 minutes. The cronjob's execution history can be retrieved from the cluster using,

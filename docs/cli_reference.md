@@ -124,7 +124,8 @@ $ bodywork cronjob create \
     --name=CRONJOB_NAME \
     --schedule=CRON_SCHEDULE \
     --git-repo-url=REMOTE_GIT_REPO_URL \
-    --git-repo-branch=REMOTE_GIT_REPO_BRANCH
+    --git-repo-branch=REMOTE_GIT_REPO_BRANCH \
+    --retries=NUMBER_OF_TIMES_TO_RETRY_ON_FAILURE
 ```
 
 Will create a cronjob whose schedule must be a valid [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) - e.g. `0 * * * *` will run the workflow every hour.
