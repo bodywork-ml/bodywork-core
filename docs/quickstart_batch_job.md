@@ -166,7 +166,8 @@ $ bodywork cronjob create \
     --name=score-data \
     --schedule="0 * * * *" \
     --git-repo-url=https://github.com/bodywork-ml/bodywork-batch-job-project \
-    --git-repo-branch=master
+    --git-repo-branch=master \
+    --retries=2
 ```
 
 Each scheduled workflow will attempt to re-run the batch-job, as defined by the state of this repository's `master` branch at the time of execution.
