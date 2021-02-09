@@ -52,7 +52,7 @@ This is the [GitOps](https://www.gitops.tech) pattern for cloud native continuou
 * **written in Python** - the native language of machine learning and data science, so your team can have full visibility of what Bodywork is doing and how.
 * **open-source** - Bodywork is built and maintained by machine learning engineers, for machine learning engineers, who are committed to keeping it 100% open-source.
 
-Bodywork brings DevOps to your machine learning projects and will form the basis of your [Machine Learning Operations (MLOps)](https://en.wikipedia.org/wiki/MLOps) platform. Bodywork ensures that your projects are always trained with the latest data, the most recent models are always deployed and your machine learning systems remain highly-available.
+Bodywork brings DevOps to your machine learning projects and will form the basis of your [Machine Learning Operations (MLOps)](https://en.wikipedia.org/wiki/MLOps) platform. It will ensure that your projects are always trained with the latest data, the most recent models are always deployed and your machine learning systems remain highly-available.
 
 ## We want your Feedback
 
