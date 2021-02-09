@@ -10,7 +10,7 @@ On demand, or on a schedule. It automates repetitive DevOps tasks and frees mach
 
 ## Where does Bodywork Fit?
 
-Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository, into containers and manages their deployment to a Kubernetes cluster.
+Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository into containers, and manages their deployment to a Kubernetes cluster.
 
 ### What is it Replacing?
 
@@ -22,13 +22,13 @@ Developing and maintaining these deployment pipelines is time-consuming. If ther
 
 ## Where do I Install Bodywork?
 
-Bodywork is distributed as a Python package that exposes a command line interface for configuring your Kubernetes cluster to run Bodywork deployment projects. Using it, a pipeline hosted on GitHub can be scheduled to run every evening, with just one command,
+Bodywork is distributed as a Python package with a command line interface for configuring Kubernetes to run Bodywork deployments. A pipeline hosted on GitHub can be scheduled to run every evening with one command,
 
 ![bodywork_cronjob_create](images/bodywork_cronjob_create.png)
 
 ## What does Bodywork Do?
 
-When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it - each one defining a stage of your pipeline. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
+When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it - where each module defines a single stage of your pipeline. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
 
 This process is shown below for an example `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
