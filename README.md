@@ -18,7 +18,7 @@ Bodywork deploys machine learning projects developed in Python, to Kubernetes. I
 * execute batch jobs
 * run reproducible pipelines
 
-On demand, or on a schedule. It automates repetitive DevOps tasks and frees machine learning engineers to focus on what they do best - solving data problems with machine learning. If this sounds good to you, then please give us a **GitHub Star ★**
+On demand, or on a schedule. It automates repetitive DevOps tasks and frees machine learning engineers to focus on what they do best - solving data problems with machine learning. If this sounds like a useful tool, then please give us a **GitHub Star ★**
 
 ## Documentation
 
@@ -34,23 +34,25 @@ To accelerate your project's journey to production, we maintain a set of [deploy
 
 ## Where does Bodywork Fit?
 
-Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers, to the cloud. Bodywork delivers your project's Python modules directly from your Git repository, into containers and manages their deployment to a Kubernetes cluster.
+Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository, into containers and manages their deployment to a Kubernetes cluster.
 
-## Where do I install Bodywork?
+## Where do I Install Bodywork?
 
-Bodywork is distributed as a Python package that exposes a command line interface for configuring your Kubernetes cluster to run Bodywork deployment projects. Scheduling a pipeline hosted on GitHub to run every evening, can be achieved with just one command,
+Bodywork is distributed as a Python package that exposes a command line interface for configuring your Kubernetes cluster to run Bodywork deployment projects. Using it, a pipeline hosted on GitHub can be scheduled to run every evening, with just one command,
 
 ![bodywork_cronjob_create](https://bodywork-media.s3.eu-west-2.amazonaws.com/bodywork-cronjob-create.png)
 
 ## What does Bodywork Do?
 
-When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it. At no point is there any need to build Docker images and push them to a container registry. This process is shown below for an example `train-and-serve` pipeline with two stages: train model (as a batch job) and then serve the trained model (as a microservice with a REST API).
+When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it - each one defining a stage of your pipeline. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
+
+This process is shown below for an example `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
 ![bodywork_diagram](https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.png)
 
 ## Bodywork as CI/CD Platform for Machine Learning
 
-Because Bodywork can run deployments on a schedule, each time cloning the latest version of your codebase in the target branch, this setup naturally forms an end-to-end CI/CD platform for your machine learning project, as illustrated below.
+Because Bodywork can run deployments on a schedule, each time cloning the latest version of your codebase in the target branch, this system naturally forms an end-to-end CI/CD platform for your machine learning project, as illustrated below.
 
 ![cicd](https://bodywork-media.s3.eu-west-2.amazonaws.com/cicd_with_bodywork.png)
 
