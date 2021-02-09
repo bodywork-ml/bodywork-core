@@ -48,7 +48,7 @@ When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containe
 
 This process is shown below for an example `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
-![bodywork_diagram](https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.png)
+![bodywork_diagram](https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.svg)
 
 ## Bodywork as CI/CD Platform for Machine Learning
 
