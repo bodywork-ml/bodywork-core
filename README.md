@@ -18,7 +18,7 @@ Bodywork deploys machine learning projects developed in Python, to Kubernetes. I
 * execute batch jobs
 * run reproducible pipelines
 
-On demand, or on a schedule. It automates repetitive DevOps tasks and frees machine learning engineers to focus on what they do best - solving data problems with machine learning. If this sounds like a useful tool, then please give us a **GitHub Star ★**
+On demand, or on a schedule. It automates repetitive DevOps tasks and frees machine learning engineers to focus on what they do best - solving data problems with machine learning.
 
 ## Documentation
 
@@ -26,25 +26,25 @@ The documentation for bodywork-core can be found [here](https://bodywork.readthe
 
 ## Deployment Templates
 
-To accelerate your project's journey to production, we maintain a set of [deployment templates](https://bodywork.readthedocs.io/en/latest/template_projects/) for common use-cases:
+To accelerate your project's journey to production, we provide [deployment templates](https://bodywork.readthedocs.io/en/latest/template_projects/) for common use-cases:
 
-* [batch job](https://github.com/bodywork-ml/bodywork-batch-job-project)
-* [model-scoring microservice with REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
-* [train-and-serve pipeline](https://github.com/bodywork-ml/bodywork-ml-pipeline-project)
+* [batch scoring data](https://github.com/bodywork-ml/bodywork-batch-job-project)
+* [deploying a model-scoring microservice with REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
+* [scheduling a train-and-serve pipeline](https://github.com/bodywork-ml/bodywork-ml-pipeline-project)
 
 ## Where does Bodywork Fit?
 
-Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository, into containers and manages their deployment to a Kubernetes cluster.
+Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository into containers, and manages their deployment to a Kubernetes cluster.
 
 ## Where do I Install Bodywork?
 
-Bodywork is distributed as a Python package that exposes a command line interface for configuring your Kubernetes cluster to run Bodywork deployment projects. Using it, a pipeline hosted on GitHub can be scheduled to run every evening, with just one command,
+Bodywork is distributed as a Python package that exposes a command line interface for configuring Kubernetes to run Bodywork deployments. Using it, a pipeline hosted on GitHub can be scheduled to run every evening, with just one command,
 
 ![bodywork_cronjob_create](https://bodywork-media.s3.eu-west-2.amazonaws.com/bodywork-cronjob-create.png)
 
 ## What does Bodywork Do?
 
-When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it - each one defining a stage of your pipeline. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
+When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it - where each module defines a single stage of your pipeline. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
 
 This process is shown below for an example `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
@@ -69,6 +69,10 @@ This is the [GitOps](https://www.gitops.tech) pattern for cloud native continuou
 * **open-source** - Bodywork is built and maintained by machine learning engineers, for machine learning engineers, who are committed to keeping it 100% open-source.
 
 Bodywork brings DevOps to your machine learning projects and will form the basis of your [Machine Learning Operations (MLOps)](https://en.wikipedia.org/wiki/MLOps) platform. It will ensure that your projects are always trained with the latest data, the most recent models are always deployed and your machine learning systems remain highly-available.
+
+## We want your Feedback
+
+If Bodywork sounds like a useful tool, then please submit your feedback with a **GitHub Star ★**.
 
 ## Requirements
 
