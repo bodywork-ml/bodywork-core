@@ -89,7 +89,7 @@ If you need help with any of this, then please don't hesitate to contact us and 
 
 If you:
 
-* have a question that these pages haven't answered, or need help getting started with Kubernetes, then please use our [discussion board](https://github.com/bodywork-ml/bodywork-core/discussions).
-* have found a bug, then please [open an issue](https://github.com/bodywork-ml/bodywork-core/issues).
-* would like to contribute, then please talk to us **first** at [info@bodyworkml.com](mailto:info@bodyworkml.com)
-* would like to commission new functionality, then please contact us at [info@bodyworkml.com](mailto:info@bodyworkml.com)
+* Have a question that these pages haven't answered, or need help getting started with Kubernetes, then please use our [discussion board](https://github.com/bodywork-ml/bodywork-core/discussions).
+* Have found a bug, then please [open an issue](https://github.com/bodywork-ml/bodywork-core/issues).
+* Would like to contribute, then please talk to us **first** at [info@bodyworkml.com](mailto:info@bodyworkml.com).
+* Would like to commission new functionality, then please contact us at [info@bodyworkml.com](mailto:info@bodyworkml.com).
