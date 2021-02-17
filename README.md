@@ -50,6 +50,14 @@ This process is shown below for an example `train-and-serve` pipeline with two s
 
 ![bodywork_diagram](https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.svg)
 
+## What do I need to Do?
+
+Divide your project into a set of discrete stages, creating a new directory for each one. Every stage will need an executable Python module for Bodywork to run, a requirements file for installing external Python dependencies, and a simple config file. Bundle these files together with a workflow execution plan, into a Git repository (e.g. on GitHub), and you're ready to run.
+
+You do **not** need to tie yourself to new APIs - package your existing codebase into this framework and watch as Bodywork pulls each stage into its own container and deploys to Kubernetes.
+
+![project_structure_map](https://bodywork-media.s3.eu-west-2.amazonaws.com/project_structure_map.png)
+
 ## Bodywork as CI/CD Platform for Machine Learning
 
 Because Bodywork can run deployments on a schedule, each time cloning the latest version of your codebase in the target branch, this system naturally forms an end-to-end CI/CD platform for your machine learning project, as illustrated below.
