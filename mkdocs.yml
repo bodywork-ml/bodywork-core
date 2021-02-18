@@ -24,7 +24,6 @@ theme:
     logo: octicons/terminal-24
   palette:
     primary: deep purple
-  titles_only: true
 markdown_extensions:
   - admonition
   - attr_list
