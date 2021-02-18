@@ -56,7 +56,7 @@ setup(
     install_requires=requirements_pkg,
     extras_require={
         'dev': requirements_dev,
-        'doc': requirements_oc,
+        'doc': requirements_doc,
     },
     zip_safe=True,
     entry_points={
