@@ -17,7 +17,7 @@ We **strongly** recommend that you find five minutes to read about the [key conc
 
 ## A REST API for Predicting Class
 
-The example model that we want to serve returns the predicted sub-species of iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Deploy ML Pipeline'](quickstart_ml_pipeline.md#a-machine-learning-task).
+The example model that we want to serve returns the predicted sub-species of iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Deploy ML Pipeline'](quickstart_ml_pipeline.md#the-ml-task).
 
 The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-serve-model-project), whose root directory is structured as follows,
 

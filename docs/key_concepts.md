@@ -9,10 +9,10 @@ Each task you want to run, such as training a model, scoring data or starting a 
 There are two different types of stage that can be created:
 
 `Batch Stage`
-: for executing code that performs a discrete task - e.g. preparing features, training a model or scoring a dataset. Batch stages have a well defined end and will be automatically shut-down after they have successfully completed.
+: For executing code that performs a discrete task - e.g. preparing features, training a model or scoring a dataset. Batch stages have a well defined end and will be automatically shut-down after they have successfully completed.
 
 `Service Stage`
-: for executing code that starts a service - e.g. a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application that loads a model and then exposes a REST API for model-scoring. Service stages are long-running processes with no end, that will be kept up-and-running until they are deleted.
+: For executing code that starts a service - e.g. a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application that loads a model and then exposes a REST API for model-scoring. Service stages are long-running processes with no end, that will be kept up-and-running until they are deleted.
 
 ## Steps
 
@@ -42,7 +42,7 @@ Most ML projects can be described by one model-training stage and one service de
 
 ## Deployment from Git Repos
 
-Bodywork requires projects to be stored and distributed as Git repositories - e.g. on GitHub. It will clone the project repository directly and execute the stages defined within it, according to the workflow DAG. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
+Bodywork requires projects to be stored and distributed as Git repositories - e.g. hosted on GitHub. It will clone the project repository directly and execute the stages defined within it, according to the workflow DAG. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
 
 ![bodywork_diagram](images/ml_pipeline.svg)
 
@@ -59,12 +59,12 @@ These files will be discussed in more detail later on, but briefly:
 : 3rd party Python package requirements for each individual stage.
 
 `config.ini`
-: stage configuration data, such as the type of stage (batch or serving), secret credentials that need to be retrieved from k8s, etc.
+: Stage configuration data, such as the type of stage (batch or serving), secret credentials that need to be retrieved from k8s, etc.
 
 `bodywork.ini`
-: workflow configuration data, such as the DAG definition used to assign stages to steps and the order in which the steps will be executed.
+: Workflow configuration data, such as the DAG definition used to assign stages to steps and the order in which the steps will be executed.
 
-This project can then be configured to run on schedule with one command,
+This project can then be configured to run on a schedule with one command,
 
 ![schedule_workflow](images/key_concept_schedule_cli.png)
 

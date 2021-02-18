@@ -1,6 +1,6 @@
 # User Guide
 
-This is a comprehensive guide to deploying ML projects to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart examples.
+This is a comprehensive guide to deploying ML projects to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart Tutorials.
 
 ## Deployment Project Structure
 
@@ -138,10 +138,10 @@ RETRIES=2
 Where:
 
 `MAX_COMPLETION_TIME_SECONDS`
-: Sets the time to wait for the given task to run, before retrying or raising a workflow execution error.
+: Time to wait for the given task to run, before retrying or raising a workflow execution error.
 
 `RETRIES`
-: Sets the number of times to retry executing a failed stage, before raising a workflow execution error.
+: Number of times to retry executing a failed stage, before raising a workflow execution error.
 
 ### Service Deployment Stages
 
@@ -157,10 +157,10 @@ PORT=5000
 Where:
 
 `MAX_STARTUP_TIME_SECONDS`
-: Sets the time to wait for the service to be 'ready' without any errors having occurred. When the service reaches the time limit without raising errors, then it will be marked as 'successful'. If a service deployment stage fails to be successful, then the deployment will be automatically rolled-back to the previous version.
+: Time to wait for the service to be 'ready' without any errors having occurred. When the service reaches the time limit without raising errors, then it will be marked as 'successful'. If a service deployment stage fails to be successful, then the deployment will be automatically rolled-back to the previous version.
 
 `REPLICAS`
-: The number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
+: Number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
 
 `PORT`
 : The port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
@@ -207,7 +207,7 @@ creating cluster-role-binding=bodywork-workflow-controller--my-classification-pr
 creating service-account=bodywork-jobs-and-deployments in namespace=my-classification-product
 ```
 
-We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created. This will grant containers in `my-classification-product` the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created. This will enable containers in the new namespace to list all available namespaces on the cluster. The appropriate cluster-role will be created if it does not yet exist.
+We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created. This will grant containers in `my-classification-product` the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created. This will enable containers in the new namespace to list all available namespaces on the cluster. The cluster-role will be created if it does not yet exist.
 
 ## Managing Secrets
 
@@ -247,7 +247,7 @@ https://github.com/my-github-username/my-classification-product
 
 ## Testing Workflows Locally
 
-Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but it is still orchestrating containers on k8s remotely. It will still clone your project from the specified branch of the Bodywork project's Git repository, and delete it once it has completed.
+Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but it is still orchestrating containers on k8s remotely. It will still clone your project from the specified branch of the Bodywork project's Git repository, and delete it when finished.
 
 For the example project used throughout this user guide, the CLI command for triggering the workflow locally using the `master` branch of the remote Git repository, would be as follows,
 
