@@ -40,7 +40,8 @@ $ bodywork stage \
 
 Clones the chosen branch of a Git repository containing a Bodywork ML project and then executes the named stage. This is equivalent to installing all the 3rd party Python package requirements specified in the stage's `requirement.txt` file, and then executing `python NAME_OF_EXECUTABLE_PYTHON_MODULE.py` as defined in the stage's `config.ini`. See [Configuring Stages](user_guide.md#configuring-stages) for more information. The Bodywork stage-runner will be started wherever the command is called.
 
-**This command is intended for use by Bodywork containers and it is not recommended for use during Bodywork project development on your local machine.**
+!!! warning ""
+    This command is intended for use by Bodywork containers and it is not recommended for use during Bodywork project development on your local machine.
 
 ## Manage Secrets
 
