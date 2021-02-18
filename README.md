@@ -12,7 +12,7 @@
 
 ---
 
-Bodywork deploys machine learning projects developed in Python, to Kubernetes. It helps you to:
+Bodywork deploys machine learning projects developed in Python, to Kubernetes. It helps you:
 
 * serve models as microservices
 * execute batch jobs
@@ -34,11 +34,11 @@ To accelerate your project's journey to production, we provide [deployment templ
 
 ## Where does Bodywork Fit?
 
-Bodywork is aimed at teams who want to deploy their machine learning projects in Docker containers. Bodywork delivers your project's Python modules directly from your Git repository into containers, and manages their deployment to a Kubernetes cluster.
+Bodywork is aimed at teams who want to deploy machine learning projects in containers. It will deliver your project's Python modules directly from your Git repository into Docker containers and manage their deployment to a Kubernetes cluster.
 
 ## Where do I Install Bodywork?
 
-Bodywork is distributed as a Python package with a command line interface for configuring Kubernetes to run Bodywork deployments. A pipeline hosted on GitHub can be scheduled to run every evening with one command,
+Bodywork is distributed as a Python package that exposes a CLI for configuring Kubernetes to run Bodywork deployments. For example, a pipeline hosted on GitHub can be scheduled to run every evening with one command,
 
 <div align="center">
 <img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bodywork-cronjob-create.png" width="610" height="220"/>
@@ -46,7 +46,7 @@ Bodywork is distributed as a Python package with a command line interface for co
 
 ## What does Bodywork Do?
 
-When Kubernetes runs a Bodywork project, it deploys pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
+When Kubernetes triggers a Bodywork deployment, it runs pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) that clone your project's Git repository and run the Python modules within it. At no point is there any need to build Docker images, push them to a container registry or trigger a deployment.
 
 This process is shown below for a `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
@@ -77,9 +77,9 @@ This is the [GitOps](https://www.gitops.tech) pattern for cloud native continuou
 ## Key Features
 
 * **continuously deploy** - batch jobs, model-scoring services as well as complex ML pipelines, using pre-built [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) to orchestrate end-to-end machine learning workflows.
-* **resilient deployments** - Bodywork handles automatic retires for batch jobs and for service deployments it will manage automatic roll-backs without any downtime.
-* **horizontal scaling** - Bodywork can back your service endpoints with multiple container replicas to handle high volumes of traffic.
-* **no new APIs to learn** - Bodywork does not require you to re-write your machine learning projects to conform to our view of how your codebase should be engineered. All you need to do is provide executable Python modules for starting services and running batch jobs.
+* **resilient deployments** - Bodywork handles automatic retires for batch jobs and automatic roll-backs for service deployments, without any downtime.
+* **horizontal scaling** - Bodywork can back your service endpoints with as many container replicas as you need to handle your API traffic volumes.
+* **no new APIs to learn** - Bodywork does not require you to re-write your machine learning projects to conform to our view of how your codebase should be engineered. All you need to do is provide executable Python modules for starting service applications and running batch jobs.
 * **no cloud platform lock-in** - Bodywork deploys to Kubernetes clusters, which are available as managed services from all major cloud providers. Kubernetes is indifferent to where it is running, so changing cloud provider is as easy as pointing to a different cluster.
 * **written in Python** - the native language of machine learning and data science, so your team can have full visibility of what Bodywork is doing and how.
 * **open-source** - Bodywork is built and maintained by machine learning engineers, for machine learning engineers, who are committed to keeping it 100% open-source.
