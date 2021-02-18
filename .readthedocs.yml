@@ -5,4 +5,5 @@ formats:
   - pdf
 python:
   version: 3.7
-  install: requirements_doc.txt
+  install: 
+    - requirements: requirements_doc.txt
