@@ -5,9 +5,10 @@
 <div align="center">
 <img src="https://pepy.tech/badge/bodywork"/>
 <img src="https://img.shields.io/pypi/pyversions/bodywork"/>
-<img src="https://circleci.com/gh/bodywork-ml/bodywork-core.svg?style=shield"/>
-<img src="https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success"/>
 <img src="https://img.shields.io/github/license/bodywork-ml/bodywork-core?color=success"/>
+<img src="https://circleci.com/gh/bodywork-ml/bodywork-core.svg?style=shield"/>
+<img src="https://codecov.io/gh/bodywork-ml/bodywork-core/branch/master/graph/badge.svg?token=QGPGZHVH9H"/>
+<img src="https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success"/>
 </div>
 
 ---
