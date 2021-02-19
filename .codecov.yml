@@ -1,6 +1,8 @@
 codecov:
   require_ci_to_pass: yes
   allow_coverage_offsets: true
+  notify:
+      after_n_builds: 2
 
 coverage:
   precision: 2
@@ -16,6 +18,7 @@ parsers:
       macro: no
 
 comment:
+  after_n_builds: 2
   layout: "reach,diff,flags,files,footer"
   behavior: default
   require_changes: no
