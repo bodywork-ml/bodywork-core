@@ -2,17 +2,20 @@
 
 ![batch_job](images/batch_job.png)
 
-This tutorial refers to files within a Bodywork template project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-batch-job-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+This tutorial refers to files within a Bodywork template project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-batch-job-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below.
 
+!!! info "Working with private repositories"
+    If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+
 ## What am I going to Learn?
 
-* How to take a Python module defining a ML task (or job) and deploy it to Kubernetes by configuring it as a Bodywork project.
-* How to test the deployment.
-* How to run the batch job on a schedule, without the manual intervention of an ML engineer.
+* [x] How to take a Python module defining a ML task (or job) and deploy it to Kubernetes.
+* [x] How to test the deployment.
+* [x] How to run the job on a schedule, without the manual intervention of an ML engineer.
 
-## A Batch Job - Scoring a Dataset with a Pre-Trained Model
+## Scoring a Dataset with a Model
 
 The example task that we want to run as a batch job with Bodywork, is to load a pre-trained model and use it to score a dataset. The latest dataset will be downloaded from cloud storage (AWS S3) and the pre-trained model will be included in the same directory as the files configuring the stage, for convenience (not as best practice).
 
@@ -28,14 +31,14 @@ root/
  |-- bodywork.ini
 ```
 
-## Configuring the Batch Stage
+## Configuring the Stage
 
 The `score-data` directory contains the code and configuration required to run the job within a pre-built container on a k8s cluster, as a batch workload. The `score.py` module is a standalone and executable Python module that contains the code required to:
 
-* download the new dataset from cloud storage (AWS S3);
-* load the pre-trained model `classification_model.joblib`;
-* score the dataset; and,
-* save the results back to cloud storage (AWS S3).
+1. download the new dataset from cloud storage (AWS S3);
+2. load the pre-trained model `classification_model.joblib`;
+3. score the dataset; and,
+4. save the results back to cloud storage (AWS S3).
 
 It can be summarised as,
 
@@ -68,7 +71,7 @@ if __name__ == '__main__':
     main()
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [score.py](https://github.com/bodywork-ml/bodywork-batch-job-project/blob/master/score-data/score.py). When Bodywork runs the stage, it will do so in exactly the same way as if you were to run,
+We recommend that you spend five minutes familiarising yourself with the full contents of [score.py](https://github.com/bodywork-ml/bodywork-batch-job-project/blob/master/score-data/score.py). When Bodywork runs the stage, it will do so in the same way as if you were to run,
 
 ```shell
 $ python score.py
@@ -156,7 +159,7 @@ Which will run the workflow defined in the `master` branch of the project's remo
 $ kubectl -n bodywork-batch-jobs get all
 ```
 
-## Running the Workflow on a Schedule
+## Scheduling the Workflow
 
 If you're happy with the test results, you can schedule the workflow-controller to operate remotely on the cluster, on a pre-defined schedule. For example, to setup the the workflow to run every hour, use the following command,
 

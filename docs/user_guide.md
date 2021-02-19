@@ -1,8 +1,8 @@
 # User Guide
 
-This is a comprehensive guide to deploying ML projects to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart examples.
+This is a comprehensive guide to deploying ML projects to k8s using Bodywork. It assumes that you understand the [key concepts](key_concepts.md) that Bodywork is built upon and that you have worked-through the Quickstart Tutorials.
 
-## Bodywork Project Structure
+## Deployment Project Structure
 
 Bodywork-compatible ML projects need to be structured in a specific way. All the files necessary for defining a stage must be contained within a directory dedicated to that stage. The directory name defines the name of the stage. This enables the Bodywork workflow-controller to identify the stages and run them in the desired order. Consider the following example directory structure,
 
@@ -33,11 +33,16 @@ root/
 
 Here we have five directories given names that relate to the ML tasks contained within them. There is also a single workflow configuration file, `bodywork.ini`. Each directory must contain the following files:
 
-- `*.py` - an executable Python module that contains all the code required for the stage. For example, `prepare_data.py` should be capable of performing all data preparation steps when executed from the command line using `python prepare_data.py`.
-- `requirements.txt` - for listing 3rd party Python packages required by the executable Python module. This must follow the [format required by Pip](https://pip.pypa.io/en/stable/reference/pip_install/#requirements-file-format).
-- `config.ini` - containing stage configuration that will be discussed in more detail below.
+`*.py`
+: An executable Python module that contains all the code required for the stage. For example, `prepare_data.py` should be capable of performing all data preparation steps when executed from the command line using `python prepare_data.py`.
 
-### Executing ML Tasks in Remote Python Environments
+`requirements.txt`
+: For listing 3rd party Python packages required by the executable Python module. This must follow the [format required by Pip](https://pip.pypa.io/en/stable/reference/pip_install/#requirements-file-format).
+
+`config.ini`
+: Containing stage configuration that will be discussed in more detail below.
+
+### Running Tasks in Remote Python Environments
 
 ![bodywork_diagram](images/ml_pipeline.svg)
 
@@ -61,9 +66,14 @@ LOG_LEVEL="INFO"
 
 Each configuration parameter is used as follows:
 
-- `PROJECT_NAME`: this will be used to identify all k8s resources deployed for this project.
-- `DOCKER_IMAGE`: the container image to use for remote execution of Bodywork workflows and stages. This should be set to `bodyworkml/bodywork-core:latest`, which will be pulled from [DockerHub](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core).
-- `DAG` - a description of the workflow structure - the stages to include in each step of the workflow - this will be discussed in more detail below.
+`PROJECT_NAME`
+: This will be used to identify all k8s resources deployed for this project.
+
+`DOCKER_IMAGE`
+: The container image to use for remote execution of Bodywork workflows and stages. This should be set to `bodyworkml/bodywork-core:latest`, which will be pulled from [DockerHub](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core).
+
+`DAG`
+: A description of the workflow structure - the stages to include in each step of the workflow - this will be discussed in more detail below.
 - `LOG_LEVEL`: must be one of: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Manages the types of log message to stream to the workflow-controller's standard output stream (stdout).
 
 ### Defining Workflow DAGs
@@ -106,9 +116,14 @@ The `[default]` section is common to all types of stage and the `[secrets]` sect
 
 Each `[default]` configuration parameter is to be used as follows:
 
-- `STAGE_TYPE`: one of `batch` or `service`. If `batch` is selected, then the executable script will be run as a discrete job (with a start and an end), and will be managed as a [k8s job](https://kubernetes.io/docs/concepts/workloads/controllers/job/). If `service` is selected, then the executable script will be run as part of a [k8s deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and will expose a [k8s cluster-ip service](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to enable access over HTTP, within the cluster.
-- `EXECUTABLE_SCRIPT`: the name of the executable Python module to run, which must exist within the stage's directory. Executable means that executing `python model_scoring_app.py` from the CLI would cause the module (or script) to run.
-- `CPU_REQUEST` / `MEMORY_REQUEST`: the compute resources to request from the cluster in order to run the stage. For more information on the units used in these parameters [refer here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes).
+`STAGE_TYPE`
+: One of `batch` or `service`. If `batch` is selected, then the executable script will be run as a discrete job (with a start and an end), and will be managed as a [k8s job](https://kubernetes.io/docs/concepts/workloads/controllers/job/). If `service` is selected, then the executable script will be run as part of a [k8s deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and will expose a [k8s cluster-ip service](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to enable access over HTTP, within the cluster.
+
+`EXECUTABLE_SCRIPT`
+: The name of the executable Python module to run, which must exist within the stage's directory. Executable means that executing `python model_scoring_app.py` from the CLI would cause the module (or script) to run.
+
+`CPU_REQUEST` / `MEMORY_REQUEST`
+: The compute resources to request from the cluster in order to run the stage. For more information on the units used in these parameters [refer here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes).
 
 ### Batch Stages
 
@@ -122,8 +137,11 @@ RETRIES=2
 
 Where:
 
-- `MAX_COMPLETION_TIME_SECONDS`: sets the time to wait for the given task to run, before retrying or raising a workflow execution error.
-- `RETRIES`: sets the number of times to retry executing a failed stage, before raising a workflow execution error.
+`MAX_COMPLETION_TIME_SECONDS`
+: Time to wait for the given task to run, before retrying or raising a workflow execution error.
+
+`RETRIES`
+: Number of times to retry executing a failed stage, before raising a workflow execution error.
 
 ### Service Deployment Stages
 
@@ -138,15 +156,20 @@ PORT=5000
 
 Where:
 
-- `MAX_STARTUP_TIME_SECONDS`: sets the time to wait for the service to be 'ready' without any errors having occurred. When the service reaches the time limit without raising errors, then it will be marked as 'successful'. If a service deployment stage fails to be successful, then the deployment will be automatically rolled-back to the previous version.
-- `REPLICAS`: the number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
-- `PORT`: the port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
+`MAX_STARTUP_TIME_SECONDS`
+: Time to wait for the service to be 'ready' without any errors having occurred. When the service reaches the time limit without raising errors, then it will be marked as 'successful'. If a service deployment stage fails to be successful, then the deployment will be automatically rolled-back to the previous version.
 
-### Injecting Secrets into Stage Containers
+`REPLICAS`
+: Number of independent containers running the service started by the stage's Python executable module -  `model_scoring_app.py`. The service endpoint will automatically route requests to each replica at random.
+
+`PORT`
+: The port to expose on the container - e.g. Flask-based services usually send and receive HTTP requests on port `5000`.
+
+### Injecting Secrets
 
 Credentials will be required whenever you wish to pull data or persist models to cloud storage, access private APIs, etc. We provide a secure mechanism for dynamically injecting credentials as environment variables within the container running a stage.
 
-The first step in this process is to store your project's secret credentials, securely within its namespace - see [Managing Credentials and Other Secrets](#managing-credentials-and-other-secrets) below for instructions on how to achieve this using Bodywork.
+The first step in this process is to store your project's secret credentials, securely within its namespace - see [Managing Credentials and Other Secrets](#managing-secrets) below for instructions on how to achieve this using Bodywork.
 
 The second step is to configure the use of this secret with the `[secrets]` section of the stages's `config.ini` file. For example,
 
@@ -167,7 +190,7 @@ if __name__ == '__main__':
     password = os.environ['PASSWORD']
 ```
 
-## Preparing a Namespace for use with Bodywork
+## Configuring Namespaces
 
 Each Bodywork project should operate within its own [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) in your k8s cluster. To setup a Bodywork compatible namespace, issue the following command from the CLI,
 
@@ -184,9 +207,9 @@ creating cluster-role-binding=bodywork-workflow-controller--my-classification-pr
 creating service-account=bodywork-jobs-and-deployments in namespace=my-classification-product
 ```
 
-We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created. This will grant containers in `my-classification-product` the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created. This will enable containers in the new namespace to list all available namespaces on the cluster. The appropriate cluster-role will be created if it does not yet exist.
+We can see that in addition to creating the namespace, two [service-accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) will also be created. This will grant containers in `my-classification-product` the appropriate authorisation to run workflows, batch jobs and deployments within the newly created namespace. Additionally, a [binding to a cluster-role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is also created. This will enable containers in the new namespace to list all available namespaces on the cluster. The cluster-role will be created if it does not yet exist.
 
-## Managing Credentials and Other Secrets
+## Managing Secrets
 
 Credentials will be required whenever you wish to pull data or persist models to cloud storage, or access private APIs from within a stage. We provide a secure mechanism for dynamically injecting secret credentials as environment variables into the container running a stage. Before a stage can be configured to inject a secret into its host container, the secret has to be placed within the k8s namespace that the workflow will be deployed to. This can be achieved from the command line - for example,
 
@@ -197,7 +220,7 @@ $ bodywork secret create \
     --data USERNAME=bodywork PASSWORD=bodywork123!
 ```
 
-Will store `USERNAME` and `PASSWORD` within a [k8s secret resource](https://kubernetes.io/docs/concepts/configuration/secret/) called `my-classification-product-cloud-storage-credentials` in the `my-classification-product` namespace. To inject `USERNAME` and `PASSWORD` as environment variables within a stage, see [Injecting Secrets into Stage Containers](#injecting-secrets-into-stage-containers) below.
+Will store `USERNAME` and `PASSWORD` within a [k8s secret resource](https://kubernetes.io/docs/concepts/configuration/secret/) called `my-classification-product-cloud-storage-credentials` in the `my-classification-product` namespace. To inject `USERNAME` and `PASSWORD` as environment variables within a stage, see [Injecting Secrets into Stage Containers](#injecting-secrets) below.
 
 ### Working with Private Git Repositories using SSH
 
@@ -224,7 +247,7 @@ https://github.com/my-github-username/my-classification-product
 
 ## Testing Workflows Locally
 
-Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but it is still orchestrating containers on k8s remotely. It will still clone your project from the specified branch of the Bodywork project's Git repository, and delete it once it has completed.
+Workflows can be triggered locally from the command line, with the workflow-controller logs streamed to your terminal. In this mode of operation, the workflow controller is operating on your local machine, but it is still orchestrating containers on k8s remotely. It will still clone your project from the specified branch of the Bodywork project's Git repository, and delete it when finished.
 
 For the example project used throughout this user guide, the CLI command for triggering the workflow locally using the `master` branch of the remote Git repository, would be as follows,
 
@@ -265,7 +288,7 @@ Should return the payload according to how you've defined your service in the ex
 
 We have explicitly excluded from Bodywork's scope, the task of enabling access to services from requests originating outside the cluster. There exist multiple patterns that can achieve this - e.g. via load balancers or ingress controllers - and the choice will depend on your project's specific requirements. Please refer to the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/) to learn more.
 
-### Deleting Redundant Service Deployments
+### Deleting Service Deployments
 
 Once you have finished testing, you may want to delete any service deployments that have been created. To list all active service deployments within a namespace, issue the command,
 
@@ -289,7 +312,7 @@ $ bodywork service delete
     --name=my-classification-product--model-scoring-service
 ```
 
-### Workflow-Controller Log Format
+### Workflow-Controller Logs
 
 All logs should start in the same way,
 
@@ -324,7 +347,7 @@ Collecting boto3==1.16.15
 
 The aim of this log structure is to provide a useful way of debugging workflows out-of-the-box, without forcing you to integrate a complete logging solution. This is not a replacement for a complete logging solution - e.g. one based on [Elasticsearch](https://www.elastic.co/observability). It is intended as a temporary solution to get your ML projects operational, as quickly as possible.
 
-## Running Workflows Remotely on a Schedule
+## Scheduling Workflows
 
 If your workflows are executing successfully, then you can schedule the workflow-controller to operate remotely on the cluster as a [k8s cronjob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/). For example, issuing the following command from the CLI,
 
@@ -353,7 +376,7 @@ JOB_NAME                                START_TIME                    COMPLETION
 my-classification-product-1605214260    2020-11-12 20:51:04+00:00     2020-11-12 20:52:34+00:00     0           1               0
 ```
 
-### Accessing Workflow Logs
+### Accessing Historic Logs
 
 The logs for each job executed by the cronjob are contained within the remote workflow-controller. The logs for a single workflow execution attempt can be retrieved by issuing the `bodywork cronjob logs` command on the CLI - for example,
 

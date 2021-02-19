@@ -4,28 +4,31 @@
 
 This tutorial builds upon concepts introduced in the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials. It demonstrates how multi-stage ML pipelines can be deployed using Bodywork.
 
-This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-ml-pipeline-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below.
 
+!!! info "Working with private repositories"
+    If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+
 ## What am I going to Learn?
 
-* How to take a solution to a ML task developed within a Jupyter notebook, and map it into two separate Python modules: one for training a model and one for serving the trained model via a REST API endpoint.
-* How to execute these `train` and `deploy` modules (that form a simple ML pipeline), remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
-* How to interact-with and test the model-scoring service that has been deployed to Kubernetes.
-* How to run the pipeline on a schedule, so that the model is periodically re-trained and then re-deployed (when new data is available), without the manual intervention of an ML engineer.
+* How to map a solution to a ML task within a Jupyter notebook, into two Python modules: one for training a model and one for serving the trained model via a REST API endpoint.
+* How to execute the `train` and `deploy` modules (a simple ML pipeline), remotely on a [Kubernetes](https://kubernetes.io/) cluster, using [GitHub](https://github.com/) and [Bodywork](https://bodywork.readthedocs.io/en/latest/).
+* How to test the REST API service that has been deployed to Kubernetes.
+* How to run the pipeline on a schedule, so that the model is periodically re-trained and then re-deployed, without the manual intervention of an ML engineer.
 
-## A Machine Learning Task
+## The ML Task
 
 The ML problem we have chosen to use for this example, is the classification of iris plants into one of their three sub-species, given their physical dimensions. It uses the [iris plants dataset](https://scikit-learn.org/stable/datasets/index.html#iris-dataset) and is an example of a multi-class classification task.
 
-The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [project's GitHub reository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), documents the trivial ML workflow used to arrive at a proposed solution to this task. It trains a Decision Tree classifier and persists the trained model to cloud storage. Take five minutes to read through it.
+The Jupyter notebook titled [ml_prototype_work.ipynb](https://github.com/bodywork-ml/bodywork-ml-pipeline-project/blob/master/ml_prototype_work.ipynb) and found in the root of the [project's GitHub repository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), documents the trivial ML workflow used to arrive at a proposed solution to this task. It trains a Decision Tree classifier and persists the trained model to cloud storage. Take five minutes to read through it.
 
-## A Machine Learning Operations Task
+## The MLOps Task
 
 Now that we have developed a solution to our chosen ML task, how do we get it into production - i.e. how can we split the Jupyter notebook into a 'train-model' stage that persists a trained model to cloud storage, and a separate 'deploy-scoring-service' stage that will load the persisted model and start a web service to expose a model-scoring API?
 
-The solution using Bodywork is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), whose root directory is as follows,
+The Bodywork project for this multi-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-ml-pipeline-project), whose root directory is as follows,
 
 ```text
 root/
@@ -42,14 +45,14 @@ root/
 
 The remainder of this tutorial is concerned with explaining what is contained within these directories and their files and how to use Bodywork to to deploy the solution to Kubernetes.
 
-## Configuring a Batch Stage for Training the Model
+## Configuring the Batch Stage
 
 The `stage-1-train-model` directory contains the code and configuration required to train the model within a [pre-built Bodywork container](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core), as a batch workload. Using the `ml_prototype_work.ipynb` notebook as a reference, the `train_model.py` module contains the code required to:
 
-* download data from an AWS S3 bucket;
-* pre-process the data (e.g. extract labels for supervised learning);
-* train the model and compute performance metrics; and,
-* persist the model to the same AWS S3 bucket that contains the original data.
+1. download data from an AWS S3 bucket;
+2. pre-process the data (e.g. extract labels for supervised learning);
+3. train the model and compute performance metrics; and,
+4. persist the model to the same AWS S3 bucket that contains the original data.
 
 It can be summarised as,
 
@@ -121,11 +124,11 @@ RETRIES=2
 
 From which it is clear to see that we have specified that this stage is a batch stage (as opposed to a service-deployment), that `train_model.py` should be the script that is run, together with an estimate of the CPU and memory resources to request from the k8s cluster, how long to wait and how many times to retry, etc.
 
-## Configuring a Service Stage for Serving the Model
+## Configuring the Service Stage
 
 The `stage-2-deploy-scoring-service` directory contains the code and configuration required to load the model trained in `stage-1-train-model` and use it to score single instances (or rows) of data, sent to a REST API endpoint in JSON format. The model's score will be used to return the model's prediction as JSON data in the response.
 
-We have choosen to use the [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to engineer our REST API server. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
+We have chosen to use the [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to engineer our REST API server. The use of Flask is **not** a requirement and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
 Within this stage's directory, `serve_model.py` defines the REST API server application. It can be summarised as,
 
@@ -273,7 +276,7 @@ If successful, you should get the following response,
 }
 ```
 
-## Executing the Workflow Remotely on a Schedule
+## Scheduling the Workflow
 
 If you're happy with the test results, then you can schedule the workflow-controller to operate remotely on the cluster as a k8s cronjob. To setup the the workflow to run every hour, for example, use the following command,
 

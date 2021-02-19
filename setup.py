@@ -28,6 +28,9 @@ with open('requirements_pkg.txt') as f:
 with open('requirements_dev.txt') as f:
     requirements_dev = f.read().splitlines()
 
+with open('requirements_doc.txt') as f:
+    requirements_doc = f.read().splitlines()
+
 # load the README file and use it as the long_description for PyPI
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -53,6 +56,7 @@ setup(
     install_requires=requirements_pkg,
     extras_require={
         'dev': requirements_dev,
+        'doc': requirements_doc,
     },
     zip_safe=True,
     entry_points={

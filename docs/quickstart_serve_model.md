@@ -2,19 +2,22 @@
 
 ![serve_model](images/serve_model.png)
 
-This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-serve-model-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine. If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+This tutorial refers to files within a Bodywork project hosted on GitHub - check it out [here](https://github.com/bodywork-ml/bodywork-serve-model-project). If you want to execute the examples, you will need to have setup [access to a Kubernetes cluster](index.md#prerequisites) and [installed bodywork](installation.md) on your local machine.
 
 We **strongly** recommend that you find five minutes to read about the [key concepts](key_concepts.md) that Bodywork is built upon, before beginning to work-through the examples below.
 
+!!! info "Working with private repositories"
+    If you've cloned the example project into a private repository and intend to use it for this tutorial, then you will need to follow the necessary configuration steps detailed [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+
 ## What am I going to Learn?
 
-* How to configure a Bodywork project to deploy a pre-trained model, as a model-scoring service with a REST API, on Kubernetes.
-* How to deploy the service.
-* How to test the deployed service.
+* [x] How to deploy a pre-trained model, as a microservice with a REST API, to Kubernetes.
+* [x] How to deploy the service.
+* [x] How to test the deployed service.
 
-## A REST API Service that Returns Predicted Classes
+## A REST API for Predicting Class
 
-The example model that we want to serve returns the predicted sub-species of iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Deploy ML Pipeline'](quickstart_ml_pipeline.md#a-machine-learning-task).
+The example model that we want to serve returns the predicted sub-species of iris plant, given four of its critical dimensions as inputs. For more information on this ML task see ['Quickstart - Deploy ML Pipeline'](quickstart_ml_pipeline.md#the-ml-task).
 
 The Bodywork project for this single-stage workflow is packaged as a [GitHub repository](https://github.com/bodywork-ml/bodywork-serve-model-project), whose root directory is structured as follows,
 
@@ -30,7 +33,7 @@ root/
 
 We have included the pre-trained model as part of the Bodywork project, for convenience (not as best practice).
 
-## Configuring the Service Stage
+## Configuring the Stage
 
 The `scoring-service` directory contains the code and configuration required to load a pre-trained model and use it to score a single instance (or row) of data, sent as JSON to a REST API endpoint. We have chosen to use the [Flask](https://flask.palletsprojects.com/en/1.1.x/) framework with which to engineer our REST API server application. The use of Flask is **not** a requirement in any way and you are free to use different frameworks - e.g. [FastAPI](https://fastapi.tiangolo.com).
 
@@ -71,7 +74,7 @@ if __name__ == '__master__':
     app.run(host='0.0.0.0', port=5000)
 ```
 
-We recommend that you spend five minutes familiarising yourself with the full contents of [service.py](https://github.com/bodywork-ml/bodywork-serve-model-project/blob/master/scoring-service/service.py). When Bodywork runs the stage, it will do so in exactly the same way as if you were to run,
+We recommend that you spend five minutes familiarising yourself with the full contents of [service.py](https://github.com/bodywork-ml/bodywork-serve-model-project/blob/master/scoring-service/service.py). When Bodywork runs the stage, it will do so in the same way as if you were to run,
 
 ```shell
 $ python service.py
@@ -159,7 +162,7 @@ Which will run the workflow defined in the `master` branch of the project's remo
 $ kubectl -n scoring-service get all
 ```
 
-## Testing the Deployed Service
+## Testing the API
 
 Service deployments are accessible via HTTP from within the cluster - they are not exposed to the public internet. To test a service from your local machine you will first of all need to start a proxy server to enable access to your cluster. This can be achieved by issuing the following command,
 

@@ -4,20 +4,21 @@
 
 ## Stages
 
-Each task you want to run, such as training a model, scoring data or starting a model-scoring service, will need to be defined within an executable Python module. This Python module defines a single **stage**. Bodywork will run each stage in its own pre-built [Bodywork container](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core), on Kubernetes.
-
-### Batch vs. Service Stages
+Each task you want to run, such as training a model, scoring data or starting a model-scoring service, needs to be defined within an executable Python module. Each module defines a single **stage**. Bodywork will run each stage in its own pre-built [Bodywork container](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core), on Kubernetes.
 
 There are two different types of stage that can be created:
 
-* **batch stage**: for executing code that performs a discrete task - e.g. preparing features, training a model or scoring a dataset. Batch stages have a well defined end and will be automatically shut-down after they have successfully completed.
-* **service stage**: for executing code that starts a service - e.g. a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application that loads a model and then exposes a REST API for model-scoring. Service stages are long-running processes with no end, that will be kept up-and-running until they are deleted.
+`Batch Stage`
+: For executing code that performs a discrete task - e.g. preparing features, training a model or scoring a dataset. Batch stages have a well defined end and will be automatically shut-down after they have successfully completed.
+
+`Service Stage`
+: For executing code that starts a service - e.g. a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application that loads a model and then exposes a REST API for model-scoring. Service stages are long-running processes with no end, that will be kept up-and-running until they are deleted.
 
 ## Steps
 
 A **step** is a collection of one or more stages that can be running at the same time (concurrently). For example, when training multiple models in parallel or starting multiple services at once. Stages that should only be executed after another stage has finished, should be placed in different steps, in the correct order.
 
-## Workflows
+## Workflow
 
 A **workflow** is an ordered collection of one or more steps, that are executed sequentially, where the next step is only executed after all of the stages in the previous step have completed successfully. A workflow can be represented as a [Directed Acyclic Graph (DAG)](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
@@ -41,7 +42,7 @@ Most ML projects can be described by one model-training stage and one service de
 
 ## Deployment from Git Repos
 
-Bodywork requires projects to be stored and distributed as Git repositories - e.g. on GitHub. It will clone the project repository directly and execute the stages defined within it, according to the workflow DAG. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
+Bodywork requires projects to be stored and distributed as Git repositories - e.g. hosted on GitHub. It will clone the project repository directly and execute the stages defined within it, according to the workflow DAG. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
 
 ![bodywork_diagram](images/ml_pipeline.svg)
 
@@ -51,13 +52,21 @@ Bodywork machine learning projects need to adopt a specific structure. The neces
 
 These files will be discussed in more detail later on, but briefly:
 
-* `*.py` - executable Python modules that run the code required by their stage.
-* `requirements.txt` - 3rd party Python package requirements for each individual stage.
-* `config.ini` - stage configuration data, such as the type of stage (batch or serving), secret credentials that need to be retrieved from k8s, etc.
-* `bodywork.ini` - workflow configuration data, such as the DAG definition used to assign stages to steps and the order in which the steps will be executed.
+`*.py`
+: Executable Python modules that run the code required by their stage.
 
-This project can then be configured to run on schedule with one command,
+`requirements.txt`
+: 3rd party Python package requirements for each individual stage.
+
+`config.ini`
+: Stage configuration data, such as the type of stage (batch or serving), secret credentials that need to be retrieved from k8s, etc.
+
+`bodywork.ini`
+: Workflow configuration data, such as the DAG definition used to assign stages to steps and the order in which the steps will be executed.
+
+This project can then be configured to run on a schedule with one command,
 
 ![schedule_workflow](images/key_concept_schedule_cli.png)
 
-Assuming the repository is public - for more information on using private repositories, see [here](user_guide.md#working-with-private-git-repositories-using-ssh).
+!!! info "Working with private Git repositories"
+    The example above assumes the GitHub repository is public - for more information on working with private repositories, please see [here](user_guide.md#working-with-private-git-repositories-using-ssh).
