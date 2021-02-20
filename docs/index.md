@@ -20,7 +20,7 @@ Bodywork is aimed at teams who want to deploy machine learning projects in conta
 
 The process of building container images and deploying them to an orchestration platform is a complex engineering task. The diagram below shows the steps required to deploy a model-scoring service, together with the tools you could use to achieve this.
 
-![old_devops_flow](images/ml_devops_flow.svg)
+![old_devops_flow](images/ml_devops_flow.png)
 
 Developing and maintaining these deployment pipelines is time-consuming. If there are multiple projects, each requiring re-training and re-deployment, then without the type of automation that Bodywork provides, management of these pipelines will quickly become a large burden.
 
@@ -36,7 +36,7 @@ When Kubernetes triggers a Bodywork deployment, it runs pre-built [Bodywork cont
 
 This process is shown below for a `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
-![bodywork_diagram](images/ml_pipeline.svg)
+![bodywork_diagram](images/ml_pipeline.png)
 
 ## What will I need to Do?
 
@@ -52,7 +52,7 @@ You do **not** need to tie yourself to new APIs - package your existing codebase
 
 Because Bodywork can run deployments on a schedule, every time cloning the latest version of your codebase in the target branch, this system naturally forms an end-to-end CI/CD platform for your machine learning project, as illustrated below.
 
-![cicd](images/cicd_with_bodywork.svg)
+![cicd](images/cicd_with_bodywork.png)
 
 This is the [GitOps](https://www.gitops.tech) pattern for cloud native continuous delivery.
 
@@ -89,7 +89,7 @@ If Bodywork sounds like a useful tool, then please give a **GitHub Star ★** to
 
 Before you start exploring what Bodywork can do for you, you will need:
 
-`Access to a Kubernetes Cluster` 
+`Access to a Kubernetes Cluster`
 : Either locally using [minikube](https://minikube.sigs.k8s.io/docs/) or [Docker-for-desktop](https://www.docker.com/products/docker-desktop), or as a managed service from a cloud provider, such as [EKS on AWS](https://aws.amazon.com/eks) or [AKS on Azure](https://azure.microsoft.com/en-us/services/kubernetes-service/).
 
 `A GitHub Account`
