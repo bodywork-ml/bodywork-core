@@ -42,7 +42,7 @@ Bodywork is aimed at teams who want to deploy machine learning projects in conta
 Bodywork is distributed as a Python package that exposes a command line interface for configuring Kubernetes to run Bodywork deployments. It takes just one command to schedule a pipeline hosted on GitHub to run every evening,
 
 <div align="center">
-<img src="docs/images/bodywork_cronjob_create.png"/>
+<img src="docs/images/bodywork_cronjob_create.png" width="610" height="220"/>
 </div>
 
 ## What does Bodywork Do?
