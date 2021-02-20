@@ -1,6 +1,6 @@
 # Deploying a Machine Learning Pipeline
 
-![ml_pipeline](images/ml_pipeline.svg)
+![ml_pipeline](images/ml_pipeline.png)
 
 This tutorial builds upon concepts introduced in the [Batch Job](quickstart_batch_job.md) and [Serve Model](quickstart_serve_model.md) quickstart tutorials. It demonstrates how multi-stage ML pipelines can be deployed using Bodywork.
 

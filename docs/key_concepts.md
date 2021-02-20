@@ -1,6 +1,6 @@
 # Stages, Steps and Workflows
 
-![workflows](images/stages_steps_workflows.svg)
+![workflows](images/stages_steps_workflows.png)
 
 ## Stages
 
@@ -44,7 +44,7 @@ Most ML projects can be described by one model-training stage and one service de
 
 Bodywork requires projects to be stored and distributed as Git repositories - e.g. hosted on GitHub. It will clone the project repository directly and execute the stages defined within it, according to the workflow DAG. At no point is there any need to build Docker images and push them to a container registry. This simplifies the [CI/CD](https://en.wikipedia.org/wiki/CI/CD) pipeline for your project, so that you can focus on the aspects (e.g. tests) that are more relevant to your machine learning task.
 
-![bodywork_diagram](images/ml_pipeline.svg)
+![bodywork_diagram](images/ml_pipeline.png)
 
 Bodywork machine learning projects need to adopt a specific structure. The necessary Python modules and configuration files required for each stage have to be contained within their own directories in your repository. For the train-and-serve scenario, the required directory project structure would be similar to:
 
