@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/website_logo_transparent_background_full.png"/>
+<img src="docs/images/bodywork_logo.png"/>
 </div>
 
 <div align="center">
@@ -42,7 +42,7 @@ Bodywork is aimed at teams who want to deploy machine learning projects in conta
 Bodywork is distributed as a Python package that exposes a command line interface for configuring Kubernetes to run Bodywork deployments. It takes just one command to schedule a pipeline hosted on GitHub to run every evening,
 
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bodywork-cronjob-create.png" width="610" height="220"/>
+<img src="docs/images/bodywork_cronjob_create.png" width="610" height="220"/>
 </div>
 
 ## What does Bodywork Do?
@@ -52,7 +52,7 @@ When Kubernetes triggers a Bodywork deployment, it runs pre-built [Bodywork cont
 This process is shown below for a `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/ml_pipeline.svg"/>
+<img src="docs/images/ml_pipeline.png"/>
 </div>
 
 ## What will I need to Do?
@@ -60,7 +60,7 @@ This process is shown below for a `train-and-serve` pipeline with two stages: tr
 Divide your project into discrete stages, creating a new directory for each one. Every stage will need an executable Python module for Bodywork to run, a requirements file for installing external Python dependencies, and a simple config file. Bundle these files together with a workflow execution plan, into a Git repository and you're ready to go.
 
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/project_structure_map.png"/>
+<img src="docs/images/project_structure_map.png"/>
 </div>
 
 You do **not** need to tie yourself to new APIs - package your existing codebase into this framework and watch as Bodywork pulls each stage into its own container and deploys to Kubernetes.
@@ -70,7 +70,7 @@ You do **not** need to tie yourself to new APIs - package your existing codebase
 Because Bodywork can run deployments on a schedule, every time cloning the latest version of your codebase in the target branch, this system naturally forms an end-to-end CI/CD platform for your machine learning project, as illustrated below.
 
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/cicd_with_bodywork.png"/>
+<img src="docs/images/cicd_with_bodywork.png"/>
 </div>
 
 This is the [GitOps](https://www.gitops.tech) pattern for cloud native continuous delivery.
