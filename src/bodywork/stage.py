@@ -174,7 +174,7 @@ class ServiceStage(Stage):
             if config['service']['INGRESS'] not in ('True', 'False'):
                 raise ValueError('expected boolean value')
             else:
-                create_ingress = config['service']['INGRESS']
+                create_ingress = bool(config['service']['INGRESS'])
         except (KeyError, ValueError) as e:
             raise BodyworkStageConfigError('INGRESS', 'service', name) from e
 
