@@ -148,7 +148,7 @@ class ServiceStage(Stage):
             directory.
         :raises BodyworkStageConfigError: If mandatory service stage
             parameters have not been set: REPLICAS,
-            MAX_STARTUP_TIME_SECONDS and PORT.
+            MAX_STARTUP_TIME_SECONDS, PORT and INGRESS.
         """
         try:
             replicas = int(config['service']['REPLICAS'])
