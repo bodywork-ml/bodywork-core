@@ -282,7 +282,7 @@ def test_delete_all_namespace_deployments_tries_to_delete_deployments_with_k8s_a
 
 
 @patch('kubernetes.client.AppsV1Api')
-def test__get_deployment_status_correctly_determines_complete_status(
+def test_get_deployment_status_correctly_determines_complete_status(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
@@ -306,7 +306,7 @@ def test__get_deployment_status_correctly_determines_complete_status(
 
 
 @patch('kubernetes.client.AppsV1Api')
-def test__get_deployment_status_raises_exception_when_status_cannot_be_determined(
+def test_get_deployment_status_raises_exception_when_status_cannot_be_determined(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
