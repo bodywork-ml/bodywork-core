@@ -437,3 +437,15 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
         name=name,
         propagation_policy='Background'
     )
+
+
+def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
+    pass
+
+
+def delete_deployment_ingress(namespace: str, name: str) -> None:
+    pass
+
+
+def has_ingress(namespace: str, name: str) -> bool:
+    pass

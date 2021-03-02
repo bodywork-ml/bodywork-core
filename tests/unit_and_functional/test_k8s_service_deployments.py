@@ -28,10 +28,13 @@ from pytest import fixture, raises
 from bodywork.k8s.service_deployments import (
     configure_service_stage_deployment,
     create_deployment,
+    create_deployment_ingress,
     delete_all_namespace_deployments,
     delete_deployment,
+    delete_deployment_ingress,
     DeploymentStatus,
     expose_deployment_as_cluster_service,
+    has_ingress,
     is_existing_deployment,
     is_exposed_as_cluster_service,
     _get_deployment_status,
@@ -438,8 +441,7 @@ def test_expose_deployment_as_cluster_service_tries_to_expose_deployment_as_serv
 
 @patch('kubernetes.client.CoreV1Api')
 def test_is_exposed_as_cluster_service_identifies_existing_services(
-    mock_k8s_core_api: MagicMock,
-    service_stage_deployment_object: kubernetes.client.V1Deployment
+    mock_k8s_core_api: MagicMock
 ):
     mock_k8s_core_api().list_namespaced_service.side_effect = [
         kubernetes.client.V1ServiceList(
@@ -475,3 +477,25 @@ def test_stop_exposing_cluster_service_tries_to_stop_exposing_deployment_as_serv
         name='bodywork-test-project--serve',
         propagation_policy='Background'
     )
+
+
+@patch('kubernetes.client.ExtensionsV1beta1Api')
+def test_create_deployment_ingress_tries_to_create_ingress_resource(
+    mock_k8s_extensions_api: MagicMock,
+    service_stage_deployment_object: kubernetes.client.V1Deployment
+):
+    pass
+
+
+@patch('kubernetes.client.ExtensionsV1beta1Api')
+def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
+    mock_k8s_extensions_api: MagicMock
+):
+    pass
+
+
+@patch('kubernetes.client.ExtensionsV1beta1Api')
+def test_has_ingress_identifies_existing_ingress_resources(
+    mock_k8s_extensions_api: MagicMock,
+):
+    pass
