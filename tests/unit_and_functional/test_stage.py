@@ -83,7 +83,7 @@ def test_stage_factory_raises_errors_for_invalid_stage_directories(
 
 
 def test_generic_stage_input_validation(project_repo_location: Path):
-    stage_name = 'stage_14_bad_executable_script'
+    stage_name = 'stage_16_bad_executable_script'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
@@ -97,21 +97,21 @@ def test_generic_stage_input_validation(project_repo_location: Path):
     with raises(FileExistsError, match='Cannot find'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_15_bad_requirements'
+    stage_name = 'stage_17_bad_requirements'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
     with raises(FileExistsError, match='Cannot find'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_16_bad_memory_request'
+    stage_name = 'stage_18_bad_memory_request'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
     with raises(BodyworkStageConfigError, match='MEMORY_REQUEST_MB'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_17_bad_cpu_request'
+    stage_name = 'stage_19_bad_cpu_request'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
@@ -169,6 +169,20 @@ def test_service_stage_input_validation(project_repo_location: Path):
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
     with raises(BodyworkStageConfigError, match='MAX_STARTUP_TIME_SECONDS'):
+        ServiceStage(stage_name, config, path_to_stage_dir)
+
+    stage_name = 'stage_14_bad_service_data'
+    path_to_stage_dir = project_repo_location / stage_name
+    path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
+    config = BodyworkConfig(path_to_config)
+    with raises(BodyworkStageConfigError, match='INGRESS'):
+        ServiceStage(stage_name, config, path_to_stage_dir)
+
+    stage_name = 'stage_15_bad_service_data'
+    path_to_stage_dir = project_repo_location / stage_name
+    path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
+    config = BodyworkConfig(path_to_config)
+    with raises(BodyworkStageConfigError, match='INGRESS'):
         ServiceStage(stage_name, config, path_to_stage_dir)
 
 
