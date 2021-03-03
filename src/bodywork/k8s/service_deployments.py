@@ -440,7 +440,52 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
 
 
 def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
-    pass
+    """Create an ingress to a service backed by a deployment.
+
+    :param deployment: A configured deployment object.
+    """
+    namespace = deployment.metadata.namespace
+    name = deployment.metadata.name
+    pod_port = int(deployment.metadata.annotations['port'])
+
+    ingress_path = f'/{namespace}/{name}(/|$)(.*)'
+
+    ingress_spec = k8s.ExtensionsV1beta1IngressSpec(
+        rules=[
+            k8s.ExtensionsV1beta1IngressRule(
+                http=k8s.ExtensionsV1beta1HTTPIngressRuleValue(
+                    paths=[
+                        k8s.ExtensionsV1beta1HTTPIngressPath(
+                            path=ingress_path,
+                            backend=k8s.ExtensionsV1beta1IngressBackend(
+                                service_name=name,
+                                service_port=pod_port
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    )
+
+    ingress_metadata = k8s.V1ObjectMeta(
+        namespace=namespace,
+        name=name,
+        annotations={
+            'kubernetes.io/ingress.class': 'nginx',
+            'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+        }
+    )
+
+    ingress = k8s.ExtensionsV1beta1Ingress(
+        metadata=ingress_metadata,
+        spec=ingress_spec
+    )
+
+    k8s.ExtensionsV1beta1Api().create_namespaced_ingress(
+        namespace=namespace,
+        body=ingress
+    )
 
 
 def delete_deployment_ingress(namespace: str, name: str) -> None:

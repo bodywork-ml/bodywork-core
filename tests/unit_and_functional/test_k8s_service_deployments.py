@@ -484,7 +484,42 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
     mock_k8s_extensions_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
-    pass
+
+    ingress_spec=kubernetes.client.ExtensionsV1beta1IngressSpec(
+        rules=[
+            kubernetes.client.ExtensionsV1beta1IngressRule(
+                http=kubernetes.client.ExtensionsV1beta1HTTPIngressRuleValue(
+                    paths=[
+                        kubernetes.client.ExtensionsV1beta1HTTPIngressPath(
+                            path='/bodywork-dev/bodywork-test-project--serve(/|$)(.*)',
+                            backend=kubernetes.client.ExtensionsV1beta1IngressBackend(
+                                service_name='bodywork-test-project--serve',
+                                service_port=5000
+                            )
+                        )
+                    ]
+                )
+            )
+        ]
+    )
+
+    ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+        metadata=kubernetes.client.V1ObjectMeta(
+            namespace='bodywork-dev',
+            name='bodywork-test-project--serve',
+            annotations={
+                'kubernetes.io/ingress.class': 'nginx',
+                'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+            }
+        ),
+        spec=ingress_spec
+    )
+
+    create_deployment_ingress(service_stage_deployment_object)
+    mock_k8s_extensions_api().create_namespaced_ingress.assert_called_once_with(
+        namespace='bodywork-dev',
+        body=ingress_object
+    )
 
 
 @patch('kubernetes.client.ExtensionsV1beta1Api')
