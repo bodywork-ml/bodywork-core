@@ -148,7 +148,7 @@ class ServiceStage(Stage):
             directory.
         :raises BodyworkStageConfigError: If mandatory service stage
             parameters have not been set: REPLICAS,
-            MAX_STARTUP_TIME_SECONDS and PORT.
+            MAX_STARTUP_TIME_SECONDS, PORT and INGRESS.
         """
         try:
             replicas = int(config['service']['REPLICAS'])
@@ -170,9 +170,18 @@ class ServiceStage(Stage):
         except (KeyError, ValueError) as e:
             raise BodyworkStageConfigError('PORT', 'service', name) from e
 
+        try:
+            if config['service']['INGRESS'] not in ('True', 'False'):
+                raise ValueError('expected boolean value')
+            else:
+                create_ingress = bool(config['service']['INGRESS'])
+        except (KeyError, ValueError) as e:
+            raise BodyworkStageConfigError('INGRESS', 'service', name) from e
+
         self.replicas = replicas
         self.max_startup_time = max_startup_time
         self.port = port
+        self.create_ingress = create_ingress
         super().__init__(name, config, path_to_stage_dir)
 
 
