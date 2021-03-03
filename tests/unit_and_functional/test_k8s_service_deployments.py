@@ -509,7 +509,8 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
             name='bodywork-test-project--serve',
             annotations={
                 'kubernetes.io/ingress.class': 'nginx',
-                'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+                'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+                'bodywork': 'true'
             }
         ),
         spec=ingress_spec
@@ -538,4 +539,45 @@ def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
 def test_has_ingress_identifies_existing_ingress_resources(
     mock_k8s_extensions_api: MagicMock,
 ):
-    pass
+    mock_k8s_extensions_api().list_namespaced_ingress.side_effect = [
+        kubernetes.client.ExtensionsV1beta1IngressList(
+            items=[
+                kubernetes.client.ExtensionsV1beta1Ingress(
+                    metadata=kubernetes.client.V1ObjectMeta(
+                        name='bodywork--serve',
+                        annotations={
+                            'kubernetes.io/ingress.class': 'nginx',
+                            'bodywork': 'true'
+                        }
+                    )
+                )
+            ]
+        ),
+        kubernetes.client.ExtensionsV1beta1IngressList(
+            items=[
+                kubernetes.client.ExtensionsV1beta1Ingress(
+                    metadata=kubernetes.client.V1ObjectMeta(
+                        name='bodywork--serve',
+                        annotations={
+                            'kubernetes.io/ingress.class': 'nginx',
+                        }
+                    )
+                )
+            ]
+        ),
+        kubernetes.client.ExtensionsV1beta1IngressList(
+            items=[
+                kubernetes.client.ExtensionsV1beta1Ingress(
+                    metadata=kubernetes.client.V1ObjectMeta(
+                        name='bodywork--some-other-service',
+                        annotations={
+                            'kubernetes.io/ingress.class': 'nginx',
+                        }
+                    )
+                )
+            ]
+        )
+    ]
+    assert has_ingress('bodywork-dev', 'bodywork--serve') is True
+    assert has_ingress('bodywork-dev', 'bodywork--serve') is False
+    assert has_ingress('bodywork-dev', 'bodywork--serve') is False

@@ -473,7 +473,8 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
         name=name,
         annotations={
             'kubernetes.io/ingress.class': 'nginx',
-            'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+            'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+            'bodywork': 'true'
         }
     )
 
@@ -491,8 +492,8 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
 def delete_deployment_ingress(namespace: str, name: str) -> None:
     """Delete an ingress to a service backed by a deployment.
 
-    :param namespace: Namespace in which exists the service to delete.
-    :param names: The name of the service.
+    :param namespace: Namespace in which exists the ingress to delete.
+    :param names: The name of the ingress.
     """
     k8s.ExtensionsV1beta1Api().delete_namespaced_ingress(
         namespace=namespace,
@@ -502,4 +503,18 @@ def delete_deployment_ingress(namespace: str, name: str) -> None:
 
 
 def has_ingress(namespace: str, name: str) -> bool:
-    pass
+    """Does a service backed by a deployment have an ingress?
+
+    :param namespace: Namespace in which to look for ingress resources.
+    :param names: The name of the ingress.
+    """
+    def is_bodywork_ingress(ingress: k8s.ExtensionsV1beta1Ingress) -> bool:
+        return True if ingress.metadata.annotations.get('bodywork') else False
+
+    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(namespace=namespace)
+    ingress_names = [
+        ingress.metadata.name
+        for ingress in ingresses.items
+        if is_bodywork_ingress(ingress)
+    ]
+    return True if name in ingress_names else False
