@@ -489,7 +489,16 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
 
 
 def delete_deployment_ingress(namespace: str, name: str) -> None:
-    pass
+    """Delete an ingress to a service backed by a deployment.
+
+    :param namespace: Namespace in which exists the service to delete.
+    :param names: The name of the service.
+    """
+    k8s.ExtensionsV1beta1Api().delete_namespaced_ingress(
+        namespace=namespace,
+        name=name,
+        propagation_policy='Background'
+    )
 
 
 def has_ingress(namespace: str, name: str) -> bool:

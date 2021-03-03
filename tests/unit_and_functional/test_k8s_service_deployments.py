@@ -526,7 +526,12 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
 def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
     mock_k8s_extensions_api: MagicMock
 ):
-    pass
+    delete_deployment_ingress('bodywork-dev', 'bodywork-test-project--serve')
+    mock_k8s_extensions_api().delete_namespaced_ingress.assert_called_once_with(
+        namespace='bodywork-dev',
+        name='bodywork-test-project--serve',
+        propagation_policy='Background'
+    )
 
 
 @patch('kubernetes.client.ExtensionsV1beta1Api')
