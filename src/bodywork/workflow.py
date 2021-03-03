@@ -210,7 +210,7 @@ def run_workflow(
                                  f'namespace={namespace}')
                     raise e
 
-                for deployment_object in deployment_objects:
+                for deployment_object, stage in zip(deployment_objects, service_stages):
                     deployment_name = deployment_object.metadata.name
                     deployment_port = deployment_object.metadata.annotations['port']
                     log.info(f'successful deployment={deployment_name} in '
@@ -222,7 +222,18 @@ def run_workflow(
                                  f'http://{deployment_name}.{namespace}.svc.cluster'
                                  f'.local:{deployment_port}')
                         k8s.expose_deployment_as_cluster_service(deployment_object)
-
+                    if (not k8s.has_ingress(namespace, deployment_name)
+                            and stage.create_ingress):
+                        log.info(f'creating ingress for deployment={deployment_name} in '
+                                 f'namespace={namespace} with'
+                                 f'path=/{namespace}/{deployment_name}')
+                        k8s.create_deployment_ingress(deployment_object)
+                    if (k8s.has_ingress(namespace, deployment_name)
+                            and not stage.create_ingress):
+                        log.info(f'deleting ingress for deployment={deployment_name} in '
+                                 f'namespace={namespace} with'
+                                 f'path=/{namespace}/{deployment_name}')
+                        k8s.delete_deployment_ingress(namespace, deployment_name)
             log.info(f'successfully executed DAG step={step}')
         log.info(f'successfully ran workflow for project={repo_url} on '
                  f'branch={repo_branch} in kubernetes namespace={namespace}')
