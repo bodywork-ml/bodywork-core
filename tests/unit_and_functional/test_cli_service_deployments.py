@@ -45,7 +45,8 @@ def test_display_service_deployments_in_namespace(
             'available_replicas': 1,
             'unavailable_replicas': 0,
             'git_url': 'project_repo_url',
-            'git_branch': 'project_repo_branch'
+            'git_branch': 'project_repo_branch',
+            'has_ingress': 'true'
         }
     }
     display_service_deployments_in_namespace('bodywork-dev')

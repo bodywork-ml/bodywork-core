@@ -30,22 +30,16 @@ def display_service_deployments_in_namespace(namespace: str) -> None:
         print(f'namespace={namespace} could not be found on k8s cluster')
         return None
     service_deployments = k8s.list_service_stage_deployments(namespace)
-    print(
-        f'{"SERVICE_URL":<50}'
-        f'{"EXPOSED":<10}'
-        f'{"AVAILABLE_REPLICAS":<25}'
-        f'{"UNAVAILABLE_REPLICAS":<25}'
-        f'{"GIT_URL":<45}'
-        f'{"GIT_BRANCH":<20}'
-    )
-    for _, data in service_deployments.items():
+    for name, data in service_deployments.items():
         print(
-            f'{data["service_url"]:<50}'
-            f'{data["service_exposed"]:<10}'
-            f'{str(data["available_replicas"]):<25}'
-            f'{str(data["unavailable_replicas"]):<25}'
-            f'{data["git_url"]:<45}'
-            f'{data["git_branch"]:<20}'
+            f'\n-- {name}:\n'
+            f'|- {"EXPOSED":<22}{data["service_exposed"]}\n'
+            f'|- {"CLUSTER_URL":<22}{data["service_url"]}\n'
+            f'|- {"HAS_INGRESS":<22}{data["has_ingress"]}\n'
+            f'|- {"AVAILABLE_REPLICAS":<22}{str(data["available_replicas"])}\n'
+            f'|- {"UNAVAILABLE_REPLICAS":<22}{str(data["unavailable_replicas"])}\n'
+            f'|- {"GIT_URL":<22}{data["git_url"]}\n'
+            f'|- {"GIT_BRANCH":<22}{data["git_branch"]}\n'
         )
 
 
