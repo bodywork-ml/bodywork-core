@@ -376,43 +376,64 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
     assert successful is True
 
 
-@patch('kubernetes.client.AppsV1Api')
 def test_list_service_stage_deployments_returns_service_stage_info(
-    mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
+    service_namespace = service_stage_deployment_object.metadata.name
+    service_name = service_stage_deployment_object.metadata.name
+    service_url = 'http://bodywork-test-project--serve:5000'
+
     service_stage_deployment_object.status = kubernetes.client.V1DeploymentStatus(
         available_replicas=1,
         unavailable_replicas=None
     )
 
+    service_stage_service_object = kubernetes.client.V1Service(
+        metadata=kubernetes.client.V1ObjectMeta(
+            namespace=service_namespace,
+            name=service_name
+        )
+    )
+
+    service_stage_ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+        metadata=kubernetes.client.V1ObjectMeta(
+            namespace=service_namespace,
+            name=service_name,
+            annotations={
+                'kubernetes.io/ingress.class': 'nginx',
+                'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+                'bodywork': 'true'
+            }
+        )
+    )
+
     with patch('kubernetes.client.AppsV1Api') as mock_k8s_apps_api:
         with patch('kubernetes.client.CoreV1Api') as mock_k8s_core_api:
-            mock_k8s_apps_api().list_namespaced_deployment.return_value = (
-                kubernetes.client.V1DeploymentList(
-                    items=[service_stage_deployment_object]
+            with patch('kubernetes.client.ExtensionsV1beta1Api') as mock_k8s_ext_api:
+                mock_k8s_apps_api().list_namespaced_deployment.return_value = (
+                    kubernetes.client.V1DeploymentList(
+                        items=[service_stage_deployment_object]
+                    )
                 )
-            )
-            mock_k8s_core_api().list_namespaced_service.return_value = (
-                kubernetes.client.V1ServiceList(
-                    items=[
-                        kubernetes.client.V1Service(
-                            metadata=kubernetes.client.V1ObjectMeta(
-                                name='bodywork-test-project--serve'
-                            )
-                        )
-                    ]
+                mock_k8s_core_api().list_namespaced_service.return_value = (
+                    kubernetes.client.V1ServiceList(
+                        items=[service_stage_service_object]
+                    )
                 )
-            )
-
-            deployment_info = list_service_stage_deployments('bodywork-dev')
-            assert 'bodywork-test-project--serve' in deployment_info.keys()
-            assert deployment_info['bodywork-test-project--serve']['service_url'] == 'http://bodywork-test-project--serve:5000'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['service_exposed'] == 'true'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['available_replicas'] == 1  # noqa
-            assert deployment_info['bodywork-test-project--serve']['unavailable_replicas'] == 0  # noqa
-            assert deployment_info['bodywork-test-project--serve']['git_branch'] == 'project_repo_branch'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['git_url'] == 'project_repo_url'  # noqa
+                mock_k8s_ext_api().list_namespaced_ingress.return_value = (
+                    kubernetes.client.ExtensionsV1beta1IngressList(
+                        items=[service_stage_ingress_object]
+                    )
+                )
+                deployment_info = list_service_stage_deployments(service_namespace)
+                assert service_name in deployment_info.keys()
+                assert deployment_info[service_name]['service_url'] == service_url
+                assert deployment_info[service_name]['service_exposed'] == 'true'
+                assert deployment_info[service_name]['available_replicas'] == 1
+                assert deployment_info[service_name]['unavailable_replicas'] == 0
+                assert deployment_info[service_name]['git_branch'] == 'project_repo_branch'  # noqa
+                assert deployment_info[service_name]['git_url'] == 'project_repo_url'
+                assert deployment_info[service_name]['has_ingress'] is True
 
 
 @patch('kubernetes.client.CoreV1Api')

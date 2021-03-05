@@ -377,7 +377,8 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
                 if deployment.status.unavailable_replicas is None
                 else deployment.status.unavailable_replicas),
             'git_url': deployment.spec.template.spec.containers[0].args[0],
-            'git_branch': deployment.spec.template.spec.containers[0].args[1]
+            'git_branch': deployment.spec.template.spec.containers[0].args[1],
+            'has_ingress': has_ingress(namespace, deployment.metadata.name)
         }
         for deployment in k8s_deployment_query.items
     }
