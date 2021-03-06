@@ -117,7 +117,7 @@ def configure_service_stage_deployment(
     )
     pod_template_spec = k8s.V1PodTemplateSpec(
         metadata=k8s.V1ObjectMeta(
-            labels={'app': stage_name},
+            labels={'app': 'bodywork', 'stage': stage_name},
             annotations={'last-updated': datetime.now().isoformat()}
         ),
         spec=pod_spec
@@ -125,14 +125,15 @@ def configure_service_stage_deployment(
     deployment_spec = k8s.V1DeploymentSpec(
         replicas=replicas,
         template=pod_template_spec,
-        selector={'matchLabels': {'app': stage_name}},
+        selector={'matchLabels': {'stage': stage_name}},
         revision_history_limit=0,
         min_ready_seconds=seconds_to_be_ready_before_completing
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
         name=f'{project_name}--{stage_name}',
-        annotations={'port': str(port)}
+        annotations={'port': str(port)},
+        labels={'app': 'bodywork', 'stage': stage_name}
     )
     deployment = k8s.V1Deployment(
         metadata=deployment_metadata,
@@ -194,7 +195,7 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
 
     associated_replica_sets = k8s.AppsV1Api().list_namespaced_replica_set(
         namespace=namespace,
-        label_selector=f'app={deployment.spec.template.metadata.labels["app"]}'
+        label_selector=f'app={deployment.spec.template.metadata.labels["stage"]}'
     )
 
     revision_ordered_replica_sets = sorted(
@@ -352,9 +353,9 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
     :param namespace: Namespace in which to list cronjobs.
     """
     k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
-        namespace=namespace
+        namespace=namespace,
+        label_selector='app=bodywork'
     )
-
     deployment_info = {
         deployment.metadata.name: {
             'service_exposed': (
@@ -438,7 +439,8 @@ def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
     )
     service_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=name
+        name=name,
+        labels={'app': 'bodywork', 'stage': name}
     )
     service = k8s.V1Service(
         metadata=service_metadata,
@@ -520,9 +522,9 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
         name=name,
         annotations={
             'kubernetes.io/ingress.class': 'nginx',
-            'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
-            'bodywork': 'true'
-        }
+            'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+        },
+        labels={'app': 'bodywork', 'stage': name}
     )
 
     ingress = k8s.ExtensionsV1beta1Ingress(
@@ -555,13 +557,9 @@ def has_ingress(namespace: str, name: str) -> bool:
     :param namespace: Namespace in which to look for ingress resources.
     :param names: The name of the ingress.
     """
-    def is_bodywork_ingress(ingress: k8s.ExtensionsV1beta1Ingress) -> bool:
-        return True if ingress.metadata.annotations.get('bodywork') else False
-
-    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(namespace=namespace)
-    ingress_names = [
-        ingress.metadata.name
-        for ingress in ingresses.items
-        if is_bodywork_ingress(ingress)
-    ]
+    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(
+        namespace=namespace,
+        label_selector='app=bodywork'
+    )
+    ingress_names = [ingress.metadata.name for ingress in ingresses.items]
     return True if name in ingress_names else False
