@@ -20,7 +20,7 @@ Pytest fixtures for use with all unit and functional testing modules.
 import os
 import shutil
 from pathlib import Path
-from subprocess import CalledProcessError, run, CompletedProcess
+from subprocess import CalledProcessError, run
 from typing import Iterable
 
 from pytest import fixture
