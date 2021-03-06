@@ -171,10 +171,11 @@ class ServiceStage(Stage):
             raise BodyworkStageConfigError('PORT', 'service', name) from e
 
         try:
-            if config['service']['INGRESS'] not in ('True', 'False'):
+            ingress_config = config['service']['INGRESS']
+            if ingress_config not in ('True', 'False'):
                 raise ValueError('expected boolean value')
             else:
-                create_ingress = bool(config['service']['INGRESS'])
+                create_ingress = True if ingress_config == 'True' else False
         except (KeyError, ValueError) as e:
             raise BodyworkStageConfigError('INGRESS', 'service', name) from e
 

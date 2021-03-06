@@ -73,7 +73,10 @@ from .service_deployments import (
     list_service_stage_deployments,
     expose_deployment_as_cluster_service,
     is_exposed_as_cluster_service,
-    stop_exposing_cluster_service
+    stop_exposing_cluster_service,
+    create_deployment_ingress,
+    delete_deployment_ingress,
+    has_ingress
 )
 from .utils import (
     api_exception_msg
@@ -122,5 +125,8 @@ __all__ = [
     'expose_deployment_as_cluster_service',
     'is_exposed_as_cluster_service',
     'stop_exposing_cluster_service',
+    'create_deployment_ingress',
+    'delete_deployment_ingress',
+    'has_ingress',
     'api_exception_msg'
 ]
