@@ -19,6 +19,7 @@ Test high-level k8s interaction with a k8s cluster to run stages and a
 demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 """
 import os
+import requests
 from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
@@ -42,7 +43,8 @@ from bodywork.k8s import (
 
 def test_workflow_and_service_management_end_to_end_from_cli(
     random_test_namespace: str,
-    docker_image: str
+    docker_image: str,
+    ingress_load_balancer_url: str
 ):
     try:
         sleep(5)
@@ -127,6 +129,22 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert 'http://bodywork-test-project--stage-4:5000' in process_four.stdout
         assert 'true' in process_four.stdout
         assert process_four.returncode == 0
+
+        stage_3_service_external_url = (
+            f'http://{ingress_load_balancer_url}/{random_test_namespace}/'
+            f'/bodywork-test-project--stage-3/v1/predict'
+        )
+
+        response_stage_3 = requests.get(url=stage_3_service_external_url)
+        assert response_stage_3.ok
+        assert response_stage_3.json()['y'] == 'hello_world'
+
+        stage_4_service_external_url = (
+            f'http://{ingress_load_balancer_url}/{random_test_namespace}/'
+            f'/bodywork-test-project--stage-4/v2/predict'
+        )
+        response_stage_4 = requests.get(url=stage_4_service_external_url)
+        assert response_stage_4.status_code == 404
 
         process_five = run(
             ['bodywork',

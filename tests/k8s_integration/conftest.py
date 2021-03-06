@@ -20,11 +20,16 @@ Pytest fixtures for use with all Kubernetes integration testing modules.
 import os
 from pathlib import Path
 from random import randint
+from typing import cast
 
 from pytest import fixture
+from kubernetes import client as k8s, config as k8s_config
 
 from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_GITHUB_KEY_ENV_VAR
 from bodywork.workflow import image_exists_on_dockerhub
+
+NGINX_INGRESS_CONTROLLER_NAMESPACE = 'ingress-nginx'
+NGINX_INGRESS_CONTROLLER_SERVICE_NAME = 'ingress-nginx-controller'
 
 
 @fixture(scope='function')
@@ -61,3 +66,30 @@ def set_github_ssh_private_key_env_var() -> None:
             os.environ[SSH_GITHUB_KEY_ENV_VAR] = private_key.read_text()
         else:
             raise RuntimeError('cannot locate private SSH key to use for GitHub')
+
+
+@fixture(scope='function')
+def ingress_load_balancer_url() -> str:
+    try:
+        k8s_config.load_kube_config()
+        services_in_namespace = k8s.CoreV1Api().list_namespaced_service(
+            namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
+        )
+        nginx_service = [
+            service for service in services_in_namespace.items
+            if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
+        ][0]
+        load_balancer = nginx_service.status.load_balancer.ingress[0].hostname
+        return cast(str, load_balancer)
+    except IndexError:
+        msg = (f'cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in '
+               f'namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}')
+        raise RuntimeError(msg)
+    except AttributeError:
+        msg = (f'cannot find a load-balancer associated with '
+               f'service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in '
+               f'namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}')
+        raise RuntimeError(msg)
+    except k8s.rest.ApiException as e:
+        msg = f'k8s API error - {e}'
+        raise RuntimeError(msg)
