@@ -51,6 +51,9 @@ def test_that_git_project_clone_raises_exceptions():
     with raises(RuntimeError, match='git clone failed'):
         download_project_code_from_repo('file:///bad_url')
 
+def test_that_git_project_clone_returns_git_error_in_exception():
+    with raises(RuntimeError, match='fatal: Could not read from remote repository'):
+        download_project_code_from_repo('git@github.com:test/test.git')
 
 def test_get_remote_repo_host_identifies_remote_hosts():
     conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'

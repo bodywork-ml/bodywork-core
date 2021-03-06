@@ -60,7 +60,7 @@ def setup_bodywork_test_project(
         os.mkdir(bodywork_output_dir)
         yield True
     except CalledProcessError as e:
-        raise RuntimeError(f'Cannot create test project Git repo - {e.stdout}.')
+        raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
     finally:
         # TEARDOWN
         shutil.rmtree('{}/.git'.format(project_repo_location), onerror=onerror)

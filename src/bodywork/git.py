@@ -52,7 +52,7 @@ def download_project_code_from_repo(
 
     try:
         run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
-            check=True)
+            check=True, capture_output=True)
     except CalledProcessError as e:
         msg = f'git clone failed - calling {e.cmd} returned {e.stderr}'
         raise RuntimeError(msg)
