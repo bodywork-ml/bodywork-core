@@ -131,7 +131,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 in process_four.stdout)
         assert (f'/{random_test_namespace}/bodywork-test-project--stage-3'
                 in process_four.stdout)
-        assert (f'/{random_test_namespace}/bodywork-test-project--stage-3'
+        assert (f'/{random_test_namespace}/bodywork-test-project--stage-4'
                 not in process_four.stdout)
         assert '5000' in process_four.stdout
         assert process_four.returncode == 0
@@ -162,7 +162,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True
         )
         assert 'deployment=bodywork-test-project--stage-3 deleted' in process_five.stdout
-        assert 'service at http://bodywork-test-project--stage-3 deleted' in process_five.stdout  # noqa
+        assert f'service at http://bodywork-test-project--stage-3.{random_test_namespace}.svc.cluster.local deleted' in process_five.stdout  # noqa
+        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-3 deleted' in process_five.stdout  # noqa
         assert process_five.returncode == 0
 
         process_six = run(
@@ -175,7 +176,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True
         )
         assert 'deployment=bodywork-test-project--stage-4 deleted' in process_six.stdout
-        assert 'service at http://bodywork-test-project--stage-4 deleted' in process_six.stdout  # noqa
+        assert f'service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted' in process_six.stdout  # noqa
+        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted' not in process_six.stdout
         assert process_six.returncode == 0
 
         process_seven = run(
@@ -186,7 +188,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding='utf-8',
             capture_output=True
         )
-        assert process_seven.stdout.split('\n')[1] == ''
+        assert process_seven.stdout == ''
         assert process_seven.returncode == 0
 
     except Exception:
