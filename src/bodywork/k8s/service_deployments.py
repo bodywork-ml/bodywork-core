@@ -354,12 +354,9 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
     k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
         namespace=namespace
     )
+
     deployment_info = {
         deployment.metadata.name: {
-            'service_url': (
-                f'http://{deployment.metadata.name}:'
-                f'{deployment.metadata.annotations["port"]}'
-            ),
             'service_exposed': (
                 'true'
                 if is_exposed_as_cluster_service(
@@ -367,6 +364,25 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
                     deployment.metadata.name
                 )
                 else 'false'
+            ),
+            'service_url': (
+                cluster_service_url(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                if is_exposed_as_cluster_service(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                else 'none'
+            ),
+            'service_port': (
+                deployment.metadata.annotations["port"]
+                if is_exposed_as_cluster_service(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                else 'none'
             ),
             'available_replicas': (
                 0
@@ -382,11 +398,27 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
                 'true'
                 if has_ingress(namespace, deployment.metadata.name)
                 else 'false'
+            ),
+            'ingress_route': (
+                ingress_route(deployment.metadata.namespace, deployment.metadata.name)
+                if has_ingress(namespace, deployment.metadata.name)
+                else 'none'
             )
         }
         for deployment in k8s_deployment_query.items
     }
     return deployment_info
+
+
+def cluster_service_url(namespace: str, deployment_name) -> str:
+    """Standardised URL to a service deployment.
+
+    :param namespace: Namespace in which the deployment exists.
+    :param deployment_name: The deployment's name.
+    :return: The internal URL to access the cluster service from within
+        the cluster.
+    """
+    return f'http://{deployment_name}.{namespace}.svc.cluster.local'
 
 
 def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
@@ -444,6 +476,16 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
     )
 
 
+def ingress_route(namespace: str, deployment_name: str) -> str:
+    """Standardised route to a service deployment.
+
+    :param namespace: Namespace in which the deployment exists.
+    :param deployment_name: The deployment's name.
+    :return: A route to use for ingress to the service deployment.
+    """
+    return f'/{namespace}/{deployment_name}'
+
+
 def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
     """Create an ingress to a service backed by a deployment.
 
@@ -453,7 +495,7 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
     name = deployment.metadata.name
     pod_port = int(deployment.metadata.annotations['port'])
 
-    ingress_path = f'/{namespace}/{name}(/|$)(.*)'
+    ingress_path = f'{ingress_route(namespace, name)}(/|$)(.*)'
 
     ingress_spec = k8s.ExtensionsV1beta1IngressSpec(
         rules=[

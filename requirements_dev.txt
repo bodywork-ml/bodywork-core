@@ -5,3 +5,4 @@ flake8==3.8.3
 tox==3.20.1
 twine==3.2.0
 wheel==0.34.2
+requests>=2.24.0

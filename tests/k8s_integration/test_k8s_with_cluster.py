@@ -123,9 +123,15 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding='utf-8',
             capture_output=True
         )
-        assert 'http://bodywork-test-project--stage-3:5000' in process_four.stdout
-        assert 'http://bodywork-test-project--stage-4:5000' in process_four.stdout
-        assert 'true' in process_four.stdout
+        assert (f'http://bodywork-test-project--stage-3.{random_test_namespace}.svc'
+                in process_four.stdout)
+        assert (f'http://bodywork-test-project--stage-4.{random_test_namespace}.svc'
+                in process_four.stdout)
+        assert (f'/{random_test_namespace}/bodywork-test-project--stage-3'
+                in process_four.stdout)
+        assert (f'/{random_test_namespace}/bodywork-test-project--stage-3'
+                not in process_four.stdout)
+        assert '5000' in process_four.stdout
         assert process_four.returncode == 0
 
         process_five = run(

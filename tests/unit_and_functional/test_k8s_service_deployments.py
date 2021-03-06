@@ -26,6 +26,7 @@ import kubernetes
 from pytest import fixture, raises
 
 from bodywork.k8s.service_deployments import (
+    cluster_service_url,
     configure_service_stage_deployment,
     create_deployment,
     create_deployment_ingress,
@@ -35,6 +36,7 @@ from bodywork.k8s.service_deployments import (
     DeploymentStatus,
     expose_deployment_as_cluster_service,
     has_ingress,
+    ingress_route,
     is_existing_deployment,
     is_exposed_as_cluster_service,
     _get_deployment_status,
@@ -379,9 +381,10 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
 def test_list_service_stage_deployments_returns_service_stage_info(
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
-    service_namespace = service_stage_deployment_object.metadata.name
+    service_namespace = service_stage_deployment_object.metadata.namespace
     service_name = service_stage_deployment_object.metadata.name
-    service_url = 'http://bodywork-test-project--serve:5000'
+    service_url = f'http://{service_name}.{service_namespace}.svc.cluster.local'
+    service_port = service_stage_deployment_object.metadata.annotations['port']
 
     service_stage_deployment_object.status = kubernetes.client.V1DeploymentStatus(
         available_replicas=1,
@@ -428,12 +431,22 @@ def test_list_service_stage_deployments_returns_service_stage_info(
                 deployment_info = list_service_stage_deployments(service_namespace)
                 assert service_name in deployment_info.keys()
                 assert deployment_info[service_name]['service_url'] == service_url
+                assert deployment_info[service_name]['service_port'] == service_port
                 assert deployment_info[service_name]['service_exposed'] == 'true'
                 assert deployment_info[service_name]['available_replicas'] == 1
                 assert deployment_info[service_name]['unavailable_replicas'] == 0
                 assert deployment_info[service_name]['git_branch'] == 'project_repo_branch'  # noqa
                 assert deployment_info[service_name]['git_url'] == 'project_repo_url'
-                assert deployment_info[service_name]['has_ingress'] is True
+                assert deployment_info[service_name]['has_ingress'] == 'true'
+
+
+def test_cluster_service_url(
+    service_stage_deployment_object: kubernetes.client.V1Deployment
+):
+    namespace = service_stage_deployment_object.metadata.namespace
+    name = service_stage_deployment_object.metadata.namespace
+    assert (cluster_service_url(namespace, name)
+            == f'http://{name}.{namespace}.svc.cluster.local')
 
 
 @patch('kubernetes.client.CoreV1Api')
@@ -498,6 +511,14 @@ def test_stop_exposing_cluster_service_tries_to_stop_exposing_deployment_as_serv
         name='bodywork-test-project--serve',
         propagation_policy='Background'
     )
+
+
+def test_ingress_route(
+    service_stage_deployment_object: kubernetes.client.V1Deployment
+):
+    namespace = service_stage_deployment_object.metadata.namespace
+    name = service_stage_deployment_object.metadata.namespace
+    assert ingress_route(namespace, name) == f'/{namespace}/{name}'
 
 
 @patch('kubernetes.client.ExtensionsV1beta1Api')

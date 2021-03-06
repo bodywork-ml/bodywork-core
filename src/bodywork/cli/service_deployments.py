@@ -32,14 +32,18 @@ def display_service_deployments_in_namespace(namespace: str) -> None:
     service_deployments = k8s.list_service_stage_deployments(namespace)
     for name, data in service_deployments.items():
         print(
-            f'\n-- {name}:\n'
-            f'|- {"EXPOSED":<22}{data["service_exposed"]}\n'
-            f'|- {"CLUSTER_URL":<22}{data["service_url"]}\n'
-            f'|- {"HAS_INGRESS":<22}{data["has_ingress"]}\n'
-            f'|- {"AVAILABLE_REPLICAS":<22}{str(data["available_replicas"])}\n'
-            f'|- {"UNAVAILABLE_REPLICAS":<22}{str(data["unavailable_replicas"])}\n'
+            f'\n{"-"*len(name)}-\n'
+            f'{name}:\n'
+            f'{"-"*len(name)}-\n'
             f'|- {"GIT_URL":<22}{data["git_url"]}\n'
             f'|- {"GIT_BRANCH":<22}{data["git_branch"]}\n'
+            f'|- {"REPLICAS_AVAILABLE":<22}{str(data["available_replicas"])}\n'
+            f'|- {"REPLICAS_UNAVAILABLE":<22}{str(data["unavailable_replicas"])}\n'
+            f'|- {"EXPOSED_AS_SERVICE":<22}{data["service_exposed"]}\n'
+            f'|- {"CLUSTER_SERVICE_URL":<22}{data["service_url"]}\n'
+            f'|- {"CLUSTER_SERVICE_PORT":<22}{data["service_port"]}\n'
+            f'|- {"INGRESS_CREATED":<22}{data["has_ingress"]}\n'
+            f'|- {"INGRESS_ROUTE":<22}{data["ingress_route"]}\n'
         )
 
 
@@ -60,4 +64,9 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
     print(f'deployment={name} deleted from namespace={namespace}')
     if k8s.is_exposed_as_cluster_service(namespace, name):
         k8s.stop_exposing_cluster_service(namespace, name)
-        print(f'service at http://{name} deleted from namespace={namespace}')
+        print(f'service at {k8s.cluster_service_url(namespace, name)} '
+              f'deleted from namespace={namespace}')
+    if k8s.has_ingress(namespace, name):
+        k8s.delete_deployment_ingress(namespace, name)
+        print(f'ingress route {k8s.ingress_route(namespace, name)} '
+              f'deleted from namespace={namespace}')
