@@ -463,7 +463,9 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
          f'--namespace={test_namespace}',
          '--name=bodywork-test-project',
          '--schedule=0,30 * * * *',
-         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'
+         '--retries=2',
+         '--history-limit=1'],
         encoding='utf-8',
         capture_output=True
     )
