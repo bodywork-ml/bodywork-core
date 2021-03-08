@@ -93,20 +93,17 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
         return None
     cronjobs_info = k8s.list_cronjobs(namespace)
     print(f'cronjobs in namespace={namespace}:\n')
-    print(
-        f'{"NAME":<40}'
-        f'{"SCHEDULE":<30}'
-        f'{"LAST_ACTIVE":<25}'
-        f'{"GIT_URL":<50}'
-        f'{"GIT_BRANCH":<20}'
-    )
     for name, data in cronjobs_info.items():
         print(
-            f'{name:<40}'
-            f'{data["schedule"]:<30}'
-            f'{str(data["last_scheduled_time"]):<25}'
-            f'{data["git_url"]:<50}'
-            f'{data["git_branch"]:<20}'
+            f'\n{"-"*len(name)}-\n'
+            f'{name}:\n'
+            f'{"-"*len(name)}-\n'
+            f'|- {"NAME":<22}{name}\n'
+            f'|- {"SCHEDULE":<22}{data["schedule"]}\n'
+            f'|- {"RETRIES":<22}{data["retries"]}\n'
+            f'|- {"GIT_URL":<22}{data["git_url"]}\n'
+            f'|- {"GIT_BRANCH":<22}{data["git_branch"]}\n'
+            f'|- {"LAST_EXECUTED":<22}{str(data["last_scheduled_time"])}\n'
         )
 
 

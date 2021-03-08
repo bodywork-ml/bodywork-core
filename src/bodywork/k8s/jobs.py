@@ -76,6 +76,7 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
+    job_name = f'{project_name}--{stage_name}'
     vcs_env_vars = [
         k8s.V1EnvVar(
             name=SSH_GITHUB_KEY_ENV_VAR,
@@ -119,7 +120,8 @@ def configure_batch_stage_job(
     )
     job_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=f'{project_name}--{stage_name}'
+        name=job_name,
+        labels={'app': 'bodywork', 'stage': job_name},
     )
     job = k8s.V1Job(
         metadata=job_metadata,

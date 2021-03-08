@@ -61,7 +61,8 @@ def batch_stage_job_object() -> kubernetes.client.V1Job:
     )
     job_metadata = kubernetes.client.V1ObjectMeta(
         namespace='bodywork-dev',
-        name='bodywork-test-project--train'
+        name='bodywork-test-project--train',
+        labels={'app': 'bodywork', 'stage': 'bodywork-test-project--train'},
     )
     job = kubernetes.client.V1Job(
         metadata=job_metadata,
