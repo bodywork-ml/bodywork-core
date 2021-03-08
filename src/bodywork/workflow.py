@@ -240,7 +240,7 @@ def run_workflow(
 
     except Exception as e:
         msg = (f'failed to execute workflow for {repo_branch} branch of project '
-               f'reposotory at {repo_url}: {e}')
+               f'repository at {repo_url}: {e}')
         log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
