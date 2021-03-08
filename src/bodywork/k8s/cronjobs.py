@@ -161,6 +161,12 @@ def list_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
         cronjob.metadata.name: {
             'schedule': cronjob.spec.schedule,
             'last_scheduled_time': cronjob.status.last_schedule_time,
+            'retries': (
+                cronjob.spec
+                .job_template
+                .spec
+                .backoff_limit
+            ),
             'git_url': (
                 cronjob.spec
                 .job_template

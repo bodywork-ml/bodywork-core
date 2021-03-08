@@ -202,6 +202,7 @@ def test_display_cronjobs_in_namespace(
         'bodywork-test-project': {
             'schedule': '0 * * * *',
             'last_scheduled_time': datetime(2020, 9, 15),
+            'retries': 2,
             'git_url': 'project_repo_url',
             'git_branch': 'project_repo_branch'
         }
@@ -210,6 +211,7 @@ def test_display_cronjobs_in_namespace(
     captured_two = capsys.readouterr()
     assert 'bodywork-test-project' in captured_two.out
     assert '0 * * * *' in captured_two.out
+    assert 'RETRIES' in captured_two.out
     assert '2020-09-15 00:00:00' in captured_two.out
     assert 'project_repo_url' in captured_two.out
     assert 'project_repo_branch' in captured_two.out
