@@ -195,7 +195,9 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
 
     associated_replica_sets = k8s.AppsV1Api().list_namespaced_replica_set(
         namespace=namespace,
-        label_selector=f'app={deployment.spec.template.metadata.labels["stage"]}'
+        label_selector=(
+            f'app=bodywork,stage={deployment.spec.template.metadata.labels["stage"]}'
+        )
     )
 
     revision_ordered_replica_sets = sorted(
