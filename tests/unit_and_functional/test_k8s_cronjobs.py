@@ -25,10 +25,10 @@ import kubernetes
 from pytest import fixture
 
 from bodywork.k8s.cronjobs import (
-    configure_cronjob,
-    create_cronjob,
-    delete_cronjob,
-    list_cronjobs,
+    configure_workflow_cronjob,
+    create_workflow_cronjob,
+    delete_workflow_cronjob,
+    list_workflow_cronjobs,
     list_workflow_jobs
 )
 
@@ -77,7 +77,7 @@ def cronjob_object() -> kubernetes.client.V1Job:
 
 
 def test_configure_batch_stage_cronjob():
-    cronjob_definition = configure_cronjob(
+    cronjob_definition = configure_workflow_cronjob(
         cron_schedule='0,30 * * * *',
         namespace='bodywork-dev',
         project_name='bodywork-test-project',
@@ -101,11 +101,11 @@ def test_configure_batch_stage_cronjob():
 
 
 @patch('kubernetes.client.BatchV1beta1Api')
-def test_create_cronjob_tries_to_create_job_with_k8s_api(
+def test_create_workflow_cronjob_tries_to_create_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
     cronjob_object: kubernetes.client.V1beta1CronJob
 ):
-    create_cronjob(cronjob_object)
+    create_workflow_cronjob(cronjob_object)
     mock_k8s_batchv1beta1_api().create_namespaced_cron_job.assert_called_once_with(
         body=cronjob_object,
         namespace='bodywork-dev'
@@ -113,11 +113,11 @@ def test_create_cronjob_tries_to_create_job_with_k8s_api(
 
 
 @patch('kubernetes.client.BatchV1beta1Api')
-def test_delete_cronjob_tries_to_delete_job_with_k8s_api(
+def test_delete_workflow_cronjob_tries_to_delete_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
     cronjob_object: kubernetes.client.V1beta1CronJob
 ):
-    delete_cronjob('bodywork-dev', 'bodywork-test-project')
+    delete_workflow_cronjob('bodywork-dev', 'bodywork-test-project')
     mock_k8s_batchv1beta1_api().delete_namespaced_cron_job.assert_called_once_with(
         name='bodywork-test-project',
         namespace='bodywork-dev',
@@ -126,14 +126,14 @@ def test_delete_cronjob_tries_to_delete_job_with_k8s_api(
 
 
 @patch('kubernetes.client.BatchV1beta1Api')
-def test_list_cronjobs_returns_cronjobs_summary_info(
+def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     mock_k8s_batchv1beta1_api: MagicMock,
     cronjob_object: kubernetes.client.V1beta1CronJob
 ):
     mock_k8s_batchv1beta1_api().list_namespaced_cron_job.return_value = (
         kubernetes.client.V1beta1CronJobList(items=[cronjob_object])
     )
-    cronjobs = list_cronjobs('bodywork-dev')
+    cronjobs = list_workflow_cronjobs('bodywork-dev')
     assert cronjobs['bodywork-test-project']['schedule'] == '0,30 * * * *'
     assert cronjobs['bodywork-test-project']['retries'] == 2
     assert cronjobs['bodywork-test-project']['git_url'] == 'project_repo_url'
@@ -143,7 +143,7 @@ def test_list_cronjobs_returns_cronjobs_summary_info(
 
 
 @patch('kubernetes.client.BatchV1Api')
-def test_list_cronjobs_workflow_jobs(
+def test_list_workflow_cronjobs_workflow_jobs(
     mock_k8s_batchv1_api: MagicMock,
 ):
     mock_k8s_batchv1_api().list_namespaced_job.return_value = (

@@ -29,11 +29,11 @@ import kubernetes
 from pkg_resources import get_distribution
 
 from .cronjobs import (
-    create_cronjob_in_namespace,
+    create_workflow_cronjob_in_namespace,
     display_cronjobs_in_namespace,
     display_cronjob_workflow_history,
     display_cronjob_workflow_logs,
-    delete_cronjob_in_namespace
+    delete_workflow_cronjob_in_namespace
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
@@ -328,7 +328,7 @@ def cronjob(args: Namespace) -> None:
         if not is_namespace_available_for_bodywork(namespace):
             print(f'namespace={namespace} is not setup for use by Bodywork')
             sys.exit(1)
-        create_cronjob_in_namespace(
+        create_workflow_cronjob_in_namespace(
             namespace,
             schedule,
             name,
@@ -339,7 +339,7 @@ def cronjob(args: Namespace) -> None:
         )
     elif command == 'delete':
         load_kubernetes_config()
-        delete_cronjob_in_namespace(namespace, name)
+        delete_workflow_cronjob_in_namespace(namespace, name)
     elif command == 'history':
         load_kubernetes_config()
         display_cronjob_workflow_history(namespace, name)

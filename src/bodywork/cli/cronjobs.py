@@ -23,7 +23,7 @@ import re
 from .. import k8s
 
 
-def create_cronjob_in_namespace(
+def create_workflow_cronjob_in_namespace(
     namespace: str,
     schedule: str,
     project_name: str,
@@ -57,7 +57,7 @@ def create_cronjob_in_namespace(
     if not _is_valid_cron_schedule(schedule):
         print(f'schedule={schedule} is not a valid cron schedule')
         return None
-    configured_job = k8s.configure_cronjob(
+    configured_job = k8s.configure_workflow_cronjob(
         schedule,
         namespace,
         project_name,
@@ -67,11 +67,11 @@ def create_cronjob_in_namespace(
         workflow_controller_history_limit,
         workflow_controller_history_limit
     )
-    k8s.create_cronjob(configured_job)
+    k8s.create_workflow_cronjob(configured_job)
     print(f'cronjob={project_name} created in namespace={namespace}')
 
 
-def delete_cronjob_in_namespace(namespace: str, project_name: str) -> None:
+def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> None:
     """Create a new cronjob within a k8s namespace.
 
     :param namespace: The namespace to deploy the cronjob to.
@@ -84,7 +84,7 @@ def delete_cronjob_in_namespace(namespace: str, project_name: str) -> None:
     if not _is_existing_cronjob(namespace, project_name):
         print(f'cronjob={project_name} not found in namespace={namespace}')
         return None
-    k8s.delete_cronjob(namespace, project_name)
+    k8s.delete_workflow_cronjob(namespace, project_name)
     print(f'cronjob={project_name} deleted from namespace={namespace}')
 
 
@@ -96,7 +96,7 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
         return None
-    cronjobs_info = k8s.list_cronjobs(namespace)
+    cronjobs_info = k8s.list_workflow_cronjobs(namespace)
     print(f'cronjobs in namespace={namespace}:\n')
     for name, data in cronjobs_info.items():
         print(
@@ -171,7 +171,7 @@ def _is_existing_cronjob(namespace: str, project_name: str) -> bool:
         the cronjob.
     :return: A boolean flag.
     """
-    cronjobs_in_namespace = k8s.list_cronjobs(namespace)
+    cronjobs_in_namespace = k8s.list_workflow_cronjobs(namespace)
     return True if project_name in cronjobs_in_namespace.keys() else False
 
 

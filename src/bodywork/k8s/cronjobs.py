@@ -31,24 +31,16 @@ from ..constants import (
 )
 
 
-def configure_cronjob(
-    cron_schedule: str,
+def configure_workflow_job(
     namespace: str,
     project_name: str,
     project_repo_url: str,
     project_repo_branch: str = 'master',
     retries: int = 2,
-    successful_jobs_history_limit: int = 1,
-    failed_jobs_history_limit: int = 1,
-    image: str = BODYWORK_DOCKER_IMAGE,
-) -> k8s.V1beta1CronJob:
-    """Configure a Bodywork batch stage k8s cron-job.
+    image: str = BODYWORK_DOCKER_IMAGE
+) -> k8s.V1Job:
+    """Configure a Bodywork workflow execution job.
 
-    A cron-job is a k8s job that is executed on a cron-like schedule. In
-    this particular instance, the job will execute the `run_workflow`
-    function that will orchestrate the required jobs and deployments.
-
-    :param cron_schedule: A valid cron schedule definition.
     :param namespace: The namespace to deploy the cronjob to.
     :param project_name: The name of the Bodywork project that the stage
         belongs to.
@@ -58,10 +50,6 @@ def configure_cronjob(
         branch to use, defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
-    :param successful_jobs_history_limit: The number of successful job
-        runs (pods) to keep, defaults to 1.
-    :param failed_jobs_history_limit: The number of unsuccessful job
-        runs (pods) to keep, defaults to 1.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :return: A configured k8s cronjob object.
@@ -99,13 +87,74 @@ def configure_cronjob(
         completions=1,
         backoff_limit=retries
     )
-    job_template = k8s.V1beta1JobTemplateSpec(
+    job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
             name=project_name,
             namespace=namespace,
-            labels={'app': 'bodywork'},
+            labels={'app': 'bodywork'}
         ),
         spec=job_spec
+    )
+    return job
+
+
+def create_workflow_job(job: k8s.V1Job) -> None:
+    """Create a workflow execution job.
+
+    :param job: A configured job object.
+    """
+    k8s.BatchV1Api().create_namespaced_job(
+        body=job,
+        namespace=job.metadata.namespace
+    )
+
+
+def configure_workflow_cronjob(
+    cron_schedule: str,
+    namespace: str,
+    project_name: str,
+    project_repo_url: str,
+    project_repo_branch: str = 'master',
+    retries: int = 2,
+    successful_jobs_history_limit: int = 1,
+    failed_jobs_history_limit: int = 1,
+    image: str = BODYWORK_DOCKER_IMAGE
+) -> k8s.V1beta1CronJob:
+    """Configure a Bodywork workflow cronjob.
+
+    A cronjob is a k8s job that is executed on a cron-like schedule. In
+    this particular instance, the job will execute the `run_workflow`
+    function that will orchestrate the required jobs and deployments.
+
+    :param cron_schedule: A valid cron schedule definition.
+    :param namespace: The namespace to deploy the cronjob to.
+    :param project_name: The name of the Bodywork project that the stage
+        belongs to.
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The Bodywork project Git repository
+        branch to use, defaults to 'master'.
+    :param retries: Number of times to retry running the stage to
+        completion (if necessary), defaults to 2.
+    :param successful_jobs_history_limit: The number of successful job
+        runs (pods) to keep, defaults to 1.
+    :param failed_jobs_history_limit: The number of unsuccessful job
+        runs (pods) to keep, defaults to 1.
+    :param image: Docker image to use for running the stage within,
+        defaults to BODYWORK_DOCKER_IMAGE.
+    :return: A configured k8s cronjob object.
+    """
+    job = configure_workflow_job(
+        namespace=namespace,
+        project_name=project_name,
+        project_repo_url=project_repo_url,
+        project_repo_branch=project_repo_branch,
+        retries=retries,
+        image=image
+    )
+    job_template = k8s.V1beta1JobTemplateSpec(
+        metadata=job.metadata,
+        spec=job.spec
     )
     cronjob_spec = k8s.V1beta1CronJobSpec(
         schedule=cron_schedule,
@@ -114,17 +163,13 @@ def configure_cronjob(
         job_template=job_template
     )
     cronjob = k8s.V1beta1CronJob(
-        metadata=k8s.V1ObjectMeta(
-            name=project_name,
-            namespace=namespace,
-            labels={'app': 'bodywork'},
-        ),
+        metadata=job.metadata,
         spec=cronjob_spec
     )
     return cronjob
 
 
-def create_cronjob(cron_job: k8s.V1Job) -> None:
+def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
     """Create a cron-job on a k8s cluster.
 
     :param cron_job: A configured cron-job object.
@@ -135,7 +180,7 @@ def create_cronjob(cron_job: k8s.V1Job) -> None:
     )
 
 
-def delete_cronjob(namespace: str, name: str) -> None:
+def delete_workflow_cronjob(namespace: str, name: str) -> None:
     """Delete a cron-job on a k8s cluster.
 
     :param namespace: Namespace in which to look for the secret to
@@ -149,7 +194,7 @@ def delete_cronjob(namespace: str, name: str) -> None:
     )
 
 
-def list_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
+def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
     """Get all cronjobs and their high-level info.
 
     :param namespace: Namespace in which to list cronjobs.
