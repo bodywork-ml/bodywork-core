@@ -17,6 +17,7 @@
 """
 Test high-level service and deployment management functions.
 """
+import re
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
@@ -54,13 +55,19 @@ def test_display_service_deployments_in_namespace(
     }
     display_service_deployments_in_namespace('bodywork-dev')
     captured_two = capsys.readouterr()
-    assert 'http://bodywork-test-project--serve.bodywork-dev.svc' in captured_two.out
-    assert '5000' in captured_two.out
-    assert '1' in captured_two.out
-    assert '0' in captured_two.out
-    assert 'project_repo_url' in captured_two.out
-    assert 'project_repo_branch' in captured_two.out
-    assert '/bodywork-dev/bodywork-test-project' in captured_two.out
+    assert re.findall(r'REPLICAS_AVAILABLE\s+1', captured_two.out)
+    assert re.findall(r'REPLICAS_UNAVAILABLE\s+0', captured_two.out)
+    assert re.findall(r'GIT_URL\s+project_repo_url', captured_two.out)
+    assert re.findall(r'GIT_BRANCH\s+project_repo_branch', captured_two.out)
+    assert re.findall(r'CLUSTER_SERVICE_PORT\s+5000', captured_two.out)
+    assert re.findall(
+        r'CLUSTER_SERVICE_URL\s+http://bodywork-test-project--serve.bodywork-dev.svc',
+        captured_two.out
+    )
+    assert re.findall(
+        r'INGRESS_ROUTE\s+/bodywork-dev/bodywork-test-project',
+        captured_two.out
+    )
 
 
 @patch('bodywork.cli.service_deployments.k8s')
