@@ -30,6 +30,7 @@ def create_cronjob_in_namespace(
     project_repo_url: str,
     project_repo_branch: str = 'master',
     retries: int = 2,
+    workflow_controller_history_limit: int = 1
 ) -> None:
     """Create a new cronjob within a k8s namespace.
 
@@ -44,6 +45,8 @@ def create_cronjob_in_namespace(
         defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param workflow_controller_history_limit: Minimum number of
+        historical workflow-controller jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
@@ -60,7 +63,9 @@ def create_cronjob_in_namespace(
         project_name,
         project_repo_url,
         project_repo_branch,
-        retries
+        retries,
+        workflow_controller_history_limit,
+        workflow_controller_history_limit
     )
     k8s.create_cronjob(configured_job)
     print(f'cronjob={project_name} created in namespace={namespace}')
