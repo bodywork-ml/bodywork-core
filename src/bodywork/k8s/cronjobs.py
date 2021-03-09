@@ -26,6 +26,7 @@ from kubernetes import client as k8s
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
+    BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     SSH_GITHUB_KEY_ENV_VAR,
     SSH_GITHUB_SECRET_NAME
 )
@@ -85,7 +86,8 @@ def configure_workflow_job(
     job_spec = k8s.V1JobSpec(
         template=pod_template_spec,
         completions=1,
-        backoff_limit=retries
+        backoff_limit=retries,
+        ttl_seconds_after_finished=BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
     )
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
@@ -240,14 +242,14 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
 
 def list_workflow_jobs(
     namespace: str,
-    cronjob_name: str
+    job_name: str
 ) -> Dict[str, Dict[str, Union[datetime, bool]]]:
-    """Get workflow-runner jobs that were triggered by a cronjob.
+    """Get historic workflow-controller jobs.
 
-    Returns status information for all workflow jobs owned by a cronjob.
+    Get status information for workflow jobs owned by a job or cronjob.
 
     :param namespace: Namespace in which to list workflow jobs.
-    :param cronjob_name: Name of cronjob that triggered workflow job.
+    :param job_name: Name of job that triggered workflow job.
     :return: Dictionary of workflow jobs each mapping to a dictionary of
         status information fields for the workflow.
     """
@@ -263,6 +265,6 @@ def list_workflow_jobs(
             'failed': True if workflow_job.status.failed else False
         }
         for workflow_job in workflow_jobs_query.items
-        if workflow_job.metadata.name.startswith(cronjob_name)
+        if workflow_job.metadata.name.startswith(job_name)
     }
     return workflow_jobs_info
