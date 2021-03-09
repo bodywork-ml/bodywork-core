@@ -19,6 +19,7 @@ Pytest fixtures for use with all unit and functional testing modules.
 """
 import os
 import shutil
+import stat
 from pathlib import Path
 from subprocess import CalledProcessError, run
 from typing import Iterable
@@ -56,14 +57,14 @@ def setup_bodywork_test_project(
     try:
         run(['git', 'init'], cwd=project_repo_location, check=True)
         run(['git', 'add', '-A'], cwd=project_repo_location, check=True)
-        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True)
+        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True, encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
     except CalledProcessError as e:
         raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
     finally:
         # TEARDOWN
-        shutil.rmtree('{}/.git'.format(project_repo_location), onerror=onerror)
+        shutil.rmtree('{}/.git'.format(project_repo_location), onerror=on_error)
         shutil.rmtree(cloned_project_repo_location, ignore_errors=True)
         shutil.rmtree(bodywork_output_dir, ignore_errors=True)
 
@@ -78,9 +79,8 @@ def k8s_env_vars() -> Iterable[bool]:
         yield True
     del os.environ['KUBERNETES_SERVICE_HOST']
 
-def onerror(func, path, exc_info):
-    """
-    Error handler for ``shutil.rmtree``.
+def on_error(func, path, exc_info):
+    """Error handler for ``shutil.rmtree``.
 
     If the error is due to an access error (read only file)
     it attempts to add write permission and then retries.
@@ -89,10 +89,8 @@ def onerror(func, path, exc_info):
 
     Usage : ``shutil.rmtree(path, onerror=onerror)``
     """
-    import stat
     if not os.access(path, os.W_OK):
-        # Is the error an access error ?
         os.chmod(path, stat.S_IWUSR)
         func(path)
     else:
-        raise
+        raise Exception

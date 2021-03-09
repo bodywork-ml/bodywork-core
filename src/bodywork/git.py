@@ -120,15 +120,13 @@ def setup_ssh_for_github() -> None:
     ssh_dir = Path('.') / SSH_DIR_NAME
     private_key = ssh_dir / 'id_rsa'
     if not private_key.exists():
-        try:
-            ssh_private_key = os.environ[SSH_GITHUB_KEY_ENV_VAR]
-        except KeyError as e:
+        if SSH_GITHUB_KEY_ENV_VAR not in os.environ:
             msg = (f'failed to setup SSH for GitHub - cannot find '
                    f'{SSH_GITHUB_KEY_ENV_VAR} environment variable')
-            raise RuntimeError(msg) from e
+            raise RuntimeError(msg)
         ssh_dir.mkdir(mode=0o700, exist_ok=True)
         private_key.touch(0o700, exist_ok=False)
-        private_key.write_text(ssh_private_key)
+        private_key.write_text(os.environ[SSH_GITHUB_KEY_ENV_VAR])
 
     known_hosts = ssh_dir / 'known_hosts'
     if not known_hosts.exists():
