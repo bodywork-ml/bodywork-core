@@ -234,10 +234,10 @@ def run_stage(
     log = bodywork_log_factory()
     log.info(f'attempting to run stage={stage_name} from {repo_branch} branch of repo'
              f' at {repo_url}')
-    download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-    path_to_stage_dir = cloned_repo_dir / stage_name
-    stage = stage_factory(path_to_stage_dir)
     try:
+        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+        path_to_stage_dir = cloned_repo_dir / stage_name
+        stage = stage_factory(path_to_stage_dir)
         _install_python_requirements(stage.requirements_file_path)
         run(['python', stage.executable_script_path], check=True)
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
