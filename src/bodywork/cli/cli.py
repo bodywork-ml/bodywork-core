@@ -29,6 +29,7 @@ import kubernetes
 from pkg_resources import get_distribution
 
 from .cronjobs import (
+    create_workflow_job_in_namespace,
     create_workflow_cronjob_in_namespace,
     display_cronjobs_in_namespace,
     display_workflow_job_history,
@@ -81,6 +82,47 @@ def cli() -> None:
         help='Seconds to stay alive before exiting.'
     )
 
+    # deployment interface
+    deployment_cmd_parser = cli_arg_subparser.add_parser('deployment')
+    deployment_cmd_parser.set_defaults(func=deployment)
+    deployment_cmd_parser.add_argument(
+        'command',
+        type=str,
+        choices=['create', 'display', 'logs'],
+        help='Deployment action to perform.'
+    )
+    deployment_cmd_parser.add_argument(
+        '--namespace',
+        '--ns',
+        required=True,
+        type=str,
+        help='Kubernetes namespace to operate in.'
+    )
+    deployment_cmd_parser.add_argument(
+        '--name',
+        type=str,
+        default='',
+        help='The name given to the deployment or the workflow job.'
+    )
+    deployment_cmd_parser.add_argument(
+        '--git-repo-url',
+        type=str,
+        default='',
+        help='Git repository URL containing the Bodywork project codebase'
+    )
+    deployment_cmd_parser.add_argument(
+        '--git-repo-branch',
+        type=str,
+        default='master',
+        help='Git repository branch to run'
+    )
+    deployment_cmd_parser.add_argument(
+        '--retries',
+        type=int,
+        default=2,
+        help='Number of times to retry a failed workflow'
+    )
+
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser('cronjob')
     cronjob_cmd_parser.set_defaults(func=cronjob)
@@ -88,7 +130,7 @@ def cli() -> None:
         'command',
         type=str,
         choices=['create', 'delete', 'display', 'history', 'logs'],
-        help='Timetable action to perform.'
+        help='Cronjob action to perform.'
     )
     cronjob_cmd_parser.add_argument(
         '--namespace',
@@ -299,8 +341,48 @@ def debug(args: Namespace) -> None:
 
 
 @handle_k8s_exceptions
+def deployment(args: Namespace) -> None:
+    """Deploy command handler.
+
+    :param args: Arguments passed to the deploy command from the CLI.
+    :param logger: Bodywork logger.
+    """
+    command = args.command
+    namespace = args.namespace
+    name = args.name
+    retries = args.retries
+    git_repo_url = args.git_repo_url
+    git_repo_branch = args.git_repo_branch
+    if (command == 'create' or command == 'logs') and name == '':
+        print('please specify --name for the deployment')
+        sys.exit(1)
+    elif command == 'create' and git_repo_url == '':
+        print('please specify Git repo URL for the deployment you want to create')
+        sys.exit(1)
+    elif command == 'create':
+        load_kubernetes_config()
+        if not is_namespace_available_for_bodywork(namespace):
+            print(f'namespace={namespace} is not setup for use by Bodywork')
+            sys.exit(1)
+        create_workflow_job_in_namespace(
+            namespace,
+            name,
+            git_repo_url,
+            git_repo_branch,
+            retries,
+        )
+    elif command == 'logs':
+        load_kubernetes_config()
+        display_workflow_job_logs(namespace, name)
+    else:
+        load_kubernetes_config()
+        display_workflow_job_history(namespace, name)
+    sys.exit(0)
+
+
+@handle_k8s_exceptions
 def cronjob(args: Namespace) -> None:
-    """Timetable command handler.
+    """Cronjob command handler.
 
     :param args: Arguments passed to the run command from the CLI.
     :param logger: Bodywork logger.
