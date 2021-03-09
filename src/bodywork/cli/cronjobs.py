@@ -23,6 +23,43 @@ import re
 from .. import k8s
 
 
+def create_workflow_job_in_namespace(
+    namespace: str,
+    project_name: str,
+    project_repo_url: str,
+    project_repo_branch: str = 'master',
+    retries: int = 2
+) -> None:
+    """Create a new workflow job within a namespace.
+
+    :param namespace: The namespace to deploy the job to.
+    :param project_name: The name of the Bodywork project attached to
+        the job.
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The branch of the Bodywork project Git
+        repository that will be used as the executable codebase,
+        defaults to 'master'.
+    :param retries: Number of times to retry running the stage to
+        completion (if necessary), defaults to 2.
+    """
+    if not k8s.namespace_exists(namespace):
+        print(f'namespace={namespace} could not be found on k8s cluster')
+        return None
+    if _is_existing_workflow_job(namespace, project_name):
+        print(f'workflow job={project_name} already exists in namespace={namespace}')
+        return None
+    configured_job = k8s.configure_workflow_job(
+        namespace,
+        project_name,
+        project_repo_url,
+        project_repo_branch,
+        retries
+    )
+    k8s.create_workflow_job(configured_job)
+    print(f'workflow job={project_name} created in namespace={namespace}')
+
+
 def create_workflow_cronjob_in_namespace(
     namespace: str,
     schedule: str,
@@ -32,7 +69,7 @@ def create_workflow_cronjob_in_namespace(
     retries: int = 2,
     workflow_controller_history_limit: int = 1
 ) -> None:
-    """Create a new cronjob within a k8s namespace.
+    """Create a new cronjob within a namespace.
 
     :param namespace: The namespace to deploy the cronjob to.
     :param schedule: A valid cron schedule definition.
@@ -51,7 +88,7 @@ def create_workflow_cronjob_in_namespace(
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
         return None
-    if _is_existing_cronjob(namespace, project_name):
+    if _is_existing_workflow_cronjob(namespace, project_name):
         print(f'cronjob={project_name} already exists in namespace={namespace}')
         return None
     if not _is_valid_cron_schedule(schedule):
@@ -68,7 +105,7 @@ def create_workflow_cronjob_in_namespace(
         workflow_controller_history_limit
     )
     k8s.create_workflow_cronjob(configured_job)
-    print(f'cronjob={project_name} created in namespace={namespace}')
+    print(f'workflow cronjob={project_name} created in namespace={namespace}')
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> None:
@@ -81,11 +118,11 @@ def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> N
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
         return None
-    if not _is_existing_cronjob(namespace, project_name):
+    if not _is_existing_workflow_cronjob(namespace, project_name):
         print(f'cronjob={project_name} not found in namespace={namespace}')
         return None
     k8s.delete_workflow_cronjob(namespace, project_name)
-    print(f'cronjob={project_name} deleted from namespace={namespace}')
+    print(f'workflow cronjob={project_name} deleted from namespace={namespace}')
 
 
 def display_cronjobs_in_namespace(namespace: str) -> None:
@@ -112,7 +149,7 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
         )
 
 
-def display_cronjob_workflow_history(namespace: str, project_name: str) -> None:
+def display_workflow_job_history(namespace: str, project_name: str) -> None:
     """Print info on workflow jobs, triggered by a cronjob, to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
@@ -145,7 +182,7 @@ def display_cronjob_workflow_history(namespace: str, project_name: str) -> None:
         )
 
 
-def display_cronjob_workflow_logs(namespace: str, workflow_job_name: str) -> None:
+def display_workflow_job_logs(namespace: str, workflow_job_name: str) -> None:
     """Print workflow job logs to stdout.
 
     :param namespace: Namespace in which the workflow job exists.
@@ -163,7 +200,19 @@ def display_cronjob_workflow_logs(namespace: str, workflow_job_name: str) -> Non
     print(workflow_job_logs)
 
 
-def _is_existing_cronjob(namespace: str, project_name: str) -> bool:
+def _is_existing_workflow_job(namespace: str, project_name: str) -> bool:
+    """Can the named job be found in the namespace.
+
+    :param namespace: The namespace to look in.
+    :param project_name: The name of the Bodywork project attached to
+        the job.
+    :return: A boolean flag.
+    """
+    jobs_in_namespace = k8s.list_workflow_jobs(namespace, project_name)
+    return True if project_name in jobs_in_namespace.keys() else False
+
+
+def _is_existing_workflow_cronjob(namespace: str, project_name: str) -> bool:
     """Can the named cronjob be found in the namespace.
 
     :param namespace: The namespace to look in.

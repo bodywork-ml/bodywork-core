@@ -31,8 +31,8 @@ from pkg_resources import get_distribution
 from .cronjobs import (
     create_workflow_cronjob_in_namespace,
     display_cronjobs_in_namespace,
-    display_cronjob_workflow_history,
-    display_cronjob_workflow_logs,
+    display_workflow_job_history,
+    display_workflow_job_logs,
     delete_workflow_cronjob_in_namespace
 )
 from .service_deployments import (
@@ -342,10 +342,10 @@ def cronjob(args: Namespace) -> None:
         delete_workflow_cronjob_in_namespace(namespace, name)
     elif command == 'history':
         load_kubernetes_config()
-        display_cronjob_workflow_history(namespace, name)
+        display_workflow_job_history(namespace, name)
     elif command == 'logs':
         load_kubernetes_config()
-        display_cronjob_workflow_logs(namespace, name)
+        display_workflow_job_logs(namespace, name)
     else:
         load_kubernetes_config()
         display_cronjobs_in_namespace(namespace)

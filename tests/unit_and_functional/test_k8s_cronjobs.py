@@ -210,7 +210,7 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
 
 
 @patch('kubernetes.client.BatchV1Api')
-def test_list_workflow_cronjobs_workflow_jobs(
+def test_list_workflow_jobs_returns_jobs_summary_info(
     mock_k8s_batchv1_api: MagicMock,
 ):
     mock_k8s_batchv1_api().list_namespaced_job.return_value = (

@@ -31,7 +31,9 @@ from .auth import (
     setup_workflow_service_account
 )
 from .cronjobs import (
+    configure_workflow_job,
     configure_workflow_cronjob,
+    create_workflow_job,
     create_workflow_cronjob,
     delete_workflow_cronjob,
     list_workflow_cronjobs,
@@ -95,11 +97,13 @@ __all__ = [
     'setup_job_and_deployment_service_accounts',
     'setup_workflow_service_account',
     'configure_workflow_cronjob',
+    'create_workflow_job',
     'create_workflow_cronjob',
     'delete_workflow_cronjob',
     'list_workflow_cronjobs',
     'list_workflow_jobs',
     'JobStatus',
+    'configure_workflow_job',
     'configure_batch_stage_job',
     'create_job',
     'delete_job',
