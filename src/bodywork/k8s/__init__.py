@@ -39,7 +39,7 @@ from .workflow_jobs import (
     list_workflow_cronjobs,
     list_workflow_jobs
 )
-from .jobs import (
+from .batch_jobs import (
     JobStatus,
     configure_batch_stage_job,
     create_job,

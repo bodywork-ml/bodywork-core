@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Test high-level cronjob management functions.
+Test high-level workflow job management functions.
 """
 import re
 from datetime import datetime
@@ -239,7 +239,7 @@ def test_delete_workflow_cronjob_in_namespace(
 
 
 @patch('bodywork.cli.workflow_jobs.k8s')
-def test_display_cronjobs_in_namespace(
+def test_display_workflow_cronjobs_in_namespace(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):

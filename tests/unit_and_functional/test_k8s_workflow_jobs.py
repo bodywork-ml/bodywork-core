@@ -15,8 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Unit tests for the high-level Kubernetes cronjobs interface, used to
-to create and manage cronjobs that execute Bodywork project workflows.
+Unit tests for the high-level interface to the Kubernetes jobs and
+cronjobs APIs, used to create and manage jobs that execute Bodywork
+project workflows.
 """
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -143,7 +144,7 @@ def workflow_cronjob_object() -> kubernetes.client.V1Job:
     return cronjob
 
 
-def test_configure_batch_stage_cronjob():
+def test_configure_workflow_cronjob():
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule='0,30 * * * *',
         namespace='bodywork-dev',
