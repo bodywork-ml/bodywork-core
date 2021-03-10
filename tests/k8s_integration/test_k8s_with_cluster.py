@@ -493,6 +493,8 @@ def test_deployment_of_remote_workflows(
         assert process_two.returncode == 0
         assert 'bodywork-test-project' in process_two.stdout
 
+        sleep(15)
+
         process_three = run(
             ['bodywork',
              'deployment',
