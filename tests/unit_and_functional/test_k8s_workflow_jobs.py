@@ -25,7 +25,7 @@ import kubernetes
 from pytest import fixture
 
 from bodywork.constants import BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
-from bodywork.k8s.cronjobs import (
+from bodywork.k8s.workflow_jobs import (
     configure_workflow_job,
     create_workflow_job,
     configure_workflow_cronjob,

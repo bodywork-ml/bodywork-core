@@ -15,8 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-High-level interface to the Kubernetes cronjobs API as used to create
-and manage cronjobs that execute Bodywork project workflows.
+High-level interface to the Kubernetes jobs and cronjobs APIs, as used
+to create and manage cronjobs that execute Bodywork project workflows.
 """
 from datetime import datetime
 from typing import Dict, Union
@@ -42,7 +42,7 @@ def configure_workflow_job(
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
-    :param namespace: The namespace to deploy the cronjob to.
+    :param namespace: The namespace to deploy the job to.
     :param project_name: The name of the Bodywork project that the stage
         belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
@@ -53,7 +53,7 @@ def configure_workflow_job(
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
-    :return: A configured k8s cronjob object.
+    :return: A configured k8s job object.
     """
     vcs_env_vars = [
         k8s.V1EnvVar(
@@ -244,7 +244,7 @@ def list_workflow_jobs(
     namespace: str,
     job_name: str
 ) -> Dict[str, Dict[str, Union[datetime, bool]]]:
-    """Get historic workflow-controller jobs.
+    """Get historic workflow jobs.
 
     Get status information for workflow jobs owned by a job or cronjob.
 

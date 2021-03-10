@@ -30,7 +30,7 @@ from .auth import (
     setup_job_and_deployment_service_accounts,
     setup_workflow_service_account
 )
-from .cronjobs import (
+from .workflow_jobs import (
     configure_workflow_job,
     configure_workflow_cronjob,
     create_workflow_job,

@@ -28,7 +28,7 @@ from typing import Callable
 import kubernetes
 from pkg_resources import get_distribution
 
-from .cronjobs import (
+from .workflow_jobs import (
     create_workflow_job_in_namespace,
     create_workflow_cronjob_in_namespace,
     display_cronjobs_in_namespace,
@@ -65,7 +65,7 @@ def cli() -> None:
     # top level interface
     cli_arg_parser = ArgumentParser(
         prog='bodywork',
-        description='Manage statistical (machine) learning model deployments on k8s.')
+        description='Deploy machine learning projects developed in Python, to k8s.')
     cli_arg_parser.add_argument(
         '--version',
         action='version',
@@ -102,25 +102,25 @@ def cli() -> None:
         '--name',
         type=str,
         default='',
-        help='The name given to the deployment or the workflow job.'
+        help='The name given to the workflow job.'
     )
     deployment_cmd_parser.add_argument(
         '--git-repo-url',
         type=str,
         default='',
-        help='Git repository URL containing the Bodywork project codebase'
+        help='Git repository URL containing the Bodywork project.'
     )
     deployment_cmd_parser.add_argument(
         '--git-repo-branch',
         type=str,
         default='master',
-        help='Git repository branch to run'
+        help='Git repository branch to run.'
     )
     deployment_cmd_parser.add_argument(
         '--retries',
         type=int,
         default=2,
-        help='Number of times to retry a failed workflow'
+        help='Number of times to retry a failed workflow job.'
     )
 
     # cronjob interface
@@ -143,37 +143,37 @@ def cli() -> None:
         '--name',
         type=str,
         default='',
-        help='The name given to the cronjob or the workflow job.'
+        help='The name given to the cronjob.'
     )
     cronjob_cmd_parser.add_argument(
         '--schedule',
         type=str,
         default='',
-        help='Workflow cronjob expressed as a cron schedule - e.g. "0,30 * * * *"'
+        help='Workflow cronjob expressed as a cron schedule - e.g. "0,30 * * * *".'
     )
     cronjob_cmd_parser.add_argument(
         '--git-repo-url',
         type=str,
         default='',
-        help='Git repository URL containing the Bodywork project codebase'
+        help='Git repository URL containing the Bodywork project codebase.'
     )
     cronjob_cmd_parser.add_argument(
         '--git-repo-branch',
         type=str,
         default='master',
-        help='Git repository branch to run'
+        help='Git repository branch to run.'
     )
     cronjob_cmd_parser.add_argument(
         '--retries',
         type=int,
         default=2,
-        help='Number of times to retry a failed workflow'
+        help='Number of times to retry a failed workflow job.'
     )
     cronjob_cmd_parser.add_argument(
         '--history-limit',
         type=int,
         default=1,
-        help='Minimum number of historic workflow-controller jobs to keep for logs'
+        help='Minimum number of historic workflow jobs to keep for logs.'
     )
 
     # service interface
@@ -219,7 +219,7 @@ def cli() -> None:
         '--name',
         type=str,
         default='',
-        help='The name given to the Kubernetes secret'
+        help='The name given to the Kubernetes secret.'
     )
     secret_cmd_parser.add_argument(
         '--data',
@@ -292,7 +292,7 @@ def cli() -> None:
     else:
         cli_arg_parser.exit(
             status=0,
-            message=('Manage statistical (machine) learning model deployments on k8s.'
+            message=('Deploy machine learning projects developed in Python, to k8s.'
                      '\n--> see bodywork -h for help')
         )
 

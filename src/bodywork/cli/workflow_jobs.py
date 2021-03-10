@@ -15,8 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-This module contains functions for managing Kubernetes cronjobs. They
-are targeted for use via the CLI.
+This module contains functions for managing Kubernetes workflow jobs.
+They are targeted for use via the CLI.
 """
 import re
 
@@ -67,7 +67,7 @@ def create_workflow_cronjob_in_namespace(
     project_repo_url: str,
     project_repo_branch: str = 'master',
     retries: int = 2,
-    workflow_controller_history_limit: int = 1
+    workflow_job_history_limit: int = 1
 ) -> None:
     """Create a new cronjob within a namespace.
 
@@ -82,8 +82,8 @@ def create_workflow_cronjob_in_namespace(
         defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
-    :param workflow_controller_history_limit: Minimum number of
-        historical workflow-controller jobs, so logs can be retrieved.
+    :param workflow_job_history_limit: Minimum number of
+        historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
@@ -101,8 +101,8 @@ def create_workflow_cronjob_in_namespace(
         project_repo_url,
         project_repo_branch,
         retries,
-        workflow_controller_history_limit,
-        workflow_controller_history_limit
+        workflow_job_history_limit,
+        workflow_job_history_limit
     )
     k8s.create_workflow_cronjob(configured_job)
     print(f'workflow cronjob={project_name} created in namespace={namespace}')
@@ -194,7 +194,7 @@ def display_workflow_job_logs(namespace: str, workflow_job_name: str) -> None:
         return None
     workflow_job_pod_name = k8s.get_latest_pod_name(namespace, workflow_job_name)
     if workflow_job_pod_name is None:
-        print(f'cannot find pod for workflow-job={workflow_job_name}')
+        print(f'cannot find pod for workflow job={workflow_job_name}')
         return None
     workflow_job_logs = k8s.get_pod_logs(namespace, workflow_job_pod_name)
     print(workflow_job_logs)
