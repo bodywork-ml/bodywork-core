@@ -242,16 +242,17 @@ def run_stage(
         run(['python', stage.executable_script_path], check=True)
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
                  f' at {repo_url}')
-    except CalledProcessError as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, e.cmd, e.stderr)
+    except Exception as e:
+        log.error(e)
+        stage_failure_exception = BodyworkStageFailure(stage_name)
         log.error(stage_failure_exception)
-        raise stage_failure_exception from e
+        raise stage_failure_exception
 
 
 def _install_python_requirements(path_to_requirements_file: Path) -> None:
     """Install the Python dependencies for a Bodywork project stage.
 
-    :param path_to_requirements_file: Path to requirements.txt flile for
+    :param path_to_requirements_file: Path to requirements.txt file for
          the stage.
     :raises RuntimeError: If there was an error when installing requirements.
     """

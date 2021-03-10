@@ -45,11 +45,13 @@ def download_project_code_from_repo(
         run(['git', '--version'], check=True)
     except CalledProcessError:
         raise RuntimeError('git is not available')
-
-    if (get_connection_protocol(url) is ConnectionPrototcol.SSH
-            and get_remote_repo_host(url) is GitRepoHost.GITHUB):
-        setup_ssh_for_github()
-
+    try:
+        if (get_connection_protocol(url) is ConnectionPrototcol.SSH
+                and get_remote_repo_host(url) is GitRepoHost.GITHUB):
+            setup_ssh_for_github()
+    except Exception as e:
+        msg = f'git clone failed - Unable to setup SSH for Github: {e}'
+        raise RuntimeError(msg)
     try:
         run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
             check=True, capture_output=True)
@@ -123,7 +125,7 @@ def setup_ssh_for_github() -> None:
         if SSH_GITHUB_KEY_ENV_VAR not in os.environ:
             msg = (f'failed to setup SSH for GitHub - cannot find '
                    f'{SSH_GITHUB_KEY_ENV_VAR} environment variable')
-            raise RuntimeError(msg)
+            raise KeyError(msg)
         ssh_dir.mkdir(mode=0o700, exist_ok=True)
         private_key.touch(0o700, exist_ok=False)
         private_key.write_text(os.environ[SSH_GITHUB_KEY_ENV_VAR])
