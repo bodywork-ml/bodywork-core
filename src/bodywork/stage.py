@@ -239,12 +239,11 @@ def run_stage(
         path_to_stage_dir = cloned_repo_dir / stage_name
         stage = stage_factory(path_to_stage_dir)
         _install_python_requirements(stage.requirements_file_path)
-        run(['python', stage.executable_script_path], check=True)
+        run(['python', stage.executable_script_path], check=True, encoding='utf-8')
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
                  f' at {repo_url}')
     except Exception as e:
-        log.error(e)
-        stage_failure_exception = BodyworkStageFailure(stage_name)
+        stage_failure_exception = BodyworkStageFailure(stage_name, e)
         log.error(stage_failure_exception)
         raise stage_failure_exception
 

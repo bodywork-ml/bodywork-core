@@ -25,6 +25,7 @@ from pathlib import Path
 from subprocess import run, CalledProcessError
 
 from .constants import DEFAULT_PROJECT_DIR, SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
+from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
@@ -41,6 +42,7 @@ def download_project_code_from_repo(
     :raises RuntimeError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
+    log = bodywork_log_factory()
     try:
         run(['git', '--version'], check=True)
     except CalledProcessError:
@@ -49,12 +51,14 @@ def download_project_code_from_repo(
         if (get_connection_protocol(url) is ConnectionPrototcol.SSH
                 and get_remote_repo_host(url) is GitRepoHost.GITHUB):
             setup_ssh_for_github()
+        elif SSH_GITHUB_KEY_ENV_VAR not in os.environ: 
+            log.warning('Not configured for use with private GitHub repos')
     except Exception as e:
         msg = f'git clone failed - Unable to setup SSH for Github: {e}'
         raise RuntimeError(msg)
     try:
         run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
-            check=True, capture_output=True)
+            check=True, capture_output=True, encoding='utf-8')
     except CalledProcessError as e:
         msg = f'git clone failed - calling {e.cmd} returned {e.stderr}'
         raise RuntimeError(msg)
@@ -67,7 +71,7 @@ class GitRepoHost(Enum):
 
 
 class ConnectionPrototcol(Enum):
-    """Conenction protocol used to access Git repo."""
+    """Connection protocol used to access Git repo."""
     FILE = 'file'
     HTTPS = 'https'
     SSH = 'ssh'
@@ -76,7 +80,7 @@ class ConnectionPrototcol(Enum):
 def get_remote_repo_host(connection_string: str) -> GitRepoHost:
     """Derive the remote Git repo host from connection string.
 
-    :param connection_string: The string contaiing the connection
+    :param connection_string: The string containing the connection
         details for the remote Git repository - e.g. the GitHUb URL.
     :raises RuntimeError: if the remote Git repository cannot be
         determined.
@@ -91,9 +95,9 @@ def get_remote_repo_host(connection_string: str) -> GitRepoHost:
 
 
 def get_connection_protocol(connection_string: str) -> ConnectionPrototcol:
-    """Derive connection protocol used to retreive Git repo.
+    """Derive connection protocol used to retrieve Git repo.
 
-    :param connection_string: The string contaiing the connection
+    :param connection_string: The string containing the connection
         details for the remote Git repository - e.g. the GitHUb URL.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.

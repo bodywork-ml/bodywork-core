@@ -55,12 +55,12 @@ def setup_bodywork_test_project(
 ) -> Iterable[bool]:
     # SETUP
     try:
-        run(['git', 'init'], cwd=project_repo_location, check=True)
-        run(['git', 'add', '-A'], cwd=project_repo_location, check=True)
+        run(['git', 'init'], cwd=project_repo_location, check=True, encoding='utf-8')
+        run(['git', 'add', '-A'], cwd=project_repo_location, check=True, encoding='utf-8')
         run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True, encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
-    except CalledProcessError as e:
+    except Exception as e:
         raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
     finally:
         # TEARDOWN
