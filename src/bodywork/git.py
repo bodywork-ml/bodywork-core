@@ -71,7 +71,7 @@ class GitRepoHost(Enum):
 
 
 class ConnectionPrototcol(Enum):
-    """Connection protocol used to access Git repo."""
+    """Conenction protocol used to access Git repo."""
     FILE = 'file'
     HTTPS = 'https'
     SSH = 'ssh'
@@ -80,7 +80,7 @@ class ConnectionPrototcol(Enum):
 def get_remote_repo_host(connection_string: str) -> GitRepoHost:
     """Derive the remote Git repo host from connection string.
 
-    :param connection_string: The string containing the connection
+    :param connection_string: The string contaiing the connection
         details for the remote Git repository - e.g. the GitHUb URL.
     :raises RuntimeError: if the remote Git repository cannot be
         determined.
@@ -95,9 +95,9 @@ def get_remote_repo_host(connection_string: str) -> GitRepoHost:
 
 
 def get_connection_protocol(connection_string: str) -> ConnectionPrototcol:
-    """Derive connection protocol used to retrieve Git repo.
+    """Derive connection protocol used to retreive Git repo.
 
-    :param connection_string: The string containing the connection
+    :param connection_string: The string contaiing the connection
         details for the remote Git repository - e.g. the GitHUb URL.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.
@@ -143,3 +143,4 @@ def setup_ssh_for_github() -> None:
     os.environ['GIT_SSH_COMMAND'] = (
         f'ssh -i {private_key} -o UserKnownHostsFile={known_hosts}'
     )
+        
