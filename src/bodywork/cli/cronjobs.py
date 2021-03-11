@@ -30,6 +30,7 @@ def create_cronjob_in_namespace(
     project_repo_url: str,
     project_repo_branch: str = 'master',
     retries: int = 2,
+    workflow_controller_history_limit: int = 1
 ) -> None:
     """Create a new cronjob within a k8s namespace.
 
@@ -44,6 +45,8 @@ def create_cronjob_in_namespace(
         defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param workflow_controller_history_limit: Minimum number of
+        historical workflow-controller jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
         print(f'namespace={namespace} could not be found on k8s cluster')
@@ -60,7 +63,9 @@ def create_cronjob_in_namespace(
         project_name,
         project_repo_url,
         project_repo_branch,
-        retries
+        retries,
+        workflow_controller_history_limit,
+        workflow_controller_history_limit
     )
     k8s.create_cronjob(configured_job)
     print(f'cronjob={project_name} created in namespace={namespace}')
@@ -93,20 +98,17 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
         return None
     cronjobs_info = k8s.list_cronjobs(namespace)
     print(f'cronjobs in namespace={namespace}:\n')
-    print(
-        f'{"NAME":<40}'
-        f'{"SCHEDULE":<30}'
-        f'{"LAST_ACTIVE":<25}'
-        f'{"GIT_URL":<50}'
-        f'{"GIT_BRANCH":<20}'
-    )
     for name, data in cronjobs_info.items():
         print(
-            f'{name:<40}'
-            f'{data["schedule"]:<30}'
-            f'{str(data["last_scheduled_time"]):<25}'
-            f'{data["git_url"]:<50}'
-            f'{data["git_branch"]:<20}'
+            f'\n{"-"*len(name)}-\n'
+            f'{name}:\n'
+            f'{"-"*len(name)}-\n'
+            f'|- {"NAME":<22}{name}\n'
+            f'|- {"SCHEDULE":<22}{data["schedule"]}\n'
+            f'|- {"RETRIES":<22}{data["retries"]}\n'
+            f'|- {"GIT_URL":<22}{data["git_url"]}\n'
+            f'|- {"GIT_BRANCH":<22}{data["git_branch"]}\n'
+            f'|- {"LAST_EXECUTED":<22}{str(data["last_scheduled_time"])}\n'
         )
 
 

@@ -50,7 +50,7 @@ class Stage:
         try:
             executable_script = config['default']['EXECUTABLE_SCRIPT']
         except KeyError as e:
-            raise BodyworkStageConfigError('EXECUTABLE_SCRIPT', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'EXECUTABLE_SCRIPT', 'default') from e
 
         executable_script_path = path_to_stage_dir / executable_script
         if not executable_script_path.exists():
@@ -64,12 +64,12 @@ class Stage:
         try:
             cpu_request = float(config['default']['CPU_REQUEST'])
         except (KeyError, TypeError) as e:
-            raise BodyworkStageConfigError('CPU_REQUEST', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'CPU_REQUEST', 'default') from e
 
         try:
             memory_request = int(config['default']['MEMORY_REQUEST_MB'])
         except (KeyError, TypeError) as e:
-            raise BodyworkStageConfigError('MEMORY_REQUEST_MB', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'MEMORY_REQUEST_MB', 'default') from e
 
         try:
             env_vars_from_secrets = [
@@ -117,15 +117,15 @@ class BatchStage(Stage):
         try:
             retries = int(config['batch']['RETRIES'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('RETRIES', 'batch', name) from e
+            raise BodyworkStageConfigError(name, 'RETRIES', 'batch') from e
 
         try:
             max_completion_time = int(config['batch']['MAX_COMPLETION_TIME_SECONDS'])
         except (KeyError, ValueError) as e:
             time_param_error = BodyworkStageConfigError(
+                name,
                 'MAX_COMPLETION_TIME_SECONDS',
-                'batch',
-                name
+                'batch'
             )
             raise time_param_error from e
 
@@ -153,22 +153,22 @@ class ServiceStage(Stage):
         try:
             replicas = int(config['service']['REPLICAS'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('REPLICAS', 'service', name) from e
+            raise BodyworkStageConfigError(name, 'REPLICAS', 'service') from e
 
         try:
             max_startup_time = int(config['service']['MAX_STARTUP_TIME_SECONDS'])
         except (KeyError, ValueError) as e:
             time_param_error = BodyworkStageConfigError(
+                name,
                 'MAX_STARTUP_TIME_SECONDS',
-                'batch',
-                name
+                'service'
             )
             raise time_param_error from e
 
         try:
             port = int(config['service']['PORT'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('PORT', 'service', name) from e
+            raise BodyworkStageConfigError(name, 'PORT', 'service') from e
 
         try:
             ingress_config = config['service']['INGRESS']
@@ -177,7 +177,7 @@ class ServiceStage(Stage):
             else:
                 create_ingress = True if ingress_config == 'True' else False
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('INGRESS', 'service', name) from e
+            raise BodyworkStageConfigError(name, 'INGRESS', 'service') from e
 
         self.replicas = replicas
         self.max_startup_time = max_startup_time
@@ -212,7 +212,7 @@ def stage_factory(path_to_stage_dir: Path) -> Stage:
             msg = f'STAGE_TYPE={stage_type} is invalid - must be one of batch or service'
             raise RuntimeError(msg)
     except (KeyError, RuntimeError) as e:
-        raise BodyworkStageConfigError('STAGE_TYPE', 'default', stage_name) from e
+        raise BodyworkStageConfigError(stage_name, 'STAGE_TYPE', 'default') from e
 
 
 def run_stage(

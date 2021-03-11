@@ -117,7 +117,7 @@ def configure_service_stage_deployment(
     )
     pod_template_spec = k8s.V1PodTemplateSpec(
         metadata=k8s.V1ObjectMeta(
-            labels={'app': stage_name},
+            labels={'app': 'bodywork', 'stage': stage_name},
             annotations={'last-updated': datetime.now().isoformat()}
         ),
         spec=pod_spec
@@ -125,14 +125,15 @@ def configure_service_stage_deployment(
     deployment_spec = k8s.V1DeploymentSpec(
         replicas=replicas,
         template=pod_template_spec,
-        selector={'matchLabels': {'app': stage_name}},
+        selector={'matchLabels': {'stage': stage_name}},
         revision_history_limit=0,
         min_ready_seconds=seconds_to_be_ready_before_completing
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
         name=f'{project_name}--{stage_name}',
-        annotations={'port': str(port)}
+        annotations={'port': str(port)},
+        labels={'app': 'bodywork', 'stage': stage_name}
     )
     deployment = k8s.V1Deployment(
         metadata=deployment_metadata,
@@ -194,7 +195,9 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
 
     associated_replica_sets = k8s.AppsV1Api().list_namespaced_replica_set(
         namespace=namespace,
-        label_selector=f'app={deployment.spec.template.metadata.labels["app"]}'
+        label_selector=(
+            f'app=bodywork,stage={deployment.spec.template.metadata.labels["stage"]}'
+        )
     )
 
     revision_ordered_replica_sets = sorted(
@@ -352,14 +355,11 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
     :param namespace: Namespace in which to list cronjobs.
     """
     k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
-        namespace=namespace
+        namespace=namespace,
+        label_selector='app=bodywork'
     )
     deployment_info = {
         deployment.metadata.name: {
-            'service_url': (
-                f'http://{deployment.metadata.name}:'
-                f'{deployment.metadata.annotations["port"]}'
-            ),
             'service_exposed': (
                 'true'
                 if is_exposed_as_cluster_service(
@@ -367,6 +367,25 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
                     deployment.metadata.name
                 )
                 else 'false'
+            ),
+            'service_url': (
+                cluster_service_url(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                if is_exposed_as_cluster_service(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                else 'none'
+            ),
+            'service_port': (
+                deployment.metadata.annotations["port"]
+                if is_exposed_as_cluster_service(
+                    deployment.metadata.namespace,
+                    deployment.metadata.name
+                )
+                else 'none'
             ),
             'available_replicas': (
                 0
@@ -377,11 +396,32 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
                 if deployment.status.unavailable_replicas is None
                 else deployment.status.unavailable_replicas),
             'git_url': deployment.spec.template.spec.containers[0].args[0],
-            'git_branch': deployment.spec.template.spec.containers[0].args[1]
+            'git_branch': deployment.spec.template.spec.containers[0].args[1],
+            'has_ingress': (
+                'true'
+                if has_ingress(namespace, deployment.metadata.name)
+                else 'false'
+            ),
+            'ingress_route': (
+                ingress_route(deployment.metadata.namespace, deployment.metadata.name)
+                if has_ingress(namespace, deployment.metadata.name)
+                else 'none'
+            )
         }
         for deployment in k8s_deployment_query.items
     }
     return deployment_info
+
+
+def cluster_service_url(namespace: str, deployment_name) -> str:
+    """Standardised URL to a service deployment.
+
+    :param namespace: Namespace in which the deployment exists.
+    :param deployment_name: The deployment's name.
+    :return: The internal URL to access the cluster service from within
+        the cluster.
+    """
+    return f'http://{deployment_name}.{namespace}.svc.cluster.local'
 
 
 def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
@@ -401,7 +441,8 @@ def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
     )
     service_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=name
+        name=name,
+        labels={'app': 'bodywork', 'stage': name}
     )
     service = k8s.V1Service(
         metadata=service_metadata,
@@ -439,6 +480,16 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
     )
 
 
+def ingress_route(namespace: str, deployment_name: str) -> str:
+    """Standardised route to a service deployment.
+
+    :param namespace: Namespace in which the deployment exists.
+    :param deployment_name: The deployment's name.
+    :return: A route to use for ingress to the service deployment.
+    """
+    return f'/{namespace}/{deployment_name}'
+
+
 def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
     """Create an ingress to a service backed by a deployment.
 
@@ -448,7 +499,7 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
     name = deployment.metadata.name
     pod_port = int(deployment.metadata.annotations['port'])
 
-    ingress_path = f'/{namespace}/{name}(/|$)(.*)'
+    ingress_path = f'{ingress_route(namespace, name)}(/|$)(.*)'
 
     ingress_spec = k8s.ExtensionsV1beta1IngressSpec(
         rules=[
@@ -473,9 +524,9 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
         name=name,
         annotations={
             'kubernetes.io/ingress.class': 'nginx',
-            'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
-            'bodywork': 'true'
-        }
+            'nginx.ingress.kubernetes.io/rewrite-target': '/$2'
+        },
+        labels={'app': 'bodywork', 'stage': name}
     )
 
     ingress = k8s.ExtensionsV1beta1Ingress(
@@ -508,13 +559,9 @@ def has_ingress(namespace: str, name: str) -> bool:
     :param namespace: Namespace in which to look for ingress resources.
     :param names: The name of the ingress.
     """
-    def is_bodywork_ingress(ingress: k8s.ExtensionsV1beta1Ingress) -> bool:
-        return True if ingress.metadata.annotations.get('bodywork') else False
-
-    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(namespace=namespace)
-    ingress_names = [
-        ingress.metadata.name
-        for ingress in ingresses.items
-        if is_bodywork_ingress(ingress)
-    ]
+    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(
+        namespace=namespace,
+        label_selector='app=bodywork'
+    )
+    ingress_names = [ingress.metadata.name for ingress in ingresses.items]
     return True if name in ingress_names else False

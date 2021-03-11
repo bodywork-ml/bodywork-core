@@ -26,6 +26,7 @@ import kubernetes
 from pytest import fixture, raises
 
 from bodywork.k8s.service_deployments import (
+    cluster_service_url,
     configure_service_stage_deployment,
     create_deployment,
     create_deployment_ingress,
@@ -35,6 +36,7 @@ from bodywork.k8s.service_deployments import (
     DeploymentStatus,
     expose_deployment_as_cluster_service,
     has_ingress,
+    ingress_route,
     is_existing_deployment,
     is_exposed_as_cluster_service,
     _get_deployment_status,
@@ -65,7 +67,7 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
     )
     pod_template_spec = kubernetes.client.V1PodTemplateSpec(
         metadata=kubernetes.client.V1ObjectMeta(
-            labels={'app': 'bodywork-test-project--serve'},
+            labels={'stage': 'bodywork-test-project--serve'},
             annotations={'last-updated': '2020-09-03T15:08:41.836365'}
         ),
         spec=pod_spec
@@ -73,7 +75,7 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
     deployment_spec = kubernetes.client.V1DeploymentSpec(
         replicas=2,
         template=pod_template_spec,
-        selector={'matchLabels': {'app': 'bodywork-test-project--serve'}}
+        selector={'matchLabels': {'stage': 'bodywork-test-project--serve'}}
     )
     deployment_metadata = kubernetes.client.V1ObjectMeta(
         namespace='bodywork-dev',
@@ -198,7 +200,7 @@ def test_rollback_deployment_tries_to_patch_deployment_to_force_rollback(
                     ),
                     spec=kubernetes.client.V1ReplicaSetSpec(
                         selector=kubernetes.client.V1LabelSelector(
-                            match_labels={'app': 'my-app'}
+                            match_labels={'stage': 'my-app'}
                         ),
                         template=template_spec_revision_one
                     )
@@ -214,7 +216,7 @@ def test_rollback_deployment_tries_to_patch_deployment_to_force_rollback(
                     ),
                     spec=kubernetes.client.V1ReplicaSetSpec(
                         selector=kubernetes.client.V1LabelSelector(
-                            match_labels={'app': 'my-app'}
+                            match_labels={'stage': 'my-app'}
                         ),
                         template=template_spec_revision_two
                     )
@@ -376,43 +378,75 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
     assert successful is True
 
 
-@patch('kubernetes.client.AppsV1Api')
 def test_list_service_stage_deployments_returns_service_stage_info(
-    mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment
 ):
+    service_namespace = service_stage_deployment_object.metadata.namespace
+    service_name = service_stage_deployment_object.metadata.name
+    service_url = f'http://{service_name}.{service_namespace}.svc.cluster.local'
+    service_port = service_stage_deployment_object.metadata.annotations['port']
+
     service_stage_deployment_object.status = kubernetes.client.V1DeploymentStatus(
         available_replicas=1,
         unavailable_replicas=None
     )
 
+    service_stage_service_object = kubernetes.client.V1Service(
+        metadata=kubernetes.client.V1ObjectMeta(
+            namespace=service_namespace,
+            name=service_name
+        )
+    )
+
+    service_stage_ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+        metadata=kubernetes.client.V1ObjectMeta(
+            namespace=service_namespace,
+            name=service_name,
+            annotations={
+                'kubernetes.io/ingress.class': 'nginx',
+                'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+                'bodywork': 'true'
+            }
+        )
+    )
+
     with patch('kubernetes.client.AppsV1Api') as mock_k8s_apps_api:
         with patch('kubernetes.client.CoreV1Api') as mock_k8s_core_api:
-            mock_k8s_apps_api().list_namespaced_deployment.return_value = (
-                kubernetes.client.V1DeploymentList(
-                    items=[service_stage_deployment_object]
+            with patch('kubernetes.client.ExtensionsV1beta1Api') as mock_k8s_ext_api:
+                mock_k8s_apps_api().list_namespaced_deployment.return_value = (
+                    kubernetes.client.V1DeploymentList(
+                        items=[service_stage_deployment_object]
+                    )
                 )
-            )
-            mock_k8s_core_api().list_namespaced_service.return_value = (
-                kubernetes.client.V1ServiceList(
-                    items=[
-                        kubernetes.client.V1Service(
-                            metadata=kubernetes.client.V1ObjectMeta(
-                                name='bodywork-test-project--serve'
-                            )
-                        )
-                    ]
+                mock_k8s_core_api().list_namespaced_service.return_value = (
+                    kubernetes.client.V1ServiceList(
+                        items=[service_stage_service_object]
+                    )
                 )
-            )
+                mock_k8s_ext_api().list_namespaced_ingress.return_value = (
+                    kubernetes.client.ExtensionsV1beta1IngressList(
+                        items=[service_stage_ingress_object]
+                    )
+                )
+                deployment_info = list_service_stage_deployments(service_namespace)
+                assert service_name in deployment_info.keys()
+                assert deployment_info[service_name]['service_url'] == service_url
+                assert deployment_info[service_name]['service_port'] == service_port
+                assert deployment_info[service_name]['service_exposed'] == 'true'
+                assert deployment_info[service_name]['available_replicas'] == 1
+                assert deployment_info[service_name]['unavailable_replicas'] == 0
+                assert deployment_info[service_name]['git_branch'] == 'project_repo_branch'  # noqa
+                assert deployment_info[service_name]['git_url'] == 'project_repo_url'
+                assert deployment_info[service_name]['has_ingress'] == 'true'
 
-            deployment_info = list_service_stage_deployments('bodywork-dev')
-            assert 'bodywork-test-project--serve' in deployment_info.keys()
-            assert deployment_info['bodywork-test-project--serve']['service_url'] == 'http://bodywork-test-project--serve:5000'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['service_exposed'] == 'true'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['available_replicas'] == 1  # noqa
-            assert deployment_info['bodywork-test-project--serve']['unavailable_replicas'] == 0  # noqa
-            assert deployment_info['bodywork-test-project--serve']['git_branch'] == 'project_repo_branch'  # noqa
-            assert deployment_info['bodywork-test-project--serve']['git_url'] == 'project_repo_url'  # noqa
+
+def test_cluster_service_url(
+    service_stage_deployment_object: kubernetes.client.V1Deployment
+):
+    namespace = service_stage_deployment_object.metadata.namespace
+    name = service_stage_deployment_object.metadata.namespace
+    assert (cluster_service_url(namespace, name)
+            == f'http://{name}.{namespace}.svc.cluster.local')
 
 
 @patch('kubernetes.client.CoreV1Api')
@@ -423,11 +457,12 @@ def test_expose_deployment_as_cluster_service_tries_to_expose_deployment_as_serv
     service_object = kubernetes.client.V1Service(
         metadata=kubernetes.client.V1ObjectMeta(
             namespace='bodywork-dev',
-            name='bodywork-test-project--serve'
+            name='bodywork-test-project--serve',
+            labels={'app': 'bodywork', 'stage': 'bodywork-test-project--serve'}
         ),
         spec=kubernetes.client.V1ServiceSpec(
             type='ClusterIP',
-            selector={'app': 'bodywork-test-project--serve'},
+            selector={'stage': 'bodywork-test-project--serve'},
             ports=[kubernetes.client.V1ServicePort(port=5000, target_port=5000)]
         )
     )
@@ -479,6 +514,14 @@ def test_stop_exposing_cluster_service_tries_to_stop_exposing_deployment_as_serv
     )
 
 
+def test_ingress_route(
+    service_stage_deployment_object: kubernetes.client.V1Deployment
+):
+    namespace = service_stage_deployment_object.metadata.namespace
+    name = service_stage_deployment_object.metadata.namespace
+    assert ingress_route(namespace, name) == f'/{namespace}/{name}'
+
+
 @patch('kubernetes.client.ExtensionsV1beta1Api')
 def test_create_deployment_ingress_tries_to_create_ingress_resource(
     mock_k8s_extensions_api: MagicMock,
@@ -510,8 +553,8 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
             annotations={
                 'kubernetes.io/ingress.class': 'nginx',
                 'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
-                'bodywork': 'true'
-            }
+            },
+            labels={'app': 'bodywork', 'stage': 'bodywork-test-project--serve'}
         ),
         spec=ingress_spec
     )
@@ -545,22 +588,8 @@ def test_has_ingress_identifies_existing_ingress_resources(
                 kubernetes.client.ExtensionsV1beta1Ingress(
                     metadata=kubernetes.client.V1ObjectMeta(
                         name='bodywork--serve',
-                        annotations={
-                            'kubernetes.io/ingress.class': 'nginx',
-                            'bodywork': 'true'
-                        }
-                    )
-                )
-            ]
-        ),
-        kubernetes.client.ExtensionsV1beta1IngressList(
-            items=[
-                kubernetes.client.ExtensionsV1beta1Ingress(
-                    metadata=kubernetes.client.V1ObjectMeta(
-                        name='bodywork--serve',
-                        annotations={
-                            'kubernetes.io/ingress.class': 'nginx',
-                        }
+                        annotations={'kubernetes.io/ingress.class': 'nginx'},
+                        labels={'app': 'bodywork', 'stage': 'bodywork--serve'}
                     )
                 )
             ]
@@ -570,14 +599,12 @@ def test_has_ingress_identifies_existing_ingress_resources(
                 kubernetes.client.ExtensionsV1beta1Ingress(
                     metadata=kubernetes.client.V1ObjectMeta(
                         name='bodywork--some-other-service',
-                        annotations={
-                            'kubernetes.io/ingress.class': 'nginx',
-                        }
+                        annotations={'kubernetes.io/ingress.class': 'nginx'},
+                        labels={'app': 'bodywork', 'stage': 'bodywork--serve'}
                     )
                 )
             ]
         )
     ]
     assert has_ingress('bodywork-dev', 'bodywork--serve') is True
-    assert has_ingress('bodywork-dev', 'bodywork--serve') is False
     assert has_ingress('bodywork-dev', 'bodywork--serve') is False

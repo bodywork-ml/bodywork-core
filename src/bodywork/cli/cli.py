@@ -127,6 +127,12 @@ def cli() -> None:
         default=2,
         help='Number of times to retry a failed workflow'
     )
+    cronjob_cmd_parser.add_argument(
+        '--history-limit',
+        type=int,
+        default=1,
+        help='Minimum number of historic workflow-controller jobs to keep for logs'
+    )
 
     # service interface
     service_cmd_parser = cli_arg_subparser.add_parser('service')
@@ -304,6 +310,7 @@ def cronjob(args: Namespace) -> None:
     name = args.name
     schedule = args.schedule
     retries = args.retries
+    history_limit = args.history_limit
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     if ((command == 'create' or command == 'delete' or command == 'history'
@@ -327,7 +334,8 @@ def cronjob(args: Namespace) -> None:
             name,
             git_repo_url,
             git_repo_branch,
-            retries
+            retries,
+            history_limit
         )
     elif command == 'delete':
         load_kubernetes_config()
