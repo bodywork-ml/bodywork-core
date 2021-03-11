@@ -51,7 +51,7 @@ def download_project_code_from_repo(
         if (get_connection_protocol(url) is ConnectionPrototcol.SSH
                 and get_remote_repo_host(url) is GitRepoHost.GITHUB):
             setup_ssh_for_github()
-        elif SSH_GITHUB_KEY_ENV_VAR not in os.environ: 
+        elif SSH_GITHUB_KEY_ENV_VAR not in os.environ:
             log.warning('Not configured for use with private GitHub repos')
     except Exception as e:
         msg = f'git clone failed - Unable to setup SSH for Github: {e}'
@@ -143,4 +143,3 @@ def setup_ssh_for_github() -> None:
     os.environ['GIT_SSH_COMMAND'] = (
         f'ssh -i {private_key} -o UserKnownHostsFile={known_hosts}'
     )
-        
