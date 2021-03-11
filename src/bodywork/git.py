@@ -29,9 +29,9 @@ from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
-    url: str,
-    branch: str = 'master',
-    destination: Path = DEFAULT_PROJECT_DIR
+        url: str,
+        branch: str = 'master',
+        destination: Path = DEFAULT_PROJECT_DIR
 ) -> None:
     """Download Bodywork project code from Git repository,
 
