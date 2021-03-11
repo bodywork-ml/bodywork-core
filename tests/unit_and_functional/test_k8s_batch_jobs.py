@@ -24,7 +24,7 @@ import kubernetes
 from pytest import fixture, raises
 
 from bodywork.exceptions import BodyworkJobFailure
-from bodywork.k8s.jobs import (
+from bodywork.k8s.batch_jobs import (
     configure_batch_stage_job,
     create_job,
     delete_job,
@@ -203,7 +203,7 @@ def test_get_job_status_raises_exception_when_job_cannot_be_found(
         _get_job_status(batch_stage_job_object)
 
 
-@patch('bodywork.k8s.jobs._get_job_status')
+@patch('bodywork.k8s.batch_jobs._get_job_status')
 def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job
@@ -213,7 +213,7 @@ def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
 
-@patch('bodywork.k8s.jobs._get_job_status')
+@patch('bodywork.k8s.batch_jobs._get_job_status')
 def test_monitor_jobs_to_completion_raises_bodyworkjobfailures_error_if_jobs_fail(
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job
@@ -223,7 +223,7 @@ def test_monitor_jobs_to_completion_raises_bodyworkjobfailures_error_if_jobs_fai
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
 
-@patch('bodywork.k8s.jobs._get_job_status')
+@patch('bodywork.k8s.batch_jobs._get_job_status')
 def test_monitor_jobs_to_completion_identifies_successful_jobs(
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job
