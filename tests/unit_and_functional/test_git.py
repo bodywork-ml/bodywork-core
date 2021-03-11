@@ -90,7 +90,7 @@ def test_get_connection_protocol_raises_exception_for_unknown_protocol():
 def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
     if os.environ.get(SSH_GITHUB_KEY_ENV_VAR):
         del os.environ[SSH_GITHUB_KEY_ENV_VAR]
-    with raises(RuntimeError, match='failed to setup SSH for GitHub'):
+    with raises(KeyError, match='failed to setup SSH for GitHub'):
         setup_ssh_for_github()
 
 
