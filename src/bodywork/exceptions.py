@@ -57,6 +57,6 @@ class BodyworkStageConfigError(Exception):
 
 
 class BodyworkStageFailure(Exception):
-    def __init__(self, stage_name: str, cmd: str, stderr: str):
-        msg = f'Stage {stage_name} failed - calling {cmd} returned {stderr}'
+    def __init__(self, stage_name: str, exception: Exception):
+        msg = f'Stage {stage_name} failed - {exception}'
         super().__init__(msg)

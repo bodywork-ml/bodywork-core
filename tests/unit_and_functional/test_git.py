@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Iterable
 
 from pytest import raises
+from unittest.mock import patch, MagicMock
 
 from bodywork.constants import SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
 from bodywork.git import (
@@ -46,11 +47,14 @@ def test_that_git_project_repo_can_be_cloned(
     except Exception:
         assert False
 
-
 def test_that_git_project_clone_raises_exceptions():
     with raises(RuntimeError, match='git clone failed'):
         download_project_code_from_repo('file:///bad_url')
 
+@patch('bodywork.git.setup_ssh_for_github')
+def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock): # noqa
+    with raises(RuntimeError, match='fatal: Could not read from remote repository'):
+        download_project_code_from_repo('git@github.com:test/test.git')
 
 def test_get_remote_repo_host_identifies_remote_hosts():
     conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'
@@ -86,7 +90,7 @@ def test_get_connection_protocol_raises_exception_for_unknown_protocol():
 def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
     if os.environ.get(SSH_GITHUB_KEY_ENV_VAR):
         del os.environ[SSH_GITHUB_KEY_ENV_VAR]
-    with raises(RuntimeError, match='failed to setup SSH for GitHub'):
+    with raises(KeyError, match='failed to setup SSH for GitHub'):
         setup_ssh_for_github()
 
 
