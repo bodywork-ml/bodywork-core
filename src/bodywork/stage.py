@@ -245,7 +245,7 @@ def run_stage(
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e)
         log.error(stage_failure_exception)
-        raise stage_failure_exception
+        raise stage_failure_exception from e
 
 
 def _install_python_requirements(path_to_requirements_file: Path) -> None:

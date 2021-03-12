@@ -57,7 +57,8 @@ def setup_bodywork_test_project(
     try:
         run(['git', 'init'], cwd=project_repo_location, check=True, encoding='utf-8')
         run(['git', 'add', '-A'], cwd=project_repo_location, check=True, encoding='utf-8')
-        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True, encoding='utf-8')
+        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True,
+            encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
     except Exception as e:
@@ -87,7 +88,7 @@ def on_error(func, path, exc_info):
 
     If the error is for another reason it re-raises the error.
 
-    Usage : ``shutil.rmtree(path, onerror=onerror)``
+    Usage : ``shutil.rmtree(path, onerror=on_error)``
     """
     if not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWUSR)

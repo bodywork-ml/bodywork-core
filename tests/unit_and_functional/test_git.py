@@ -52,7 +52,7 @@ def test_that_git_project_clone_raises_exceptions():
         download_project_code_from_repo('file:///bad_url')
 
 @patch('bodywork.git.setup_ssh_for_github')
-def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_method: MagicMock):
+def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock): # noqa
     with raises(RuntimeError, match='fatal: Could not read from remote repository'):
         download_project_code_from_repo('git@github.com:test/test.git')
 

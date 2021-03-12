@@ -29,9 +29,9 @@ from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
-        url: str,
-        branch: str = 'master',
-        destination: Path = DEFAULT_PROJECT_DIR
+    url: str,
+    branch: str = 'master',
+    destination: Path = DEFAULT_PROJECT_DIR
 ) -> None:
     """Download Bodywork project code from Git repository,
 
@@ -54,7 +54,7 @@ def download_project_code_from_repo(
         elif SSH_GITHUB_KEY_ENV_VAR not in os.environ:
             log.warning('Not configured for use with private GitHub repos')
     except Exception as e:
-        msg = f'git clone failed - Unable to setup SSH for Github: {e}'
+        msg = f'Unable to setup SSH for Github and you are trying to connect via SSH: {e}'
         raise RuntimeError(msg)
     try:
         run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
