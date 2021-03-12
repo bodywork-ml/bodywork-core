@@ -165,6 +165,47 @@ def test_cli_secret_handler_error_handling():
     )
     assert 'could not parse secret data' in process_four.stdout
 
+def test_deployment_subcommand_exists():
+    process = run(['bodywork', 'deployment', '-h'], encoding='utf-8', capture_output=True)
+    expected_output = 'usage: bodywork deployment [-h]'
+    assert process.stdout.find(expected_output) != -1
+
+
+def test_cli_deployment_handler_error_handling():
+    process_one = run(
+        ['bodywork',
+         'deployment',
+         'create',
+         '--namespace=bodywork-dev'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert 'please specify --name for the deployment' in process_one.stdout
+    assert process_one.returncode == 1
+
+    process_two = run(
+        ['bodywork',
+         'deployment',
+         'logs',
+         '--namespace=bodywork-dev'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert 'please specify --name for the deployment' in process_two.stdout
+    assert process_two.returncode == 1
+
+    process_three = run(
+        ['bodywork',
+         'deployment',
+         'create',
+         '--namespace=bodywork-dev',
+         '--name=the-cronjob'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert 'please specify Git repo URL' in process_three.stdout
+    assert process_three.returncode == 1
+
 
 def test_cronjobs_subcommand_exists():
     process = run(['bodywork', 'cronjob', '-h'], encoding='utf-8', capture_output=True)

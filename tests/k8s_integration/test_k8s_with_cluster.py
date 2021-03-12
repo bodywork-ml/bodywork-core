@@ -383,24 +383,6 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
-    random_test_namespace: str
-):
-    process_one = run(
-        ['bodywork',
-            'cronjob',
-            'create',
-            f'--namespace={random_test_namespace}',
-            '--name=bodywork-test-project',
-            '--schedule=0,30 * * * *',
-            '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
-        encoding='utf-8',
-        capture_output=True
-    )
-    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
-    assert process_one.returncode == 1
-
-
 def test_cli_secret_handler_crud(test_namespace: str):
     process_one = run(
         ['bodywork',
@@ -453,6 +435,102 @@ def test_cli_secret_handler_crud(test_namespace: str):
     )
     assert '' in process_four.stdout
     assert process_four.returncode == 0
+
+
+def test_deployment_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
+    random_test_namespace: str
+):
+    process_one = run(
+        ['bodywork',
+         'deployment',
+         'create',
+         f'--namespace={random_test_namespace}',
+         '--name=bodywork-test-project',
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
+    assert process_one.returncode == 1
+
+
+def test_deployment_of_remote_workflows(
+    random_test_namespace: str
+):
+    try:
+        sleep(5)
+
+        process_zero = run(
+            ['bodywork',
+             'setup-namespace',
+             random_test_namespace],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_zero.returncode == 0
+
+        process_one = run(
+            ['bodywork',
+             'deployment',
+             'create',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project',
+             '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_one.returncode == 0
+
+        sleep(5)
+
+        process_two = run(
+            ['bodywork',
+             'deployment',
+             'display',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_two.returncode == 0
+        assert 'bodywork-test-project' in process_two.stdout
+
+        process_three = run(
+            ['bodywork',
+             'deployment',
+             'logs',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_three.returncode == 0
+        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        delete_namespace(random_test_namespace)
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
+    random_test_namespace: str
+):
+    process_one = run(
+        ['bodywork',
+         'cronjob',
+         'create',
+         f'--namespace={random_test_namespace}',
+         '--name=bodywork-test-project',
+         '--schedule=0,30 * * * *',
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
+    assert process_one.returncode == 1
 
 
 def test_cli_cronjob_handler_crud(test_namespace: str):

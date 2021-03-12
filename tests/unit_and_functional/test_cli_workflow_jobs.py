@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Test high-level cronjob management functions.
+Test high-level workflow job management functions.
 """
 import re
 from datetime import datetime
@@ -23,24 +23,74 @@ from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cronjobs import (
-    create_cronjob_in_namespace,
-    delete_cronjob_in_namespace,
+from bodywork.cli.workflow_jobs import (
+    create_workflow_job_in_namespace,
+    create_workflow_cronjob_in_namespace,
+    delete_workflow_cronjob_in_namespace,
     display_cronjobs_in_namespace,
-    display_cronjob_workflow_history,
-    display_cronjob_workflow_logs,
-    _is_existing_cronjob,
+    display_workflow_job_history,
+    display_workflow_job_logs,
+    _is_existing_workflow_job,
+    _is_existing_workflow_cronjob,
     _is_valid_cron_schedule
 )
 
 
-@patch('bodywork.cli.cronjobs.k8s')
-def test_is_existing_cronjob(mock_k8s_module: MagicMock):
-    mock_k8s_module.list_cronjobs.return_value = {
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_is_existing_workflow_job(mock_k8s_module: MagicMock):
+    mock_k8s_module.list_workflow_jobs.return_value = {
         'bodywork-test-project': {}
     }
-    assert _is_existing_cronjob('bodywork-dev', 'bodywork-test-project') is True
-    assert _is_existing_cronjob('bodywork-dev', 'not-a-real-cronjob') is False
+    assert _is_existing_workflow_job('bodywork-dev', 'bodywork-test-project') is True
+    assert _is_existing_workflow_job('bodywork-dev', 'not-a-real-cronjob') is False
+
+
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_create_workflow_job_in_namespace(
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture
+):
+    mock_k8s_module.namespace_exists.return_value = False
+    create_workflow_job_in_namespace(
+        'bodywork-dev',
+        'bodywork-test-project',
+        'project_repo_url',
+        'project_repo_branch'
+    )
+    captured_one = capsys.readouterr()
+    assert 'namespace=bodywork-dev could not be found' in captured_one.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_workflow_jobs.return_value = {'bodywork-test-project': {}}
+    create_workflow_job_in_namespace(
+        'bodywork-dev',
+        'bodywork-test-project',
+        'project_repo_url',
+        'project_repo_branch'
+    )
+    captured_two = capsys.readouterr()
+    assert 'job=bodywork-test-project already exists' in captured_two.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_workflow_jobs.return_value = {'foo': {}}
+    mock_k8s_module.create_workflow_job.side_effect = None
+    create_workflow_job_in_namespace(
+        'bodywork-dev',
+        'bodywork-test-project',
+        'project_repo_url',
+        'project_repo_branch'
+    )
+    captured_three = capsys.readouterr()
+    assert 'job=bodywork-test-project created in namespace' in captured_three.out
+
+
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_is_existing_workflow_cronjob(mock_k8s_module: MagicMock):
+    mock_k8s_module.list_workflow_cronjobs.return_value = {
+        'bodywork-test-project': {}
+    }
+    assert _is_existing_workflow_cronjob('bodywork-dev', 'bodywork-test-project') is True
+    assert _is_existing_workflow_cronjob('bodywork-dev', 'not-a-real-cronjob') is False
 
 
 def test_is_valid_cron_scheule():
@@ -109,13 +159,13 @@ def test_is_valid_cron_scheule():
     assert _is_valid_cron_schedule('* * * * 0-4/2') is True
 
 
-@patch('bodywork.cli.cronjobs.k8s')
-def test_create_cronjob_in_namespace(
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_create_workflow_cronjob_in_namespace(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    create_cronjob_in_namespace(
+    create_workflow_cronjob_in_namespace(
         'bodywork-dev',
         '0 * * * *',
         'bodywork-test-project',
@@ -126,8 +176,8 @@ def test_create_cronjob_in_namespace(
     assert 'namespace=bodywork-dev could not be found' in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {'bodywork-test-project': {}}
-    create_cronjob_in_namespace(
+    mock_k8s_module.list_workflow_cronjobs.return_value = {'bodywork-test-project': {}}
+    create_workflow_cronjob_in_namespace(
         'bodywork-dev',
         '0 * * * *',
         'bodywork-test-project',
@@ -138,9 +188,9 @@ def test_create_cronjob_in_namespace(
     assert 'cronjob=bodywork-test-project already exists' in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {'foo': {}}
-    mock_k8s_module.create_cronjob.side_effect = None
-    create_cronjob_in_namespace(
+    mock_k8s_module.list_workflow_cronjobs.return_value = {'foo': {}}
+    mock_k8s_module.create_workflow_cronjob.side_effect = None
+    create_workflow_cronjob_in_namespace(
         'bodywork-dev',
         '0 * * *',
         'bodywork-test-project',
@@ -151,9 +201,9 @@ def test_create_cronjob_in_namespace(
     assert 'schedule=0 * * * is not a valid cron schedule' in captured_three.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {'foo': {}}
-    mock_k8s_module.create_cronjob.side_effect = None
-    create_cronjob_in_namespace(
+    mock_k8s_module.list_workflow_cronjobs.return_value = {'foo': {}}
+    mock_k8s_module.create_workflow_cronjob.side_effect = None
+    create_workflow_cronjob_in_namespace(
         'bodywork-dev',
         '0 * * * *',
         'bodywork-test-project',
@@ -164,32 +214,32 @@ def test_create_cronjob_in_namespace(
     assert 'cronjob=bodywork-test-project created in namespace' in captured_four.out
 
 
-@patch('bodywork.cli.cronjobs.k8s')
-def test_delete_cronjob_in_namespace(
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_delete_workflow_cronjob_in_namespace(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    delete_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
+    delete_workflow_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
     captured_one = capsys.readouterr()
     assert 'namespace=bodywork-dev could not be found' in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {'foo': {}}
-    delete_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
+    mock_k8s_module.list_workflow_cronjobs.return_value = {'foo': {}}
+    delete_workflow_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
     captured_two = capsys.readouterr()
     assert 'cronjob=bodywork-test-project not found' in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {'bodywork-test-project': {}}
-    mock_k8s_module.delete_cronjob.side_effect = None
-    delete_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
+    mock_k8s_module.list_workflow_cronjobs.return_value = {'bodywork-test-project': {}}
+    mock_k8s_module.delete_workflow_cronjob.side_effect = None
+    delete_workflow_cronjob_in_namespace('bodywork-dev', 'bodywork-test-project')
     captured_three = capsys.readouterr()
     assert 'cronjob=bodywork-test-project deleted from namespace' in captured_three.out
 
 
-@patch('bodywork.cli.cronjobs.k8s')
-def test_display_cronjobs_in_namespace(
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_display_workflow_cronjobs_in_namespace(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):
@@ -199,7 +249,7 @@ def test_display_cronjobs_in_namespace(
     assert 'namespace=bodywork-dev could not be found' in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    mock_k8s_module.list_cronjobs.return_value = {
+    mock_k8s_module.list_workflow_cronjobs.return_value = {
         'bodywork-test-project': {
             'schedule': '0 * * * *',
             'last_scheduled_time': datetime(2020, 9, 15),
@@ -218,13 +268,13 @@ def test_display_cronjobs_in_namespace(
     assert re.findall(r'GIT_BRANCH\s+ project_repo_branch', captured_two.out)
 
 
-@patch('bodywork.cli.cronjobs.k8s')
-def test_display_cronjob_workflow_history(
+@patch('bodywork.cli.workflow_jobs.k8s')
+def test_display_workflow_job_history(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    display_cronjob_workflow_history('bodywork-dev', 'bodywork-test-project')
+    display_workflow_job_history('bodywork-dev', 'bodywork-test-project')
     captured_one = capsys.readouterr()
     assert 'namespace=bodywork-dev could not be found' in captured_one.out
 
@@ -238,7 +288,7 @@ def test_display_cronjob_workflow_history(
             'failed': False
         }
     }
-    display_cronjob_workflow_history('bodywork-dev', 'bodywork-test-project')
+    display_workflow_job_history('bodywork-dev', 'bodywork-test-project')
     captured_two = capsys.readouterr()
     lines = captured_two.out.split('\n')
     header = lines[2]
@@ -250,25 +300,25 @@ def test_display_cronjob_workflow_history(
                 and (f'0{" "*19}1{" "*19}0' in data))
 
 
-@patch('bodywork.cli.cronjobs.k8s')
+@patch('bodywork.cli.workflow_jobs.k8s')
 def test_display_cronjob_workflow_job_logs(
     mock_k8s_module: MagicMock,
     capsys: CaptureFixture
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    display_cronjob_workflow_logs('bodywork-dev', 'bodywork-test-project-12345')
+    display_workflow_job_logs('bodywork-dev', 'bodywork-test-project-12345')
     captured_one = capsys.readouterr()
     assert 'namespace=bodywork-dev could not be found' in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.get_latest_pod_name.return_value = None
-    display_cronjob_workflow_logs('bodywork-dev', 'bodywork-test-project-12345')
+    display_workflow_job_logs('bodywork-dev', 'bodywork-test-project-12345')
     captured_two = capsys.readouterr()
-    assert 'find pod for workflow-job=bodywork-test-project-12345' in captured_two.out
+    assert 'find pod for workflow job=bodywork-test-project-12345' in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.get_latest_pod_name.return_value = 'bodywork-test-project-12345-pqrs'
     mock_k8s_module.get_pod_logs.return_value = 'INFO - foo.py - bar'
-    display_cronjob_workflow_logs('bodywork-dev', 'bodywork-test-project-12345')
+    display_workflow_job_logs('bodywork-dev', 'bodywork-test-project-12345')
     captured_three = capsys.readouterr()
     assert 'INFO - foo.py - bar' in captured_three.out
