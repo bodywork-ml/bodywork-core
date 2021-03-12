@@ -135,6 +135,7 @@ def test_list_cronjobs_returns_cronjobs_summary_info(
     )
     cronjobs = list_cronjobs('bodywork-dev')
     assert cronjobs['bodywork-test-project']['schedule'] == '0,30 * * * *'
+    assert cronjobs['bodywork-test-project']['retries'] == 2
     assert cronjobs['bodywork-test-project']['git_url'] == 'project_repo_url'
     assert cronjobs['bodywork-test-project']['git_branch'] == 'project_repo_branch'
     assert (cronjobs['bodywork-test-project']['last_scheduled_time']

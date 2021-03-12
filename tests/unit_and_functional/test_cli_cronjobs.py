@@ -17,6 +17,7 @@
 """
 Test high-level cronjob management functions.
 """
+import re
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -202,17 +203,19 @@ def test_display_cronjobs_in_namespace(
         'bodywork-test-project': {
             'schedule': '0 * * * *',
             'last_scheduled_time': datetime(2020, 9, 15),
+            'retries': 2,
             'git_url': 'project_repo_url',
             'git_branch': 'project_repo_branch'
         }
     }
     display_cronjobs_in_namespace('bodywork-dev')
     captured_two = capsys.readouterr()
-    assert 'bodywork-test-project' in captured_two.out
-    assert '0 * * * *' in captured_two.out
-    assert '2020-09-15 00:00:00' in captured_two.out
-    assert 'project_repo_url' in captured_two.out
-    assert 'project_repo_branch' in captured_two.out
+    assert re.findall(r'bodywork-test-project', captured_two.out)
+    assert re.findall(r'SCHEDULE\s+0 * * * *', captured_two.out)
+    assert re.findall(r'RETRIES\s+2', captured_two.out)
+    assert re.findall(r'LAST_EXECUTED\s+2020-09-15 00:00:00', captured_two.out)
+    assert re.findall(r'GIT_URL\s+project_repo_url', captured_two.out)
+    assert re.findall(r'GIT_BRANCH\s+ project_repo_branch', captured_two.out)
 
 
 @patch('bodywork.cli.cronjobs.k8s')
@@ -237,16 +240,14 @@ def test_display_cronjob_workflow_history(
     }
     display_cronjob_workflow_history('bodywork-dev', 'bodywork-test-project')
     captured_two = capsys.readouterr()
-    assert 'JOB_NAME' in captured_two.out
-    assert 'START_TIME' in captured_two.out
-    assert 'COMPLETION_TIME' in captured_two.out
-    assert 'ACTIVE' in captured_two.out
-    assert 'SUCCEEDED' in captured_two.out
-    assert 'FAILED' in captured_two.out
-    assert 'workflow-job-12345' in captured_two.out
-    assert str(datetime(2020, 10, 19, 1, 15)) in captured_two.out
-    assert str(datetime(2020, 10, 19, 1, 30)) in captured_two.out
-    assert f'0{" "*19}1{" "*19}0' in captured_two.out
+    lines = captured_two.out.split('\n')
+    header = lines[2]
+    data = lines[3]
+    assert ('JOB_NAME' in header) and ('workflow-job-12345' in data)
+    assert ('START_TIME' in header) and (str(datetime(2020, 10, 19, 1, 15)) in data)
+    assert ('COMPLETION_TIME' in header) and (str(datetime(2020, 10, 19, 1, 30)) in data)
+    assert (('ACTIVE' in header) and ('SUCCEEDED' in header) and ('FAILED' in header)
+                and (f'0{" "*19}1{" "*19}0' in data))
 
 
 @patch('bodywork.cli.cronjobs.k8s')

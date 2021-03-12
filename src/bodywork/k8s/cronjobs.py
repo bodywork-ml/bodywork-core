@@ -100,6 +100,11 @@ def configure_cronjob(
         backoff_limit=retries
     )
     job_template = k8s.V1beta1JobTemplateSpec(
+        metadata=k8s.V1ObjectMeta(
+            name=project_name,
+            namespace=namespace,
+            labels={'app': 'bodywork'},
+        ),
         spec=job_spec
     )
     cronjob_spec = k8s.V1beta1CronJobSpec(
@@ -111,7 +116,8 @@ def configure_cronjob(
     cronjob = k8s.V1beta1CronJob(
         metadata=k8s.V1ObjectMeta(
             name=project_name,
-            namespace=namespace
+            namespace=namespace,
+            labels={'app': 'bodywork'},
         ),
         spec=cronjob_spec
     )
@@ -155,6 +161,12 @@ def list_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
         cronjob.metadata.name: {
             'schedule': cronjob.spec.schedule,
             'last_scheduled_time': cronjob.status.last_schedule_time,
+            'retries': (
+                cronjob.spec
+                .job_template
+                .spec
+                .backoff_limit
+            ),
             'git_url': (
                 cronjob.spec
                 .job_template
