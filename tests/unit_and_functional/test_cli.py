@@ -93,10 +93,14 @@ def test_stage_command_successful_has_zero_exit_code(
              'stage',
              project_repo_connection_string,
              'master',
-             'stage_1_good'],
-            check=True)
+             'stage_1_good',
+             ],
+            check=True,
+            capture_output=True,
+            encoding='utf-8')
         assert True
-    except CalledProcessError:
+    except CalledProcessError as e:
+        print(f'Test Failed - {e.stderr}')
         assert False
 
 

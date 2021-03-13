@@ -34,7 +34,7 @@ def project_repo_location() -> Path:
 
 @fixture(scope='function')
 def project_repo_connection_string(project_repo_location: Path) -> str:
-    return f'file://{project_repo_location.absolute()}'
+    return project_repo_location.absolute().as_uri()
 
 
 @fixture(scope='function')
@@ -66,7 +66,7 @@ def setup_bodywork_test_project(
     finally:
         # TEARDOWN
         shutil.rmtree('{}/.git'.format(project_repo_location), onerror=on_error)
-        shutil.rmtree(cloned_project_repo_location, ignore_errors=True, onerror=on_error)
+        shutil.rmtree(cloned_project_repo_location, onerror=on_error)
         shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
 
 
