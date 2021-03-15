@@ -10,6 +10,7 @@ coverage:
   round: down
   range: "80...100"
   status:
+    patch: off
     project:
       default:
         target: 80%
