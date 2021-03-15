@@ -74,48 +74,48 @@ def test_stage_factory_yields_correct_data_for_service_stages(
 def test_stage_factory_raises_errors_for_invalid_stage_directories(
     project_repo_location: Path
 ):
-    with raises(FileExistsError, match='does not exist'):
+    with raises(FileExistsError, match=r'does not exist'):
         path_to_stage_dir = project_repo_location / 'not_a_stage'
         stage_factory(path_to_stage_dir)
-    with raises(BodyworkStageConfigError, match='STAGE_TYPE'):
+    with raises(BodyworkStageConfigError, match=r'STAGE_TYPE in \[default\]'):
         path_to_stage_dir = project_repo_location / 'stage_6_bad_stage_type'
         stage_factory(path_to_stage_dir)
 
 
 def test_generic_stage_input_validation(project_repo_location: Path):
-    stage_name = 'stage_14_bad_executable_script'
+    stage_name = 'stage_16_bad_executable_script'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='EXECUTABLE_SCRIPT'):
+    with raises(BodyworkStageConfigError, match=r'EXECUTABLE_SCRIPT in \[default\]'):
         Stage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_2_bad_config'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(FileExistsError, match='Cannot find'):
+    with raises(FileExistsError, match=r'Cannot find'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_15_bad_requirements'
+    stage_name = 'stage_17_bad_requirements'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(FileExistsError, match='Cannot find'):
+    with raises(FileExistsError, match=r'Cannot find'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_16_bad_memory_request'
+    stage_name = 'stage_18_bad_memory_request'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='MEMORY_REQUEST_MB'):
+    with raises(BodyworkStageConfigError, match=r'MEMORY_REQUEST_MB in \[default\]'):
         Stage(stage_name, config, path_to_stage_dir)
 
-    stage_name = 'stage_17_bad_cpu_request'
+    stage_name = 'stage_19_bad_cpu_request'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='CPU_REQUEST'):
+    with raises(BodyworkStageConfigError, match=r'CPU_REQUEST in \[default\]'):
         Stage(stage_name, config, path_to_stage_dir)
 
 
@@ -124,21 +124,21 @@ def test_batch_stage_input_validation(project_repo_location: Path):
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='RETRIES'):
+    with raises(BodyworkStageConfigError, match=r'RETRIES in \[batch\]'):
         BatchStage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_8_bad_batch_data'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='MAX_COMPLETION_TIME_SECONDS'):
+    with raises(BodyworkStageConfigError, match=r'MAX_COMPLETION_TIME_SECONDS in \[batch\]'):  #noqa
         BatchStage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_9_bad_batch_data'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='MAX_COMPLETION_TIME_SECONDS'):
+    with raises(BodyworkStageConfigError, match=r'MAX_COMPLETION_TIME_SECONDS in \[batch\]'):  #noqa
         BatchStage(stage_name, config, path_to_stage_dir)
 
 
@@ -147,28 +147,42 @@ def test_service_stage_input_validation(project_repo_location: Path):
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='REPLICAS'):
+    with raises(BodyworkStageConfigError, match=r'REPLICAS in \[service\]'):
         ServiceStage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_11_bad_service_data'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='PORT'):
+    with raises(BodyworkStageConfigError, match=r'PORT in \[service\]'):
         ServiceStage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_12_bad_service_data'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='MAX_STARTUP_TIME_SECONDS'):
+    with raises(BodyworkStageConfigError, match=r'MAX_STARTUP_TIME_SECONDS in \[service\]'):  # noqa
         ServiceStage(stage_name, config, path_to_stage_dir)
 
     stage_name = 'stage_13_bad_service_data'
     path_to_stage_dir = project_repo_location / stage_name
     path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
     config = BodyworkConfig(path_to_config)
-    with raises(BodyworkStageConfigError, match='MAX_STARTUP_TIME_SECONDS'):
+    with raises(BodyworkStageConfigError, match=r'MAX_STARTUP_TIME_SECONDS in \[service\]'):  # noqa
+        ServiceStage(stage_name, config, path_to_stage_dir)
+
+    stage_name = 'stage_14_bad_service_data'
+    path_to_stage_dir = project_repo_location / stage_name
+    path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
+    config = BodyworkConfig(path_to_config)
+    with raises(BodyworkStageConfigError, match=r'INGRESS in \[service\]'):
+        ServiceStage(stage_name, config, path_to_stage_dir)
+
+    stage_name = 'stage_15_bad_service_data'
+    path_to_stage_dir = project_repo_location / stage_name
+    path_to_config = path_to_stage_dir / STAGE_CONFIG_FILENAME
+    config = BodyworkConfig(path_to_config)
+    with raises(BodyworkStageConfigError, match=r'INGRESS in \[service\]'):
         ServiceStage(stage_name, config, path_to_stage_dir)
 
 
@@ -220,7 +234,7 @@ def test_that_requirements_install_errors_raise_exception(
         / 'stage_2_bad_config'
         / 'requirements.txt'
     )
-    with raises(RuntimeError, match='requirements'):
+    with raises(RuntimeError, match=r'requirements'):
         _install_python_requirements(path_to_requirements)
 
 
@@ -249,5 +263,5 @@ def test_run_stage_failure_raises_exception(
     project_repo_connection_string: str,
     bodywork_output_dir: Path
 ):
-    with raises(BodyworkStageFailure, match='stage_3_bad_script'):
+    with raises(BodyworkStageFailure, match=r'stage_3_bad_script'):
         run_stage('stage_3_bad_script', project_repo_connection_string)

@@ -16,7 +16,7 @@
 
 """
 This module contains all of the functions and classes required to
-download theproject code and run stages.
+download the project code and run stages.
 """
 from pathlib import Path
 from subprocess import run, CalledProcessError
@@ -50,7 +50,7 @@ class Stage:
         try:
             executable_script = config['default']['EXECUTABLE_SCRIPT']
         except KeyError as e:
-            raise BodyworkStageConfigError('EXECUTABLE_SCRIPT', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'EXECUTABLE_SCRIPT', 'default') from e
 
         executable_script_path = path_to_stage_dir / executable_script
         if not executable_script_path.exists():
@@ -64,12 +64,12 @@ class Stage:
         try:
             cpu_request = float(config['default']['CPU_REQUEST'])
         except (KeyError, TypeError) as e:
-            raise BodyworkStageConfigError('CPU_REQUEST', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'CPU_REQUEST', 'default') from e
 
         try:
             memory_request = int(config['default']['MEMORY_REQUEST_MB'])
         except (KeyError, TypeError) as e:
-            raise BodyworkStageConfigError('MEMORY_REQUEST_MB', 'default', name) from e
+            raise BodyworkStageConfigError(name, 'MEMORY_REQUEST_MB', 'default') from e
 
         try:
             env_vars_from_secrets = [
@@ -117,15 +117,15 @@ class BatchStage(Stage):
         try:
             retries = int(config['batch']['RETRIES'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('RETRIES', 'batch', name) from e
+            raise BodyworkStageConfigError(name, 'RETRIES', 'batch') from e
 
         try:
             max_completion_time = int(config['batch']['MAX_COMPLETION_TIME_SECONDS'])
         except (KeyError, ValueError) as e:
             time_param_error = BodyworkStageConfigError(
+                name,
                 'MAX_COMPLETION_TIME_SECONDS',
-                'batch',
-                name
+                'batch'
             )
             raise time_param_error from e
 
@@ -148,31 +148,41 @@ class ServiceStage(Stage):
             directory.
         :raises BodyworkStageConfigError: If mandatory service stage
             parameters have not been set: REPLICAS,
-            MAX_STARTUP_TIME_SECONDS and PORT.
+            MAX_STARTUP_TIME_SECONDS, PORT and INGRESS.
         """
         try:
             replicas = int(config['service']['REPLICAS'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('REPLICAS', 'service', name) from e
+            raise BodyworkStageConfigError(name, 'REPLICAS', 'service') from e
 
         try:
             max_startup_time = int(config['service']['MAX_STARTUP_TIME_SECONDS'])
         except (KeyError, ValueError) as e:
             time_param_error = BodyworkStageConfigError(
+                name,
                 'MAX_STARTUP_TIME_SECONDS',
-                'batch',
-                name
+                'service'
             )
             raise time_param_error from e
 
         try:
             port = int(config['service']['PORT'])
         except (KeyError, ValueError) as e:
-            raise BodyworkStageConfigError('PORT', 'service', name) from e
+            raise BodyworkStageConfigError(name, 'PORT', 'service') from e
+
+        try:
+            ingress_config = config['service']['INGRESS']
+            if ingress_config not in ('True', 'False'):
+                raise ValueError('expected boolean value')
+            else:
+                create_ingress = True if ingress_config == 'True' else False
+        except (KeyError, ValueError) as e:
+            raise BodyworkStageConfigError(name, 'INGRESS', 'service') from e
 
         self.replicas = replicas
         self.max_startup_time = max_startup_time
         self.port = port
+        self.create_ingress = create_ingress
         super().__init__(name, config, path_to_stage_dir)
 
 
@@ -202,7 +212,7 @@ def stage_factory(path_to_stage_dir: Path) -> Stage:
             msg = f'STAGE_TYPE={stage_type} is invalid - must be one of batch or service'
             raise RuntimeError(msg)
     except (KeyError, RuntimeError) as e:
-        raise BodyworkStageConfigError('STAGE_TYPE', 'default', stage_name) from e
+        raise BodyworkStageConfigError(stage_name, 'STAGE_TYPE', 'default') from e
 
 
 def run_stage(
@@ -211,7 +221,7 @@ def run_stage(
     repo_branch: str = 'master',
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR
 ) -> None:
-    """Retreive latest project code and run the chosen stage.
+    """Retrieve latest project code and run the chosen stage.
 
     :param stage_name: The Bodywork project stage name.
     :param repo_url: Git repository URL.
@@ -224,16 +234,17 @@ def run_stage(
     log = bodywork_log_factory()
     log.info(f'attempting to run stage={stage_name} from {repo_branch} branch of repo'
              f' at {repo_url}')
-    download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-    path_to_stage_dir = cloned_repo_dir / stage_name
-    stage = stage_factory(path_to_stage_dir)
     try:
+        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+        path_to_stage_dir = cloned_repo_dir / stage_name
+        stage = stage_factory(path_to_stage_dir)
         _install_python_requirements(stage.requirements_file_path)
-        run(['python', stage.executable_script_path], check=True)
+        run(['python', stage.executable_script_path.name], check=True,
+            cwd=path_to_stage_dir, capture_output=True, encoding='utf-8')
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
                  f' at {repo_url}')
-    except CalledProcessError as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, e.cmd, e.stderr)
+    except Exception as e:
+        stage_failure_exception = BodyworkStageFailure(stage_name, e)
         log.error(stage_failure_exception)
         raise stage_failure_exception from e
 
@@ -241,12 +252,13 @@ def run_stage(
 def _install_python_requirements(path_to_requirements_file: Path) -> None:
     """Install the Python dependencies for a Bodywork project stage.
 
-    :param path_to_requirements_file: Path to requirements.txt flile for
+    :param path_to_requirements_file: Path to requirements.txt file for
          the stage.
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        run(['pip', 'install', '-r', path_to_requirements_file], check=True)
+        run(['pip', 'install', '-r', path_to_requirements_file], check=True,
+            capture_output=True, encoding='utf-8')
     except CalledProcessError as e:
         msg = f'Cannot install stage requirements: {e.cmd} failed with {e.stderr}'
         raise RuntimeError(msg)

@@ -19,6 +19,7 @@ Test high-level k8s interaction with a k8s cluster to run stages and a
 demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 """
 import os
+import requests
 from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
@@ -42,7 +43,8 @@ from bodywork.k8s import (
 
 def test_workflow_and_service_management_end_to_end_from_cli(
     random_test_namespace: str,
-    docker_image: str
+    docker_image: str,
+    ingress_load_balancer_url: str
 ):
     try:
         sleep(5)
@@ -123,10 +125,32 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding='utf-8',
             capture_output=True
         )
-        assert 'http://bodywork-test-project--stage-3:5000' in process_four.stdout
-        assert 'http://bodywork-test-project--stage-4:5000' in process_four.stdout
-        assert 'true' in process_four.stdout
+        assert (f'http://bodywork-test-project--stage-3.{random_test_namespace}.svc'
+                in process_four.stdout)
+        assert (f'http://bodywork-test-project--stage-4.{random_test_namespace}.svc'
+                in process_four.stdout)
+        assert (f'/{random_test_namespace}/bodywork-test-project--stage-3'
+                in process_four.stdout)
+        assert (f'/{random_test_namespace}/bodywork-test-project--stage-4'
+                not in process_four.stdout)
+        assert '5000' in process_four.stdout
         assert process_four.returncode == 0
+
+        stage_3_service_external_url = (
+            f'http://{ingress_load_balancer_url}/{random_test_namespace}/'
+            f'/bodywork-test-project--stage-3/v1/predict'
+        )
+
+        response_stage_3 = requests.get(url=stage_3_service_external_url)
+        assert response_stage_3.ok
+        assert response_stage_3.json()['y'] == 'hello_world'
+
+        stage_4_service_external_url = (
+            f'http://{ingress_load_balancer_url}/{random_test_namespace}/'
+            f'/bodywork-test-project--stage-4/v2/predict'
+        )
+        response_stage_4 = requests.get(url=stage_4_service_external_url)
+        assert response_stage_4.status_code == 404
 
         process_five = run(
             ['bodywork',
@@ -138,7 +162,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True
         )
         assert 'deployment=bodywork-test-project--stage-3 deleted' in process_five.stdout
-        assert 'service at http://bodywork-test-project--stage-3 deleted' in process_five.stdout  # noqa
+        assert f'service at http://bodywork-test-project--stage-3.{random_test_namespace}.svc.cluster.local deleted' in process_five.stdout  # noqa
+        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-3 deleted' in process_five.stdout  # noqa
         assert process_five.returncode == 0
 
         process_six = run(
@@ -151,7 +176,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True
         )
         assert 'deployment=bodywork-test-project--stage-4 deleted' in process_six.stdout
-        assert 'service at http://bodywork-test-project--stage-4 deleted' in process_six.stdout  # noqa
+        assert f'service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted' in process_six.stdout  # noqa
+        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted' not in process_six.stdout
         assert process_six.returncode == 0
 
         process_seven = run(
@@ -162,7 +188,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding='utf-8',
             capture_output=True
         )
-        assert process_seven.stdout.split('\n')[1] == ''
+        assert process_seven.stdout == ''
         assert process_seven.returncode == 0
 
     except Exception:
@@ -357,24 +383,6 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
-    random_test_namespace: str
-):
-    process_one = run(
-        ['bodywork',
-            'cronjob',
-            'create',
-            f'--namespace={random_test_namespace}',
-            '--name=bodywork-test-project',
-            '--schedule=0,30 * * * *',
-            '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
-        encoding='utf-8',
-        capture_output=True
-    )
-    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
-    assert process_one.returncode == 1
-
-
 def test_cli_secret_handler_crud(test_namespace: str):
     process_one = run(
         ['bodywork',
@@ -429,6 +437,102 @@ def test_cli_secret_handler_crud(test_namespace: str):
     assert process_four.returncode == 0
 
 
+def test_deployment_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
+    random_test_namespace: str
+):
+    process_one = run(
+        ['bodywork',
+         'deployment',
+         'create',
+         f'--namespace={random_test_namespace}',
+         '--name=bodywork-test-project',
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
+    assert process_one.returncode == 1
+
+
+def test_deployment_of_remote_workflows(
+    random_test_namespace: str
+):
+    try:
+        sleep(5)
+
+        process_zero = run(
+            ['bodywork',
+             'setup-namespace',
+             random_test_namespace],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_zero.returncode == 0
+
+        process_one = run(
+            ['bodywork',
+             'deployment',
+             'create',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project',
+             '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_one.returncode == 0
+
+        sleep(5)
+
+        process_two = run(
+            ['bodywork',
+             'deployment',
+             'display',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_two.returncode == 0
+        assert 'bodywork-test-project' in process_two.stdout
+
+        process_three = run(
+            ['bodywork',
+             'deployment',
+             'logs',
+             f'--namespace={random_test_namespace}',
+             '--name=bodywork-test-project'],
+            encoding='utf-8',
+            capture_output=True
+        )
+        assert process_three.returncode == 0
+        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        delete_namespace(random_test_namespace)
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
+    random_test_namespace: str
+):
+    process_one = run(
+        ['bodywork',
+         'cronjob',
+         'create',
+         f'--namespace={random_test_namespace}',
+         '--name=bodywork-test-project',
+         '--schedule=0,30 * * * *',
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert f'{random_test_namespace} is not setup for use' in process_one.stdout
+    assert process_one.returncode == 1
+
+
 def test_cli_cronjob_handler_crud(test_namespace: str):
     process_one = run(
         ['bodywork',
@@ -437,7 +541,9 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
          f'--namespace={test_namespace}',
          '--name=bodywork-test-project',
          '--schedule=0,30 * * * *',
-         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'],
+         '--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project'
+         '--retries=2',
+         '--history-limit=1'],
         encoding='utf-8',
         capture_output=True
     )

@@ -132,3 +132,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.ssh_bodywork/id_rsa
+.ssh_bodywork/known_hosts
+bodywork_project/
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/bodywork-core.iml

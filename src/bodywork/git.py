@@ -25,6 +25,7 @@ from pathlib import Path
 from subprocess import run, CalledProcessError
 
 from .constants import DEFAULT_PROJECT_DIR, SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
+from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
@@ -41,18 +42,23 @@ def download_project_code_from_repo(
     :raises RuntimeError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
+    log = bodywork_log_factory()
     try:
         run(['git', '--version'], check=True)
     except CalledProcessError:
         raise RuntimeError('git is not available')
-
-    if (get_connection_protocol(url) is ConnectionPrototcol.SSH
-            and get_remote_repo_host(url) is GitRepoHost.GITHUB):
-        setup_ssh_for_github()
-
+    try:
+        if (get_connection_protocol(url) is ConnectionPrototcol.SSH
+                and get_remote_repo_host(url) is GitRepoHost.GITHUB):
+            setup_ssh_for_github()
+        elif SSH_GITHUB_KEY_ENV_VAR not in os.environ:
+            log.warning('Not configured for use with private GitHub repos')
+    except Exception as e:
+        msg = f'Unable to setup SSH for Github and you are trying to connect via SSH: {e}' # noqa
+        raise RuntimeError(msg)
     try:
         run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
-            check=True)
+            check=True, capture_output=True, encoding='utf-8')
     except CalledProcessError as e:
         msg = f'git clone failed - calling {e.cmd} returned {e.stderr}'
         raise RuntimeError(msg)
@@ -120,15 +126,13 @@ def setup_ssh_for_github() -> None:
     ssh_dir = Path('.') / SSH_DIR_NAME
     private_key = ssh_dir / 'id_rsa'
     if not private_key.exists():
-        try:
-            ssh_private_key = os.environ[SSH_GITHUB_KEY_ENV_VAR]
-        except KeyError as e:
+        if SSH_GITHUB_KEY_ENV_VAR not in os.environ:
             msg = (f'failed to setup SSH for GitHub - cannot find '
                    f'{SSH_GITHUB_KEY_ENV_VAR} environment variable')
-            raise RuntimeError(msg) from e
+            raise KeyError(msg)
         ssh_dir.mkdir(mode=0o700, exist_ok=True)
         private_key.touch(0o700, exist_ok=False)
-        private_key.write_text(ssh_private_key)
+        private_key.write_text(os.environ[SSH_GITHUB_KEY_ENV_VAR])
 
     known_hosts = ssh_dir / 'known_hosts'
     if not known_hosts.exists():

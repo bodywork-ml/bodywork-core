@@ -30,14 +30,16 @@ from .auth import (
     setup_job_and_deployment_service_accounts,
     setup_workflow_service_account
 )
-from .cronjobs import (
-    configure_cronjob,
-    create_cronjob,
-    delete_cronjob,
-    list_cronjobs,
+from .workflow_jobs import (
+    configure_workflow_job,
+    configure_workflow_cronjob,
+    create_workflow_job,
+    create_workflow_cronjob,
+    delete_workflow_cronjob,
+    list_workflow_cronjobs,
     list_workflow_jobs
 )
-from .jobs import (
+from .batch_jobs import (
     JobStatus,
     configure_batch_stage_job,
     create_job,
@@ -71,9 +73,14 @@ from .service_deployments import (
     delete_all_namespace_deployments,
     monitor_deployments_to_completion,
     list_service_stage_deployments,
+    cluster_service_url,
     expose_deployment_as_cluster_service,
     is_exposed_as_cluster_service,
-    stop_exposing_cluster_service
+    stop_exposing_cluster_service,
+    ingress_route,
+    create_deployment_ingress,
+    delete_deployment_ingress,
+    has_ingress
 )
 from .utils import (
     api_exception_msg
@@ -89,12 +96,14 @@ __all__ = [
     'service_account_exists',
     'setup_job_and_deployment_service_accounts',
     'setup_workflow_service_account',
-    'configure_cronjob',
-    'create_cronjob',
-    'delete_cronjob',
-    'list_cronjobs',
+    'configure_workflow_cronjob',
+    'create_workflow_job',
+    'create_workflow_cronjob',
+    'delete_workflow_cronjob',
+    'list_workflow_cronjobs',
     'list_workflow_jobs',
     'JobStatus',
+    'configure_workflow_job',
     'configure_batch_stage_job',
     'create_job',
     'delete_job',
@@ -119,8 +128,13 @@ __all__ = [
     'delete_all_namespace_deployments',
     'monitor_deployments_to_completion',
     'list_service_stage_deployments',
+    'cluster_service_url',
     'expose_deployment_as_cluster_service',
     'is_exposed_as_cluster_service',
     'stop_exposing_cluster_service',
+    'ingress_route',
+    'create_deployment_ingress',
+    'delete_deployment_ingress',
+    'has_ingress',
     'api_exception_msg'
 ]
