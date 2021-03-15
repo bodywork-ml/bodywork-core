@@ -16,7 +16,7 @@
 
 """
 This module contains all of the functions and classes required to
-download theproject code and run stages.
+download the project code and run stages.
 """
 from pathlib import Path
 from subprocess import run, CalledProcessError
@@ -221,7 +221,7 @@ def run_stage(
     repo_branch: str = 'master',
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR
 ) -> None:
-    """Retreive latest project code and run the chosen stage.
+    """Retrieve latest project code and run the chosen stage.
 
     :param stage_name: The Bodywork project stage name.
     :param repo_url: Git repository URL.
@@ -239,7 +239,8 @@ def run_stage(
         path_to_stage_dir = cloned_repo_dir / stage_name
         stage = stage_factory(path_to_stage_dir)
         _install_python_requirements(stage.requirements_file_path)
-        run(['python', stage.executable_script_path], check=True, encoding='utf-8')
+        run(['python', stage.executable_script_path.name], check=True,
+            cwd=path_to_stage_dir, capture_output=True, encoding='utf-8')
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
                  f' at {repo_url}')
     except Exception as e:
@@ -256,7 +257,8 @@ def _install_python_requirements(path_to_requirements_file: Path) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        run(['pip', 'install', '-r', path_to_requirements_file], check=True)
+        run(['pip', 'install', '-r', path_to_requirements_file], check=True,
+            capture_output=True, encoding='utf-8')
     except CalledProcessError as e:
         msg = f'Cannot install stage requirements: {e.cmd} failed with {e.stderr}'
         raise RuntimeError(msg)

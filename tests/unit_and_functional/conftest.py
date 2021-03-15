@@ -21,7 +21,7 @@ import os
 import shutil
 import stat
 from pathlib import Path
-from subprocess import CalledProcessError, run
+from subprocess import run
 from typing import Iterable
 
 from pytest import fixture
@@ -34,7 +34,7 @@ def project_repo_location() -> Path:
 
 @fixture(scope='function')
 def project_repo_connection_string(project_repo_location: Path) -> str:
-    return f'file://{project_repo_location.absolute()}'
+    return project_repo_location.absolute().as_uri()
 
 
 @fixture(scope='function')
@@ -57,8 +57,8 @@ def setup_bodywork_test_project(
     try:
         run(['git', 'init'], cwd=project_repo_location, check=True, encoding='utf-8')
         run(['git', 'add', '-A'], cwd=project_repo_location, check=True, encoding='utf-8')
-        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True, capture_output=True,
-            encoding='utf-8')
+        run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True,
+            capture_output=True, encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
     except Exception as e:
@@ -66,8 +66,8 @@ def setup_bodywork_test_project(
     finally:
         # TEARDOWN
         shutil.rmtree('{}/.git'.format(project_repo_location), onerror=on_error)
-        shutil.rmtree(cloned_project_repo_location, ignore_errors=True)
-        shutil.rmtree(bodywork_output_dir, ignore_errors=True)
+        shutil.rmtree(cloned_project_repo_location, ignore_errors=True, onerror=on_error)
+        shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
 
 
 @fixture(scope='function')
@@ -79,6 +79,7 @@ def k8s_env_vars() -> Iterable[bool]:
     finally:
         yield True
     del os.environ['KUBERNETES_SERVICE_HOST']
+
 
 def on_error(func, path, exc_info):
     """Error handler for ``shutil.rmtree``.
