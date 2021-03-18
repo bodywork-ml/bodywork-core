@@ -110,3 +110,5 @@ If you:
 * Have found a bug, then please [open an issue](https://github.com/bodywork-ml/bodywork-core/issues).
 * Would like to contribute, then please talk to us **first** at [info@bodyworkml.com](mailto:info@bodyworkml.com).
 * Would like to commission new functionality, then please contact us at [info@bodyworkml.com](mailto:info@bodyworkml.com).
+
+Bodywork is brought to you by [Bodywork Machine Learning](https://www.bodyworkml.com).
