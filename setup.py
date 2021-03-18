@@ -34,14 +34,14 @@ with open('README.md', 'r') as f:
 
 setup(
     name='bodywork',
-    description='MLOps framework for running model-training workloads and deploying model-scoring services on Kubernetes.',
+    description='Deploy machine learning to Kubernetes - MLOps accelerated.',
     long_description=readme,
     long_description_content_type='text/markdown',
     version=version,
     license='AGPL 3.0',
-    author='Bodywork Machine Learning Ltd',
+    author='Bodywork Machine Learning Ltd.',
     author_email='info@bodyworkml.com',
-    url='https://github.com/bodywork-ml/bodywork-core',
+    url='https://www.bodyworkml.com',
     project_urls={
         'Source': 'https://github.com/bodywork-ml/bodywork-core',
         'Documentation': 'https://bodywork.readthedocs.io/en/latest/'
