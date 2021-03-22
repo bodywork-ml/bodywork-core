@@ -47,10 +47,10 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config['project']['name'] == 'bodywork-test-project'
     assert config['logging']['log_level'] == 'INFO'
     assert len(config['stages']) == 3
-    assert 'stage-1-good' in config['stages']
-    assert 'batch' in config['stages']['stage-1-good']
-    assert config['stages']['stage-1-good']['executable_script'] == 'main.py'
-    assert config['stages']['stage-1-good']['batch']['retries'] == 4
-    assert config['stages']['stage-1-good']['secrets']['FOO'] == 'foobar-secret'
-    assert (config['stages']['stage-1-good']['requirements']
+    assert 'stage_1_good' in config['stages']
+    assert 'batch' in config['stages']['stage_1_good']
+    assert config['stages']['stage_1_good']['executable_script'] == 'main.py'
+    assert config['stages']['stage_1_good']['batch']['retries'] == 4
+    assert config['stages']['stage_1_good']['secrets']['FOO'] == 'foobar-secret'
+    assert (config['stages']['stage_1_good']['requirements']
             == ['boto3==1.16.15', 'joblib==0.17.0'])

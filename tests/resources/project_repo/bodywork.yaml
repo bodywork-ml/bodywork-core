@@ -1,9 +1,9 @@
 project:
   name: bodywork-test-project
   docker_image: bodyworkml/bodywork-core:latest
-  DAG: stage-1-good >> stage-4-good,stage-5-good
+  DAG: stage_1_good >> stage_4_good,stage_5_good
 stages:
-  stage-1-good:
+  stage_1_good:
     executable_script: main.py
     cpu_request: 0.5
     memory_request_mb: 250
@@ -16,14 +16,14 @@ stages:
     requirements:
       - boto3==1.16.15
       - joblib==0.17.0
-  stage-4-good:
+  stage_4_good:
     executable_script: main.py
     cpu_request: 0.5
     memory_request_mb: 250
     batch:
       max_completion_time_seconds: 60
       retries: 4
-  stage-5-good:
+  stage_5_good:
     executable_script: main.py
     cpu_request: 0.5
     memory_request_mb: 250
