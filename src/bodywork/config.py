@@ -22,10 +22,16 @@ from typing import Dict, Sequence, Union
 
 import yaml
 
-from .exceptions import BodyworkProjectConfigYAMLError
+from .constants import BODYWORK_CONFIG_VERSION
+from .exceptions import (
+    BodyworkConfigMissingSectionError,
+    BodyworkConfigVersionMismatchError,
+    BodyworkConfigParsingError,
+    BodyworkMissingConfigError
+)
 
-ConfigSection = Dict[str, Union[str, float, int, bool]]
-Config = Dict[str, Union[ConfigSection, Sequence[ConfigSection]]]
+SectionConfig = Dict[str, str]
+StageConfig = Dict[str, Union[str, int, float, Dict[str, Union[str, int, float, bool]]]]
 
 
 class BodyworkConfig:
@@ -36,20 +42,49 @@ class BodyworkConfig:
 
         :param config_file_path: Config file path.
         :raises FileExistsError: if config_file_path does not exist.
-        :raises BodyworkProjectConfigYAMLError: if config file cannot be
+        :raises BodyworkConfigParsingError: if config file cannot be
             parsed as valid YAML.
+        :raises BodyworkConfigMissingSectionError: if config file does
+            not contain all of the following sections: version,
+            project, stages and logging.
+        :raises BodyworkConfigVersionMismatchError: if config file
+            schema version does not match the schame version supported
+            by the current Bodywork version.
         """
         try:
             config_yaml =  config_file_path.read_text(encoding='utf-8', errors='strict')
-            self.config: Config = yaml.load(config_yaml, Loader=yaml.SafeLoader)
+            config = yaml.load(config_yaml, Loader=yaml.SafeLoader)
+            if type(config) is not dict:
+               raise yaml.YAMLError 
+            self._config =  config
         except (FileNotFoundError, IsADirectoryError):
             raise FileExistsError(f'no config file found at {config_file_path}')
         except yaml.YAMLError as e:
-            raise BodyworkProjectConfigYAMLError(config_file_path) from e
+            raise BodyworkConfigParsingError(config_file_path) from e
 
-    def __getitem__(
-        self,
-        config_section_key: str
-        ) -> Union[ConfigSection, Sequence[ConfigSection]]:
-        """Access sections of the config file directly."""
-        return self.config[config_section_key]
+        missing_config_sections = []
+        if 'version' not in config:
+            missing_config_sections.append('version')
+        
+        if 'project' in config:
+            self.project: SectionConfig = config['project']
+        else:
+            missing_config_sections.append('project')
+
+        if 'stages' in config:
+            self.stages: Sequence[SectionConfig] = config['stages']
+        else:
+            missing_config_sections.append('stages')
+
+        if 'logging' in config:
+            self.logging: SectionConfig = config['logging']
+        else:
+            missing_config_sections.append('logging')
+
+        if missing_config_sections:
+            raise BodyworkConfigMissingSectionError(missing_config_sections)
+
+        if type(config['version']) != str:
+            raise BodyworkMissingConfigError('version')
+        if config['version'] != BODYWORK_CONFIG_VERSION:
+            raise BodyworkConfigVersionMismatchError(config['version'])

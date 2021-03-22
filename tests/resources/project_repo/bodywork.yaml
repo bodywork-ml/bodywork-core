@@ -1,3 +1,4 @@
+version: "1.0"
 project:
   name: bodywork-test-project
   docker_image: bodyworkml/bodywork-core:latest

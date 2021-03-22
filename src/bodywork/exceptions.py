@@ -21,11 +21,11 @@ in this module to make them easier to locate when importing the package
 externally.
 """
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from kubernetes.client import V1Job
 
-from .constants import PROJECT_CONFIG_FILENAME
+from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION, PROJECT_CONFIG_FILENAME
 
 
 class BodyworkJobFailure(Exception):
@@ -38,16 +38,29 @@ class BodyworkJobFailure(Exception):
         super().__init__(msg)
 
 
-class BodyworkProjectConfigYAMLError(Exception):
+class BodyworkConfigParsingError(Exception):
     def __init__(self, config_file_path: Path):
         msg = (f'cannot parse YAML from {config_file_path}')
         super().__init__(msg)
 
 
-class BodyworkProjectConfigError(Exception):
-    def __init__(self, missing_param_name: str):
-        msg = (f'cannot find parameter={missing_param_name} in '
-               f'{PROJECT_CONFIG_FILENAME} file')
+class BodyworkConfigMissingSectionError(Exception):
+    def __init__(self, missing_sections: Sequence[str]):
+        msg = (f'Bodywork config file missing sections: {", ".join(missing_sections)}')
+        super().__init__(msg)
+
+
+class BodyworkConfigVersionMismatchError(Exception):
+    def __init__(self, version: str):
+        msg = (f'Bodywork config file has schema version {version}, when Bodywork version '
+               f'version {BODYWORK_VERSION} requires schema version '
+               f'{BODYWORK_CONFIG_VERSION}')
+        super().__init__(msg)
+
+
+class BodyworkMissingConfigError(Exception):
+    def __init__(self, missing_param: str):
+        msg = f'cannot find {missing_param} in {PROJECT_CONFIG_FILENAME} file'
         super().__init__(msg)
 
 

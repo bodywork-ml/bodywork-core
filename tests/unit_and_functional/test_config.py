@@ -23,34 +23,53 @@ from pytest import raises
 
 from bodywork.config import BodyworkConfig
 from bodywork.constants import PROJECT_CONFIG_FILENAME
-from bodywork.exceptions import BodyworkProjectConfigYAMLError
+from bodywork.exceptions import (
+    BodyworkConfigMissingSectionError,
+    BodyworkConfigVersionMismatchError,
+    BodyworkConfigParsingError,
+    BodyworkMissingConfigError
+)
 
 
 def test_that_invalid_config_file_path_raises_error():
-    bad_config_file_path = Path('./tests/not_a_real_directory/bodywerk.ini')
+    bad_config_file = Path('./tests/not_a_real_directory/bodywerk.ini')
     with raises(FileExistsError, match='no config file found'):
-        BodyworkConfig(bad_config_file_path)
+        BodyworkConfig(bad_config_file)
 
 
 def test_that_invalid_config_format_raises_error():
-    config_file_path = Path('./tests/resources/project_repo/bodywork.ini')
-    expected_exception_msg = f'cannot parse YAML from {config_file_path}'
-    with raises(BodyworkProjectConfigYAMLError, match=expected_exception_msg):
-        BodyworkConfig(config_file_path)
+    config_file = Path('./tests/resources/project_repo/bodywork.ini')
+    expected_exception_msg = f'cannot parse YAML from {config_file}'
+    with raises(BodyworkConfigParsingError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
+
+
+def test_that_empty_config_file_raises_error():
+    config_file = Path('./tests/resources/project_repo/bodywork_empty.yaml')
+    expected_exception_msg = f'cannot parse YAML from {config_file}'
+    with raises(BodyworkConfigParsingError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
+
+
+def test_that_config_file_with_missing_sections_raises_error():
+    config_file = Path('./tests/resources/project_repo/bodywork_missing_sections.yaml')
+    expected_exception_msg = f'missing sections: version, project, stages, logging'
+    with raises(BodyworkConfigMissingSectionError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
 
 
 def test_that_config_values_can_be_retreived_from_valid_config(
     project_repo_location: Path
 ):
-    config_file_path = project_repo_location / PROJECT_CONFIG_FILENAME
-    config = BodyworkConfig(config_file_path)
-    assert config['project']['name'] == 'bodywork-test-project'
-    assert config['logging']['log_level'] == 'INFO'
-    assert len(config['stages']) == 3
-    assert 'stage_1_good' in config['stages']
-    assert 'batch' in config['stages']['stage_1_good']
-    assert config['stages']['stage_1_good']['executable_script'] == 'main.py'
-    assert config['stages']['stage_1_good']['batch']['retries'] == 4
-    assert config['stages']['stage_1_good']['secrets']['FOO'] == 'foobar-secret'
-    assert (config['stages']['stage_1_good']['requirements']
+    config_file = project_repo_location / PROJECT_CONFIG_FILENAME
+    config = BodyworkConfig(config_file)
+    assert config.project['name'] == 'bodywork-test-project'
+    assert config.logging['log_level'] == 'INFO'
+    assert len(config.stages) == 3
+    assert 'stage_1_good' in config.stages
+    assert 'batch' in config.stages['stage_1_good']
+    assert config.stages['stage_1_good']['executable_script'] == 'main.py'
+    assert config.stages['stage_1_good']['batch']['retries'] == 4
+    assert config.stages['stage_1_good']['secrets']['FOO'] == 'foobar-secret'
+    assert (config.stages['stage_1_good']['requirements']
             == ['boto3==1.16.15', 'joblib==0.17.0'])

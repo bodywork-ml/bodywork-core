@@ -20,10 +20,13 @@ accoss all modules and tests as required. Constants should not be
 defined within seperate modules as this can lead to duplications and
 inconsistencies.
 """
+import pkg_resources
 from pathlib import Path
 
+BODYWORK_CONFIG_VERSION = '1.0'
 BODYWORK_DOCKERHUB_IMAGE_REPO = 'bodyworkml/bodywork-core'
 BODYWORK_DOCKER_IMAGE = f'{BODYWORK_DOCKERHUB_IMAGE_REPO}:latest'
+BODYWORK_VERSION = pkg_resources.get_distribution('bodywork')
 BODYWORK_WORKFLOW_CLUSTER_ROLE = 'bodywork-workflow-controller'
 BODYWORK_WORKFLOW_SERVICE_ACCOUNT = 'bodywork-workflow-controller'
 BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE = 15 * 60
