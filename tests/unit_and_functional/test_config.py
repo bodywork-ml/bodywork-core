@@ -15,17 +15,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Test the Bodywork config handling.
+Test Bodywork config reading, parsing and validation.
 """
 from pathlib import Path
 
 from pytest import raises
 
-from bodywork.config import BodyworkConfig
+from bodywork.config import BodyworkConfig, ProjectConfig, LoggingConfig
 from bodywork.constants import PROJECT_CONFIG_FILENAME
 from bodywork.exceptions import (
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
+    BodyworkConfigMissingOrInvalidParametersError,
     BodyworkConfigParsingError,
     BodyworkMissingConfigError
 )
@@ -58,13 +59,46 @@ def test_that_config_file_with_missing_sections_raises_error():
         BodyworkConfig(config_file)
 
 
+def test_bodywork_config_project_section_validation(
+    project_repo_location: Path
+):
+    missing_all_params = {'not_a_valid_section': None}
+    expected_msg = (f'missing parameters from project section: '
+                    f'name, docker_image, DAG')
+    with raises(BodyworkConfigMissingOrInvalidParametersError, match=expected_msg):
+        ProjectConfig(missing_all_params)
+
+    has_all_params = {'name': 'foo', 'docker_image': 'me/my-image:latest', 'DAG': 'a>>b'}
+    try:
+        ProjectConfig(has_all_params)
+        assert True
+    except:
+        assert False
+
+
+def test_bodywork_config_logging_section_validation(
+    project_repo_location: Path
+):
+    missing_all_params = {'not_a_valid_section': None}
+    expected_msg = f'missing parameters from logging section: log_level'
+    with raises(BodyworkConfigMissingOrInvalidParametersError, match=expected_msg):
+        LoggingConfig(missing_all_params)
+
+    has_all_params = {'log_level': 'INFO'}
+    try:
+        LoggingConfig(has_all_params)
+        assert True
+    except:
+        assert False
+
+
 def test_that_config_values_can_be_retreived_from_valid_config(
     project_repo_location: Path
 ):
     config_file = project_repo_location / PROJECT_CONFIG_FILENAME
     config = BodyworkConfig(config_file)
-    assert config.project['name'] == 'bodywork-test-project'
-    assert config.logging['log_level'] == 'INFO'
+    assert config.project.name == 'bodywork-test-project'
+    assert config.logging.log_level == 'info'
     assert len(config.stages) == 3
     assert 'stage_1_good' in config.stages
     assert 'batch' in config.stages['stage_1_good']

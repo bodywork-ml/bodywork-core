@@ -25,7 +25,7 @@ from typing import Iterable, Sequence
 
 from kubernetes.client import V1Job
 
-from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION, PROJECT_CONFIG_FILENAME
+from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 
 
 class BodyworkJobFailure(Exception):
@@ -50,6 +50,13 @@ class BodyworkConfigMissingSectionError(Exception):
         super().__init__(msg)
 
 
+class BodyworkConfigMissingOrInvalidParamError(Exception):
+    def __init__(self, missing_params: Sequence[str]):
+        self.missing_params = missing_params
+        msg = f'Bodywork config missing parameters: {", ".join(missing_params)}'
+        super().__init__(msg)
+
+
 class BodyworkConfigVersionMismatchError(Exception):
     def __init__(self, version: str):
         msg = (f'Bodywork config file has schema version {version}, when Bodywork version '
@@ -60,7 +67,7 @@ class BodyworkConfigVersionMismatchError(Exception):
 
 class BodyworkMissingConfigError(Exception):
     def __init__(self, missing_param: str):
-        msg = f'cannot find {missing_param} in {PROJECT_CONFIG_FILENAME} file'
+        msg = f'cannot find {missing_param} in Bodywork config file'
         super().__init__(msg)
 
 

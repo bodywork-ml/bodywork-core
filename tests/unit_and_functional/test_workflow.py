@@ -28,7 +28,7 @@ from _pytest.capture import CaptureFixture
 from bodywork.config import BodyworkConfig
 from bodywork.constants import STAGE_CONFIG_FILENAME, PROJECT_CONFIG_FILENAME
 from bodywork.exceptions import (
-    BodyworkProjectConfigError,
+    BodyworkMissingConfigError,
     BodyworkWorkflowExecutionError
 )
 from bodywork.stage import BatchStage, ServiceStage
@@ -41,29 +41,6 @@ from bodywork.workflow import (
     _get_workflow_stages,
     _print_logs_to_stdout
 )
-
-
-def test_bodywork_project_config_validation(
-    project_repo_location: Path
-):
-    with raises(BodyworkProjectConfigError, match='PROJECT_NAME'):
-        BodyworkProject(project_repo_location / 'bad_project_name_bodywork.ini')
-    with raises(BodyworkProjectConfigError, match='DOCKER_IMAGE'):
-        BodyworkProject(project_repo_location / 'bad_docker_image_bodywork.ini')
-    with raises(BodyworkProjectConfigError, match='DAG'):
-        BodyworkProject(project_repo_location / 'bad_DAG_bodywork.ini')
-    with raises(BodyworkProjectConfigError, match='LOG_LEVEL'):
-        BodyworkProject(project_repo_location / 'bad_log_level_bodywork.ini')
-
-
-def test_bodywork_project_config_returns_correct_data(
-    project_repo_location: Path
-):
-    project_data = BodyworkProject(project_repo_location / PROJECT_CONFIG_FILENAME)
-    assert project_data.name == 'bodywork-test-project'
-    assert project_data.docker_image == 'bodyworkml/bodywork-core:latest'
-    assert project_data.dag == 'stage_1_good >> stage_4_good,stage_5_good'
-    assert project_data.log_level == 'INFO'
 
 
 def test_parse_dag_definition_parses_multi_stage_dags():

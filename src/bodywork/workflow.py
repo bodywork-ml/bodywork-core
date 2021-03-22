@@ -31,7 +31,7 @@ from .constants import (
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS
 )
-from .exceptions import BodyworkProjectConfigError, BodyworkWorkflowExecutionError
+from .exceptions import BodyworkMissingConfigError, BodyworkWorkflowExecutionError
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
 from .stage import BatchStage, ServiceStage, Stage, stage_factory
@@ -46,18 +46,18 @@ class BodyworkProject:
         """Constructor.
 
         :param path_to_config_file: Path to project config file.
-        :raises BodyworkProjectConfigError: If mandatory project
+        :raises BodyworkMissingConfigError: If mandatory project
             parameters have not been set: PROJECT_NAME, DAG and
             LOG_LEVEL.
         """
-        project_config = BodyworkConfig(path_to_config_file)
+        config = BodyworkConfig(path_to_config_file)
         try:
-            project_name = project_config['default']['PROJECT_NAME'].lower()
-            docker_image = project_config['default']['DOCKER_IMAGE'].lower()
-            dag = project_config['workflow']['DAG']
-            log_level = project_config['logging']['LOG_LEVEL']
+            project_name = config.project['name'].lower()
+            docker_image = config.project['docker_image'].lower()
+            dag = config.project['DAG']
+            log_level = config.logging['log_level']
         except KeyError as e:
-            raise BodyworkProjectConfigError(str(e)) from e
+            raise BodyworkMissingConfigError(str(e)) from e
 
         self.name = project_name
         self.docker_image = docker_image
