@@ -23,6 +23,7 @@ from pytest import raises
 
 from bodywork.config import BodyworkConfig
 from bodywork.constants import PROJECT_CONFIG_FILENAME
+from bodywork.exceptions import BodyworkProjectConfigYAMLError
 
 
 def test_that_invalid_config_file_path_raises_error():
@@ -31,21 +32,25 @@ def test_that_invalid_config_file_path_raises_error():
         BodyworkConfig(bad_config_file_path)
 
 
-def test_that_invalid_config_requests_raise_error(
+def test_that_invalid_config_format_raises_error():
+    config_file_path = Path('./tests/resources/project_repo/bodywork.ini')
+    expected_exception_msg = f'cannot parse YAML from {config_file_path}'
+    with raises(BodyworkProjectConfigYAMLError, match=expected_exception_msg):
+        BodyworkConfig(config_file_path)
+
+
+def test_that_config_values_can_be_retreived_from_valid_config(
     project_repo_location: Path
 ):
     config_file_path = project_repo_location / PROJECT_CONFIG_FILENAME
     config = BodyworkConfig(config_file_path)
-    with raises(KeyError, match='not_a_real_config_section'):
-        config['not_a_real_config_section']
-    with raises(KeyError, match='not_a_real_parameter'):
-        config['default']['not_a_real_parameter']
-
-
-def test_that_config_values_can_be_retreived(
-    project_repo_location: Path
-):
-    config_file_path = project_repo_location / PROJECT_CONFIG_FILENAME
-    config = BodyworkConfig(config_file_path)
-    assert config['default']['PROJECT_NAME'] == 'bodywork-test-project'
-    assert config['logging']['LOG_LEVEL'] == 'INFO'
+    assert config['project']['name'] == 'bodywork-test-project'
+    assert config['logging']['log_level'] == 'INFO'
+    assert len(config['stages']) == 3
+    assert 'stage-1-good' in config['stages']
+    assert 'batch' in config['stages']['stage-1-good']
+    assert config['stages']['stage-1-good']['executable_script'] == 'main.py'
+    assert config['stages']['stage-1-good']['batch']['retries'] == 4
+    assert config['stages']['stage-1-good']['secrets']['FOO'] == 'foobar-secret'
+    assert (config['stages']['stage-1-good']['requirements']
+            == ['boto3==1.16.15', 'joblib==0.17.0'])

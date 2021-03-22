@@ -15,11 +15,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Bodywork config file reader and parser. Works for both project and stage
-config files.
+Bodywork config file reader and parser.
 """
-from configparser import ConfigParser, ExtendedInterpolation, SectionProxy
 from pathlib import Path
+from typing import Dict, Sequence, Union
+
+import yaml
+
+from .exceptions import BodyworkProjectConfigYAMLError
+
+ConfigSection = Dict[str, Union[str, float, int, bool]]
+Config = Dict[str, Union[ConfigSection, Sequence[ConfigSection]]]
 
 
 class BodyworkConfig:
@@ -29,14 +35,21 @@ class BodyworkConfig:
         """Constructor.
 
         :param config_file_path: Config file path.
-        :raises RuntimeError: if config_file_path does not exist.
+        :raises FileExistsError: if config_file_path does not exist.
+        :raises BodyworkProjectConfigYAMLError: if config file cannot be
+            parsed as valid YAML.
         """
-        if not config_file_path.exists() or config_file_path.is_dir():
+        try:
+            config_yaml =  config_file_path.read_text(encoding='utf-8', errors='strict')
+            self.config: Config = yaml.load(config_yaml, Loader=yaml.SafeLoader)
+        except (FileNotFoundError, IsADirectoryError):
             raise FileExistsError(f'no config file found at {config_file_path}')
-        config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-        config_parser.read(config_file_path)
-        self.config_parser = config_parser
+        except yaml.YAMLError as e:
+            raise BodyworkProjectConfigYAMLError(config_file_path) from e
 
-    def __getitem__(self, config_section_key: str) -> SectionProxy:
+    def __getitem__(
+        self,
+        config_section_key: str
+        ) -> Union[ConfigSection, Sequence[ConfigSection]]:
         """Access sections of the config file directly."""
-        return self.config_parser[config_section_key]
+        return self.config[config_section_key]

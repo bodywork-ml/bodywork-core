@@ -20,6 +20,7 @@ all modules and tests. All Bodywork specific exceptions should be kept
 in this module to make them easier to locate when importing the package
 externally.
 """
+from pathlib import Path
 from typing import Iterable
 
 from kubernetes.client import V1Job
@@ -34,6 +35,12 @@ class BodyworkJobFailure(Exception):
             for job in failed_jobs
         ]
         msg = f'{"; ".join(failed_jobs_msg)} have failed'
+        super().__init__(msg)
+
+
+class BodyworkProjectConfigYAMLError(Exception):
+    def __init__(self, config_file_path: Path):
+        msg = (f'cannot parse YAML from {config_file_path}')
         super().__init__(msg)
 
 

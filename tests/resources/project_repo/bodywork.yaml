@@ -1,0 +1,44 @@
+project:
+  name: bodywork-test-project
+  docker_image: bodyworkml/bodywork-core:latest
+  DAG: stage-1-good >> stage-4-good,stage-5-good
+stages:
+  stage-1-good:
+    executable_script: main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
+    secrets:
+      FOO: foobar-secret
+      BAR: foobar-secret
+    requirements:
+      - boto3==1.16.15
+      - joblib==0.17.0
+  stage-4-good:
+    executable_script: main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
+  stage-5-good:
+    executable_script: main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    service:
+      max_startup_time_seconds: 60
+      replicas: 2
+      port: 5000
+      ingress: true
+    secrets:
+      FOO: foobar-secret
+      BAR: foobar-secret
+    requirements:
+      - Flask==1.1.2
+      - joblib==0.17.0
+      - numpy==1.19.4
+      - scikit-learn==0.23.2
+logging:
+  log_level: INFO
