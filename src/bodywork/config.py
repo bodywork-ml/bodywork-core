@@ -75,38 +75,44 @@ class BodyworkConfig:
         if missing_config_sections:
             raise BodyworkConfigMissingSectionError(missing_config_sections)
 
-        if type(config['version']) != str:
-            raise BodyworkMissingConfigError('version')
-        if config['version'] != BODYWORK_CONFIG_VERSION:
-            raise BodyworkConfigVersionMismatchError(config['version'])
-
-        missing_or_invalid_params: List[str] = []
-
         try:
-            self.project = ProjectConfig(config['project'])
+            if str(config['version']) != BODYWORK_CONFIG_VERSION:
+                raise BodyworkConfigVersionMismatchError(config['version'])
+        except Exception:
+            raise BodyworkConfigMissingOrInvalidParamError(['version'])
+
+        missing_or_invalid_param: List[str] = []
+        try:
+            self.project = Project(config['project'])
         except BodyworkConfigMissingOrInvalidParamError as e:
-            missing_or_invalid_params += e.missing_params
+            missing_or_invalid_param += e.missing_params
 
         try:
-            self.logging = LoggingConfig(config['logging'])
+            self.logging = Logging(config['logging'])
         except BodyworkConfigMissingOrInvalidParamError as e:
-            missing_or_invalid_params += e.missing_params
+            missing_or_invalid_param += e.missing_params
 
         try:
-            self.stages: Sequence[StageConfig] = []
+            self.stages: Sequence[Stage] = []
             for stage_name, stage_config in config['stages'].items():
                 try:
-                    self.stages.append(StageConfig(stage_name, stage_config))
+                    if (not ('batch' in stage_config or 'service' in stage_config)
+                            or ('batch' in stage_config and 'service' in stage_config)):
+                        missing_or_invalid_param.append(
+                            f'stages.{stage_name}.batch/service'
+                        )
+                        continue
+                    self.stages.append(Stage(stage_name, stage_config))
                 except BodyworkConfigMissingOrInvalidParamError as e:
-                    missing_or_invalid_params += e.missing_params
+                    missing_or_invalid_param += e.missing_params
         except TypeError:
-            missing_or_invalid_params.append('stages._')
+            missing_or_invalid_param.append('stages._')
 
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        if missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class ProjectConfig:
+class Project:
     """Class for project section of Bodywork config."""
 
     def __init__(self, config_section: Dict[str, str]):
@@ -117,27 +123,27 @@ class ProjectConfig:
             required configuration parameters are missing or invalid.
         """
 
-        missing_or_invalid_params = []
+        missing_or_invalid_param = []
         try:
-            self.name = config_section['name'].lower()
+            self.name = str(config_section['name']).lower()
         except Exception:
-            missing_or_invalid_params.append('project.name')
-
-        try:
-            self.docker_image = config_section['docker_image'].lower()
-        except Exception:
-            missing_or_invalid_params.append('project.docker_image')
+            missing_or_invalid_param.append('project.name')
 
         try:
-            self.DAG = config_section['DAG']
+            self.docker_image = str(config_section['docker_image']).lower()
         except Exception:
-            missing_or_invalid_params.append('project.DAG')
+            missing_or_invalid_param.append('project.docker_image')
 
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        try:
+            self.DAG = str(config_section['DAG'])
+        except Exception:
+            missing_or_invalid_param.append('project.DAG')
+
+        if missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class LoggingConfig:
+class Logging:
     """Class for logging section of Bodywork config."""
 
     def __init__(self, config_section: Dict[str, str]):
@@ -148,18 +154,18 @@ class LoggingConfig:
             required configuration parameters are missing or invalid.
         """
 
-        missing_or_invalid_params = []
+        missing_or_invalid_param = []
         try:
-            self.log_level = config_section['log_level'].lower()
+            self.log_level = str(config_section['log_level']).lower()
         except Exception:
-            missing_or_invalid_params.append('logging.log_level')
+            missing_or_invalid_param.append('logging.log_level')
 
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        if missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class StageConfig:
-    """Class for a stage in stages section of Bodywork config."""
+class Stage:
+    """Common stage data in stages section of Bodywork config."""
 
     def __init__(self, stage_name: str, config: Dict[str, Any]):
         """Constructor.
@@ -167,66 +173,49 @@ class StageConfig:
         :param stage_name: Name of stage.
         :param config: Dictionary of configuration parameters.
         """
-        missing_or_invalid_params = []
+        missing_or_invalid_param = []
         try:
-            self.executable_script = config['executable_script']
+            self.executable_script = str(config['executable_script'])
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.executable_script')
+            missing_or_invalid_param.append(f'stages.{stage_name}.executable_script')
 
         try:
-            self.cpu_request = config['cpu_request']
+            self.cpu_request = float(config['cpu_request'])
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.cpu_request')
+            missing_or_invalid_param.append(f'stages.{stage_name}.cpu_request')
 
         try:
-            self.memory_request_mb = config['memory_request_mb']
+            self.memory_request_mb = float(config['memory_request_mb'])
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.memory_request_mb')
+            missing_or_invalid_param.append(f'stages.{stage_name}.memory_request_mb')
 
         if 'requirements' in config:
             try:
-                if any(e for e in config['requirements'] if e is not None):
+                if any(str(e) for e in config['requirements'] if e is not None):
                     self.requirements = config['requirements']
                 else:
                     self.requirements = []
             except Exception:
-                missing_or_invalid_params.append(f'stages.{stage_name}.requirements')
+                missing_or_invalid_param.append(f'stages.{stage_name}.requirements')
         else:
             self.requirements = []
 
         if 'secrets' in config:
             try:
-                if any(v for k, v in config['secrets'].items() if v is not None):
+                if any(str(v) for k, v in config['secrets'].items() if v is not None):
                     self.secrets = config['secrets']
                 else:
                     self.secrets = {}
             except Exception:
-                missing_or_invalid_params.append(f'stages.{stage_name}.secrets')
+                missing_or_invalid_param.append(f'stages.{stage_name}.secrets')
         else:
             self.secrets = {}
 
-        if not ('batch' in config or 'service' in config):
-            missing_or_invalid_params.append(f'stages.{stage_name}.batch/stage')
-
-        if 'batch' in config and 'service' in config:
-            missing_or_invalid_params.append(f'stages.{stage_name}.batch/stage')
-        elif 'batch' in config:
-            try:
-                self.batch = BatchStage(stage_name, config['batch'])
-            except BodyworkConfigMissingOrInvalidParamError as e:
-                missing_or_invalid_params += e.missing_params
-        else:
-            try:
-                self.batch = BatchStage(stage_name, config['batch'])
-            except BodyworkConfigMissingOrInvalidParamError as e:
-                missing_or_invalid_params += e.missing_params
-
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        self.missing_or_invalid_param = missing_or_invalid_param
 
 
-class BatchStage:
-    """Class for batch stage data within stage of Bodywork config."""
+class BatchStage(Stage):
+    """Batch stage data within stages section of Bodywork config."""
 
     def __init__(self, stage_name: str, config: Dict[str, ConfigValues]):
         """Constructor.
@@ -236,25 +225,26 @@ class BatchStage:
         :raises BodyworkConfigMissingOrInvalidParamError: if any
             required configuration parameters are missing or invalid.
         """
-        missing_or_invalid_params = []
+        super().__init__(stage_name, config)
+
         try:
-            self.max_completion_time_seconds = config['max_completion_time_seconds']
+            self.max_completion_time_seconds = int(config['max_completion_time_seconds'])
         except Exception:
-            missing_or_invalid_params.append(
+            self.missing_or_invalid_param.append(
                 f'stage.{stage_name}.max_completion_time_seconds'
             )
 
         try:
-            self.retries = config['retries']
+            self.retries = int(config['retries'])
         except Exception:
-            missing_or_invalid_params.append(f'stage.{stage_name}.batch.retries')
+            self.missing_or_invalid_param.append(f'stage.{stage_name}.batch.retries')
 
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        if self.missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(self.missing_or_invalid_param)
 
 
-class ServiceStage:
-    """Class for service stage data within stage of Bodywork config."""
+class ServiceStage(Stage):
+    """Service stage data within stages section of Bodywork config."""
 
     def __init__(self, stage_name, config: Dict[str, ConfigValues]):
         """Constructor.
@@ -264,28 +254,32 @@ class ServiceStage:
         :raises BodyworkConfigMissingOrInvalidParamError: if any
             required configuration parameters are missing or invalid.
         """
-        missing_or_invalid_params = []
+        super().__init__(stage_name, config)
+
         try:
-            self.max_startup_time_seconds = config['max_startup_time_seconds']
+            self.max_startup_time_seconds = int(config['max_startup_time_seconds'])
         except Exception:
-            missing_or_invalid_params.append(
+            self.missing_or_invalid_param.append(
                 f'stages.{stage_name}.service.max_startup_time_seconds'
             )
 
         try:
-            self.replicas = config['replicas']
+            self.replicas = int(config['replicas'])
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.service.replicas')
+            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.replicas')
 
         try:
-            self.port = config['port']
+            self.port = int(config['port'])
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.service.port')
+            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.port')
 
         try:
-            self.ingress = config['ingress']
+            if config['ingress'] is True or config['ingress'] is False:
+                self.ingress = config['ingress']
+            else:
+                raise TypeError
         except Exception:
-            missing_or_invalid_params.append(f'stages.{stage_name}.service.ingress')
+            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.ingress')
 
-        if missing_or_invalid_params:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_params)
+        if self.missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(self.missing_or_invalid_param)
