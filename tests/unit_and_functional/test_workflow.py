@@ -70,7 +70,7 @@ def test_parse_dag_definition_raises_invalid_dag_definition_exceptions():
 def test_get_workflow_stages_raises_exception_for_invalid_stages(
     project_repo_location: Path,
 ):
-    dag = [['stage_1_good'], ['stage_2_bad_config']]
+    dag = [['stage_1'], ['stage_2_bad_config']]
     with raises(RuntimeError, match='stage_2_bad_config'):
         _get_workflow_stages(dag, project_repo_location)
 
@@ -78,34 +78,34 @@ def test_get_workflow_stages_raises_exception_for_invalid_stages(
 def test_get_workflow_stages_return_valid_stage_info(
     project_repo_location: Path,
 ):
-    dag = [['stage_1_good'], ['stage_4_good', 'stage_5_good']]
+    dag = [['stage_1'], ['stage_2', 'stage_3']]
 
-    path_to_stage_1_dir = project_repo_location / 'stage_1_good'
+    path_to_stage_1_dir = project_repo_location / 'stage_1'
     stage_1_info = BatchStage(
-        'stage_1_good',
+        'stage_1',
         BodyworkConfig(path_to_stage_1_dir / STAGE_CONFIG_FILENAME),
         path_to_stage_1_dir
     )
 
-    path_to_stage_4_dir = project_repo_location / 'stage_4_good'
+    path_to_stage_4_dir = project_repo_location / 'stage_2'
     stage_4_info = BatchStage(
-        'stage_4_good',
+        'stage_2',
         BodyworkConfig(path_to_stage_4_dir / STAGE_CONFIG_FILENAME),
         path_to_stage_4_dir
     )
 
-    path_to_stage_5_dir = project_repo_location / 'stage_5_good'
+    path_to_stage_5_dir = project_repo_location / 'stage_3'
     stage_5_info = ServiceStage(
-        'stage_5_good',
+        'stage_3',
         BodyworkConfig(path_to_stage_5_dir / STAGE_CONFIG_FILENAME),
         path_to_stage_5_dir
     )
 
     all_stage_info = _get_workflow_stages(dag, project_repo_location)
     assert len(all_stage_info) == 3
-    assert all_stage_info['stage_1_good'] == stage_1_info
-    assert all_stage_info['stage_4_good'] == stage_4_info
-    assert all_stage_info['stage_5_good'] == stage_5_info
+    assert all_stage_info['stage_1'] == stage_1_info
+    assert all_stage_info['stage_2'] == stage_4_info
+    assert all_stage_info['stage_3'] == stage_5_info
 
 
 @patch('requests.Session')

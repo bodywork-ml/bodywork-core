@@ -93,7 +93,7 @@ def test_stage_command_successful_has_zero_exit_code(
              'stage',
              project_repo_connection_string,
              'master',
-             'stage_1_good',
+             'stage_1',
              ],
             check=True,
             capture_output=True,

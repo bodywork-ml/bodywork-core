@@ -36,7 +36,7 @@ from bodywork.stage import (
 
 
 def test_stage_factory_yields_stage_data_for_valid_stage(project_repo_location: Path):
-    path_to_stage_dir = project_repo_location / 'stage_1_good'
+    path_to_stage_dir = project_repo_location / 'stage_1'
     try:
         stage_factory(path_to_stage_dir)
         assert True
@@ -45,12 +45,12 @@ def test_stage_factory_yields_stage_data_for_valid_stage(project_repo_location: 
 
 
 def test_stage_factory_yields_correct_data_for_batch_stages(project_repo_location: Path):
-    path_to_stage_dir = project_repo_location / 'stage_1_good'
+    path_to_stage_dir = project_repo_location / 'stage_1'
     stage_info = stage_factory(path_to_stage_dir)
     assert stage_info.path_to_stage_dir == path_to_stage_dir
     assert type(stage_info.config) == BodyworkConfig
     assert stage_info.executable_script_path == path_to_stage_dir / 'main.py'
-    assert stage_info.name == 'stage_1_good'
+    assert stage_info.name == 'stage_1'
     assert type(stage_info) == BatchStage
     assert stage_info.retries == 4
     assert stage_info.max_completion_time == 60
@@ -59,12 +59,12 @@ def test_stage_factory_yields_correct_data_for_batch_stages(project_repo_locatio
 def test_stage_factory_yields_correct_data_for_service_stages(
     project_repo_location: Path
 ):
-    path_to_stage_dir = project_repo_location / 'stage_5_good'
+    path_to_stage_dir = project_repo_location / 'stage_3'
     stage_info = stage_factory(path_to_stage_dir)
     assert stage_info.path_to_stage_dir == path_to_stage_dir
     assert type(stage_info.config) == BodyworkConfig
     assert stage_info.executable_script_path == path_to_stage_dir / 'main.py'
-    assert stage_info.name == 'stage_5_good'
+    assert stage_info.name == 'stage_3'
     assert type(stage_info) == ServiceStage
     assert stage_info.replicas == 2
     assert stage_info.max_startup_time == 60
@@ -187,10 +187,10 @@ def test_service_stage_input_validation(project_repo_location: Path):
 
 
 def test_stage_secret_parsing(project_repo_location: Path):
-    path_to_stage_1_dir = project_repo_location / 'stage_1_good'
+    path_to_stage_1_dir = project_repo_location / 'stage_1'
     stage_1 = stage_factory(path_to_stage_1_dir)
 
-    path_to_stage_4_dir = project_repo_location / 'stage_4_good'
+    path_to_stage_4_dir = project_repo_location / 'stage_2'
     stage_4 = stage_factory(path_to_stage_4_dir)
 
     assert stage_1.env_vars_from_secrets[0] == ('foobar-secret', 'FOO')
@@ -199,10 +199,10 @@ def test_stage_secret_parsing(project_repo_location: Path):
 
 
 def test_stage_equality_operations(project_repo_location: Path):
-    path_to_stage_1_dir = project_repo_location / 'stage_1_good'
+    path_to_stage_1_dir = project_repo_location / 'stage_1'
     stage_1 = stage_factory(path_to_stage_1_dir)
 
-    path_to_stage_5_dir = project_repo_location / 'stage_5_good'
+    path_to_stage_5_dir = project_repo_location / 'stage_3'
     stage_5 = stage_factory(path_to_stage_5_dir)
 
     assert stage_1 == stage_1
@@ -215,7 +215,7 @@ def test_that_requirements_can_be_installed(
 ):
     path_to_requirements = (
         project_repo_location
-        / 'stage_5_good'
+        / 'stage_3'
         / 'requirements.txt'
     )
     try:
@@ -244,7 +244,7 @@ def test_run_stage(
     bodywork_output_dir: Path
 ):
     try:
-        run_stage('stage_1_good', project_repo_connection_string)
+        run_stage('stage_1', project_repo_connection_string)
         assert True
     except Exception:
         assert False

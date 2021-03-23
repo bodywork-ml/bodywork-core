@@ -1,4 +1,4 @@
-version: "1.0"
+version: "0.1"
 project:
   name: bodywork-test-project
   docker_image: bodyworkml/bodywork-core:latest
@@ -38,6 +38,7 @@ stages:
       BAR: foobar-secret
     requirements:
       - Flask==1.1.2
+      - joblib==0.17.0
       - numpy==1.19.4
       - scikit-learn==0.23.2
 logging:

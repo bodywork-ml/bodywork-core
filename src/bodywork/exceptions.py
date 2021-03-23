@@ -53,13 +53,14 @@ class BodyworkConfigMissingSectionError(Exception):
 class BodyworkConfigMissingOrInvalidParamError(Exception):
     def __init__(self, missing_params: Sequence[str]):
         self.missing_params = missing_params
-        msg = f'Bodywork config missing parameters: {", ".join(missing_params)}'
+        msg = (f'Bodywork config missing or invalid parameters: '
+               f'{", ".join(missing_params)}')
         super().__init__(msg)
 
 
 class BodyworkConfigVersionMismatchError(Exception):
     def __init__(self, version: str):
-        msg = (f'Bodywork config file has schema version {version}, when Bodywork version '
+        msg = (f'Bodywork config file has schema version {version}, when Bodywork '
                f'version {BODYWORK_VERSION} requires schema version '
                f'{BODYWORK_CONFIG_VERSION}')
         super().__init__(msg)

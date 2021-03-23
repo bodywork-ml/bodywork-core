@@ -21,75 +21,255 @@ from pathlib import Path
 
 from pytest import raises
 
-from bodywork.config import BodyworkConfig, ProjectConfig, LoggingConfig
-from bodywork.constants import PROJECT_CONFIG_FILENAME
+from bodywork.config import (
+    BodyworkConfig,
+    Project,
+    BatchStage,
+    ServiceStage,
+    Stage,
+    Logging
+)
+from bodywork.constants import (
+    BODYWORK_CONFIG_VERSION,
+    BODYWORK_VERSION,
+    PROJECT_CONFIG_FILENAME
+)
 from bodywork.exceptions import (
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
-    BodyworkConfigMissingOrInvalidParametersError,
-    BodyworkConfigParsingError,
-    BodyworkMissingConfigError
+    BodyworkConfigMissingOrInvalidParamError,
+    BodyworkConfigParsingError
 )
 
 
-def test_that_invalid_config_file_path_raises_error():
-    bad_config_file = Path('./tests/not_a_real_directory/bodywerk.ini')
+def test_that_invalid_config_file_path_raises_error(
+    project_repo_location: Path
+):
+    bad_config_file = project_repo_location / 'bodywerk.ini'
     with raises(FileExistsError, match='no config file found'):
         BodyworkConfig(bad_config_file)
 
 
-def test_that_invalid_config_format_raises_error():
-    config_file = Path('./tests/resources/project_repo/bodywork.ini')
+def test_that_invalid_config_format_raises_error(
+    project_repo_location: Path
+):
+    config_file = project_repo_location / 'bodywork.ini'
     expected_exception_msg = f'cannot parse YAML from {config_file}'
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 
 
-def test_that_empty_config_file_raises_error():
-    config_file = Path('./tests/resources/project_repo/bodywork_empty.yaml')
+def test_that_empty_config_file_raises_error(
+    project_repo_location: Path
+):
+    config_file = project_repo_location / 'bodywork_empty.yaml'
     expected_exception_msg = f'cannot parse YAML from {config_file}'
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 
 
-def test_that_config_file_with_missing_sections_raises_error():
-    config_file = Path('./tests/resources/project_repo/bodywork_missing_sections.yaml')
-    expected_exception_msg = f'missing sections: version, project, stages, logging'
+def test_that_config_file_with_missing_sections_raises_error(
+    project_repo_location: Path
+):
+    config_file = project_repo_location / 'bodywork_missing_sections.yaml'
+    expected_exception_msg = 'missing sections: version, project, stages, logging'
     with raises(BodyworkConfigMissingSectionError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 
 
-def test_bodywork_config_project_section_validation(
+def test_that_config_file_with_invalid_schema_version_raises_error(
     project_repo_location: Path
 ):
-    missing_all_params = {'not_a_valid_section': None}
-    expected_msg = (f'missing parameters from project section: '
-                    f'name, docker_image, DAG')
-    with raises(BodyworkConfigMissingOrInvalidParametersError, match=expected_msg):
-        ProjectConfig(missing_all_params)
+    config_file = project_repo_location / 'bodywork_invalid_version.yaml'
+    expected_exception_msg = 'missing or invalid parameters: version'
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
 
-    has_all_params = {'name': 'foo', 'docker_image': 'me/my-image:latest', 'DAG': 'a>>b'}
+
+def test_that_config_file_with_mismatched_schema_version_raises_error(
+    project_repo_location: Path
+):
+    config_file = project_repo_location / 'bodywork_version_mismatch.yaml'
+    expected_exception_msg = (f'config file has schema version 0.1, when Bodywork '
+                              f'version {BODYWORK_VERSION} requires schema version '
+                              f'{BODYWORK_CONFIG_VERSION}')
+    with raises(BodyworkConfigVersionMismatchError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
+
+
+def test_that_config_file_with_non_list_stages_raises_error(
+    project_repo_location: Path
+):
+    config_file = project_repo_location / 'bodywork_bad_stages_section.yaml'
+    expected_exception_msg = 'missing or invalid parameters: stages._'
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        BodyworkConfig(config_file)
+
+
+def test_bodywork_config_project_section_validation():
+    config_missing_all_params = {'not_a_valid_section': None}
+    expected_exception_msg = ('missing or invalid parameters: project.name, '
+                              'project.docker_image, project.DAG')
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        Project(config_missing_all_params)
+
+    config_all_invalid_params = {'name': -1, 'docker_image': [], 'DAG': None}
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        Project(config_all_invalid_params)
+
+    config_all_valid_params = {'name': 'me', 'docker_image': 'my/img:1.0', 'DAG': 'a>>b'}
     try:
-        ProjectConfig(has_all_params)
+        Project(config_all_valid_params)
         assert True
-    except:
+    except Exception:
         assert False
 
 
-def test_bodywork_config_logging_section_validation(
-    project_repo_location: Path
-):
-    missing_all_params = {'not_a_valid_section': None}
-    expected_msg = f'missing parameters from logging section: log_level'
-    with raises(BodyworkConfigMissingOrInvalidParametersError, match=expected_msg):
-        LoggingConfig(missing_all_params)
+def test_bodywork_config_logging_section_validation():
+    config_missing_all_params = {'not_a_valid_section': None}
+    expected_exception_msg = 'missing or invalid parameters: logging.log_level'
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        Logging(config_missing_all_params)
 
-    has_all_params = {'log_level': 'INFO'}
+    config_all_params = {'log_level': 'INFO'}
     try:
-        LoggingConfig(has_all_params)
+        Logging(config_all_params)
         assert True
-    except:
+    except Exception:
         assert False
+
+
+def test_bodywork_config_generic_stage_validation():
+    stage_name = 'my_stage'
+
+    config_missing_all_params = {'not_a_valid_section': None}
+    expected_missing_or_invalid_param = [
+        'stages.my_stage.executable_script',
+        'stages.my_stage.cpu_request',
+        'stages.my_stage.memory_request_mb'
+    ]
+    stage = Stage(stage_name, config_missing_all_params)
+    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+
+    config_missing_all_invalid_params = {
+        'executable_script': None,
+        'cpu_request': None,
+        'memory_request_mb': None,
+        'requirements': None,
+        'secrets': None
+    }
+    expected_missing_or_invalid_param = [
+        'stages.my_stage.executable_script',
+        'stages.my_stage.cpu_request',
+        'stages.my_stage.memory_request_mb',
+        'stages.my_stage.requirements',
+        'stages.my_stage.secrets'
+    ]
+    stage = Stage(stage_name, config_missing_all_invalid_params)
+    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+
+    config_missing_all_invalid_params = {
+        'executable_script': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100,
+        'requirements': ['foo==1.0.0', 'bar==2.0'],
+        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
+    }
+    expected_missing_or_invalid_param = []
+    stage = Stage(stage_name, config_missing_all_invalid_params)
+    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+
+
+def test_bodywork_config_batch_stage_validation():
+    stage_name = 'my_stage'
+    valid_generic_stage_config = {
+        'executable_script': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100,
+        'requirements': ['foo==1.0.0', 'bar==2.0'],
+        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
+    }
+
+    config_missing_all_params = {'not_a_valid_section': None}
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'stages.my_stage.batch.max_completion_time_seconds, '
+        'stages.my_stage.batch.retries'
+    )
+    full_config = {**valid_generic_stage_config, 'batch': config_missing_all_params}
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        BatchStage(stage_name, full_config)
+
+    config_all_invalid_params = {
+        'max_completion_time_seconds': -1,
+        'retries': -1
+    }
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'stages.my_stage.batch.max_completion_time_seconds, '
+        'stages.my_stage.batch.retries'
+    )
+    full_config = {**valid_generic_stage_config, 'batch': config_all_invalid_params}
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        BatchStage(stage_name, full_config)
+
+    config_all_valid_params = {
+        'max_completion_time_seconds': 10,
+        'retries': 1
+    }
+    full_config = {**valid_generic_stage_config, 'batch': config_all_valid_params}
+    stage = BatchStage(stage_name, full_config)
+    assert stage.missing_or_invalid_param == []
+
+
+def test_bodywork_config_service_stage_validation():
+    stage_name = 'my_stage'
+    valid_generic_stage_config = {
+        'executable_script': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100,
+        'requirements': ['foo==1.0.0', 'bar==2.0'],
+        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
+    }
+
+    config_missing_all_params = {'not_a_valid_section': None}
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'stages.my_stage.service.max_startup_time_seconds, '
+        'stages.my_stage.service.replicas, '
+        'stages.my_stage.service.port, '
+        'stages.my_stage.service.ingress'
+    )
+    full_config = {**valid_generic_stage_config, 'service': config_missing_all_params}
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        ServiceStage(stage_name, full_config)
+
+    config_all_invalid_params = {
+        'max_startup_time_seconds': -1,
+        'replicas': -1,
+        'port': -1,
+        'ingress': 'no'
+    }
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'stages.my_stage.service.max_startup_time_seconds, '
+        'stages.my_stage.service.replicas, '
+        'stages.my_stage.service.port, '
+        'stages.my_stage.service.ingress'
+    )
+    full_config = {**valid_generic_stage_config, 'service': config_all_invalid_params}
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        ServiceStage(stage_name, full_config)
+
+    config_all_valid_params = {
+        'max_startup_time_seconds': 10,
+        'replicas': 2,
+        'port': 5000,
+        'ingress': True
+    }
+    full_config = {**valid_generic_stage_config, 'service': config_all_valid_params}
+    stage = ServiceStage(stage_name, full_config)
+    assert stage.missing_or_invalid_param == []
 
 
 def test_that_config_values_can_be_retreived_from_valid_config(
@@ -100,10 +280,21 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.project.name == 'bodywork-test-project'
     assert config.logging.log_level == 'info'
     assert len(config.stages) == 3
-    assert 'stage_1_good' in config.stages
-    assert 'batch' in config.stages['stage_1_good']
-    assert config.stages['stage_1_good']['executable_script'] == 'main.py'
-    assert config.stages['stage_1_good']['batch']['retries'] == 4
-    assert config.stages['stage_1_good']['secrets']['FOO'] == 'foobar-secret'
-    assert (config.stages['stage_1_good']['requirements']
+
+    assert 'stage_1' in config.stages
+    assert config.stages['stage_1'].executable_script == 'main.py'
+    assert config.stages['stage_1'].max_completion_time_seconds == 60
+    assert config.stages['stage_1'].retries == 4
+    assert config.stages['stage_1'].secrets['FOO'] == 'foobar-secret'
+    assert (config.stages['stage_1'].requirements
             == ['boto3==1.16.15', 'joblib==0.17.0'])
+
+    assert 'stage_3' in config.stages
+    assert config.stages['stage_3'].executable_script == 'main.py'
+    assert config.stages['stage_3'].max_startup_time_seconds == 60
+    assert config.stages['stage_3'].replicas == 2
+    assert config.stages['stage_3'].port == 5000
+    assert config.stages['stage_3'].ingress is True
+    assert config.stages['stage_3'].secrets['BAR'] == 'foobar-secret'
+    assert (config.stages['stage_3'].requirements
+            == ['Flask==1.1.2', 'numpy==1.19.4', 'scikit-learn==0.23.2'])
