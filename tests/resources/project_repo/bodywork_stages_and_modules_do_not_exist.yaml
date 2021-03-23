@@ -4,7 +4,7 @@ project:
   docker_image: bodyworkml/bodywork-core:latest
   DAG: stage_1 >> stage_2,stage_3
 stages:
-  stage_1:
+  stage_one:
     executable_module: main.py
     cpu_request: 0.5
     memory_request_mb: 250
@@ -17,7 +17,7 @@ stages:
     requirements:
       - boto3==1.16.15
       - joblib==0.17.0
-  stage_2:
+  stage_two:
     executable_module: main.py
     cpu_request: 0.5
     memory_request_mb: 250
@@ -25,7 +25,7 @@ stages:
       max_completion_time_seconds: 60
       retries: 4
   stage_3:
-    executable_module: main.py
+    executable_module: does_not_exist.py
     cpu_request: 0.5
     memory_request_mb: 250
     service:

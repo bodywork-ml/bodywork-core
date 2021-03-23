@@ -18,7 +18,7 @@
 Bodywork configuration file parsing and validation.
 """
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 import yaml
 
@@ -30,14 +30,18 @@ from .exceptions import (
     BodyworkConfigMissingOrInvalidParamError
 )
 
+DAG = Iterable[Iterable[str]]
+
 
 class BodyworkConfig:
     """Configuration data that has been parsed and validated."""
 
-    def __init__(self, config_file_path: Path):
+    def __init__(self, config_file_path: Path, check_py_modules_exist: bool = False):
         """Constructor.
 
         :param config_file_path: Config file path.
+        :param check_py_modules_exist: Whether to check that the
+            executable Python modules specified in stage configs, exist.
         :raises FileExistsError: if config_file_path does not exist.
         :raises BodyworkConfigParsingError: if config file cannot be
             parsed as valid YAML.
@@ -56,6 +60,7 @@ class BodyworkConfig:
             if type(config) is not dict:
                 raise yaml.YAMLError
             self._config = config
+            self._config_file_path = config_file_path
         except (FileNotFoundError, IsADirectoryError):
             raise FileExistsError(f'no config file found at {config_file_path}')
         except yaml.YAMLError as e:
@@ -114,7 +119,22 @@ class BodyworkConfig:
         except AttributeError:
             missing_or_invalid_param.append('stages._')
 
+        if check_py_modules_exist:
+            for stage_name, stage in self.stages.items():
+                stage_dir = self._config_file_path.parent / stage_name
+                file_path = stage_dir / stage.executable_module
+                if not stage_dir.exists():
+                    missing_or_invalid_param.append(
+                        f'stages.{stage_name} -> cannot locate dir'
+                    )
+                    continue
+                if not file_path.exists():
+                    missing_or_invalid_param.append(
+                        f'stages.{stage_name}.executable_module -> cannot locate file'
+                    )
+
         if missing_or_invalid_param:
+            missing_or_invalid_param.sort()
             raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
@@ -142,6 +162,9 @@ class Project:
 
         try:
             self.DAG = config_section['DAG'].replace(' ', '')
+            self.workflow = _parse_dag_definition(self.DAG)
+        except ValueError as e:
+            missing_or_invalid_param.append(f'project.DAG -> {e}')
         except Exception:
             missing_or_invalid_param.append('project.DAG')
 
@@ -181,9 +204,9 @@ class Stage:
         """
         missing_or_invalid_param = []
         try:
-            self.executable_script = config['executable_script'].strip()
+            self.executable_module = config['executable_module'].strip()
         except Exception:
-            missing_or_invalid_param.append(f'stages.{stage_name}.executable_script')
+            missing_or_invalid_param.append(f'stages.{stage_name}.executable_module')
 
         try:
             self.cpu_request = float(config['cpu_request'])
@@ -308,3 +331,27 @@ class ServiceStage(Stage):
 
         if self.missing_or_invalid_param:
             raise BodyworkConfigMissingOrInvalidParamError(self.missing_or_invalid_param)
+
+
+def _parse_dag_definition(dag_definition: str) -> DAG:
+    """Parse DAG definition string.
+
+    :param dag_definition: A DAG definition in string format.
+    :raises ValueError: If any 'null' (zero character) stage names are
+        found.
+    :return: A list of steps, where each step is a list of Bodywork
+        project stage names (containing a list of stages to run in each
+        step).
+    """
+    steps = dag_definition.replace(' ', '').split('>>')
+    stages_in_steps = [step.split(',') for step in steps]
+    steps_with_null_stages = [
+        str(n)
+        for n, step in enumerate(stages_in_steps, start=1) for stage in step
+        if stage == ''
+    ]
+    if len(steps_with_null_stages) > 0:
+        msg = (f'null stages found in step {", ".join(steps_with_null_stages)} when '
+               f'parsing DAG definition')
+        raise ValueError(msg)
+    return stages_in_steps

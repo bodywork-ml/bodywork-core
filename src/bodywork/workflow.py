@@ -295,30 +295,6 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     return image_name, image_tag
 
 
-def _parse_dag_definition(dag_definition: str) -> DAG:
-    """Parse DAG definition string.
-
-    :param dag_definition: A DAG definition in string format.
-    :raises ValueError: If any 'null' (zero character) stage names are
-        found.
-    :return: A list of steps, where each step is a list of Bodywork
-        project stage names (containing a list of stages to run in each
-        step).
-    """
-    steps = dag_definition.replace(' ', '').split('>>')
-    stages_in_steps = [step.split(',') for step in steps]
-    steps_with_null_stages = [
-        str(n)
-        for n, step in enumerate(stages_in_steps, start=1) for stage in step
-        if stage == ''
-    ]
-    if len(steps_with_null_stages) > 0:
-        msg = (f'null stages found in step {", ".join(steps_with_null_stages)} when '
-               f'parsing DAG definition')
-        raise ValueError(msg)
-    return stages_in_steps
-
-
 def _get_workflow_stages(
     dag: DAG,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR

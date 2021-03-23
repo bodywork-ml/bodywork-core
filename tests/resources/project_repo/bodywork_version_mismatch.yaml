@@ -5,7 +5,7 @@ project:
   DAG: stage_1 >> stage_2,stage_3
 stages:
   stage_1:
-    executable_script: main.py
+    executable_module: main.py
     cpu_request: 0.5
     memory_request_mb: 250
     batch:
@@ -18,14 +18,14 @@ stages:
       - boto3==1.16.15
       - joblib==0.17.0
   stage_2:
-    executable_script: main.py
+    executable_module: main.py
     cpu_request: 0.5
     memory_request_mb: 250
     batch:
       max_completion_time_seconds: 60
       retries: 4
   stage_3:
-    executable_script: main.py
+    executable_module: main.py
     cpu_request: 0.5
     memory_request_mb: 250
     service:

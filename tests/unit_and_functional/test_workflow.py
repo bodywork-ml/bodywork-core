@@ -27,44 +27,15 @@ from _pytest.capture import CaptureFixture
 
 from bodywork.config import BodyworkConfig
 from bodywork.constants import STAGE_CONFIG_FILENAME, PROJECT_CONFIG_FILENAME
-from bodywork.exceptions import (
-    BodyworkMissingConfigError,
-    BodyworkWorkflowExecutionError
-)
+from bodywork.exceptions import BodyworkWorkflowExecutionError
 from bodywork.stage import BatchStage, ServiceStage
 from bodywork.workflow import (
-    BodyworkProject,
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
-    _parse_dag_definition,
     _get_workflow_stages,
     _print_logs_to_stdout
 )
-
-
-def test_parse_dag_definition_parses_multi_stage_dags():
-    dag_definition = 'stage_1 >> stage_2,stage_3 >> stage_4'
-    parsed_dag_structure = _parse_dag_definition(dag_definition)
-    expected_dag_structure = [
-        ['stage_1'],
-        ['stage_2', 'stage_3'],
-        ['stage_4']
-    ]
-    assert parsed_dag_structure == expected_dag_structure
-
-
-def test_parse_dag_definition_parses_single_stage_dags():
-    dag_definition = 'stage_1'
-    parsed_dag_structure = _parse_dag_definition(dag_definition)
-    expected_dag_structure = [['stage_1']]
-    assert parsed_dag_structure == expected_dag_structure
-
-
-def test_parse_dag_definition_raises_invalid_dag_definition_exceptions():
-    dag_definition = 'stage_1 >> ,stage_3 >> stage_4'
-    with raises(ValueError, match='null stages found in step 2'):
-        _parse_dag_definition(dag_definition)
 
 
 def test_get_workflow_stages_raises_exception_for_invalid_stages(

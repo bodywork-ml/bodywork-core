@@ -27,7 +27,8 @@ from bodywork.config import (
     BatchStage,
     ServiceStage,
     Stage,
-    Logging
+    Logging,
+    _parse_dag_definition
 )
 from bodywork.constants import (
     BODYWORK_CONFIG_VERSION,
@@ -45,7 +46,7 @@ from bodywork.exceptions import (
 def test_that_invalid_config_file_path_raises_error(
     project_repo_location: Path
 ):
-    bad_config_file = project_repo_location / 'bodywerk.ini'
+    bad_config_file = project_repo_location / 'bodywerk.yaml'
     with raises(FileExistsError, match='no config file found'):
         BodyworkConfig(bad_config_file)
 
@@ -117,6 +118,12 @@ def test_bodywork_config_project_section_validation():
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
         Project(config_all_invalid_params)
 
+    config_invalid_DAG = {'name': 'me', 'docker_image': 'my/img:1.0', 'DAG': 'a>>b,>>c'}
+    expected_exception_msg = ('missing or invalid parameters: project.DAG -> '
+                              'null stages found in step 2 when parsing DAG')
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        Project(config_invalid_DAG)
+
     config_all_valid_params = {'name': 'me', 'docker_image': 'my/img:1.0', 'DAG': 'a>>b'}
     try:
         Project(config_all_valid_params)
@@ -144,7 +151,7 @@ def test_bodywork_config_generic_stage_validation():
 
     config_missing_all_params = {'not_a_valid_section': None}
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_script',
+        'stages.my_stage.executable_module',
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb'
     ]
@@ -152,14 +159,14 @@ def test_bodywork_config_generic_stage_validation():
     assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_missing_all_invalid_params = {
-        'executable_script': None,
+        'executable_module': None,
         'cpu_request': None,
         'memory_request_mb': None,
         'requirements': None,
         'secrets': None
     }
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_script',
+        'stages.my_stage.executable_module',
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb',
         'stages.my_stage.requirements',
@@ -169,7 +176,7 @@ def test_bodywork_config_generic_stage_validation():
     assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_missing_all_invalid_params = {
-        'executable_script': 'main.py',
+        'executable_module': 'main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -183,7 +190,7 @@ def test_bodywork_config_generic_stage_validation():
 def test_bodywork_config_batch_stage_validation():
     stage_name = 'my_stage'
     valid_generic_stage_config = {
-        'executable_script': 'main.py',
+        'executable_module': 'main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -225,7 +232,7 @@ def test_bodywork_config_batch_stage_validation():
 def test_bodywork_config_service_stage_validation():
     stage_name = 'my_stage'
     valid_generic_stage_config = {
-        'executable_script': 'main.py',
+        'executable_module': 'main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -272,6 +279,27 @@ def test_bodywork_config_service_stage_validation():
     assert stage.missing_or_invalid_param == []
 
 
+def test_py_modules_that_cannot_be_located_raise_error(
+    project_repo_location
+):
+    config_file = project_repo_location / 'bodywork.yaml'
+    try:
+        BodyworkConfig(config_file, check_py_modules_exist=True)
+        assert True
+    except Exception:
+        assert False
+
+    config_file = project_repo_location / 'bodywork_stages_and_modules_do_not_exist.yaml'
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'stages.stage_3.executable_module -> cannot locate file, '
+        'stages.stage_one -> cannot locate dir, '
+        'stages.stage_two -> cannot locate dir'
+    )
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        BodyworkConfig(config_file, check_py_modules_exist=True)
+
+
 def test_that_config_values_can_be_retreived_from_valid_config(
     project_repo_location: Path
 ):
@@ -282,7 +310,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert len(config.stages) == 3
 
     assert 'stage_1' in config.stages
-    assert config.stages['stage_1'].executable_script == 'main.py'
+    assert config.stages['stage_1'].executable_module == 'main.py'
     assert config.stages['stage_1'].max_completion_time_seconds == 60
     assert config.stages['stage_1'].retries == 4
     assert config.stages['stage_1'].secrets['FOO'] == 'foobar-secret'
@@ -290,7 +318,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
             == ['boto3==1.16.15', 'joblib==0.17.0'])
 
     assert 'stage_3' in config.stages
-    assert config.stages['stage_3'].executable_script == 'main.py'
+    assert config.stages['stage_3'].executable_module == 'main.py'
     assert config.stages['stage_3'].max_startup_time_seconds == 60
     assert config.stages['stage_3'].replicas == 2
     assert config.stages['stage_3'].port == 5000
@@ -298,3 +326,27 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages['stage_3'].secrets['BAR'] == 'foobar-secret'
     assert (config.stages['stage_3'].requirements
             == ['Flask==1.1.2', 'numpy==1.19.4', 'scikit-learn==0.23.2'])
+
+
+def test_parse_dag_definition_parses_multi_stage_dags():
+    dag_definition = 'stage_1 >> stage_2,stage_3 >> stage_4'
+    parsed_dag_structure = _parse_dag_definition(dag_definition)
+    expected_dag_structure = [
+        ['stage_1'],
+        ['stage_2', 'stage_3'],
+        ['stage_4']
+    ]
+    assert parsed_dag_structure == expected_dag_structure
+
+
+def test_parse_dag_definition_parses_single_stage_dags():
+    dag_definition = 'stage_1'
+    parsed_dag_structure = _parse_dag_definition(dag_definition)
+    expected_dag_structure = [['stage_1']]
+    assert parsed_dag_structure == expected_dag_structure
+
+
+def test_parse_dag_definition_raises_invalid_dag_definition_exceptions():
+    dag_definition = 'stage_1 >> ,stage_3 >> stage_4'
+    with raises(ValueError, match='null stages found in step 2'):
+        _parse_dag_definition(dag_definition)
