@@ -30,13 +30,9 @@ def test_that_requirements_can_be_installed(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path
 ):
-    path_to_requirements = (
-        project_repo_location
-        / 'stage_3'
-        / 'requirements.txt'
-    )
+    requirements = ['wheel>=0.34.2', 'six>=1.15.0']
     try:
-        _install_python_requirements(path_to_requirements)
+        _install_python_requirements(requirements)
         assert True
     except Exception:
         assert False
@@ -46,13 +42,9 @@ def test_that_requirements_install_errors_raise_exception(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path
 ):
-    path_to_requirements = (
-        project_repo_location
-        / 'stage_2_bad_config'
-        / 'requirements.txt'
-    )
+    requirements = ['invalid-package-foo==0.1.0.0.0.1']
     with raises(RuntimeError, match=r'requirements'):
-        _install_python_requirements(path_to_requirements)
+        _install_python_requirements(requirements)
 
 
 def test_run_stage(

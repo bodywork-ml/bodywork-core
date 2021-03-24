@@ -20,8 +20,10 @@ download the project code and run stages.
 """
 from pathlib import Path
 from subprocess import run, CalledProcessError
+from typing import Sequence
 
-from .constants import DEFAULT_PROJECT_DIR
+from .config import BodyworkConfig
+from .constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
 from .exceptions import BodyworkStageFailure
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
@@ -48,11 +50,15 @@ def run_stage(
              f' at {repo_url}')
     try:
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        path_to_stage_dir = cloned_repo_dir / stage_name
-        stage = stage_factory(path_to_stage_dir)
-        _install_python_requirements(stage.requirements_file_path)
-        run(['python', stage.executable_script_path.name], check=True,
-            cwd=path_to_stage_dir, capture_output=True, encoding='utf-8')
+        config_file_path = cloned_repo_dir / PROJECT_CONFIG_FILENAME
+        project_config = BodyworkConfig(config_file_path)
+        stage = project_config.stages[stage_name]
+        _install_python_requirements(stage.requirements)
+        run(['python', stage.executable_module],
+            check=True,
+            cwd=stage.executable_module_path.parent,
+            capture_output=True,
+            encoding='utf-8')
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
                  f' at {repo_url}')
     except Exception as e:
@@ -61,15 +67,14 @@ def run_stage(
         raise stage_failure_exception from e
 
 
-def _install_python_requirements(path_to_requirements_file: Path) -> None:
+def _install_python_requirements(requirements: Sequence[str]) -> None:
     """Install the Python dependencies for a Bodywork project stage.
 
-    :param path_to_requirements_file: Path to requirements.txt file for
-         the stage.
+    :param requirements: List of requirements to be installed.
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        run(['pip', 'install', '-r', path_to_requirements_file], check=True,
+        run(['pip', 'install', *requirements], check=True,
             capture_output=True, encoding='utf-8')
     except CalledProcessError as e:
         msg = f'Cannot install stage requirements: {e.cmd} failed with {e.stderr}'
