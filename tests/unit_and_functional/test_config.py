@@ -148,6 +148,7 @@ def test_bodywork_config_logging_section_validation():
 
 def test_bodywork_config_generic_stage_validation():
     stage_name = 'my_stage'
+    root_dir = Path('.')
 
     config_missing_all_params = {'not_a_valid_section': None}
     expected_missing_or_invalid_param = [
@@ -155,7 +156,7 @@ def test_bodywork_config_generic_stage_validation():
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb'
     ]
-    stage = Stage(stage_name, config_missing_all_params)
+    stage = Stage(stage_name, config_missing_all_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_missing_all_invalid_params = {
@@ -172,7 +173,7 @@ def test_bodywork_config_generic_stage_validation():
         'stages.my_stage.requirements',
         'stages.my_stage.secrets'
     ]
-    stage = Stage(stage_name, config_missing_all_invalid_params)
+    stage = Stage(stage_name, config_missing_all_invalid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_all_valid_params = {
@@ -183,16 +184,33 @@ def test_bodywork_config_generic_stage_validation():
         'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
     }
     expected_missing_or_invalid_param = []
-    stage = Stage(stage_name, config_all_valid_params)
+    stage = Stage(stage_name, config_all_valid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     stage_name_with_whitespace = ' stage one '
-    stage = Stage(stage_name_with_whitespace, config_all_valid_params)
+    stage = Stage(stage_name_with_whitespace, config_all_valid_params, root_dir)
     assert stage.name == 'stage-one'
 
 
+def test_stage_equality_operations():
+    root_dir = Path('.')
+    generic_stage_config = {
+        'executable_module': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100,
+        'requirements': ['foo==1.0.0', 'bar==2.0'],
+        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
+    }
+    stage_1 = Stage('stage_1', generic_stage_config, root_dir)
+    stage_2 = Stage('stage_2', generic_stage_config, root_dir)
+    assert stage_1 == stage_1
+    assert stage_1 != stage_2
+
+
 def test_bodywork_config_batch_stage_validation():
+    root_dir = Path('.')
     stage_name = 'my_stage'
+
     valid_generic_stage_config = {
         'executable_module': 'main.py',
         'cpu_request': 0.5,
@@ -209,7 +227,7 @@ def test_bodywork_config_batch_stage_validation():
     )
     full_config = {**valid_generic_stage_config, 'batch': config_missing_all_params}
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BatchStage(stage_name, full_config)
+        BatchStage(stage_name, full_config, root_dir)
 
     config_all_invalid_params = {
         'max_completion_time_seconds': -1,
@@ -222,19 +240,21 @@ def test_bodywork_config_batch_stage_validation():
     )
     full_config = {**valid_generic_stage_config, 'batch': config_all_invalid_params}
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BatchStage(stage_name, full_config)
+        BatchStage(stage_name, full_config, root_dir)
 
     config_all_valid_params = {
         'max_completion_time_seconds': 10,
         'retries': 1
     }
     full_config = {**valid_generic_stage_config, 'batch': config_all_valid_params}
-    stage = BatchStage(stage_name, full_config)
+    stage = BatchStage(stage_name, full_config, root_dir)
     assert stage._missing_or_invalid_param == []
 
 
 def test_bodywork_config_service_stage_validation():
+    root_dir = Path('.')
     stage_name = 'my_stage'
+
     valid_generic_stage_config = {
         'executable_module': 'main.py',
         'cpu_request': 0.5,
@@ -253,7 +273,7 @@ def test_bodywork_config_service_stage_validation():
     )
     full_config = {**valid_generic_stage_config, 'service': config_missing_all_params}
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        ServiceStage(stage_name, full_config)
+        ServiceStage(stage_name, full_config, root_dir)
 
     config_all_invalid_params = {
         'max_startup_time_seconds': -1,
@@ -270,7 +290,7 @@ def test_bodywork_config_service_stage_validation():
     )
     full_config = {**valid_generic_stage_config, 'service': config_all_invalid_params}
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        ServiceStage(stage_name, full_config)
+        ServiceStage(stage_name, full_config, root_dir)
 
     config_all_valid_params = {
         'max_startup_time_seconds': 10,
@@ -279,7 +299,7 @@ def test_bodywork_config_service_stage_validation():
         'ingress': True
     }
     full_config = {**valid_generic_stage_config, 'service': config_all_valid_params}
-    stage = ServiceStage(stage_name, full_config)
+    stage = ServiceStage(stage_name, full_config, root_dir)
     assert stage._missing_or_invalid_param == []
 
 

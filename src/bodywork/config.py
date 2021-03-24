@@ -61,6 +61,7 @@ class BodyworkConfig:
                 raise yaml.YAMLError
             self._config = config
             self._config_file_path = config_file_path
+            self._root_dir = config_file_path.parent
         except (FileNotFoundError, IsADirectoryError):
             raise FileExistsError(f'no config file found at {config_file_path}')
         except yaml.YAMLError as e:
@@ -109,12 +110,14 @@ class BodyworkConfig:
                     elif 'batch' in stage_config:
                         self.stages[stage_name] = BatchStage(
                             str(stage_name),
-                            stage_config
+                            stage_config,
+                            self._root_dir
                         )
                     elif 'service' in stage_config:
                         self.stages[stage_name] = ServiceStage(
                             str(stage_name),
-                            stage_config
+                            stage_config,
+                            self._root_dir
                         )
                     else:
                         missing_or_invalid_param.append(
@@ -127,14 +130,12 @@ class BodyworkConfig:
 
         if check_py_modules_exist:
             for stage_name, stage in self.stages.items():
-                stage_dir = self._config_file_path.parent / stage_name
-                file_path = stage_dir / stage.executable_module
-                if not stage_dir.exists():
+                if not stage.executable_module_path.parent.exists():
                     missing_or_invalid_param.append(
                         f'stages.{stage_name} -> cannot locate dir'
                     )
                     continue
-                if not file_path.exists():
+                if not stage.executable_module_path.exists():
                     missing_or_invalid_param.append(
                         f'stages.{stage_name}.executable_module -> cannot locate file'
                     )
@@ -202,17 +203,20 @@ class Logging:
 class Stage:
     """Common stage configuration for all stages."""
 
-    def __init__(self, stage_name: str, config: Dict[str, Any]):
+    def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
         """Constructor.
 
         :param stage_name: Name of stage.
         :param config: Dictionary of configuration parameters.
+        :param root_dir: The root directory of the project containing
+            the bodywork config file and the stage directories.
         """
         self.name = stage_name.strip().replace(' ', '-')
         missing_or_invalid_param = []
 
         try:
             self.executable_module = config['executable_module'].strip()
+            self.executable_module_path = root_dir / stage_name / self.executable_module
         except Exception:
             missing_or_invalid_param.append(f'stages.{stage_name}.executable_module')
 
@@ -250,19 +254,31 @@ class Stage:
 
         self._missing_or_invalid_param = missing_or_invalid_param
 
+    def __eq__(self, other) -> bool:
+        """Object equality operator.
+
+        :param other: Other Stage object to compare this one too.
+        """
+        if self.executable_module_path == other.executable_module_path:
+            return True
+        else:
+            return False
+
 
 class BatchStage(Stage):
     """Specific stage configuration for batch stages."""
 
-    def __init__(self, stage_name: str, config: Dict[str, Any]):
+    def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
         """Constructor.
 
         :param stage_name: Name of parent stage config.
         :param config: Dictionary of configuration parameters.
+        :param root_dir: The root directory of the project containing
+            the bodywork config file and the stage directories.
         :raises BodyworkConfigMissingOrInvalidParamError: if any
             required configuration parameters are missing or invalid.
         """
-        super().__init__(stage_name, config)
+        super().__init__(stage_name, config, root_dir)
         batch_config = config['batch']
 
         try:
@@ -292,15 +308,17 @@ class BatchStage(Stage):
 class ServiceStage(Stage):
     """Specific stage configuration for service stages."""
 
-    def __init__(self, stage_name, config: Dict[str, Any]):
+    def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path):
         """Constructor.
 
         :param stage_name: Name of parent stage config.
         :param config: Dictionary of configuration parameters.
+        :param root_dir: The root directory of the project containing
+            the bodywork config file and the stage directories.
         :raises BodyworkConfigMissingOrInvalidParamError: if any
             required configuration parameters are missing or invalid.
         """
-        super().__init__(stage_name, config)
+        super().__init__(stage_name, config, root_dir)
         service_config = config['service']
 
         try:
