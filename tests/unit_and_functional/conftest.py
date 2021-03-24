@@ -21,7 +21,7 @@ import os
 import shutil
 import stat
 from pathlib import Path
-from subprocess import run
+from subprocess import CalledProcessError, run
 from typing import Iterable
 
 from pytest import fixture
@@ -56,12 +56,12 @@ def setup_bodywork_test_project(
     # SETUP
     try:
         run(['git', 'init'], cwd=project_repo_location, check=True, encoding='utf-8')
-        run(['git', 'add', '-A'], cwd=project_repo_location, check=True, encoding='utf-8')
+        run(['git', 'add', '-A'], cwd=project_repo_location, check=True, encoding='utf-8')  # noqa
         run(['git', 'commit', '-m', '"test"'], cwd=project_repo_location, check=True,
             capture_output=True, encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
-    except Exception as e:
+    except CalledProcessError as e:
         raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
     finally:
         # TEARDOWN
