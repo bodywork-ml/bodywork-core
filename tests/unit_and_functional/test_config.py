@@ -339,7 +339,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     config_file = project_repo_location / PROJECT_CONFIG_FILENAME
     config = BodyworkConfig(config_file)
     assert config.project.name == 'bodywork-test-project'
-    assert config.logging.log_level == 'info'
+    assert config.logging.log_level == 'INFO'
     assert len(config.stages) == 3
 
     assert 'stage_1' in config.stages
