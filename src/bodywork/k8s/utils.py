@@ -18,6 +18,7 @@
 Helper functions for working with the Kubernetes API.
 """
 import json
+import re
 from typing import cast
 
 from kubernetes.client.rest import ApiException
@@ -35,3 +36,12 @@ def api_exception_msg(e: ApiException) -> str:
         return cast(str, message)
     except (KeyError, TypeError):
         return ''
+
+
+def make_valid_k8s_name(name: str) -> str:
+    """Remove invalid characters from k8s resource name.
+
+    :param name: Original intended name.
+    :return: Valid Kubernetes resource name.
+    """
+    return re.sub(r'(\s|_)', '-', name.strip())
