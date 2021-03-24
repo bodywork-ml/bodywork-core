@@ -47,7 +47,7 @@ def test_that_requirements_install_errors_raise_exception(
         _install_python_requirements(requirements)
 
 
-def test_run_stage(
+def test_run_stage_with_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path
@@ -63,6 +63,25 @@ def test_run_stage(
             stage_output = f.read()
         assert stage_output.find('Hello from stage 1') != -1
         assert stage_output.find('numpy.sum(numpy.ones(10))=10') != 1
+    except FileNotFoundError:
+        assert False
+
+
+def test_run_stage_without_requirements_install(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path
+):
+    try:
+        run_stage('stage_2', project_repo_connection_string)
+        assert True
+    except Exception:
+        assert False
+
+    try:
+        with open(bodywork_output_dir / 'stage_2_test_file.txt') as f:
+            stage_output = f.read()
+        assert stage_output.find('Hello from stage 2') != -1
     except FileNotFoundError:
         assert False
 

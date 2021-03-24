@@ -187,10 +187,6 @@ def test_bodywork_config_generic_stage_validation():
     stage = Stage(stage_name, config_all_valid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
-    stage_name_with_whitespace = ' stage one '
-    stage = Stage(stage_name_with_whitespace, config_all_valid_params, root_dir)
-    assert stage.name == 'stage-one'
-
     config_all_valid_params_no_secrets_requirements = {
         'executable_module': 'main.py',
         'cpu_request': 0.5,

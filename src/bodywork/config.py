@@ -17,6 +17,7 @@
 """
 Bodywork configuration file parsing and validation.
 """
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
@@ -158,7 +159,7 @@ class Project:
 
         missing_or_invalid_param = []
         try:
-            self.name = config_section['name'].lower()
+            self.name = re.sub(r'(\s|_)', '-', config_section['name'].lower().strip())
         except Exception:
             missing_or_invalid_param.append('project.name')
 
@@ -211,7 +212,7 @@ class Stage:
         :param root_dir: The root directory of the project containing
             the bodywork config file and the stage directories.
         """
-        self.name = stage_name.strip().replace(' ', '-')
+        self.name = stage_name
         missing_or_invalid_param = []
 
         try:

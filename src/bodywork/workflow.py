@@ -67,7 +67,6 @@ def run_workflow(
         path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
         config = BodyworkConfig(path_to_project_config_file, check_py_modules_exist=True)
         log.setLevel(config.logging.log_level)
-
         workflow_dag = config.project.workflow
         all_stages = config.stages
 

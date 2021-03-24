@@ -23,8 +23,6 @@ stages:
     batch:
       max_completion_time_seconds: 60
       retries: 4
-    requirements:
-      - wheel==0.34.2
   stage_3:
     executable_module: main.py
     cpu_request: 0.5
