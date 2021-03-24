@@ -156,7 +156,7 @@ def test_bodywork_config_generic_stage_validation():
         'stages.my_stage.memory_request_mb'
     ]
     stage = Stage(stage_name, config_missing_all_params)
-    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_missing_all_invalid_params = {
         'executable_module': None,
@@ -173,9 +173,9 @@ def test_bodywork_config_generic_stage_validation():
         'stages.my_stage.secrets'
     ]
     stage = Stage(stage_name, config_missing_all_invalid_params)
-    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
-    config_missing_all_invalid_params = {
+    config_all_valid_params = {
         'executable_module': 'main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
@@ -183,8 +183,12 @@ def test_bodywork_config_generic_stage_validation():
         'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
     }
     expected_missing_or_invalid_param = []
-    stage = Stage(stage_name, config_missing_all_invalid_params)
-    assert stage.missing_or_invalid_param == expected_missing_or_invalid_param
+    stage = Stage(stage_name, config_all_valid_params)
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+
+    stage_name_with_whitespace = ' stage one '
+    stage = Stage(stage_name_with_whitespace, config_all_valid_params)
+    assert stage.name == 'stage-one'
 
 
 def test_bodywork_config_batch_stage_validation():
@@ -226,7 +230,7 @@ def test_bodywork_config_batch_stage_validation():
     }
     full_config = {**valid_generic_stage_config, 'batch': config_all_valid_params}
     stage = BatchStage(stage_name, full_config)
-    assert stage.missing_or_invalid_param == []
+    assert stage._missing_or_invalid_param == []
 
 
 def test_bodywork_config_service_stage_validation():
@@ -276,7 +280,7 @@ def test_bodywork_config_service_stage_validation():
     }
     full_config = {**valid_generic_stage_config, 'service': config_all_valid_params}
     stage = ServiceStage(stage_name, full_config)
-    assert stage.missing_or_invalid_param == []
+    assert stage._missing_or_invalid_param == []
 
 
 def test_py_modules_that_cannot_be_located_raise_error(

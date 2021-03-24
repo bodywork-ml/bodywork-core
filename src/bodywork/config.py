@@ -107,9 +107,15 @@ class BodyworkConfig:
                         )
                         continue
                     elif 'batch' in stage_config:
-                        self.stages[stage_name] = BatchStage(stage_name, stage_config)
+                        self.stages[stage_name] = BatchStage(
+                            str(stage_name),
+                            stage_config
+                        )
                     elif 'service' in stage_config:
-                        self.stages[stage_name] = ServiceStage(stage_name, stage_config)
+                        self.stages[stage_name] = ServiceStage(
+                            str(stage_name),
+                            stage_config
+                        )
                     else:
                         missing_or_invalid_param.append(
                             f'stages.{stage_name}.batch/service'
@@ -202,7 +208,9 @@ class Stage:
         :param stage_name: Name of stage.
         :param config: Dictionary of configuration parameters.
         """
+        self.name = stage_name.strip().replace(' ', '-')
         missing_or_invalid_param = []
+
         try:
             self.executable_module = config['executable_module'].strip()
         except Exception:
@@ -240,7 +248,7 @@ class Stage:
         else:
             self.secrets = {}
 
-        self.missing_or_invalid_param = missing_or_invalid_param
+        self._missing_or_invalid_param = missing_or_invalid_param
 
 
 class BatchStage(Stage):
@@ -265,7 +273,7 @@ class BatchStage(Stage):
                 raise ValueError
             self.max_completion_time_seconds = max_completion_time_seconds
         except Exception:
-            self.missing_or_invalid_param.append(
+            self._missing_or_invalid_param.append(
                 f'stages.{stage_name}.batch.max_completion_time_seconds'
             )
 
@@ -275,10 +283,10 @@ class BatchStage(Stage):
                 raise ValueError
             self.retries = retries
         except Exception:
-            self.missing_or_invalid_param.append(f'stages.{stage_name}.batch.retries')
+            self._missing_or_invalid_param.append(f'stages.{stage_name}.batch.retries')
 
-        if self.missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(self.missing_or_invalid_param)
+        if self._missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(self._missing_or_invalid_param)  # noqa
 
 
 class ServiceStage(Stage):
@@ -301,7 +309,7 @@ class ServiceStage(Stage):
                 raise ValueError
             self.max_startup_time_seconds = max_startup_time_seconds
         except Exception:
-            self.missing_or_invalid_param.append(
+            self._missing_or_invalid_param.append(
                 f'stages.{stage_name}.service.max_startup_time_seconds'
             )
 
@@ -311,7 +319,9 @@ class ServiceStage(Stage):
                 raise ValueError
             self.replicas = replicas
         except Exception:
-            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.replicas')
+            self._missing_or_invalid_param.append(
+                f'stages.{stage_name}.service.replicas'
+            )
 
         try:
             port = int(service_config['port'])
@@ -319,7 +329,7 @@ class ServiceStage(Stage):
                 raise ValueError
             self.port = port
         except Exception:
-            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.port')
+            self._missing_or_invalid_param.append(f'stages.{stage_name}.service.port')
 
         try:
             if service_config['ingress'] is True or service_config['ingress'] is False:
@@ -327,10 +337,10 @@ class ServiceStage(Stage):
             else:
                 raise TypeError
         except Exception:
-            self.missing_or_invalid_param.append(f'stages.{stage_name}.service.ingress')
+            self._missing_or_invalid_param.append(f'stages.{stage_name}.service.ingress')
 
-        if self.missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(self.missing_or_invalid_param)
+        if self._missing_or_invalid_param:
+            raise BodyworkConfigMissingOrInvalidParamError(self._missing_or_invalid_param)  # noqa
 
 
 def _parse_dag_definition(dag_definition: str) -> DAG:
