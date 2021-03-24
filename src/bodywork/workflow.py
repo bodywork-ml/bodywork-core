@@ -20,49 +20,20 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Dict, Iterable, Optional, Tuple, Union
+from typing import cast, Optional, Tuple
 
 import requests
 
 from . import k8s
-from .config import BodyworkConfig
+from .config import BodyworkConfig, BatchStage, ServiceStage
 from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS
 )
-from .exceptions import BodyworkMissingConfigError, BodyworkWorkflowExecutionError
+from .exceptions import BodyworkWorkflowExecutionError
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
-from .stage import BatchStage, ServiceStage, Stage, stage_factory
-
-DAG = Iterable[Iterable[str]]
-
-
-class BodyworkProject:
-    """Class for Bodywork project data."""
-
-    def __init__(self, path_to_config_file: Path):
-        """Constructor.
-
-        :param path_to_config_file: Path to project config file.
-        :raises BodyworkMissingConfigError: If mandatory project
-            parameters have not been set: PROJECT_NAME, DAG and
-            LOG_LEVEL.
-        """
-        config = BodyworkConfig(path_to_config_file)
-        try:
-            project_name = config.project['name'].lower()
-            docker_image = config.project['docker_image'].lower()
-            dag = config.project['DAG']
-            log_level = config.logging['log_level']
-        except KeyError as e:
-            raise BodyworkMissingConfigError(str(e)) from e
-
-        self.name = project_name
-        self.docker_image = docker_image
-        self.dag = dag
-        self.log_level = log_level
 
 
 def run_workflow(
@@ -94,14 +65,14 @@ def run_workflow(
             raise ValueError(f'{namespace} is not a valid namespace on your cluster')
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
-        project = BodyworkProject(path_to_project_config_file)
-        log.setLevel(project.log_level)
+        config = BodyworkConfig(path_to_project_config_file)
+        log.setLevel(config.logging.log_level)
 
-        workflow_dag = _parse_dag_definition(project.dag)
-        all_stages = _get_workflow_stages(workflow_dag, cloned_repo_dir)
+        workflow_dag = config.project.workflow
+        all_stages = config.stages
 
         docker_image = (
-            project.docker_image
+            config.project.docker_image
             if docker_image_override is None
             else docker_image_override
         )
@@ -128,7 +99,7 @@ def run_workflow(
                     k8s.configure_batch_stage_job(
                         namespace,
                         stage.name,
-                        project.name,
+                        config.project.name,
                         repo_url,
                         repo_branch,
                         retries=stage.retries,
@@ -166,7 +137,7 @@ def run_workflow(
                     k8s.configure_service_stage_deployment(
                         namespace,
                         stage.name,
-                        project.name,
+                        config.project.name,
                         repo_url,
                         repo_branch,
                         replicas=stage.replicas,
@@ -293,46 +264,6 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     else:
         raise ValueError(err_msg)
     return image_name, image_tag
-
-
-def _get_workflow_stages(
-    dag: DAG,
-    cloned_repo_dir: Path = DEFAULT_PROJECT_DIR
-) -> Dict[str, Stage]:
-    """Ensure every stage in a DAG is executable.
-
-    :param dag: The steps and stages to be executed.
-    :param cloned_repo_dir: The name of the directory into which the
-        repository has been cloned, defaults to DEFAULT_PROJECT_DIR.
-    :raises: RuntimeError if any of the directories for the requested
-        stages are not valid Bodywork stages.
-    """
-    def try_to_get_stage(stage_name: str) -> Union[Stage, Exception]:
-        try:
-            path_to_stage_dir = cloned_repo_dir / stage_name
-            stage_info = stage_factory(path_to_stage_dir)
-            return stage_info
-        except Exception as e:
-            return e
-
-    attempted_stage_constructions = {
-        stage: try_to_get_stage(stage)
-        for step in dag
-        for stage in step
-    }
-
-    invalid_stages = [
-        str(stage)
-        for stage in attempted_stage_constructions.values()
-        if isinstance(stage, Exception)
-    ]
-    if invalid_stages:
-        msg = (f'invaid stages found in Bodywork project repo: '
-               f'{"; ".join(invalid_stages)}')
-        raise RuntimeError(msg)
-    else:
-        valid_stages = cast(Dict[str, Stage], attempted_stage_constructions)
-        return valid_stages
 
 
 def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:

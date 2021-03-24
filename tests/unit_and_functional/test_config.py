@@ -191,6 +191,15 @@ def test_bodywork_config_generic_stage_validation():
     stage = Stage(stage_name_with_whitespace, config_all_valid_params, root_dir)
     assert stage.name == 'stage-one'
 
+    config_all_valid_params_no_secrets_requirements = {
+        'executable_module': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100
+    }
+    expected_missing_or_invalid_param = []
+    stage = Stage(stage_name, config_all_valid_params_no_secrets_requirements, root_dir)
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+
 
 def test_stage_equality_operations():
     root_dir = Path('.')
@@ -337,7 +346,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages['stage_1'].executable_module == 'main.py'
     assert config.stages['stage_1'].max_completion_time == 60
     assert config.stages['stage_1'].retries == 4
-    assert config.stages['stage_1'].secrets['FOO'] == 'foobar-secret'
+    assert config.stages['stage_1'].env_vars_from_secrets[0] == ('foobar-secret', 'FOO')
     assert (config.stages['stage_1'].requirements
             == ['boto3==1.16.15', 'joblib==0.17.0'])
 
@@ -347,7 +356,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages['stage_3'].replicas == 2
     assert config.stages['stage_3'].port == 5000
     assert config.stages['stage_3'].create_ingress is True
-    assert config.stages['stage_3'].secrets['BAR'] == 'foobar-secret'
+    assert config.stages['stage_3'].env_vars_from_secrets[1] == ('foobar-secret', 'BAR')
     assert (config.stages['stage_3'].requirements
             == ['Flask==1.1.2', 'numpy==1.19.4', 'scikit-learn==0.23.2'])
 

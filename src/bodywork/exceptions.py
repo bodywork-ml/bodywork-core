@@ -66,21 +66,8 @@ class BodyworkConfigVersionMismatchError(Exception):
         super().__init__(msg)
 
 
-class BodyworkMissingConfigError(Exception):
-    def __init__(self, missing_param: str):
-        msg = f'cannot find {missing_param} in Bodywork config file'
-        super().__init__(msg)
-
-
 class BodyworkWorkflowExecutionError(Exception):
     def __init__(self, msg):
-        super().__init__(msg)
-
-
-class BodyworkStageConfigError(Exception):
-    def __init__(self, stage_name: str, config_key: str, config_section: str):
-        msg = (f'{config_key} in [{config_section}] section of {stage_name} stage '
-               f'config file is missing or mis-specified')
         super().__init__(msg)
 
 

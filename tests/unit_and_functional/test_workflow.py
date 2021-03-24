@@ -25,58 +25,14 @@ import requests
 from pytest import raises
 from _pytest.capture import CaptureFixture
 
-from bodywork.config import BodyworkConfig
-from bodywork.constants import STAGE_CONFIG_FILENAME, PROJECT_CONFIG_FILENAME
+from bodywork.constants import PROJECT_CONFIG_FILENAME
 from bodywork.exceptions import BodyworkWorkflowExecutionError
-from bodywork.stage import BatchStage, ServiceStage
 from bodywork.workflow import (
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
-    _get_workflow_stages,
     _print_logs_to_stdout
 )
-
-
-def test_get_workflow_stages_raises_exception_for_invalid_stages(
-    project_repo_location: Path,
-):
-    dag = [['stage_1'], ['stage_2_bad_config']]
-    with raises(RuntimeError, match='stage_2_bad_config'):
-        _get_workflow_stages(dag, project_repo_location)
-
-
-def test_get_workflow_stages_return_valid_stage_info(
-    project_repo_location: Path,
-):
-    dag = [['stage_1'], ['stage_2', 'stage_3']]
-
-    path_to_stage_1_dir = project_repo_location / 'stage_1'
-    stage_1_info = BatchStage(
-        'stage_1',
-        BodyworkConfig(path_to_stage_1_dir / STAGE_CONFIG_FILENAME),
-        path_to_stage_1_dir
-    )
-
-    path_to_stage_4_dir = project_repo_location / 'stage_2'
-    stage_4_info = BatchStage(
-        'stage_2',
-        BodyworkConfig(path_to_stage_4_dir / STAGE_CONFIG_FILENAME),
-        path_to_stage_4_dir
-    )
-
-    path_to_stage_5_dir = project_repo_location / 'stage_3'
-    stage_5_info = ServiceStage(
-        'stage_3',
-        BodyworkConfig(path_to_stage_5_dir / STAGE_CONFIG_FILENAME),
-        path_to_stage_5_dir
-    )
-
-    all_stage_info = _get_workflow_stages(dag, project_repo_location)
-    assert len(all_stage_info) == 3
-    assert all_stage_info['stage_1'] == stage_1_info
-    assert all_stage_info['stage_2'] == stage_4_info
-    assert all_stage_info['stage_3'] == stage_5_info
 
 
 @patch('requests.Session')

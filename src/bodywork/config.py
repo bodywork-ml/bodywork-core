@@ -192,7 +192,7 @@ class Logging:
 
         missing_or_invalid_param = []
         try:
-            self.log_level = str(config_section['log_level']).lower()
+            self.log_level = str(config_section['log_level'])
         except Exception:
             missing_or_invalid_param.append('logging.log_level')
 
@@ -243,14 +243,14 @@ class Stage:
 
         if 'secrets' in config:
             try:
-                if any(str(v) for k, v in config['secrets'].items() if v is not None):
-                    self.secrets = config['secrets']
-                else:
-                    self.secrets = {}
+                self.env_vars_from_secrets = [
+                    (secret_name.lower(), secret_key.upper())
+                    for secret_key, secret_name in config['secrets'].items()
+                ]
             except Exception:
                 missing_or_invalid_param.append(f'stages.{stage_name}.secrets')
         else:
-            self.secrets = {}
+            self.env_vars_from_secrets = []
 
         self._missing_or_invalid_param = missing_or_invalid_param
 
