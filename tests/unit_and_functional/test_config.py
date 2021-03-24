@@ -347,8 +347,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages['stage_1'].max_completion_time == 60
     assert config.stages['stage_1'].retries == 4
     assert config.stages['stage_1'].env_vars_from_secrets[0] == ('foobar-secret', 'FOO')
-    assert (config.stages['stage_1'].requirements
-            == ['boto3==1.16.15', 'joblib==0.17.0'])
+    assert config.stages['stage_1'].requirements == ['numpy==1.19.1']
 
     assert 'stage_3' in config.stages
     assert config.stages['stage_3'].executable_module == 'main.py'
@@ -357,8 +356,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages['stage_3'].port == 5000
     assert config.stages['stage_3'].create_ingress is True
     assert config.stages['stage_3'].env_vars_from_secrets[1] == ('foobar-secret', 'BAR')
-    assert (config.stages['stage_3'].requirements
-            == ['Flask==1.1.2', 'numpy==1.19.4', 'scikit-learn==0.23.2'])
+    assert config.stages['stage_3'].requirements == ['wheel==0.34.2']
 
 
 def test_parse_dag_definition_parses_multi_stage_dags():

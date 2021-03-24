@@ -15,8 +15,7 @@ stages:
       FOO: foobar-secret
       BAR: foobar-secret
     requirements:
-      - boto3==1.16.15
-      - joblib==0.17.0
+      - numpy==1.19.1
   stage_2:
     executable_module: main.py
     cpu_request: 0.5
@@ -24,6 +23,8 @@ stages:
     batch:
       max_completion_time_seconds: 60
       retries: 4
+    requirements:
+      - wheel==0.34.2
   stage_3:
     executable_module: main.py
     cpu_request: 0.5
@@ -37,8 +38,6 @@ stages:
       FOO: foobar-secret
       BAR: foobar-secret
     requirements:
-      - Flask==1.1.2
-      - numpy==1.19.4
-      - scikit-learn==0.23.2
+      - wheel==0.34.2
 logging:
   log_level: INFO

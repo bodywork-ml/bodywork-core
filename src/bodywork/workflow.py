@@ -65,7 +65,7 @@ def run_workflow(
             raise ValueError(f'{namespace} is not a valid namespace on your cluster')
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
-        config = BodyworkConfig(path_to_project_config_file)
+        config = BodyworkConfig(path_to_project_config_file, check_py_modules_exist=True)
         log.setLevel(config.logging.log_level)
 
         workflow_dag = config.project.workflow
