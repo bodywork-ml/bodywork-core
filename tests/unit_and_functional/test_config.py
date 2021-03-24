@@ -335,7 +335,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
     assert 'stage_1' in config.stages
     assert config.stages['stage_1'].executable_module == 'main.py'
-    assert config.stages['stage_1'].max_completion_time_seconds == 60
+    assert config.stages['stage_1'].max_completion_time == 60
     assert config.stages['stage_1'].retries == 4
     assert config.stages['stage_1'].secrets['FOO'] == 'foobar-secret'
     assert (config.stages['stage_1'].requirements
@@ -343,10 +343,10 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
     assert 'stage_3' in config.stages
     assert config.stages['stage_3'].executable_module == 'main.py'
-    assert config.stages['stage_3'].max_startup_time_seconds == 60
+    assert config.stages['stage_3'].max_startup_time == 60
     assert config.stages['stage_3'].replicas == 2
     assert config.stages['stage_3'].port == 5000
-    assert config.stages['stage_3'].ingress is True
+    assert config.stages['stage_3'].create_ingress is True
     assert config.stages['stage_3'].secrets['BAR'] == 'foobar-secret'
     assert (config.stages['stage_3'].requirements
             == ['Flask==1.1.2', 'numpy==1.19.4', 'scikit-learn==0.23.2'])

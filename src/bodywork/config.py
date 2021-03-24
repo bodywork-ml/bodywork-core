@@ -226,7 +226,7 @@ class Stage:
             missing_or_invalid_param.append(f'stages.{stage_name}.cpu_request')
 
         try:
-            self.memory_request_mb = float(config['memory_request_mb'])
+            self.memory_request = int(config['memory_request_mb'])
         except Exception:
             missing_or_invalid_param.append(f'stages.{stage_name}.memory_request_mb')
 
@@ -282,12 +282,10 @@ class BatchStage(Stage):
         batch_config = config['batch']
 
         try:
-            max_completion_time_seconds = int(
-                batch_config['max_completion_time_seconds']
-            )
-            if max_completion_time_seconds < 0:
+            max_completion_time = int(batch_config['max_completion_time_seconds'])
+            if max_completion_time < 0:
                 raise ValueError
-            self.max_completion_time_seconds = max_completion_time_seconds
+            self.max_completion_time = max_completion_time
         except Exception:
             self._missing_or_invalid_param.append(
                 f'stages.{stage_name}.batch.max_completion_time_seconds'
@@ -322,10 +320,10 @@ class ServiceStage(Stage):
         service_config = config['service']
 
         try:
-            max_startup_time_seconds = int(service_config['max_startup_time_seconds'])
-            if max_startup_time_seconds < 0:
+            max_startup_time = int(service_config['max_startup_time_seconds'])
+            if max_startup_time < 0:
                 raise ValueError
-            self.max_startup_time_seconds = max_startup_time_seconds
+            self.max_startup_time = max_startup_time
         except Exception:
             self._missing_or_invalid_param.append(
                 f'stages.{stage_name}.service.max_startup_time_seconds'
@@ -351,7 +349,7 @@ class ServiceStage(Stage):
 
         try:
             if service_config['ingress'] is True or service_config['ingress'] is False:
-                self.ingress = service_config['ingress']
+                self.create_ingress = service_config['ingress']
             else:
                 raise TypeError
         except Exception:
