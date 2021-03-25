@@ -206,6 +206,18 @@ def test_bodywork_config_generic_stage_validation():
     stage = Stage(stage_name, config_all_valid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
+    config_all_valid_params_bad_requirements = {
+        'executable_module': 'main.py',
+        'cpu_request': 0.5,
+        'memory_request_mb': 100,
+        'requirements': [None]
+    }
+    expected_missing_or_invalid_param = [
+        'stages.my_stage.requirements'
+    ]
+    stage = Stage(stage_name, config_all_valid_params_bad_requirements, root_dir)
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+
     config_all_valid_params_no_secrets_requirements = {
         'executable_module': 'main.py',
         'cpu_request': 0.5,

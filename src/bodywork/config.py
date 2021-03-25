@@ -245,10 +245,10 @@ class Stage:
 
         if 'requirements' in config:
             try:
-                if any(str(e) for e in config['requirements'] if e is not None):
+                if any(e is None for e in config['requirements']):
+                    missing_or_invalid_param.append(f'stages.{stage_name}.requirements')
+                elif any(str(e) for e in config['requirements']):
                     self.requirements = config['requirements']
-                else:
-                    self.requirements = []
             except Exception:
                 missing_or_invalid_param.append(f'stages.{stage_name}.requirements')
         else:
