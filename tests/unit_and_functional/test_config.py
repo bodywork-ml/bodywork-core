@@ -180,6 +180,7 @@ def test_bodywork_config_generic_stage_validation():
 
     config_missing_all_invalid_params = {
         'executable_module': None,
+        'args': None,
         'cpu_request': None,
         'memory_request_mb': None,
         'requirements': None,
@@ -187,6 +188,7 @@ def test_bodywork_config_generic_stage_validation():
     }
     expected_missing_or_invalid_param = [
         'stages.my_stage.executable_module_path',
+        'stages.my_stage.args',
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb',
         'stages.my_stage.requirements',
@@ -197,6 +199,7 @@ def test_bodywork_config_generic_stage_validation():
 
     config_all_valid_params = {
         'executable_module_path': 'stage_dir/main.py',
+        'args': ['Hello', 'World'],
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -208,6 +211,7 @@ def test_bodywork_config_generic_stage_validation():
 
     config_all_valid_params_bad_requirements = {
         'executable_module_path': 'stage_dir/main.py',
+        'args': ['Hello', 'World'],
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': [None]
@@ -216,6 +220,18 @@ def test_bodywork_config_generic_stage_validation():
         'stages.my_stage.requirements'
     ]
     stage = Stage(stage_name, config_all_valid_params_bad_requirements, root_dir)
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+
+    config_all_valid_params_bad_args = {
+        'executable_module_path': 'stage_dir/main.py',
+        'args': [None],
+        'cpu_request': 0.5,
+        'memory_request_mb': 100
+    }
+    expected_missing_or_invalid_param = [
+        'stages.my_stage.args'
+    ]
+    stage = Stage(stage_name, config_all_valid_params_bad_args, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_all_valid_params_no_secrets_requirements = {

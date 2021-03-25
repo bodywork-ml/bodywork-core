@@ -230,6 +230,17 @@ class Stage:
                 f'stages.{stage_name}.executable_module_path'
             )
 
+        if 'args' in config:
+            try:
+                if any(e is None for e in config['args']):
+                    missing_or_invalid_param.append(f'stages.{stage_name}.args')
+                else:
+                    self.args = [str(arg) for arg in config['args']]
+            except Exception:
+                missing_or_invalid_param.append(f'stages.{stage_name}.args')
+        else:
+            self.args = []
+
         try:
             self.cpu_request = float(config['cpu_request'])
         except Exception:

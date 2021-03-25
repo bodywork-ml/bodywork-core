@@ -86,6 +86,26 @@ def test_run_stage_without_requirements_install(
         assert False
 
 
+def test_run_stage_with_arguements(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path
+):
+    try:
+        run_stage('stage_3', project_repo_connection_string)
+        assert True
+    except Exception:
+        assert False
+
+    try:
+        with open(bodywork_output_dir / 'stage_3_test_file.txt') as f:
+            stage_output = f.read()
+        assert stage_output.find('arg1 = Hello World') != -1
+        assert stage_output.find('arg2 = 1') != -1
+    except FileNotFoundError:
+        assert False
+
+
 def test_run_stage_failure_raises_exception(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,

@@ -55,7 +55,7 @@ def run_stage(
         stage = project_config.stages[stage_name]
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        run(['python', stage.executable_module],
+        run(['python', stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
             capture_output=True,
