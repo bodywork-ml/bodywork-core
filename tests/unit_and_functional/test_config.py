@@ -117,9 +117,9 @@ def test_that_config_file_with_non_list_stages_raises_error(
     bodywork_config._config['stages'] = 'bad'
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'project.workflow - cannot find stages.stage_1, '
-        'project.workflow - cannot find stages.stage_2, '
-        'project.workflow - cannot find stages.stage_3, '
+        'project.workflow - cannot find valid stage @ stages.stage_1, '
+        'project.workflow - cannot find valid stage @ stages.stage_2, '
+        'project.workflow - cannot find valid stage @ stages.stage_3, '
         'stages._ - no stage configs provided'
     )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
@@ -346,11 +346,31 @@ def test_py_modules_that_cannot_be_located_raise_error(
     bodywork_config._config['stages']['stage_3']['executable_module'] = 'i_dont_exist.py'
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'project.workflow - cannot find stages.stage_1, '
-        'project.workflow - cannot find stages.stage_2, '
+        'project.workflow - cannot find valid stage @ stages.stage_1, '
+        'project.workflow - cannot find valid stage @ stages.stage_2, '
         'stages.stage_3.executable_module -> cannot locate file, '
         'stages.stage_one -> cannot locate dir, '
         'stages.stage_two -> cannot locate dir'
+    )
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        bodywork_config._validate_parsed_config()
+
+
+def test_that_subsection_validation_feeds_through_to_validation_report(
+    bodywork_config: BodyworkConfig
+):
+    del bodywork_config._config['project']['docker_image']
+    del bodywork_config._config['logging']['log_level']
+    del bodywork_config._config['stages']['stage_1']['batch']
+    bodywork_config._config['stages']['stage_2']['service'] = {'foo': 'bar'}
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'logging.log_level, '
+        'project.docker_image, '
+        'project.workflow - cannot find valid stage @ stages.stage_1, '
+        'project.workflow - cannot find valid stage @ stages.stage_2, '
+        'stages.stage_1.batch/service, '
+        'stages.stage_2.batch/service'
     )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
@@ -412,5 +432,7 @@ def test_check_workflow_stages_are_configured():
         workflow,
         configured_stages
     )
-    assert missing_stage_configs == ['project.workflow - cannot find stages.c']
+    assert missing_stage_configs == [
+        'project.workflow - cannot find valid stage @ stages.c'
+    ]
     assert _check_workflow_stages_are_configured(['a'], ['a']) == []

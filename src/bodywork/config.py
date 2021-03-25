@@ -111,38 +111,35 @@ class BodyworkConfig:
         try:
             self.stages: Dict[str, Stage] = {}
             for stage_name, stage_config in config['stages'].items():
-                try:
-                    if 'batch' in stage_config and 'service' in stage_config:
-                        missing_or_invalid_param.append(
-                            f'stages.{stage_name}.batch/service'
-                        )
-                        continue
-                    elif 'batch' in stage_config:
-                        self.stages[stage_name] = BatchStage(
-                            str(stage_name),
-                            stage_config,
-                            self._root_dir
-                        )
-                    elif 'service' in stage_config:
-                        self.stages[stage_name] = ServiceStage(
-                            str(stage_name),
-                            stage_config,
-                            self._root_dir
-                        )
-                    else:
-                        missing_or_invalid_param.append(
-                            f'stages.{stage_name}.batch/service'
-                        )
-                except BodyworkConfigMissingOrInvalidParamError as e:
-                    missing_or_invalid_param += e.missing_params
+                if 'batch' in stage_config and 'service' in stage_config:
+                    missing_or_invalid_param.append(
+                        f'stages.{stage_name}.batch/service'
+                    )
+                    continue
+                elif 'batch' in stage_config:
+                    self.stages[stage_name] = BatchStage(
+                        str(stage_name),
+                        stage_config,
+                        self._root_dir
+                    )
+                elif 'service' in stage_config:
+                    self.stages[stage_name] = ServiceStage(
+                        str(stage_name),
+                        stage_config,
+                        self._root_dir
+                    )
+                else:
+                    missing_or_invalid_param.append(
+                        f'stages.{stage_name}.batch/service'
+                    )
         except AttributeError:
             missing_or_invalid_param.append('stages._ - no stage configs provided')
 
-        stages_in_workflow_without_config = _check_workflow_stages_are_configured(
+        stages_in_workflow_without_valid_config = _check_workflow_stages_are_configured(
             self.project.workflow,
             self.stages.keys()
         )
-        missing_or_invalid_param += stages_in_workflow_without_config
+        missing_or_invalid_param += stages_in_workflow_without_valid_config
 
         if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
@@ -411,7 +408,7 @@ def _check_workflow_stages_are_configured(
     """
     stages_in_workflow = [stage for step in workflow for stage in step]
     missing_stages = [
-        f'project.workflow - cannot find stages.{stage}'
+        f'project.workflow - cannot find valid stage @ stages.{stage}'
         for stage in stages_in_workflow
         if stage not in stages
     ]
