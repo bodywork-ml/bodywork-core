@@ -91,13 +91,13 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             'attempting to run workflow for '
             'project=https://github.com/bodywork-ml/bodywork-test-project on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
-        expected_output_2 = 'successfully ran stage=stage-1'
-        expected_output_3 = 'attempting to run stage=stage-4'
+        expected_output_2 = 'successfully ran stage=stage_1'
+        expected_output_3 = 'attempting to run stage=stage_4'
         expected_output_4 = (
             'successfully ran workflow for '
             'project=https://github.com/bodywork-ml/bodywork-test-project on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
-        expected_output_5 = 'successfully ran stage=stage-5'
+        expected_output_5 = 'successfully ran stage=stage_5'
         assert expected_output_1 in process_two.stdout
         assert expected_output_2 in process_two.stdout
         assert expected_output_3 in process_two.stdout
@@ -177,7 +177,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         )
         assert 'deployment=bodywork-test-project--stage-4 deleted' in process_six.stdout
         assert f'service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted' in process_six.stdout  # noqa
-        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted' not in process_six.stdout
+        assert f'ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted' not in process_six.stdout  # noqa
         assert process_six.returncode == 0
 
         process_seven = run(
@@ -369,7 +369,7 @@ def test_workflow_with_ssh_github_connectivity(
             'successfully ran workflow for '
             'project=git@github.com:bodywork-ml/bodywork-test-project.git on '
             f'branch=master in kubernetes namespace={random_test_namespace}')
-        expected_output_3 = 'successfully ran stage=stage-1'
+        expected_output_3 = 'successfully ran stage=stage_1'
         assert expected_output_1 in process_three.stdout
         assert expected_output_2 in process_three.stdout
         assert expected_output_3 in process_three.stdout
