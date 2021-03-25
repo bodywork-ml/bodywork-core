@@ -17,7 +17,6 @@
 """
 Bodywork configuration file parsing and validation.
 """
-import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
@@ -159,7 +158,7 @@ class Project:
 
         missing_or_invalid_param = []
         try:
-            self.name = re.sub(r'(\s|_)', '-', config_section['name'].lower().strip())
+            self.name = config_section['name'].lower()
         except Exception:
             missing_or_invalid_param.append('project.name')
 
