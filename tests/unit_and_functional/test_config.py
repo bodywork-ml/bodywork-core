@@ -19,7 +19,7 @@ Test Bodywork config reading, parsing and validation.
 """
 from pathlib import Path
 
-from pytest import raises
+from pytest import fixture, raises
 
 from bodywork.config import (
     BodyworkConfig,
@@ -33,8 +33,7 @@ from bodywork.config import (
 )
 from bodywork.constants import (
     BODYWORK_CONFIG_VERSION,
-    BODYWORK_VERSION,
-    PROJECT_CONFIG_FILENAME
+    BODYWORK_VERSION
 )
 from bodywork.exceptions import (
     BodyworkConfigMissingSectionError,
@@ -42,6 +41,12 @@ from bodywork.exceptions import (
     BodyworkConfigMissingOrInvalidParamError,
     BodyworkConfigParsingError
 )
+
+
+@fixture(scope='function')
+def bodywork_config(project_repo_location: Path) -> BodyworkConfig:
+    config_file = project_repo_location / 'bodywork.yaml'
+    return BodyworkConfig(config_file)
 
 
 def test_that_invalid_config_file_path_raises_error(
@@ -71,38 +76,45 @@ def test_that_empty_config_file_raises_error(
 
 
 def test_that_config_file_with_missing_sections_raises_error(
-    project_repo_location: Path
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / 'bodywork_missing_sections.yaml'
+    del bodywork_config._config['version']
+    del bodywork_config._config['project']
+    del bodywork_config._config['stages']
+    del bodywork_config._config['logging']
     expected_exception_msg = 'missing sections: version, project, stages, logging'
     with raises(BodyworkConfigMissingSectionError, match=expected_exception_msg):
-        BodyworkConfig(config_file)
+        bodywork_config._validate_parsed_config()
 
 
 def test_that_config_file_with_invalid_schema_version_raises_error(
-    project_repo_location: Path
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / 'bodywork_invalid_version.yaml'
+    bodywork_config._config['version'] = 'not the version'
     expected_exception_msg = 'missing or invalid parameters: version'
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BodyworkConfig(config_file)
+        bodywork_config._validate_parsed_config()
+
+    bodywork_config._config['version'] = '1.0.0'
+    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+        bodywork_config._validate_parsed_config()
 
 
 def test_that_config_file_with_mismatched_schema_version_raises_error(
-    project_repo_location: Path
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / 'bodywork_version_mismatch.yaml'
+    bodywork_config._config['version'] = '0.1'
     expected_exception_msg = (f'config file has schema version 0.1, when Bodywork '
                               f'version {BODYWORK_VERSION} requires schema version '
                               f'{BODYWORK_CONFIG_VERSION}')
     with raises(BodyworkConfigVersionMismatchError, match=expected_exception_msg):
-        BodyworkConfig(config_file)
+        bodywork_config._validate_parsed_config()
 
 
 def test_that_config_file_with_non_list_stages_raises_error(
-    project_repo_location: Path
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / 'bodywork_bad_stages_section.yaml'
+    bodywork_config._config['stages'] = 'bad'
     expected_exception_msg = (
         'missing or invalid parameters: '
         'project.workflow - cannot find stages.stage_1, '
@@ -111,7 +123,7 @@ def test_that_config_file_with_non_list_stages_raises_error(
         'stages._ - no stage configs provided'
     )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BodyworkConfig(config_file)
+        bodywork_config._validate_parsed_config()
 
 
 def test_bodywork_config_project_section_validation():
@@ -316,16 +328,22 @@ def test_bodywork_config_service_stage_validation():
 
 
 def test_py_modules_that_cannot_be_located_raise_error(
-    project_repo_location
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / 'bodywork.yaml'
+    bodywork_config.check_py_modules_exist = True
     try:
-        BodyworkConfig(config_file, check_py_modules_exist=True)
+        bodywork_config._validate_parsed_config()
         assert True
     except Exception:
         assert False
 
-    config_file = project_repo_location / 'bodywork_stages_and_modules_do_not_exist.yaml'
+    stage_1 = bodywork_config._config['stages']['stage_1']
+    bodywork_config._config['stages']['stage_one'] = stage_1
+    del bodywork_config._config['stages']['stage_1']
+    stage_2 = bodywork_config._config['stages']['stage_2']
+    bodywork_config._config['stages']['stage_two'] = stage_2
+    del bodywork_config._config['stages']['stage_2']
+    bodywork_config._config['stages']['stage_3']['executable_module'] = 'i_dont_exist.py'
     expected_exception_msg = (
         'missing or invalid parameters: '
         'project.workflow - cannot find stages.stage_1, '
@@ -335,14 +353,13 @@ def test_py_modules_that_cannot_be_located_raise_error(
         'stages.stage_two -> cannot locate dir'
     )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BodyworkConfig(config_file, check_py_modules_exist=True)
+        bodywork_config._validate_parsed_config()
 
 
 def test_that_config_values_can_be_retreived_from_valid_config(
-    project_repo_location: Path
+    bodywork_config: BodyworkConfig
 ):
-    config_file = project_repo_location / PROJECT_CONFIG_FILENAME
-    config = BodyworkConfig(config_file)
+    config = bodywork_config
     assert config.project.name == 'bodywork-test-project'
     assert config.logging.log_level == 'INFO'
     assert len(config.stages) == 3

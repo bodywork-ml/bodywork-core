@@ -45,14 +45,6 @@ class BodyworkConfig:
         :raises FileExistsError: if config_file_path does not exist.
         :raises BodyworkConfigParsingError: if config file cannot be
             parsed as valid YAML.
-        :raises BodyworkConfigMissingSectionError: if config file does
-            not contain all of the following sections: version,
-            project, stages and logging.
-        :raises BodyworkConfigVersionMismatchError: if config file
-            schema version does not match the schame version supported
-            by the current Bodywork version.
-        :raises BodyworkConfigMissingOrInvalidParamError: if a config
-            parameter is missing or has been set to an invalid value.
         """
         try:
             config_yaml = config_file_path.read_text(encoding='utf-8', errors='strict')
@@ -66,7 +58,25 @@ class BodyworkConfig:
             raise FileExistsError(f'no config file found at {config_file_path}')
         except yaml.YAMLError as e:
             raise BodyworkConfigParsingError(config_file_path) from e
+        self.check_py_modules_exist = check_py_modules_exist
+        self._validate_parsed_config()
 
+    def _validate_parsed_config(self) -> None:
+        """Validate configuration parameters.
+
+        This function exists seperately to the class constructor purely
+        to facilitate easier testing.
+
+        :raises BodyworkConfigMissingSectionError: if config file does
+            not contain all of the following sections: version,
+            project, stages and logging.
+        :raises BodyworkConfigVersionMismatchError: if config file
+            schema version does not match the schame version supported
+            by the current Bodywork version.
+        :raises BodyworkConfigMissingOrInvalidParamError: if a config
+            parameter is missing or has been set to an invalid value.
+        """
+        config = self._config
         missing_config_sections = []
         if 'version' not in config:
             missing_config_sections.append('version')
@@ -134,7 +144,7 @@ class BodyworkConfig:
         )
         missing_or_invalid_param += stages_in_workflow_without_config
 
-        if check_py_modules_exist:
+        if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
                 if not stage.executable_module_path.parent.exists():
                     missing_or_invalid_param.append(
