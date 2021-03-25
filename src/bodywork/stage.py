@@ -19,7 +19,7 @@ This module contains all of the functions and classes required to
 download the project code and run stages.
 """
 from pathlib import Path
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, DEVNULL
 from typing import Sequence
 
 from .config import BodyworkConfig
@@ -75,8 +75,11 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        run(['pip', 'install', *requirements], check=True,
-            capture_output=True, encoding='utf-8')
+        run(['pip', 'install', *requirements],
+            check=True,
+            capture_output=True,
+            encoding='utf-8',
+            stdout=DEVNULL)
     except CalledProcessError as e:
         msg = f'Cannot install stage requirements: {e.cmd} failed with {e.stderr}'
         raise RuntimeError(msg)

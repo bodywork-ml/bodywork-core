@@ -55,4 +55,4 @@ def get_pod_logs(namespace: str, pod_name: str) -> str:
         namespace=namespace,
         name=pod_name
     )
-    return cast(str, pod_logs)
+    return cast(str, pod_logs[:-1])
