@@ -171,7 +171,7 @@ def test_bodywork_config_generic_stage_validation():
 
     config_missing_all_params = {'not_a_valid_section': None}
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_module',
+        'stages.my_stage.executable_module_path',
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb'
     ]
@@ -186,7 +186,7 @@ def test_bodywork_config_generic_stage_validation():
         'secrets': None
     }
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_module',
+        'stages.my_stage.executable_module_path',
         'stages.my_stage.cpu_request',
         'stages.my_stage.memory_request_mb',
         'stages.my_stage.requirements',
@@ -196,7 +196,7 @@ def test_bodywork_config_generic_stage_validation():
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_all_valid_params = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -207,7 +207,7 @@ def test_bodywork_config_generic_stage_validation():
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_all_valid_params_bad_requirements = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': [None]
@@ -219,7 +219,7 @@ def test_bodywork_config_generic_stage_validation():
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_all_valid_params_no_secrets_requirements = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100
     }
@@ -231,7 +231,7 @@ def test_bodywork_config_generic_stage_validation():
 def test_stage_equality_operations():
     root_dir = Path('.')
     generic_stage_config = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -248,7 +248,7 @@ def test_bodywork_config_batch_stage_validation():
     stage_name = 'my_stage'
 
     valid_generic_stage_config = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -292,7 +292,7 @@ def test_bodywork_config_service_stage_validation():
     stage_name = 'my_stage'
 
     valid_generic_stage_config = {
-        'executable_module': 'main.py',
+        'executable_module_path': 'stage_dir/main.py',
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
@@ -355,14 +355,12 @@ def test_py_modules_that_cannot_be_located_raise_error(
     stage_2 = bodywork_config._config['stages']['stage_2']
     bodywork_config._config['stages']['stage_two'] = stage_2
     del bodywork_config._config['stages']['stage_2']
-    bodywork_config._config['stages']['stage_3']['executable_module'] = 'i_dont_exist.py'
+    bodywork_config._config['stages']['stage_3']['executable_module_path'] = 'not_dir/main.py'
     expected_exception_msg = (
         'missing or invalid parameters: '
         'project.workflow - cannot find valid stage @ stages.stage_1, '
         'project.workflow - cannot find valid stage @ stages.stage_2, '
-        'stages.stage_3.executable_module -> cannot locate file, '
-        'stages.stage_one -> cannot locate dir, '
-        'stages.stage_two -> cannot locate dir'
+        'stages.stage_3.executable_module_path -> does not exist'
     )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
@@ -392,12 +390,14 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     bodywork_config: BodyworkConfig
 ):
     config = bodywork_config
+    root_dir = bodywork_config._root_dir
     assert config.project.name == 'bodywork-test-project'
     assert config.logging.log_level == 'INFO'
     assert len(config.stages) == 3
 
     assert 'stage_1' in config.stages
     assert config.stages['stage_1'].executable_module == 'main.py'
+    assert config.stages['stage_1'].executable_module_path == root_dir / 'stage_1/main.py'  # noqa
     assert config.stages['stage_1'].max_completion_time == 60
     assert config.stages['stage_1'].retries == 4
     assert config.stages['stage_1'].env_vars_from_secrets[0] == ('foobar-secret', 'FOO')
@@ -405,6 +405,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
     assert 'stage_3' in config.stages
     assert config.stages['stage_3'].executable_module == 'main.py'
+    assert config.stages['stage_3'].executable_module_path == root_dir / 'stage_3/main.py'  # noqa
     assert config.stages['stage_3'].max_startup_time == 60
     assert config.stages['stage_3'].replicas == 2
     assert config.stages['stage_3'].port == 5000

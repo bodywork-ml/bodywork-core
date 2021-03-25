@@ -5,7 +5,7 @@ project:
   DAG: stage_1 >> stage_2,stage_3
 stages:
   stage_1:
-    executable_module: main.py
+    executable_module_path: stage_1/main.py
     cpu_request: 0.5
     memory_request_mb: 250
     batch:
@@ -17,14 +17,14 @@ stages:
     requirements:
       - numpy==1.19.1
   stage_2:
-    executable_module: main.py
+    executable_module_path: stage_2/main.py
     cpu_request: 0.5
     memory_request_mb: 250
     batch:
       max_completion_time_seconds: 60
       retries: 4
   stage_3:
-    executable_module: main.py
+    executable_module_path: stage_3/main.py
     cpu_request: 0.5
     memory_request_mb: 250
     service:

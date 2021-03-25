@@ -143,14 +143,9 @@ class BodyworkConfig:
 
         if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
-                if not stage.executable_module_path.parent.exists():
-                    missing_or_invalid_param.append(
-                        f'stages.{stage_name} -> cannot locate dir'
-                    )
-                    continue
                 if not stage.executable_module_path.exists():
                     missing_or_invalid_param.append(
-                        f'stages.{stage_name}.executable_module -> cannot locate file'
+                        f'stages.{stage_name}.executable_module_path -> does not exist'
                     )
 
         if missing_or_invalid_param:
@@ -228,10 +223,12 @@ class Stage:
         missing_or_invalid_param = []
 
         try:
-            self.executable_module = config['executable_module'].strip()
-            self.executable_module_path = root_dir / stage_name / self.executable_module
+            self.executable_module_path = root_dir / config['executable_module_path']
+            self.executable_module = self.executable_module_path.name
         except Exception:
-            missing_or_invalid_param.append(f'stages.{stage_name}.executable_module')
+            missing_or_invalid_param.append(
+                f'stages.{stage_name}.executable_module_path'
+            )
 
         try:
             self.cpu_request = float(config['cpu_request'])
@@ -272,7 +269,7 @@ class Stage:
 
         :param other: Other Stage object to compare this one too.
         """
-        if self.executable_module_path == other.executable_module_path:
+        if self.name == other.name:
             return True
         else:
             return False
