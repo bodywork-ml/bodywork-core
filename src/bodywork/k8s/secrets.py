@@ -23,6 +23,8 @@ from typing import Dict, List, Optional, Tuple
 
 from kubernetes import client as k8s
 
+from .utils import make_valid_k8s_name
+
 
 def configure_env_vars_from_secrets(
     namespace: str,
@@ -112,7 +114,7 @@ def create_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) ->
     secret = k8s.V1Secret(
         metadata=k8s.V1ObjectMeta(
             namespace=namespace,
-            name=name
+            name=make_valid_k8s_name(name)
         ),
         string_data=keys_and_values
     )
