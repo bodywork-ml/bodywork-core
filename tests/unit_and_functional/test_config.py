@@ -28,7 +28,8 @@ from bodywork.config import (
     ServiceStage,
     Stage,
     Logging,
-    _parse_dag_definition
+    _parse_dag_definition,
+    _check_workflow_stages_are_configured
 )
 from bodywork.constants import (
     BODYWORK_CONFIG_VERSION,
@@ -102,7 +103,13 @@ def test_that_config_file_with_non_list_stages_raises_error(
     project_repo_location: Path
 ):
     config_file = project_repo_location / 'bodywork_bad_stages_section.yaml'
-    expected_exception_msg = 'missing or invalid parameters: stages._'
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'project.workflow - cannot find stages.stage_1, '
+        'project.workflow - cannot find stages.stage_2, '
+        'project.workflow - cannot find stages.stage_3, '
+        'stages._ - no stage configs provided'
+    )
     with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 
@@ -321,6 +328,8 @@ def test_py_modules_that_cannot_be_located_raise_error(
     config_file = project_repo_location / 'bodywork_stages_and_modules_do_not_exist.yaml'
     expected_exception_msg = (
         'missing or invalid parameters: '
+        'project.workflow - cannot find stages.stage_1, '
+        'project.workflow - cannot find stages.stage_2, '
         'stages.stage_3.executable_module -> cannot locate file, '
         'stages.stage_one -> cannot locate dir, '
         'stages.stage_two -> cannot locate dir'
@@ -377,3 +386,14 @@ def test_parse_dag_definition_raises_invalid_dag_definition_exceptions():
     dag_definition = 'stage_1 >> ,stage_3 >> stage_4'
     with raises(ValueError, match='null stages found in step 2'):
         _parse_dag_definition(dag_definition)
+
+
+def test_check_workflow_stages_are_configured():
+    workflow = [['a'], ['b', 'c'], ['d']]
+    configured_stages = ['a', 'b', 'd']
+    missing_stage_configs = _check_workflow_stages_are_configured(
+        workflow,
+        configured_stages
+    )
+    assert missing_stage_configs == ['project.workflow - cannot find stages.c']
+    assert _check_workflow_stages_are_configured(['a'], ['a']) == []

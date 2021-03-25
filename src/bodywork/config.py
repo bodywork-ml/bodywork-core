@@ -18,7 +18,7 @@
 Bodywork configuration file parsing and validation.
 """
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Sequence
 
 import yaml
 
@@ -126,7 +126,13 @@ class BodyworkConfig:
                 except BodyworkConfigMissingOrInvalidParamError as e:
                     missing_or_invalid_param += e.missing_params
         except AttributeError:
-            missing_or_invalid_param.append('stages._')
+            missing_or_invalid_param.append('stages._ - no stage configs provided')
+
+        stages_in_workflow_without_config = _check_workflow_stages_are_configured(
+            self.project.workflow,
+            self.stages.keys()
+        )
+        missing_or_invalid_param += stages_in_workflow_without_config
 
         if check_py_modules_exist:
             for stage_name, stage in self.stages.items():
@@ -381,3 +387,22 @@ def _parse_dag_definition(dag_definition: str) -> DAG:
                f'parsing DAG definition')
         raise ValueError(msg)
     return stages_in_steps
+
+
+def _check_workflow_stages_are_configured(
+    workflow: Iterable[Iterable[str]],
+    stages: Iterable[str]
+) -> Sequence[str]:
+    """Identify stages in workflow that have not been configured.
+
+    :param workflow: A project DAG parsed into a Bodywork workflow.
+    :param stages: List of stages that have been configured.
+    :return: List of missing stage messages.
+    """
+    stages_in_workflow = [stage for step in workflow for stage in step]
+    missing_stages = [
+        f'project.workflow - cannot find stages.{stage}'
+        for stage in stages_in_workflow
+        if stage not in stages
+    ]
+    return missing_stages
