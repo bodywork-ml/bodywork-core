@@ -22,7 +22,7 @@ import os
 import re
 from enum import Enum
 from pathlib import Path
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, DEVNULL
 
 from .constants import DEFAULT_PROJECT_DIR, SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
 from .logs import bodywork_log_factory
@@ -44,7 +44,7 @@ def download_project_code_from_repo(
     """
     log = bodywork_log_factory()
     try:
-        run(['git', '--version'], check=True)
+        run(['git', '--version'], check=True, stdout=DEVNULL)
     except CalledProcessError:
         raise RuntimeError('git is not available')
     try:
