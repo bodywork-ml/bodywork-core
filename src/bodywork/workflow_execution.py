@@ -25,7 +25,7 @@ from typing import cast, Optional, Tuple
 import requests
 
 from . import k8s
-from .config import BodyworkConfig, BatchStage, ServiceStage
+from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
@@ -83,14 +83,14 @@ def run_workflow(
         for step in workflow_dag:
             log.info(f'attempting to execute DAG step={step}')
             batch_stages = [
-                cast(BatchStage, all_stages[stage_name])
+                cast(BatchStageConfig, all_stages[stage_name])
                 for stage_name in step
-                if type(all_stages[stage_name]) is BatchStage
+                if type(all_stages[stage_name]) is BatchStageConfig
             ]
             service_stages = [
-                cast(ServiceStage, all_stages[stage_name])
+                cast(ServiceStageConfig, all_stages[stage_name])
                 for stage_name in step
-                if type(all_stages[stage_name]) is ServiceStage
+                if type(all_stages[stage_name]) is ServiceStageConfig
             ]
 
             if batch_stages:

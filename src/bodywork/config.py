@@ -99,17 +99,17 @@ class BodyworkConfig:
 
         missing_or_invalid_param: List[str] = []
         try:
-            self.project = Project(config['project'])
+            self.project = ProjectConfig(config['project'])
         except BodyworkConfigMissingOrInvalidParamError as e:
             missing_or_invalid_param += e.missing_params
 
         try:
-            self.logging = Logging(config['logging'])
+            self.logging = LoggingConfig(config['logging'])
         except BodyworkConfigMissingOrInvalidParamError as e:
             missing_or_invalid_param += e.missing_params
 
         try:
-            self.stages: Dict[str, Stage] = {}
+            self.stages: Dict[str, StageConfig] = {}
             for stage_name, stage_config in config['stages'].items():
                 if 'batch' in stage_config and 'service' in stage_config:
                     missing_or_invalid_param.append(
@@ -117,13 +117,13 @@ class BodyworkConfig:
                     )
                     continue
                 elif 'batch' in stage_config:
-                    self.stages[stage_name] = BatchStage(
+                    self.stages[stage_name] = BatchStageConfig(
                         str(stage_name),
                         stage_config,
                         self._root_dir
                     )
                 elif 'service' in stage_config:
-                    self.stages[stage_name] = ServiceStage(
+                    self.stages[stage_name] = ServiceStageConfig(
                         str(stage_name),
                         stage_config,
                         self._root_dir
@@ -153,7 +153,7 @@ class BodyworkConfig:
             raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class Project:
+class ProjectConfig:
     """High-level project configuration."""
 
     def __init__(self, config_section: Dict[str, str]):
@@ -187,7 +187,7 @@ class Project:
             raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class Logging:
+class LoggingConfig:
     """Logging configuration."""
 
     def __init__(self, config_section: Dict[str, str]):
@@ -208,7 +208,7 @@ class Logging:
             raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
 
 
-class Stage:
+class StageConfig:
     """Common stage configuration for all stages."""
 
     def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
@@ -286,7 +286,7 @@ class Stage:
             return False
 
 
-class BatchStage(Stage):
+class BatchStageConfig(StageConfig):
     """Specific stage configuration for batch stages."""
 
     def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
@@ -324,7 +324,7 @@ class BatchStage(Stage):
             raise BodyworkConfigMissingOrInvalidParamError(self._missing_or_invalid_param)  # noqa
 
 
-class ServiceStage(Stage):
+class ServiceStageConfig(StageConfig):
     """Specific stage configuration for service stages."""
 
     def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path):

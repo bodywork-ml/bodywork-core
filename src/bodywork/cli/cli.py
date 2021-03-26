@@ -59,8 +59,8 @@ from ..exceptions import (
     BodyworkWorkflowExecutionError
 )
 from ..k8s import api_exception_msg, load_kubernetes_config
-from ..stage import run_stage
-from ..workflow import run_workflow
+from ..stage_execution import run_stage
+from ..workflow_execution import run_workflow
 
 
 def cli() -> None:

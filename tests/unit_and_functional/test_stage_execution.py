@@ -23,7 +23,7 @@ from typing import Iterable
 from pytest import raises
 
 from bodywork.exceptions import BodyworkStageFailure
-from bodywork.stage import _install_python_requirements, run_stage
+from bodywork.stage_execution import _install_python_requirements, run_stage
 
 
 def test_that_requirements_can_be_installed(

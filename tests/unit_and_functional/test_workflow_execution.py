@@ -27,7 +27,7 @@ from _pytest.capture import CaptureFixture
 
 from bodywork.constants import PROJECT_CONFIG_FILENAME
 from bodywork.exceptions import BodyworkWorkflowExecutionError
-from bodywork.workflow import (
+from bodywork.workflow_execution import (
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
@@ -73,7 +73,7 @@ def test_parse_dockerhub_image_string_parses_valid_strings():
             == ('bodyworkml/bodywork-core', 'latest'))
 
 
-@patch('bodywork.workflow.k8s')
+@patch('bodywork.workflow_execution.k8s')
 def test_run_workflow_raises_exception_if_namespace_does_not_exist(
     mock_k8s: MagicMock,
     setup_bodywork_test_project: Iterable[bool],
@@ -84,7 +84,7 @@ def test_run_workflow_raises_exception_if_namespace_does_not_exist(
         run_workflow('foo_bar_foo_993', project_repo_location)
 
 
-@patch('bodywork.workflow.k8s')
+@patch('bodywork.workflow_execution.k8s')
 def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
     mock_k8s.get_latest_pod_name.return_value = 'bodywork-test-project--stage-1'
     mock_k8s.get_pod_logs.return_value = 'foo-bar'
