@@ -581,13 +581,8 @@ def validate_config(args: Namespace) -> None:
         BodyworkConfig(file_path, check_py_files)
         print(f'--> {file_path} is a valid Bodywork config file.')
         sys.exit(0)
-    except FileExistsError as e:
-        print(f'--> {e}')
-        sys.exit(1)
-    except BodyworkConfigParsingError as e:
-        print(f'--> {e}')
-        sys.exit(1)
-    except BodyworkConfigMissingSectionError as e:
+    except (FileExistsError, BodyworkConfigParsingError,
+            BodyworkConfigMissingSectionError) as e:
         print(f'--> {e}')
         sys.exit(1)
     except BodyworkConfigMissingOrInvalidParamError as e:
