@@ -26,7 +26,7 @@ from pytest import fixture
 from kubernetes import client as k8s, config as k8s_config
 
 from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_GITHUB_KEY_ENV_VAR
-from bodywork.workflow import image_exists_on_dockerhub
+from bodywork.workflow_execution import image_exists_on_dockerhub
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = 'ingress-nginx'
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = 'ingress-nginx-controller'
