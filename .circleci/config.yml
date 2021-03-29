@@ -38,7 +38,7 @@ jobs:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
   run-k8s-integration-tests:
-    executor: aws-eks/python3
+    executor: aws-eks/python:3.8
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
@@ -48,7 +48,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py3-k8s_integration_tests -- -s -vv
+          command: tox -e py38-k8s_integration_tests -- -s -vv
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
