@@ -38,8 +38,8 @@ jobs:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
   run-k8s-integration-tests:
-    executor: aws-eks/python
-    parameters:
+    executor:
+      name: aws-eks/python
       tag: "3.8"
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
