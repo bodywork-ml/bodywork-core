@@ -20,7 +20,7 @@ orbs:
 jobs:
   run-unit-and-functional-tests-and-static-code-analysis:
     docker: 
-      - image: circleci/python:3
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run:
