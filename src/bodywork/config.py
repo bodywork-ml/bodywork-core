@@ -17,9 +17,11 @@
 """
 Bodywork configuration file parsing and validation.
 """
+import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence
 
+import cerberus
 import yaml
 
 from .constants import BODYWORK_CONFIG_VERSION
@@ -27,10 +29,60 @@ from .exceptions import (
     BodyworkConfigParsingError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
-    BodyworkConfigMissingOrInvalidParamError
+    BodyworkConfigValidationError
 )
 
 DAG = Iterable[Iterable[str]]
+VALID_K8S_NAME_REGEX = r'[a-zA-Z0-9-\.]+'
+
+
+class DictDataValidator:
+    """Data validator for dictionaries.
+
+    This class is designed to validate key-value data against a schema.
+    It uses Cerberus - https://docs.python-cerberus.org/en/stable/ - and
+    its in-built schema definition language.
+    """
+
+    def __init__(self, schema: Dict[str, Dict[str, Any]]):
+        """Constructor.
+
+        :param schema: Valid Cerberus data schema.
+        """
+        self._data_validator = cerberus.Validator(schema=schema, allow_unknown=True)
+
+    def find_errors_in(self, data: Dict[str, Any], prefix: str = '') -> List[str]:
+        """Find schema invalidation errors.
+
+        :param data: Data to validate against the schema.
+        :param prefix: Prefix to add to all data keys that map to an
+            error, defaults to ''.
+        :return: List of data validation errors.
+        """
+        is_valid = self._data_validator.validate(data)
+        if is_valid:
+            return []
+        else:
+            errors = self._data_validator.errors
+            return self._format_errors(errors, prefix)
+
+    @staticmethod
+    def _format_errors(errors: Dict[str, Any], prefix: str = '') -> List[str]:
+        """Generate human-readable error messages.
+
+        :param errors: Raw error output from data validation.
+        :param prefix: Prefix to add to all data keys that map to an
+            error, defaults to ''.
+        :return: List of formatted errors.
+        """
+        def format_error(k: str, v: Any) -> str:
+            try:
+                err_msg = f'{prefix}{k} -> {", ".join(v)}'
+            except TypeError:
+                err_msg = f'{prefix}{k} -> {json.dumps(v)}'
+            return err_msg
+
+        return [format_error(k, v) for k, v in errors.items()]
 
 
 class BodyworkConfig:
@@ -73,7 +125,7 @@ class BodyworkConfig:
         :raises BodyworkConfigVersionMismatchError: if config file
             schema version does not match the schame version supported
             by the current Bodywork version.
-        :raises BodyworkConfigMissingOrInvalidParamError: if a config
+        :raises BodyworkConfigValidationError: if a config
             parameter is missing or has been set to an invalid value.
         """
         config = self._config
@@ -95,17 +147,17 @@ class BodyworkConfig:
             if config['version'] != BODYWORK_CONFIG_VERSION:
                 raise BodyworkConfigVersionMismatchError(config['version'])
         except (AttributeError, ValueError):
-            raise BodyworkConfigMissingOrInvalidParamError(['version'])
+            raise BodyworkConfigValidationError(['version'])
 
         missing_or_invalid_param: List[str] = []
         try:
             self.project = ProjectConfig(config['project'])
-        except BodyworkConfigMissingOrInvalidParamError as e:
+        except BodyworkConfigValidationError as e:
             missing_or_invalid_param += e.missing_params
 
         try:
             self.logging = LoggingConfig(config['logging'])
-        except BodyworkConfigMissingOrInvalidParamError as e:
+        except BodyworkConfigValidationError as e:
             missing_or_invalid_param += e.missing_params
 
         try:
@@ -150,66 +202,128 @@ class BodyworkConfig:
 
         if missing_or_invalid_param:
             missing_or_invalid_param.sort()
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
+            raise BodyworkConfigValidationError(missing_or_invalid_param)
 
 
 class ProjectConfig:
     """High-level project configuration."""
 
+    SCHEMA = {
+        'name': {
+            'type': 'string',
+            'required': True,
+            'regex': VALID_K8S_NAME_REGEX
+        },
+        'docker_image': {
+            'type': 'string',
+            'required': True
+        },
+        'DAG': {
+            'type': 'string',
+            'required': True
+        }
+    }
+
     def __init__(self, config_section: Dict[str, str]):
         """Constructor.
 
         :param config: Dictionary of configuration parameters.
-        :raises BodyworkConfigMissingOrInvalidParamError: if any
+        :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
 
-        missing_or_invalid_param = []
-        try:
-            self.name = config_section['name'].lower()
-        except Exception:
-            missing_or_invalid_param.append('project.name')
-
-        try:
-            self.docker_image = config_section['docker_image'].lower()
-        except Exception:
-            missing_or_invalid_param.append('project.docker_image')
-
-        try:
-            self.DAG = config_section['DAG'].replace(' ', '')
-            self.workflow = _parse_dag_definition(self.DAG)
-        except ValueError as e:
-            missing_or_invalid_param.append(f'project.DAG -> {e}')
-        except Exception:
-            missing_or_invalid_param.append('project.DAG')
-
+        data_validator = DictDataValidator(self.SCHEMA)
+        missing_or_invalid_param = data_validator.find_errors_in(
+            config_section,
+            prefix='project.'
+        )
         if missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
+            raise BodyworkConfigValidationError(missing_or_invalid_param)
+        else:
+            self.name = config_section['name']
+            self.docker_image = config_section['docker_image']
+            self.DAG = config_section['DAG']
+            try:
+                self.workflow = _parse_dag_definition(config_section['DAG'])
+            except ValueError as e:
+                raise BodyworkConfigValidationError([f'project.DAG -> {e}'])
 
 
 class LoggingConfig:
     """Logging configuration."""
 
+    SCHEMA = {
+        'log_level': {
+            'type': 'string',
+            'required': True,
+            'allowed': ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        }
+    }
+
     def __init__(self, config_section: Dict[str, str]):
         """Constructor.
 
         :param config: Dictionary of configuration parameters.
-        :raises BodyworkConfigMissingOrInvalidParamError: if any
+        :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
 
-        missing_or_invalid_param = []
-        try:
-            self.log_level = str(config_section['log_level'])
-        except Exception:
-            missing_or_invalid_param.append('logging.log_level')
-
+        data_validator = DictDataValidator(self.SCHEMA)
+        missing_or_invalid_param = data_validator.find_errors_in(
+            config_section,
+            prefix='logging.'
+        )
         if missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(missing_or_invalid_param)
+            raise BodyworkConfigValidationError(missing_or_invalid_param)
+        else:
+            self.log_level = config_section['log_level']
 
 
 class StageConfig:
     """Common stage configuration for all stages."""
+
+    SCHEMA_GENERIC = {
+        'executable_module_path': {
+            'type': 'string',
+            'required': True,
+            'regex': r'.+(\.py$)'
+        },
+        'args': {
+            'type': 'list',
+            'required': False,
+            'schema': {
+                'type': 'string'
+            }
+        },
+        'cpu_request': {
+            'type': 'float',
+            'required': True,
+            'min': 0.0
+        },
+        'memory_request_mb': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        },
+        'requirements': {
+            'type': 'list',
+            'required': False,
+            'schema': {
+                'type': 'string'
+            }
+        },
+        'secrets': {
+            'type': 'dict',
+            'required': False,
+            'keysrules': {
+                'type': 'string'
+            },
+            'valuesrules': {
+                'type': 'string',
+                'regex': VALID_K8S_NAME_REGEX
+            }
+        }
+    }
 
     def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
         """Constructor.
@@ -219,61 +333,26 @@ class StageConfig:
         :param root_dir: The root directory of the project containing
             the bodywork config file and the stage directories.
         """
-        self.name = stage_name
-        missing_or_invalid_param = []
-
-        try:
+        data_validator = DictDataValidator(self.SCHEMA_GENERIC)
+        self._missing_or_invalid_param = data_validator.find_errors_in(
+            config,
+            prefix=f'stages.{stage_name}.'
+        )
+        if not self._missing_or_invalid_param:
+            self.name = stage_name
             self.executable_module_path = root_dir / config['executable_module_path']
             self.executable_module = self.executable_module_path.name
-        except Exception:
-            missing_or_invalid_param.append(
-                f'stages.{stage_name}.executable_module_path'
-            )
-
-        if 'args' in config:
-            try:
-                if any(e is None for e in config['args']):
-                    missing_or_invalid_param.append(f'stages.{stage_name}.args')
-                else:
-                    self.args = [str(arg) for arg in config['args']]
-            except Exception:
-                missing_or_invalid_param.append(f'stages.{stage_name}.args')
-        else:
-            self.args = []
-
-        try:
-            self.cpu_request = float(config['cpu_request'])
-        except Exception:
-            missing_or_invalid_param.append(f'stages.{stage_name}.cpu_request')
-
-        try:
-            self.memory_request = int(config['memory_request_mb'])
-        except Exception:
-            missing_or_invalid_param.append(f'stages.{stage_name}.memory_request_mb')
-
-        if 'requirements' in config:
-            try:
-                if any(e is None for e in config['requirements']):
-                    missing_or_invalid_param.append(f'stages.{stage_name}.requirements')
-                elif any(str(e) for e in config['requirements']):
-                    self.requirements = config['requirements']
-            except Exception:
-                missing_or_invalid_param.append(f'stages.{stage_name}.requirements')
-        else:
-            self.requirements = []
-
-        if 'secrets' in config:
-            try:
+            self.args = config['args'] if 'args' in config else []
+            self.cpu_request = config['cpu_request']
+            self.memory_request = config['memory_request_mb']
+            self.requirements = config['requirements'] if 'requirements' in config else []  # noqa
+            if 'secrets' in config:
                 self.env_vars_from_secrets = [
-                    (secret_name.lower(), secret_key.upper())
+                    (secret_name, secret_key)
                     for secret_key, secret_name in config['secrets'].items()
                 ]
-            except Exception:
-                missing_or_invalid_param.append(f'stages.{stage_name}.secrets')
-        else:
-            self.env_vars_from_secrets = []
-
-        self._missing_or_invalid_param = missing_or_invalid_param
+            else:
+                self.env_vars_from_secrets = []
 
     def __eq__(self, other) -> bool:
         """Object equality operator.
@@ -289,6 +368,19 @@ class StageConfig:
 class BatchStageConfig(StageConfig):
     """Specific stage configuration for batch stages."""
 
+    SCHEMA_BATCH = {
+        'max_completion_time_seconds': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        },
+        'retries': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        }
+    }
+
     def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path):
         """Constructor.
 
@@ -296,36 +388,47 @@ class BatchStageConfig(StageConfig):
         :param config: Dictionary of configuration parameters.
         :param root_dir: The root directory of the project containing
             the bodywork config file and the stage directories.
-        :raises BodyworkConfigMissingOrInvalidParamError: if any
+        :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
         super().__init__(stage_name, config, root_dir)
         batch_config = config['batch']
-
-        try:
-            max_completion_time = int(batch_config['max_completion_time_seconds'])
-            if max_completion_time < 0:
-                raise ValueError
-            self.max_completion_time = max_completion_time
-        except Exception:
-            self._missing_or_invalid_param.append(
-                f'stages.{stage_name}.batch.max_completion_time_seconds'
-            )
-
-        try:
-            retries = int(batch_config['retries'])
-            if retries < 0:
-                raise ValueError
-            self.retries = retries
-        except Exception:
-            self._missing_or_invalid_param.append(f'stages.{stage_name}.batch.retries')
-
-        if self._missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(self._missing_or_invalid_param)  # noqa
+        data_validator = DictDataValidator(self.SCHEMA_BATCH)
+        self._missing_or_invalid_param += data_validator.find_errors_in(
+            batch_config,
+            prefix=f'stages.{stage_name}.batch.'
+        )
+        if not self._missing_or_invalid_param:
+            self.max_completion_time = batch_config['max_completion_time_seconds']
+            self.retries = batch_config['retries']
+        else:
+            raise BodyworkConfigValidationError(self._missing_or_invalid_param)
 
 
 class ServiceStageConfig(StageConfig):
     """Specific stage configuration for service stages."""
+
+    SCHEMA_SERVICE = {
+        'max_startup_time_seconds': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        },
+        'replicas': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        },
+        'port': {
+            'type': 'integer',
+            'required': True,
+            'min': 0
+        },
+        'ingress': {
+            'type': 'boolean',
+            'required': True,
+        }
+    }
 
     def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path):
         """Constructor.
@@ -334,50 +437,23 @@ class ServiceStageConfig(StageConfig):
         :param config: Dictionary of configuration parameters.
         :param root_dir: The root directory of the project containing
             the bodywork config file and the stage directories.
-        :raises BodyworkConfigMissingOrInvalidParamError: if any
+        :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
         super().__init__(stage_name, config, root_dir)
         service_config = config['service']
-
-        try:
-            max_startup_time = int(service_config['max_startup_time_seconds'])
-            if max_startup_time < 0:
-                raise ValueError
-            self.max_startup_time = max_startup_time
-        except Exception:
-            self._missing_or_invalid_param.append(
-                f'stages.{stage_name}.service.max_startup_time_seconds'
-            )
-
-        try:
-            replicas = int(service_config['replicas'])
-            if replicas < 0:
-                raise ValueError
-            self.replicas = replicas
-        except Exception:
-            self._missing_or_invalid_param.append(
-                f'stages.{stage_name}.service.replicas'
-            )
-
-        try:
-            port = int(service_config['port'])
-            if port < 0:
-                raise ValueError
-            self.port = port
-        except Exception:
-            self._missing_or_invalid_param.append(f'stages.{stage_name}.service.port')
-
-        try:
-            if service_config['ingress'] is True or service_config['ingress'] is False:
-                self.create_ingress = service_config['ingress']
-            else:
-                raise TypeError
-        except Exception:
-            self._missing_or_invalid_param.append(f'stages.{stage_name}.service.ingress')
-
-        if self._missing_or_invalid_param:
-            raise BodyworkConfigMissingOrInvalidParamError(self._missing_or_invalid_param)  # noqa
+        data_validator = DictDataValidator(self.SCHEMA_SERVICE)
+        self._missing_or_invalid_param += data_validator.find_errors_in(
+            service_config,
+            prefix=f'stages.{stage_name}.service.'
+        )
+        if not self._missing_or_invalid_param:
+            self.max_startup_time = service_config['max_startup_time_seconds']
+            self.replicas = service_config['replicas']
+            self.port = service_config['port']
+            self.create_ingress = service_config['ingress']
+        else:
+            raise BodyworkConfigValidationError(self._missing_or_invalid_param)
 
 
 def _parse_dag_definition(dag_definition: str) -> DAG:
@@ -416,7 +492,7 @@ def _check_workflow_stages_are_configured(
     """
     stages_in_workflow = [stage for step in workflow for stage in step]
     missing_stages = [
-        f'project.workflow - cannot find valid stage @ stages.{stage}'
+        f'project.workflow -> cannot find valid stage @ stages.{stage}'
         for stage in stages_in_workflow
         if stage not in stages
     ]

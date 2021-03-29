@@ -53,7 +53,7 @@ from .setup_namespace import (
     setup_namespace_with_service_accounts_and_roles
 )
 from ..exceptions import (
-    BodyworkConfigMissingOrInvalidParamError,
+    BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError
@@ -585,7 +585,7 @@ def validate_config(args: Namespace) -> None:
             BodyworkConfigMissingSectionError) as e:
         print(f'--> {e}')
         sys.exit(1)
-    except BodyworkConfigMissingOrInvalidParamError as e:
+    except BodyworkConfigValidationError as e:
         print(f'- missing or invalid parameters found in {file_path}:')
         missing_or_invalid_param_list = '\n* '.join(e.missing_params)
         print(f'* {missing_or_invalid_param_list}')

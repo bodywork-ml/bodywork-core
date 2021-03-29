@@ -25,9 +25,7 @@ stages:
       retries: 4
   stage_3:
     executable_module_path: stage_3/main.py
-    args:
-      - "Hello World"
-      - 1
+    args: ["Hello World", "1"]
     cpu_request: 0.5
     memory_request_mb: 250
     service:

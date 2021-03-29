@@ -50,7 +50,7 @@ class BodyworkConfigMissingSectionError(Exception):
         super().__init__(msg)
 
 
-class BodyworkConfigMissingOrInvalidParamError(Exception):
+class BodyworkConfigValidationError(Exception):
     def __init__(self, missing_params: Sequence[str]):
         self.missing_params = missing_params
         msg = (f'Bodywork config missing or invalid parameters: '

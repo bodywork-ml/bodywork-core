@@ -23,11 +23,12 @@ from pytest import fixture, raises
 
 from bodywork.config import (
     BodyworkConfig,
-    ProjectConfig,
     BatchStageConfig,
+    DictDataValidator,
+    LoggingConfig,
+    ProjectConfig,
     ServiceStageConfig,
     StageConfig,
-    LoggingConfig,
     _parse_dag_definition,
     _check_workflow_stages_are_configured
 )
@@ -38,7 +39,7 @@ from bodywork.constants import (
 from bodywork.exceptions import (
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
-    BodyworkConfigMissingOrInvalidParamError,
+    BodyworkConfigValidationError,
     BodyworkConfigParsingError
 )
 
@@ -47,6 +48,24 @@ from bodywork.exceptions import (
 def bodywork_config(project_repo_location: Path) -> BodyworkConfig:
     config_file = project_repo_location / 'bodywork.yaml'
     return BodyworkConfig(config_file)
+
+
+def test_key_value_data_parser_correctly_identifies_invalid_data():
+    schema = {'version': {'type': 'string'}, 'project': {'type': 'dict'}}
+    validator = DictDataValidator(schema)
+    valid_data = {'version': '1.0', 'project': {'name': 'foo'}}
+    invalid_data = {'version': 1.0, 'project': 'foo'}
+    assert len(validator.find_errors_in(valid_data)) == 0
+    assert len(validator.find_errors_in(invalid_data)) == 2
+
+
+def test_key_value_data_parser_correctly_correctly_formats_errors():
+    schema = {'version': {'type': 'string'}, 'project': {'type': 'dict'}}
+    validator = DictDataValidator(schema)
+    invalid_data = {'version': 1.0, 'project': 'foo'}
+    errors = validator.find_errors_in(invalid_data, prefix='a.b.')
+    assert errors[0] == 'a.b.project -> must be of dict type'
+    assert errors[1] == 'a.b.version -> must be of string type'
 
 
 def test_that_invalid_config_file_path_raises_error(
@@ -92,11 +111,11 @@ def test_that_config_file_with_invalid_schema_version_raises_error(
 ):
     bodywork_config._config['version'] = 'not the version'
     expected_exception_msg = 'missing or invalid parameters: version'
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
     bodywork_config._config['version'] = '1.0.0'
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
 
@@ -117,30 +136,42 @@ def test_that_config_file_with_non_list_stages_raises_error(
     bodywork_config._config['stages'] = 'bad'
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'project.workflow - cannot find valid stage @ stages.stage_1, '
-        'project.workflow - cannot find valid stage @ stages.stage_2, '
-        'project.workflow - cannot find valid stage @ stages.stage_3, '
+        'project.workflow -> cannot find valid stage @ stages.stage_1, '
+        'project.workflow -> cannot find valid stage @ stages.stage_2, '
+        'project.workflow -> cannot find valid stage @ stages.stage_3, '
         'stages._ - no stage configs provided'
     )
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
 
 def test_bodywork_config_project_section_validation():
     config_missing_all_params = {'not_a_valid_section': None}
-    expected_exception_msg = ('missing or invalid parameters: project.name, '
-                              'project.docker_image, project.DAG')
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'project.DAG -> required field, '
+        'project.docker_image -> required field, '
+        'project.name -> required field'
+    )
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         ProjectConfig(config_missing_all_params)
 
     config_all_invalid_params = {'name': -1, 'docker_image': [], 'DAG': None}
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'project.DAG -> null value not allowed, '
+        'project.docker_image -> must be of string type, '
+        'project.name -> must be of string type'
+    )
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         ProjectConfig(config_all_invalid_params)
 
     config_invalid_DAG = {'name': 'me', 'docker_image': 'my/img:1.0', 'DAG': 'a>>b,>>c'}
-    expected_exception_msg = ('missing or invalid parameters: project.DAG -> '
-                              'null stages found in step 2 when parsing DAG')
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'project.DAG -> null stages found in step 2 when parsing DAG'
+    )
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         ProjectConfig(config_invalid_DAG)
 
     config_all_valid_params = {'name': 'me', 'docker_image': 'my/img:1.0', 'DAG': 'a>>b'}
@@ -153,8 +184,11 @@ def test_bodywork_config_project_section_validation():
 
 def test_bodywork_config_logging_section_validation():
     config_missing_all_params = {'not_a_valid_section': None}
-    expected_exception_msg = 'missing or invalid parameters: logging.log_level'
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    expected_exception_msg = (
+        'missing or invalid parameters: '
+        'logging.log_level -> required field'
+    )
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         LoggingConfig(config_missing_all_params)
 
     config_all_params = {'log_level': 'INFO'}
@@ -171,28 +205,29 @@ def test_bodywork_config_generic_stage_validation():
 
     config_missing_all_params = {'not_a_valid_section': None}
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_module_path',
-        'stages.my_stage.cpu_request',
-        'stages.my_stage.memory_request_mb'
+        'stages.my_stage.cpu_request -> required field',
+        'stages.my_stage.executable_module_path -> required field',
+        'stages.my_stage.memory_request_mb -> required field',
     ]
     stage = StageConfig(stage_name, config_missing_all_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
     config_missing_all_invalid_params = {
-        'executable_module': None,
+        'executable_module_path': None,
         'args': None,
         'cpu_request': None,
         'memory_request_mb': None,
         'requirements': None,
-        'secrets': None
+        'secrets': None,
+        'batch': None
     }
     expected_missing_or_invalid_param = [
-        'stages.my_stage.executable_module_path',
-        'stages.my_stage.args',
-        'stages.my_stage.cpu_request',
-        'stages.my_stage.memory_request_mb',
-        'stages.my_stage.requirements',
-        'stages.my_stage.secrets'
+        'stages.my_stage.args -> null value not allowed',
+        'stages.my_stage.cpu_request -> null value not allowed',
+        'stages.my_stage.executable_module_path -> null value not allowed',
+        'stages.my_stage.memory_request_mb -> null value not allowed',
+        'stages.my_stage.requirements -> null value not allowed',
+        'stages.my_stage.secrets -> null value not allowed'
     ]
     stage = StageConfig(stage_name, config_missing_all_invalid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
@@ -203,49 +238,12 @@ def test_bodywork_config_generic_stage_validation():
         'cpu_request': 0.5,
         'memory_request_mb': 100,
         'requirements': ['foo==1.0.0', 'bar==2.0'],
-        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'}
+        'secrets': {'FOO_UN': 'secret-bar', 'FOO_PWD': 'secret-bar'},
     }
     expected_missing_or_invalid_param = []
     stage = StageConfig(stage_name, config_all_valid_params, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
-
-    config_all_valid_params_bad_requirements = {
-        'executable_module_path': 'stage_dir/main.py',
-        'args': ['Hello', 'World'],
-        'cpu_request': 0.5,
-        'memory_request_mb': 100,
-        'requirements': [None]
-    }
-    expected_missing_or_invalid_param = [
-        'stages.my_stage.requirements'
-    ]
-    stage = StageConfig(stage_name, config_all_valid_params_bad_requirements, root_dir)
-    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
-
-    config_all_valid_params_bad_args = {
-        'executable_module_path': 'stage_dir/main.py',
-        'args': [None],
-        'cpu_request': 0.5,
-        'memory_request_mb': 100
-    }
-    expected_missing_or_invalid_param = [
-        'stages.my_stage.args'
-    ]
-    stage = StageConfig(stage_name, config_all_valid_params_bad_args, root_dir)
-    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
-
-    config_all_valid_params_no_secrets_requirements = {
-        'executable_module_path': 'stage_dir/main.py',
-        'cpu_request': 0.5,
-        'memory_request_mb': 100
-    }
-    expected_missing_or_invalid_param = []
-    stage = StageConfig(
-        stage_name,
-        config_all_valid_params_no_secrets_requirements,
-        root_dir
-    )
-    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+    assert stage.env_vars_from_secrets[1] == ('secret-bar', 'FOO_PWD')
 
 
 def test_stage_equality_operations():
@@ -278,24 +276,11 @@ def test_bodywork_config_batch_stage_validation():
     config_missing_all_params = {'not_a_valid_section': None}
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'stages.my_stage.batch.max_completion_time_seconds, '
-        'stages.my_stage.batch.retries'
+        'stages.my_stage.batch.max_completion_time_seconds -> required field, '
+        'stages.my_stage.batch.retries -> required field'
     )
     full_config = {**valid_generic_stage_config, 'batch': config_missing_all_params}
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        BatchStageConfig(stage_name, full_config, root_dir)
-
-    config_all_invalid_params = {
-        'max_completion_time_seconds': -1,
-        'retries': -1
-    }
-    expected_exception_msg = (
-        'missing or invalid parameters: '
-        'stages.my_stage.batch.max_completion_time_seconds, '
-        'stages.my_stage.batch.retries'
-    )
-    full_config = {**valid_generic_stage_config, 'batch': config_all_invalid_params}
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         BatchStageConfig(stage_name, full_config, root_dir)
 
     config_all_valid_params = {
@@ -322,30 +307,13 @@ def test_bodywork_config_service_stage_validation():
     config_missing_all_params = {'not_a_valid_section': None}
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'stages.my_stage.service.max_startup_time_seconds, '
-        'stages.my_stage.service.replicas, '
-        'stages.my_stage.service.port, '
-        'stages.my_stage.service.ingress'
+        'stages.my_stage.service.ingress -> required field, '
+        'stages.my_stage.service.max_startup_time_seconds -> required field, '
+        'stages.my_stage.service.port -> required field, '
+        'stages.my_stage.service.replicas -> required field'
     )
     full_config = {**valid_generic_stage_config, 'service': config_missing_all_params}
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
-        ServiceStageConfig(stage_name, full_config, root_dir)
-
-    config_all_invalid_params = {
-        'max_startup_time_seconds': -1,
-        'replicas': -1,
-        'port': -1,
-        'ingress': 'no'
-    }
-    expected_exception_msg = (
-        'missing or invalid parameters: '
-        'stages.my_stage.service.max_startup_time_seconds, '
-        'stages.my_stage.service.replicas, '
-        'stages.my_stage.service.port, '
-        'stages.my_stage.service.ingress'
-    )
-    full_config = {**valid_generic_stage_config, 'service': config_all_invalid_params}
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         ServiceStageConfig(stage_name, full_config, root_dir)
 
     config_all_valid_params = {
@@ -378,11 +346,11 @@ def test_py_modules_that_cannot_be_located_raise_error(
     bodywork_config._config['stages']['stage_3']['executable_module_path'] = 'not_dir/main.py'  # noqa
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'project.workflow - cannot find valid stage @ stages.stage_1, '
-        'project.workflow - cannot find valid stage @ stages.stage_2, '
+        'project.workflow -> cannot find valid stage @ stages.stage_1, '
+        'project.workflow -> cannot find valid stage @ stages.stage_2, '
         'stages.stage_3.executable_module_path -> does not exist'
     )
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
 
@@ -395,14 +363,14 @@ def test_that_subsection_validation_feeds_through_to_validation_report(
     bodywork_config._config['stages']['stage_2']['service'] = {'foo': 'bar'}
     expected_exception_msg = (
         'missing or invalid parameters: '
-        'logging.log_level, '
-        'project.docker_image, '
-        'project.workflow - cannot find valid stage @ stages.stage_1, '
-        'project.workflow - cannot find valid stage @ stages.stage_2, '
+        'logging.log_level -> required field, '
+        'project.docker_image -> required field, '
+        'project.workflow -> cannot find valid stage @ stages.stage_1, '
+        'project.workflow -> cannot find valid stage @ stages.stage_2, '
         'stages.stage_1.batch/service, '
         'stages.stage_2.batch/service'
     )
-    with raises(BodyworkConfigMissingOrInvalidParamError, match=expected_exception_msg):
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
 
@@ -466,6 +434,6 @@ def test_check_workflow_stages_are_configured():
         configured_stages
     )
     assert missing_stage_configs == [
-        'project.workflow - cannot find valid stage @ stages.c'
+        'project.workflow -> cannot find valid stage @ stages.c'
     ]
     assert _check_workflow_stages_are_configured(['a'], ['a']) == []
