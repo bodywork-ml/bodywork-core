@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM python:3.7-slim as py37-base
+FROM python:3.8-slim as py38-base
 RUN apt -y update &&\
     apt-get install -y git &&\
     apt -y install build-essential &&\
     apt-get clean
 WORKDIR /home/app
 
-FROM py37-base as builder
+FROM py38-base as builder
 COPY . .
 RUN git config --global user.email "body@work.com" &&\
     git config --global user.name "bodywork"
@@ -29,8 +29,9 @@ RUN pip install -r requirements_dev.txt
 RUN tox -e unit_and_functional_tests
 RUN python setup.py bdist_wheel
 
-FROM py37-base
+FROM py38-base
 COPY --from=builder /home/app/dist/*.whl .
-RUN pip install *.whl
+RUN pip install *.whl &&\
+    rm *.whl
 ENTRYPOINT ["bodywork"]
 CMD ["debug", "900"]
