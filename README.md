@@ -47,7 +47,7 @@ Bodywork is distributed as a Python package that exposes a command line interfac
 
 ## What does Bodywork Do?
 
-When triggered, Bodywork clones your project's Git repository, analyses the configuration provided in a `bodywork.yaml` file, and then manages the deployment of each stage - creating new [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) to run the Python modules that define each one. At no point is there any need to build Docker images, push them to a container registry or to configure Kubernetes directly.
+When triggered, Bodywork clones your project's Git repository, analyses the configuration provided in a `bodywork.yaml` file, and then manages the deployment of the projects' stages - creating new [Bodywork containers](https://hub.docker.com/repository/docker/bodyworkml/bodywork-core) to run the Python modules that define each one. At no point is there any need to build Docker images, push them to a container registry or to configure Kubernetes directly.
 
 This process is shown below for a `train-and-serve` pipeline with two stages: train model (as a batch job), then serve the trained model (as a microservice with a REST API).
 
