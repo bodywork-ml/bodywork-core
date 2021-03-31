@@ -20,11 +20,12 @@ all modules and tests. All Bodywork specific exceptions should be kept
 in this module to make them easier to locate when importing the package
 externally.
 """
-from typing import Iterable
+from pathlib import Path
+from typing import Iterable, Sequence
 
 from kubernetes.client import V1Job
 
-from .constants import PROJECT_CONFIG_FILENAME
+from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 
 
 class BodyworkJobFailure(Exception):
@@ -37,22 +38,36 @@ class BodyworkJobFailure(Exception):
         super().__init__(msg)
 
 
-class BodyworkProjectConfigError(Exception):
-    def __init__(self, missing_param_name: str):
-        msg = (f'cannot find parameter={missing_param_name} in '
-               f'{PROJECT_CONFIG_FILENAME} file')
+class BodyworkConfigParsingError(Exception):
+    def __init__(self, config_file_path: Path):
+        msg = (f'cannot parse YAML from {config_file_path}')
+        super().__init__(msg)
+
+
+class BodyworkConfigMissingSectionError(Exception):
+    def __init__(self, missing_sections: Sequence[str]):
+        msg = (f'Bodywork config file missing sections: {", ".join(missing_sections)}')
+        super().__init__(msg)
+
+
+class BodyworkConfigValidationError(Exception):
+    def __init__(self, missing_params: Sequence[str]):
+        self.missing_params = missing_params
+        msg = (f'Bodywork config missing or invalid parameters: '
+               f'{", ".join(missing_params)}')
+        super().__init__(msg)
+
+
+class BodyworkConfigVersionMismatchError(Exception):
+    def __init__(self, version: str):
+        msg = (f'Bodywork config file has schema version {version}, when Bodywork '
+               f'version {BODYWORK_VERSION} requires schema version '
+               f'{BODYWORK_CONFIG_VERSION}')
         super().__init__(msg)
 
 
 class BodyworkWorkflowExecutionError(Exception):
     def __init__(self, msg):
-        super().__init__(msg)
-
-
-class BodyworkStageConfigError(Exception):
-    def __init__(self, stage_name: str, config_key: str, config_section: str):
-        msg = (f'{config_key} in [{config_section}] section of {stage_name} stage '
-               f'config file is missing or mis-specified')
         super().__init__(msg)
 
 

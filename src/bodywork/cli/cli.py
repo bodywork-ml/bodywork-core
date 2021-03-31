@@ -20,14 +20,16 @@ Command Line Interface (CLI)
 import sys
 import traceback
 import urllib3
-from functools import wraps
 from argparse import ArgumentParser, Namespace
+from functools import wraps
+from pathlib import Path
 from time import sleep
 from typing import Callable
 
 import kubernetes
 from pkg_resources import get_distribution
 
+from ..config import BodyworkConfig
 from .workflow_jobs import (
     create_workflow_job_in_namespace,
     create_workflow_cronjob_in_namespace,
@@ -50,10 +52,15 @@ from .setup_namespace import (
     is_namespace_available_for_bodywork,
     setup_namespace_with_service_accounts_and_roles
 )
-from ..exceptions import BodyworkWorkflowExecutionError
+from ..exceptions import (
+    BodyworkConfigValidationError,
+    BodyworkConfigMissingSectionError,
+    BodyworkConfigParsingError,
+    BodyworkWorkflowExecutionError
+)
 from ..k8s import api_exception_msg, load_kubernetes_config
-from ..stage import run_stage
-from ..workflow import run_workflow
+from ..stage_execution import run_stage
+from ..workflow_execution import run_workflow
 
 
 def cli() -> None:
@@ -283,6 +290,21 @@ def cli() -> None:
         'namespace',
         type=str,
         help='Kubernetes namespace to create (if necessary) and setup.'
+    )
+
+    # validate interface
+    validate_config_file_cmd_parser = cli_arg_subparser.add_parser('validate')
+    validate_config_file_cmd_parser.set_defaults(func=validate_config)
+    validate_config_file_cmd_parser.add_argument(
+        '--file',
+        type=str,
+        default='bodywork.yaml',
+        help='Path to bodywork.yaml config file.'
+    )
+    validate_config_file_cmd_parser.add_argument(
+        '--check-files',
+        action='store_true',
+        help='Cross-check config with files and directories'
     )
 
     # get config and logger then execute delegated function
@@ -545,3 +567,26 @@ def setup_namespace(args: Namespace) -> None:
     load_kubernetes_config()
     setup_namespace_with_service_accounts_and_roles(namespace)
     sys.exit(0)
+
+
+def validate_config(args: Namespace) -> None:
+    """Validates a Bodywork config file and returns errors.
+
+    :param args: Arguments passed to the run command from the CLI.
+    :param logger: Bodywork logger.
+    """
+    file_path = Path(args.file)
+    check_py_files = args.check_files
+    try:
+        BodyworkConfig(file_path, check_py_files)
+        print(f'--> {file_path} is a valid Bodywork config file.')
+        sys.exit(0)
+    except (FileExistsError, BodyworkConfigParsingError,
+            BodyworkConfigMissingSectionError) as e:
+        print(f'--> {e}')
+        sys.exit(1)
+    except BodyworkConfigValidationError as e:
+        print(f'- missing or invalid parameters found in {file_path}:')
+        missing_or_invalid_param_list = '\n* '.join(e.missing_params)
+        print(f'* {missing_or_invalid_param_list}')
+        sys.exit(1)

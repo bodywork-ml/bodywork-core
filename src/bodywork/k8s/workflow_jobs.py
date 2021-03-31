@@ -30,6 +30,7 @@ from ..constants import (
     SSH_GITHUB_KEY_ENV_VAR,
     SSH_GITHUB_SECRET_NAME
 )
+from .utils import make_valid_k8s_name
 
 
 def configure_workflow_job(
@@ -91,7 +92,7 @@ def configure_workflow_job(
     )
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
-            name=project_name,
+            name=make_valid_k8s_name(project_name),
             namespace=namespace,
             labels={'app': 'bodywork'}
         ),

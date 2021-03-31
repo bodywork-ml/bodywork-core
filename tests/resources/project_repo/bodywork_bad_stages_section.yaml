@@ -1,0 +1,8 @@
+version: "1.0"
+project:
+  name: bodywork-test-project
+  docker_image: bodyworkml/bodywork-core:latest
+  DAG: stage_1 >> stage_2,stage_3
+stages: bad
+logging:
+  log_level: INFO

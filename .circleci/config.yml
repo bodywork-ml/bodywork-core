@@ -16,11 +16,11 @@
 
 version: 2.1
 orbs:
-  aws-eks: circleci/aws-eks@1.0.0
+  aws-eks: circleci/aws-eks@1.0.3
 jobs:
   run-unit-and-functional-tests-and-static-code-analysis:
     docker: 
-      - image: circleci/python:3
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run:
@@ -33,12 +33,14 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e unit_and_functional_tests,static_code_analysis -- -s -vv
+          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
   run-k8s-integration-tests:
-    executor: aws-eks/python3
+    executor:
+      name: aws-eks/python
+      tag: "3.8"
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
@@ -48,7 +50,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e k8s_integration_tests -- -s -vv
+          command: tox -e py38-k8s_integration_tests -- -s -vv
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
@@ -74,7 +76,7 @@ jobs:
             docker push bodyworkml/bodywork-core
   build-python-package-push-to-pypi:
     docker: 
-      - image: circleci/python:3
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run:
@@ -88,7 +90,7 @@ jobs:
           command: twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD --verbose
   create-and-push-new-git-tag:
     docker: 
-      - image: circleci/python:3
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run:
@@ -99,7 +101,7 @@ jobs:
           command: git push origin v$(cat VERSION)
   ensure-package-version-number-incremented:
     docker: 
-      - image: circleci/python:3
+      - image: circleci/python:3.8
     steps:
       - checkout
       - run: 

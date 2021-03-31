@@ -20,6 +20,8 @@ Kubernetes namespaces for Bodywork projects.
 """
 from kubernetes import client as k8s
 
+from .utils import make_valid_k8s_name
+
 
 def namespace_exists(namespace: str) -> bool:
     """Does the namespace exist on the Kubernetes cluster.
@@ -44,9 +46,10 @@ def create_namespace(name: str) -> None:
 
     :param namespace: Kubernetes namespace to create.
     """
+    valid_k8s_name = make_valid_k8s_name(name)
     k8s.CoreV1Api().create_namespace(
         body=k8s.V1Namespace(
-            metadata=k8s.V1ObjectMeta(name=name)
+            metadata=k8s.V1ObjectMeta(name=valid_k8s_name)
         )
     )
 

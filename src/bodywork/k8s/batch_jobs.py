@@ -31,6 +31,7 @@ from ..constants import (
     SSH_GITHUB_SECRET_NAME
 )
 from ..exceptions import BodyworkJobFailure
+from .utils import make_valid_k8s_name
 
 
 class JobStatus(Enum):
@@ -76,7 +77,7 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
-    job_name = f'{project_name}--{stage_name}'
+    job_name = make_valid_k8s_name(f'{project_name}--{stage_name}')
     vcs_env_vars = [
         k8s.V1EnvVar(
             name=SSH_GITHUB_KEY_ENV_VAR,

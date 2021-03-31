@@ -73,7 +73,7 @@ def bodywork_log_factory(
     else:
         try:
             bodywork_config = BodyworkConfig(config_file_path)
-            log.setLevel(bodywork_config['logging']['LOG_LEVEL'])
+            log.setLevel(bodywork_config.logging.log_level)
         except FileExistsError:
             try:
                 log_level_from_env_var = os.environ[DEFAULT_LOG_LEVEL_ENV_VAR]

@@ -31,6 +31,7 @@ from ..constants import (
     SSH_GITHUB_KEY_ENV_VAR,
     SSH_GITHUB_SECRET_NAME
 )
+from .utils import make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
@@ -131,7 +132,7 @@ def configure_service_stage_deployment(
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=f'{project_name}--{stage_name}',
+        name=make_valid_k8s_name(f'{project_name}--{stage_name}'),
         annotations={'port': str(port)},
         labels={'app': 'bodywork', 'stage': stage_name}
     )

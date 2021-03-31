@@ -18,6 +18,7 @@
 Test the Bodywork CLI.
 """
 import urllib3
+from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Iterable
 
@@ -93,7 +94,7 @@ def test_stage_command_successful_has_zero_exit_code(
              'stage',
              project_repo_connection_string,
              'master',
-             'stage_1_good',
+             'stage_1',
              ],
             check=True,
             capture_output=True,
@@ -169,8 +170,13 @@ def test_cli_secret_handler_error_handling():
     )
     assert 'could not parse secret data' in process_four.stdout
 
+
 def test_deployment_subcommand_exists():
-    process = run(['bodywork', 'deployment', '-h'], encoding='utf-8', capture_output=True)
+    process = run(
+        ['bodywork', 'deployment', '-h'],
+        encoding='utf-8',
+        capture_output=True
+    )
     expected_output = 'usage: bodywork deployment [-h]'
     assert process.stdout.find(expected_output) != -1
 
@@ -345,3 +351,52 @@ def test_graceful_exit_when_no_command_specified():
         capture_output=True,
     )
     assert process.returncode == 0
+
+
+def test_validate_subcommand(
+    project_repo_location: Path
+):
+    config_file_path = project_repo_location / 'bodywork.yaml'
+    process_one = run(
+        ['bodywork', 'validate', '--file', config_file_path],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert process_one.returncode == 0
+
+    config_file_path = project_repo_location / 'does_not_exist.yaml'
+    process_two = run(
+        ['bodywork', 'validate', '--file', config_file_path],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert process_two.returncode == 1
+    assert 'no config file found' in process_two.stdout
+
+    config_file_path = project_repo_location / 'bodywork_empty.yaml'
+    process_three = run(
+        ['bodywork', 'validate', '--file', config_file_path],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert process_three.returncode == 1
+    assert 'cannot parse YAML' in process_three.stdout
+
+    config_file_path = project_repo_location / 'bodywork_missing_sections.yaml'
+    process_four = run(
+        ['bodywork', 'validate', '--file', config_file_path],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert process_four.returncode == 1
+    assert 'missing sections: version, project, stages, logging' in process_four.stdout
+
+    config_file_path = project_repo_location / 'bodywork_bad_stages_section.yaml'
+    process_five = run(
+        ['bodywork', 'validate', '--file', config_file_path],
+        encoding='utf-8',
+        capture_output=True
+    )
+    assert process_five.returncode == 1
+    assert 'missing or invalid parameters' in process_five.stdout
+    assert '* stages._' in process_five.stdout
