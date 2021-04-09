@@ -506,6 +506,7 @@ def test_deployment_of_remote_workflows(
         )
         assert process_three.returncode == 0
         assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+        assert 'ERROR' not in process_three.stdout
 
     except Exception:
         assert False
