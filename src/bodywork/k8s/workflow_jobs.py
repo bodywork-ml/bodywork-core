@@ -27,8 +27,8 @@ from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    SSH_GITHUB_KEY_ENV_VAR,
-    SSH_GITHUB_SECRET_NAME
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_SECRET_NAME
 )
 from .utils import make_valid_k8s_name
 
@@ -58,11 +58,11 @@ def configure_workflow_job(
     """
     vcs_env_vars = [
         k8s.V1EnvVar(
-            name=SSH_GITHUB_KEY_ENV_VAR,
+            name=SSH_PRIVATE_KEY_ENV_VAR,
             value_from=k8s.V1EnvVarSource(
                 secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_GITHUB_KEY_ENV_VAR,
-                    name=SSH_GITHUB_SECRET_NAME,
+                    key=SSH_PRIVATE_KEY_ENV_VAR,
+                    name=SSH_SECRET_NAME,
                     optional=True
                 )
             )

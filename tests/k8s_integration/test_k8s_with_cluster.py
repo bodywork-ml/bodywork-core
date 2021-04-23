@@ -29,8 +29,8 @@ from pytest import raises
 from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
-    SSH_GITHUB_KEY_ENV_VAR,
-    SSH_GITHUB_SECRET_NAME
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_SECRET_NAME
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -327,9 +327,9 @@ def test_workflow_with_ssh_github_connectivity(
              'secret',
              'create',
              f'--namespace={random_test_namespace}',
-             f'--name={SSH_GITHUB_SECRET_NAME}',
+             f'--name={SSH_SECRET_NAME}',
              '--data',
-             f'{SSH_GITHUB_KEY_ENV_VAR}={os.environ[SSH_GITHUB_KEY_ENV_VAR]}'],
+             f'{SSH_PRIVATE_KEY_ENV_VAR}={os.environ[SSH_PRIVATE_KEY_ENV_VAR]}'],
             encoding='utf-8',
             capture_output=True
         )

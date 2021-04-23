@@ -61,7 +61,7 @@ def setup_bodywork_test_project(
             capture_output=True, encoding='utf-8')
         os.mkdir(bodywork_output_dir)
         yield True
-    except CalledProcessError as e:
+    except Exception as e:
         raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
     finally:
         # TEARDOWN
