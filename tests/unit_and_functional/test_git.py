@@ -25,21 +25,23 @@ from typing import Iterable
 from pytest import raises
 from unittest.mock import patch, MagicMock
 
-from bodywork.constants import SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
+from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
     ConnectionPrototcol,
     download_project_code_from_repo,
     get_connection_protocol,
     get_remote_repo_host,
     GitRepoHost,
-    setup_ssh_for_github
+    setup_ssh_for_github,
+    known_hosts_contains_domain_key,
+    get_ssh_public_key_from_domain
 )
 
 
 def test_that_git_project_repo_can_be_cloned(
-    setup_bodywork_test_project: Iterable[bool],
-    project_repo_connection_string: str,
-    cloned_project_repo_location: Path
+        setup_bodywork_test_project: Iterable[bool],
+        project_repo_connection_string: str,
+        cloned_project_repo_location: Path
 ):
     try:
         download_project_code_from_repo(project_repo_connection_string)
@@ -54,7 +56,7 @@ def test_that_git_project_clone_raises_exceptions():
 
 
 @patch('bodywork.git.setup_ssh_for_github')
-def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock): # noqa
+def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock):  # noqa
     with raises(RuntimeError, match='fatal: Could not read from remote repository'):
         download_project_code_from_repo('git@github.com:test/test.git')
 
@@ -91,15 +93,15 @@ def test_get_connection_protocol_raises_exception_for_unknown_protocol():
 
 
 def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
-    if os.environ.get(SSH_GITHUB_KEY_ENV_VAR):
-        del os.environ[SSH_GITHUB_KEY_ENV_VAR]
+    if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
     with raises(KeyError, match='failed to setup SSH for GitHub'):
         setup_ssh_for_github()
 
 
 def test_setup_ssh_for_github_create_ssh_files_and_env_var():
-    if not os.environ.get(SSH_GITHUB_KEY_ENV_VAR):
-        os.environ[SSH_GITHUB_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
+    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
 
     try:
         ssh_dir = Path('.') / SSH_DIR_NAME
@@ -119,3 +121,17 @@ def test_setup_ssh_for_github_create_ssh_files_and_env_var():
         assert False
     finally:
         shutil.rmtree(ssh_dir, ignore_errors=True)
+
+
+def test_known_hosts_contains_domain_key():
+    url = 'git@github.com:bodyworkml/test-project.git'
+    known_hosts = Path('C:\\Users\\Mario\\.ssh\\known_hosts')
+
+    result = known_hosts_contains_domain_key(url, known_hosts)
+    assert result == True
+
+def test_get_ssh_public_key_from_domain():
+
+    result = get_ssh_public_key_from_domain('github.com')
+
+    assert result is not None
