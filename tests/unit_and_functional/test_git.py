@@ -32,8 +32,7 @@ from bodywork.git import (
     get_connection_protocol,
     get_remote_repo_host,
     GitRepoHost,
-    setup_ssh_for_github,
-    known_hosts_contains_domain_key,
+    setup_ssh_for_git_host,
     get_ssh_public_key_from_domain
 )
 
@@ -50,12 +49,40 @@ def test_that_git_project_repo_can_be_cloned(
         assert False
 
 
+def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
+        setup_bodywork_test_project: Iterable[bool],
+        github_repo_connection_string: str,
+        cloned_project_repo_location: Path
+):
+    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
+    try:
+        download_project_code_from_repo(github_repo_connection_string)
+        assert cloned_project_repo_location.exists()
+    except Exception:
+        assert False
+
+
+def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
+        setup_bodywork_test_project: Iterable[bool],
+        gitlab_repo_connection_string: str,
+        cloned_project_repo_location: Path
+):
+    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
+    try:
+        download_project_code_from_repo(gitlab_repo_connection_string)
+        assert cloned_project_repo_location.exists()
+    except Exception:
+        assert False
+
+
 def test_that_git_project_clone_raises_exceptions():
     with raises(RuntimeError, match='git clone failed'):
         download_project_code_from_repo('file:///bad_url')
 
 
-@patch('bodywork.git.setup_ssh_for_github')
+@patch('bodywork.git.setup_ssh_for_git_host')
 def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock):  # noqa
     with raises(RuntimeError, match='fatal: Could not read from remote repository'):
         download_project_code_from_repo('git@github.com:test/test.git')
@@ -93,20 +120,21 @@ def test_get_connection_protocol_raises_exception_for_unknown_protocol():
 
 
 def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
+    hostname = 'github.com'
     if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    with raises(KeyError, match='failed to setup SSH for GitHub'):
-        setup_ssh_for_github()
+    with raises(KeyError, match=f'failed to setup SSH for {hostname}'):
+        setup_ssh_for_git_host(hostname)
 
 
-def test_setup_ssh_for_github_create_ssh_files_and_env_var():
+def test_setup_ssh_for_git_host_create_ssh_files_and_env_var():
     if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
 
     try:
         ssh_dir = Path('.') / SSH_DIR_NAME
         assert ssh_dir.exists() is False
-        setup_ssh_for_github()
+        setup_ssh_for_git_host('github.com')
 
         private_key = ssh_dir / 'id_rsa'
         assert private_key.exists() is True
@@ -123,15 +151,11 @@ def test_setup_ssh_for_github_create_ssh_files_and_env_var():
         shutil.rmtree(ssh_dir, ignore_errors=True)
 
 
-def test_known_hosts_contains_domain_key():
-    url = 'git@github.com:bodyworkml/test-project.git'
-    known_hosts = Path('C:\\Users\\Mario\\.ssh\\known_hosts')
+@patch('bodywork.git.run')
+def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_not_match(mock_run: MagicMock):
+    hostname = 'github.com'
 
-    result = known_hosts_contains_domain_key(url, known_hosts)
-    assert result == True
+    with raises(ConnectionAbortedError, match=f'SECURITY ALERT! SSH Fingerprint received '
+                                              f'from server does not match the fingerprint for {hostname}.'):
+        get_ssh_public_key_from_domain(hostname)
 
-def test_get_ssh_public_key_from_domain():
-
-    result = get_ssh_public_key_from_domain('github.com')
-
-    assert result is not None

@@ -48,6 +48,16 @@ def bodywork_output_dir() -> Path:
 
 
 @fixture(scope='function')
+def gitlab_repo_connection_string() -> str:
+    return 'git@gitlab.com:bodyworkml/test-project.git'
+
+
+@fixture(scope='function')
+def github_repo_connection_string() -> str:
+    return 'git@github.com:bodywork-ml/private-test-repo.git'
+
+
+@fixture(scope='function')
 def setup_bodywork_test_project(
     project_repo_location: Path,
     cloned_project_repo_location: Path,
@@ -66,6 +76,7 @@ def setup_bodywork_test_project(
     finally:
         # TEARDOWN
         shutil.rmtree('{}/.git'.format(project_repo_location), onerror=on_error)
+        shutil.rmtree('{}/.git'.format(cloned_project_repo_location), ignore_errors=True, onerror=on_error)
         shutil.rmtree(cloned_project_repo_location, ignore_errors=True, onerror=on_error)
         shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
 
