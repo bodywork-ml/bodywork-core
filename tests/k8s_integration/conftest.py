@@ -25,7 +25,7 @@ from typing import cast
 from pytest import fixture
 from kubernetes import client as k8s, config as k8s_config
 
-from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_PRIVATE_KEY_ENV_VAR
+from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_GITHUB_KEY_ENV_VAR
 from bodywork.workflow_execution import image_exists_on_dockerhub
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = 'ingress-nginx'
@@ -59,11 +59,11 @@ def docker_image() -> str:
 @fixture(scope='function')
 def set_github_ssh_private_key_env_var() -> None:
     try:
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+        os.environ[SSH_GITHUB_KEY_ENV_VAR]
     except KeyError:
         private_key = Path.home() / '.ssh/id_rsa'
         if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+            os.environ[SSH_GITHUB_KEY_ENV_VAR] = private_key.read_text()
         else:
             raise RuntimeError('cannot locate private SSH key to use for GitHub')
 

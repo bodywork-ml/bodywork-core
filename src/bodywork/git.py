@@ -22,7 +22,7 @@ import os
 import re
 from enum import Enum
 from pathlib import Path
-from subprocess import run, CalledProcessError, DEVNULL, PIPE
+from subprocess import run, CalledProcessError, DEVNULL, PIPE, Popen
 from urllib.parse import urlparse
 
 from .constants import DEFAULT_PROJECT_DIR, SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR, \
@@ -51,8 +51,7 @@ def download_project_code_from_repo(
         raise RuntimeError('git is not available')
     try:
         if get_connection_protocol(url) is ConnectionPrototcol.SSH:
-            hostname = urlparse(f'ssh://{url}').hostname
-            setup_ssh_for_git_host(hostname)
+            setup_ssh_for_github(urlparse(url).hostname)
         elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             log.warning('Not configured for use with private GitHub repos')
     except Exception as e:
@@ -118,7 +117,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionPrototcol:
         raise RuntimeError(msg)
 
 
-def setup_ssh_for_git_host(hostname: str) -> None:
+def setup_ssh_for_github(hostname: str) -> None:
     """Setup system for SSH interaction with GitHub.
 
     Using the private key assigned to an environment variable, this
@@ -137,25 +136,18 @@ def setup_ssh_for_git_host(hostname: str) -> None:
         private_key.touch(0o700, exist_ok=False)
         private_key.write_text(os.environ[SSH_PRIVATE_KEY_ENV_VAR])
 
-    try:
-        known_hosts = ssh_dir / 'known_hosts'
-        if not known_hosts.exists():
-            known_hosts.touch(0o700, exist_ok=False)
-            known_hosts.write_text(get_ssh_public_key_from_domain(hostname))
-        elif not known_hosts_contains_domain_key(hostname, known_hosts):
-            known_hosts.touch(0o700)
-            with known_hosts.open(mode='a') as file_handle:
-                file_handle.write(get_ssh_public_key_from_domain(hostname))
-    except OSError as e:
-        raise RuntimeError(f'Error updating known hosts with public key from {hostname}') from e
+    known_hosts = ssh_dir / 'known_hosts'
+    if not known_hosts.exists() or not known_hosts_contains_domain_key(hostname):
+        known_hosts.touch(0o700, exist_ok=False)
+        known_hosts.write_text(get_ssh_public_key_from_domain(hostname))
 
-    os.environ['GIT_SSH_COMMAND'] = (f"ssh -i '{private_key}'"
-                                     f" -o UserKnownHostsFile='{known_hosts}'")
+    os.environ['GIT_SSH_COMMAND'] = (
+        f'ssh -i {private_key} -o UserKnownHostsFile={known_hosts}'
+    )
 
 
 def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -> bool:
-    # return f'{hostname} ssh-rsa' in known_hosts_filepath.read_text()
-    return hostname in known_hosts_filepath.read_text()
+    return f'{hostname} ssh-rsa' in known_hosts_filepath.read_text()
 
 
 def get_ssh_public_key_from_domain(hostname: str) -> str:

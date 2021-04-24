@@ -32,7 +32,9 @@ from bodywork.git import (
     get_connection_protocol,
     get_remote_repo_host,
     GitRepoHost,
-    setup_ssh_for_git_host,
+    setup_ssh_for_github,
+    known_hosts_contains_domain_key,
+    get_ssh_public_key_from_domain
 )
 
 
@@ -43,30 +45,6 @@ def test_that_git_project_repo_can_be_cloned(
 ):
     try:
         download_project_code_from_repo(project_repo_connection_string)
-        assert cloned_project_repo_location.exists()
-    except Exception:
-        assert False
-
-
-def test_that_git_project_repo_can_be_cloned_from_github(
-        setup_bodywork_test_project: Iterable[bool],
-        github_repo_connection_string: str,
-        cloned_project_repo_location: Path
-):
-    try:
-        download_project_code_from_repo(github_repo_connection_string)
-        assert cloned_project_repo_location.exists()
-    except Exception:
-        assert False
-
-
-def test_that_git_project_repo_can_be_cloned_from_gitlab(
-        setup_bodywork_test_project: Iterable[bool],
-        gitlab_repo_connection_string: str,
-        cloned_project_repo_location: Path
-):
-    try:
-        download_project_code_from_repo(gitlab_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -118,7 +96,7 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
     if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
     with raises(KeyError, match='failed to setup SSH for GitHub'):
-        setup_ssh_for_git_host('github.com')
+        setup_ssh_for_github()
 
 
 def test_setup_ssh_for_github_create_ssh_files_and_env_var():
@@ -128,7 +106,7 @@ def test_setup_ssh_for_github_create_ssh_files_and_env_var():
     try:
         ssh_dir = Path('.') / SSH_DIR_NAME
         assert ssh_dir.exists() is False
-        setup_ssh_for_git_host('github.com')
+        setup_ssh_for_github()
 
         private_key = ssh_dir / 'id_rsa'
         assert private_key.exists() is True
@@ -145,14 +123,15 @@ def test_setup_ssh_for_github_create_ssh_files_and_env_var():
         shutil.rmtree(ssh_dir, ignore_errors=True)
 
 
-def test_setup_ssh_for_github_returns_key_for_domain():
+def test_known_hosts_contains_domain_key():
     url = 'git@github.com:bodyworkml/test-project.git'
+    known_hosts = Path('C:\\Users\\Mario\\.ssh\\known_hosts')
 
-    setup_ssh_for_git_host(url)
+    result = known_hosts_contains_domain_key(url, known_hosts)
+    assert result == True
 
+def test_get_ssh_public_key_from_domain():
 
-def test_setup_ssh_for_github_throws_exception_if_ssh_fingerprints_do_not_match():
-    url = 'git@github.com:bodyworkml/test-project.git'
-    with raises(ConnectionAbortedError, match='cannot identify connection protocol'):
-        setup_ssh_for_git_host(url)
+    result = get_ssh_public_key_from_domain('github.com')
 
+    assert result is not None
