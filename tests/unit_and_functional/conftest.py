@@ -48,6 +48,16 @@ def bodywork_output_dir() -> Path:
 
 
 @fixture(scope='function')
+def gitlab_repo_connection_string() -> str:
+    return 'git@gitlab.com:bodyworkml/test-project.git'
+
+
+@fixture(scope='function')
+def github_repo_connection_string() -> str:
+    return 'git@github.com:bodywork-ml/private-test-repo.git'
+
+
+@fixture(scope='function')
 def setup_bodywork_test_project(
     project_repo_location: Path,
     cloned_project_repo_location: Path,
