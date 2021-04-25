@@ -29,11 +29,16 @@ jobs:
             git config --global user.name "Bodywork Machine Learning Ltd"
             git config --global user.email "info@bodyworkml.com"
       - run:
+          name: Install OpenSSH
+          command: sudo apt-get install openssh-server
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv
+          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv --junitxml=~/tox/junit.xml
+      - store_test_results:
+          path: ~/tox/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
