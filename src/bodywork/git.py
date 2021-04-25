@@ -129,13 +129,10 @@ def setup_ssh_for_git_host(hostname: str) -> None:
     ssh_dir = Path('.') / SSH_DIR_NAME
     private_key = ssh_dir / 'id_rsa'
     if not private_key.exists():
-        if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            msg = (f'failed to setup SSH for {hostname} - cannot find '
-                   f'{SSH_PRIVATE_KEY_ENV_VAR} environment variable')
-            raise KeyError(msg)
-        ssh_dir.mkdir(mode=0o700, exist_ok=True)
-        private_key.touch(0o700, exist_ok=False)
-        private_key.write_text(os.environ[SSH_PRIVATE_KEY_ENV_VAR])
+        msg = (f'failed to setup SSH for {hostname} - cannot find SSH private key'
+               f'{private_key}. Please ensure you have generated your public/private'
+               f' SSH key for use with your git provider')
+        raise FileNotFoundError(msg)
 
     try:
         known_hosts = ssh_dir / 'known_hosts'

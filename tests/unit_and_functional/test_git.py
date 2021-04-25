@@ -24,6 +24,7 @@ from typing import Iterable
 
 from pytest import raises
 from unittest.mock import patch, MagicMock
+from conftest import on_error
 
 from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
@@ -61,6 +62,9 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
+    finally:
+        ssh_dir = Path('.') / SSH_DIR_NAME
+        shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
@@ -68,13 +72,14 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
         gitlab_repo_connection_string: str,
         cloned_project_repo_location: Path
 ):
-    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
     try:
         download_project_code_from_repo(gitlab_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
+    finally:
+        ssh_dir = Path('.') / SSH_DIR_NAME
+        shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 def test_that_git_project_clone_raises_exceptions():
@@ -119,11 +124,13 @@ def test_get_connection_protocol_raises_exception_for_unknown_protocol():
         get_connection_protocol(conn_str)
 
 
-def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
+def test_setup_ssh_for_git_raises_exception_no_private_key_env_var():
     hostname = 'github.com'
-    if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    with raises(KeyError, match=f'failed to setup SSH for {hostname}'):
+    ssh_dir = Path('.') / SSH_DIR_NAME
+    if ssh_dir.exists():
+        shutil.rmtree(ssh_dir, onerror=on_error)
+
+    with raises(FileNotFoundError, match=f'failed to setup SSH for {hostname} - cannot find SSH private key'):
         setup_ssh_for_git_host(hostname)
 
 
@@ -148,7 +155,7 @@ def test_setup_ssh_for_git_host_create_ssh_files_and_env_var():
     except Exception:
         assert False
     finally:
-        shutil.rmtree(ssh_dir, ignore_errors=True)
+        shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 @patch('bodywork.git.run')
