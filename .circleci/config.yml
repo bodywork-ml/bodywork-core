@@ -29,6 +29,9 @@ jobs:
             git config --global user.name "Bodywork Machine Learning Ltd"
             git config --global user.email "info@bodyworkml.com"
       - run:
+          name: Install OpenSSH
+          command: sudo apt-get install openssh-server
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
