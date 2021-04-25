@@ -36,7 +36,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s --junitxml=~/tox/junit.xml
+          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s --junitxml=~/tox/junit.xml -q
       - store_test_results:
           path: ~/tox/
       - run:
