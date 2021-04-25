@@ -140,6 +140,5 @@ def setup_ssh_for_github() -> None:
         known_hosts.touch(0o700, exist_ok=False)
         known_hosts.write_text(ssh_public_key)
 
-    os.environ['GIT_SSH_COMMAND'] = (
-        f'ssh -i {private_key} -o UserKnownHostsFile={known_hosts}'
-    )
+    os.environ['GIT_SSH_COMMAND'] = (f"ssh -i '{private_key}'"
+                                     f" -o UserKnownHostsFile='{known_hosts}'")
