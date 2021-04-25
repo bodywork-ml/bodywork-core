@@ -37,6 +37,8 @@ jobs:
       - run: 
           name: Running tests
           command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv
+      - store_test_results:
+          path: ~/test-results/pytest/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
