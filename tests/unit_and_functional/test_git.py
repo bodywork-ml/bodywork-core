@@ -55,8 +55,6 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
         github_repo_connection_string: str,
         cloned_project_repo_location: Path
 ):
-    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
     try:
         download_project_code_from_repo(github_repo_connection_string)
         assert cloned_project_repo_location.exists()
@@ -73,6 +71,10 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
         cloned_project_repo_location: Path
 ):
     try:
+        ssh_dir = Path('.') / SSH_DIR_NAME
+        os.makedirs(ssh_dir, exist_ok=False)
+        with open(os.path.join(ssh_dir, 'id_rsa'), 'w'):
+            pass
         download_project_code_from_repo(gitlab_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
@@ -90,7 +92,7 @@ def test_that_git_project_clone_raises_exceptions():
 @patch('bodywork.git.setup_ssh_for_git_host')
 def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock):  # noqa
     with raises(RuntimeError, match='fatal: Could not read from remote repository'):
-        download_project_code_from_repo('git@github.com:test/test.git')
+        download_project_code_from_repo('git@xyz.com:test/test.git')
 
 
 def test_get_remote_repo_host_identifies_remote_hosts():
@@ -134,25 +136,26 @@ def test_setup_ssh_for_git_raises_exception_no_private_key_env_var():
         setup_ssh_for_git_host(hostname)
 
 
-def test_setup_ssh_for_git_host_create_ssh_files_and_env_var():
-    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = 'MY_PRIVATE_KEY'
+def test_setup_ssh_for_git_host_create_known_host_and_env_var():
 
     try:
         ssh_dir = Path('.') / SSH_DIR_NAME
-        assert ssh_dir.exists() is False
+        if not ssh_dir.exists():
+            os.makedirs(ssh_dir, exist_ok=False)
+        key_path = Path(ssh_dir, 'id_rsa')
+        if not key_path.exists():
+            with open(key_path, 'w'):
+                pass
+        known_hosts = ssh_dir / 'known_hosts'
+
+        assert known_hosts.exists() is False
         setup_ssh_for_git_host('github.com')
 
-        private_key = ssh_dir / 'id_rsa'
-        assert private_key.exists() is True
-        assert private_key.read_text() == 'MY_PRIVATE_KEY'
-
-        known_hosts = ssh_dir / 'known_hosts'
         assert known_hosts.exists() is True
         assert known_hosts.read_text()[:18] == 'github.com ssh-rsa'
 
         assert os.environ['GIT_SSH_COMMAND'][:3] == 'ssh'
-    except Exception:
+    except Exception as e:
         assert False
     finally:
         shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
