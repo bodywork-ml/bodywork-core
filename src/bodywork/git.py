@@ -143,9 +143,9 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
                     'bitbucket.org': BITBUCKET_SSH_FINGERPRINT}
     if hostname in fingerprints:
         try:
-            server_key = run(['ssh-keyscan', '-t', 'rsa', hostname], check=True, shell=True,
+            server_key = run(['ssh-keyscan', '-t', 'rsa', hostname], check=True,
                              capture_output=True, encoding='utf-8').stdout
-            fingerprint = run(['ssh-keygen', '-l', '-f', '-'], check=True, shell=True,
+            fingerprint = run(['ssh-keygen', '-l', '-f', '-'], check=True,
                               capture_output=True, encoding='utf-8', input=server_key).stdout.strip()
             if fingerprint == fingerprints.get(hostname):
                 return server_key
