@@ -28,18 +28,18 @@ from conftest import on_error
 
 from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
-    ConnectionPrototcol,
+    ConnectionProtocol,
     download_project_code_from_repo,
     get_connection_protocol,
     setup_ssh_for_git_host,
-    get_ssh_public_key_from_domain
+    get_ssh_public_key_from_domain,
 )
 
 
 def test_that_git_project_repo_can_be_cloned(
-        setup_bodywork_test_project: Iterable[bool],
-        project_repo_connection_string: str,
-        cloned_project_repo_location: Path
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    cloned_project_repo_location: Path,
 ):
     try:
         download_project_code_from_repo(project_repo_connection_string)
@@ -49,9 +49,10 @@ def test_that_git_project_repo_can_be_cloned(
 
 
 def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
-        setup_bodywork_test_project: Iterable[bool],
-        github_repo_connection_string: str,
-        cloned_project_repo_location: Path
+    setup_bodywork_test_project: Iterable[bool],
+    github_repo_connection_string: str,
+    cloned_project_repo_location: Path,
+    set_github_ssh_private_key_env_var: None,
 ):
     try:
         download_project_code_from_repo(github_repo_connection_string)
@@ -59,97 +60,101 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     except Exception:
         assert False
     finally:
-        ssh_dir = Path('.') / SSH_DIR_NAME
+        ssh_dir = Path(".") / SSH_DIR_NAME
         shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
-        setup_bodywork_test_project: Iterable[bool],
-        gitlab_repo_connection_string: str,
-        cloned_project_repo_location: Path
+    setup_bodywork_test_project: Iterable[bool],
+    gitlab_repo_connection_string: str,
+    cloned_project_repo_location: Path,
+    set_gitlab_ssh_private_key_env_var: None,
 ):
     try:
-        ssh_dir = Path('.') / SSH_DIR_NAME
+        ssh_dir = Path(".") / SSH_DIR_NAME
         os.makedirs(ssh_dir, exist_ok=False)
-        with open(os.path.join(ssh_dir, 'id_rsa'), 'w'):
+        with open(os.path.join(ssh_dir, "id_rsa"), "w"):
             pass
         download_project_code_from_repo(gitlab_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
     finally:
-        ssh_dir = Path('.') / SSH_DIR_NAME
+        ssh_dir = Path(".") / SSH_DIR_NAME
         shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 def test_that_git_project_clone_raises_exceptions():
-    with raises(RuntimeError, match='git clone failed'):
-        download_project_code_from_repo('file:///bad_url')
+    with raises(RuntimeError, match="git clone failed"):
+        download_project_code_from_repo("file:///bad_url")
 
 
-@patch('bodywork.git.setup_ssh_for_git_host')
-def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock):  # noqa
-    with raises(RuntimeError, match='fatal: Could not read from remote repository'):
-        download_project_code_from_repo('git@xyz.com:test/test.git')
+@patch("bodywork.git.setup_ssh_for_git_host")
+def test_that_git_project_clone_returns_git_error_in_exception(
+    mock_setup_ssh: MagicMock,
+):  # noqa
+    with raises(RuntimeError, match="fatal: Could not read from remote repository"):
+        download_project_code_from_repo("git@xyz.com:test/test.git")
 
 
 def test_get_connection_protocol_identifies_connection_protocols():
-    conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'
-    assert get_connection_protocol(conn_str_1) is ConnectionPrototcol.HTTPS
+    conn_str_1 = "https://github.com/bodywork-ml/bodywork-test-project"
+    assert get_connection_protocol(conn_str_1) is ConnectionProtocol.HTTPS
 
-    conn_str_2 = 'git@github.com:bodywork-ml/bodywork-test-project.git'
-    assert get_connection_protocol(conn_str_2) is ConnectionPrototcol.SSH
+    conn_str_2 = "git@github.com:bodywork-ml/bodywork-test-project.git"
+    assert get_connection_protocol(conn_str_2) is ConnectionProtocol.SSH
 
-    conn_str_3 = 'file:///Users/alexioannides/Dropbox/data_science/workspace/python/bodywork'  # noqa
-    assert get_connection_protocol(conn_str_3) is ConnectionPrototcol.FILE
+    conn_str_3 = "file:///Users/alexioannides/Dropbox/data_science/workspace/python/bodywork"  # noqa
+    assert get_connection_protocol(conn_str_3) is ConnectionProtocol.FILE
 
 
 def test_get_connection_protocol_raises_exception_for_unknown_protocol():
-    conn_str = 'http://github.com/bodywork-ml/bodywork-test-project'
-    with raises(RuntimeError, match='cannot identify connection protocol'):
+    conn_str = "http://github.com/bodywork-ml/bodywork-test-project"
+    with raises(RuntimeError, match="cannot identify connection protocol"):
         get_connection_protocol(conn_str)
 
 
-def test_setup_ssh_for_git_raises_exception_no_private_key_env_var():
-    hostname = 'github.com'
-    ssh_dir = Path('.') / SSH_DIR_NAME
-    if ssh_dir.exists():
-        shutil.rmtree(ssh_dir, onerror=on_error)
-
-    with raises(FileNotFoundError, match=f'failed to setup SSH for {hostname} - cannot find SSH private key'):
+def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
+    hostname = "github.com"
+    if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+    with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
         setup_ssh_for_git_host(hostname)
 
 
 def test_setup_ssh_for_git_host_create_known_host_and_env_var():
+    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = "MY_PRIVATE_KEY"
 
     try:
-        ssh_dir = Path('.') / SSH_DIR_NAME
-        if not ssh_dir.exists():
-            os.makedirs(ssh_dir, exist_ok=False)
-        key_path = Path(ssh_dir, 'id_rsa')
-        if not key_path.exists():
-            with open(key_path, 'w'):
-                pass
-        known_hosts = ssh_dir / 'known_hosts'
+        ssh_dir = Path(".") / SSH_DIR_NAME
+        assert ssh_dir.exists() is False
+        setup_ssh_for_git_host("github.com")
 
-        assert known_hosts.exists() is False
-        setup_ssh_for_git_host('github.com')
+        private_key = ssh_dir / "id_rsa"
+        assert private_key.exists() is True
+        assert private_key.read_text() == "MY_PRIVATE_KEY"
 
+        known_hosts = ssh_dir / "known_hosts"
         assert known_hosts.exists() is True
-        assert known_hosts.read_text()[:18] == 'github.com ssh-rsa'
+        assert known_hosts.read_text()[:18] == "github.com ssh-rsa"
 
-        assert os.environ['GIT_SSH_COMMAND'][:3] == 'ssh'
-    except Exception as e:
+        assert os.environ["GIT_SSH_COMMAND"][:3] == "ssh"
+    except Exception:
         assert False
     finally:
         shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
-@patch('bodywork.git.run')
-def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_not_match(mock_run: MagicMock):
-    hostname = 'github.com'
+@patch("bodywork.git.run")
+def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_not_match(
+    mock_run: MagicMock,
+):
+    hostname = "github.com"
 
-    with raises(ConnectionAbortedError, match=f'SECURITY ALERT! SSH Fingerprint received '
-                                              f'from server does not match the fingerprint for {hostname}.'):
+    with raises(
+        ConnectionAbortedError,
+        match=f"SECURITY ALERT! SSH Fingerprint received "
+        f"from server does not match the fingerprint for {hostname}.",
+    ):
         get_ssh_public_key_from_domain(hostname)
-

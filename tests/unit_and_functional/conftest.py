@@ -23,6 +23,7 @@ import stat
 from pathlib import Path
 from subprocess import CalledProcessError, run
 from typing import Iterable
+from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
 
 from pytest import fixture
 
@@ -90,6 +91,30 @@ def k8s_env_vars() -> Iterable[bool]:
     finally:
         yield True
     del os.environ['KUBERNETES_SERVICE_HOST']
+
+
+@fixture(scope='function')
+def set_github_ssh_private_key_env_var() -> None:
+    try:
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+    except KeyError:
+        private_key = Path.home() / '.ssh/id_rsa'
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+
+
+@fixture(scope='function')
+def set_gitlab_ssh_private_key_env_var() -> None:
+    try:
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+    except KeyError:
+        private_key = Path.home() / '.ssh/id_rsa_e28827a593edd69f1a58cf07a7755107'
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError('cannot locate private SSH key to use for GitHub')
 
 
 def on_error(func, path, exc_info):
