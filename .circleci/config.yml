@@ -39,6 +39,9 @@ jobs:
           name: Copy SSH Keys to test project
           command: sudo cp -r ~/.ssh ~/project/.ssh_bodywork
       - run:
+          name: Enable Access to SSH keys
+          command: sudo chmod -R 777 ~/project/.ssh_bodywork
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
