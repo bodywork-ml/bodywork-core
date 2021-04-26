@@ -31,6 +31,10 @@ jobs:
       - run:
           name: Install OpenSSH
           command: sudo apt-get install openssh-server
+      - add_ssh_keys:
+            fingerprints:
+              - "3b:3f:26:dc:81:3b:6d:49:88:8e:da:f0:d5:9f:99:d6"
+              - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"  
       - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
