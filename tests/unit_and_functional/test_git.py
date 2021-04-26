@@ -31,8 +31,6 @@ from bodywork.git import (
     ConnectionPrototcol,
     download_project_code_from_repo,
     get_connection_protocol,
-    get_remote_repo_host,
-    GitRepoHost,
     setup_ssh_for_git_host,
     get_ssh_public_key_from_domain
 )
@@ -93,20 +91,6 @@ def test_that_git_project_clone_raises_exceptions():
 def test_that_git_project_clone_returns_git_error_in_exception(mock_setup_ssh: MagicMock):  # noqa
     with raises(RuntimeError, match='fatal: Could not read from remote repository'):
         download_project_code_from_repo('git@xyz.com:test/test.git')
-
-
-def test_get_remote_repo_host_identifies_remote_hosts():
-    conn_str_1 = 'https://github.com/bodywork-ml/bodywork-test-project'
-    assert get_remote_repo_host(conn_str_1) is GitRepoHost.GITHUB
-
-    conn_str_2 = 'git@github.com:bodywork-ml/bodywork-test-project.git'
-    assert get_remote_repo_host(conn_str_2) is GitRepoHost.GITHUB
-
-
-def test_get_remote_repo_host_raises_exception_for_unknown_host():
-    conn_str = ' https://bitbucket.org/8ffie/ml-and-statistics-python-jupyter-nb.git'
-    with raises(RuntimeError, match='unknown Git repo host'):
-        get_remote_repo_host(conn_str)
 
 
 def test_get_connection_protocol_identifies_connection_protocols():

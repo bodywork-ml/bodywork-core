@@ -80,23 +80,6 @@ class ConnectionPrototcol(Enum):
     SSH = 'ssh'
 
 
-def get_remote_repo_host(connection_string: str) -> GitRepoHost:
-    """Derive the remote Git repo host from connection string.
-
-    :param connection_string: The string containing the connection
-        details for the remote Git repository - e.g. the GitHUb URL.
-    :raises RuntimeError: if the remote Git repository cannot be
-        determined.
-    :return: The remote Git host type.
-    """
-    github = True if connection_string.find('github.com') != -1 else False
-    if github:
-        return GitRepoHost.GITHUB
-    else:
-        msg = 'unknown Git repo host - only remote repos on GitHub currently supported.'
-        raise RuntimeError(msg)
-
-
 def get_connection_protocol(connection_string: str) -> ConnectionPrototcol:
     """Derive connection protocol used to retrieve Git repo.
 
@@ -171,6 +154,6 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
                     f'SECURITY ALERT! SSH Fingerprint received from server does not match the fingerprint for'
                     f' {hostname}. Please check and ensure that {hostname} is not being impersonated')
         except CalledProcessError as e:
-            raise RuntimeError(f'Unable to retrieve public SSH key from {hostname}: {e.stdout}')
+            raise RuntimeError(f'Unable to retrieve public SSH key from {hostname}: {e.stdout} {e.stderr}')
     else:
         raise RuntimeError(f'{hostname} is not supported by Bodywork')
