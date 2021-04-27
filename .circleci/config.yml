@@ -43,7 +43,7 @@ jobs:
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
-  run-k8s-integration-tests:
+  run-integration-tests:
     executor:
       name: aws-eks/python
       tag: "3.8"
