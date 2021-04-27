@@ -152,7 +152,7 @@ workflows:
           filters:
             branches:
               ignore: master
-      - run-k8s-integration-tests:
+      - run-integration-tests:
           requires:
             - build-dev-docker-image-push-to-dockerhub
       - build-master-docker-image-push-to-dockerhub:
