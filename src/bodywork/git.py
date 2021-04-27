@@ -169,7 +169,9 @@ def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -
 
 def get_ssh_public_key_from_domain(hostname: str) -> str:
     """Gets the public SSH key from the host and checks if the fingerprint matches
-     the stored fingerprint of valid servers
+     the stored fingerprint of valid servers. Output from ssh-keyscan is piped into
+     ssh-keygen by setting the input in conjunction with the trailing '-' in the
+     command.
 
     :param hostname: Name of host to retrieve the key from e.g. Gitlab.com
     :return: The public SSH Key of the host.
@@ -198,12 +200,12 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
                 return server_key
             else:
                 raise ConnectionAbortedError(
-                    f"SECURITY ALERT! SSH Fingerprint received from server does not match the fingerprint for" # noqa
-                    f" {hostname}. Please check and ensure that {hostname} is not being impersonated"   # noqa
+                    f"SECURITY ALERT! SSH Fingerprint received from server does not match the fingerprint for"  # noqa
+                    f" {hostname}. Please check and ensure that {hostname} is not being impersonated"  # noqa
                 )
         except CalledProcessError as e:
             raise RuntimeError(
-                f"Unable to retrieve public SSH key from {hostname}: {e.stdout} {e.stderr}" # noqa
+                f"Unable to retrieve public SSH key from {hostname}: {e.stdout} {e.stderr}"  # noqa
             )
     else:
         raise RuntimeError(f"{hostname} is not supported by Bodywork")

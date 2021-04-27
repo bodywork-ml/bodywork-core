@@ -31,73 +31,76 @@ from bodywork.workflow_execution import (
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
-    _print_logs_to_stdout
+    _print_logs_to_stdout,
 )
 
 
-@patch('requests.Session')
+@patch("requests.Session")
 def test_image_exists_on_dockerhub_handles_connection_error(
-    mock_requests_session: MagicMock
+    mock_requests_session: MagicMock,
 ):
     mock_requests_session().get.side_effect = requests.exceptions.ConnectionError
-    with raises(RuntimeError, match='cannot connect to'):
-        image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'latest')
+    with raises(RuntimeError, match="cannot connect to"):
+        image_exists_on_dockerhub("bodywork-ml/bodywork-core", "latest")
 
 
-@patch('requests.Session')
+@patch("requests.Session")
 def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
-    mock_requests_session: MagicMock
+    mock_requests_session: MagicMock,
 ):
     mock_requests_session().get.return_value = requests.Response()
 
     mock_requests_session().get.return_value.status_code = 200
-    assert image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'v1') is True
+    assert image_exists_on_dockerhub("bodywork-ml/bodywork-core", "v1") is True
 
     mock_requests_session().get.return_value.status_code = 404
-    assert image_exists_on_dockerhub('bodywork-ml/bodywork-core', 'x') is False
+    assert image_exists_on_dockerhub("bodywork-ml/bodywork-core", "x") is False
 
 
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
-        ValueError,
-        match=f'invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}'
+        ValueError, match=f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}"
     ):
-        parse_dockerhub_image_string('bodyworkml-bodywork-stage-runner:latest')
-        parse_dockerhub_image_string('bodyworkml/bodywork-core:lat:st')
+        parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
+        parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
 
 
 def test_parse_dockerhub_image_string_parses_valid_strings():
-    assert (parse_dockerhub_image_string('bodyworkml/bodywork-core:0.0.1')
-            == ('bodyworkml/bodywork-core', '0.0.1'))
-    assert (parse_dockerhub_image_string('bodyworkml/bodywork-core')
-            == ('bodyworkml/bodywork-core', 'latest'))
+    assert parse_dockerhub_image_string("bodyworkml/bodywork-core:0.0.1") == (
+        "bodyworkml/bodywork-core",
+        "0.0.1",
+    )
+    assert parse_dockerhub_image_string("bodyworkml/bodywork-core") == (
+        "bodyworkml/bodywork-core",
+        "latest",
+    )
 
 
-@patch('bodywork.workflow_execution.k8s')
+@patch("bodywork.workflow_execution.k8s")
 def test_run_workflow_raises_exception_if_namespace_does_not_exist(
     mock_k8s: MagicMock,
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path,
 ):
     mock_k8s.namespace_exists.return_value = False
-    with raises(BodyworkWorkflowExecutionError, match='not a valid namespace'):
-        run_workflow('foo_bar_foo_993', project_repo_location)
+    with raises(BodyworkWorkflowExecutionError, match="not a valid namespace"):
+        run_workflow("foo_bar_foo_993", project_repo_location)
 
 
-@patch('bodywork.workflow_execution.k8s')
+@patch("bodywork.workflow_execution.k8s")
 def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
-    mock_k8s.get_latest_pod_name.return_value = 'bodywork-test-project--stage-1'
-    mock_k8s.get_pod_logs.return_value = 'foo-bar'
-    _print_logs_to_stdout('the-namespace', 'bodywork-test-project--stage-1')
+    mock_k8s.get_latest_pod_name.return_value = "bodywork-test-project--stage-1"
+    mock_k8s.get_pod_logs.return_value = "foo-bar"
+    _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
     captured_stdout = capsys.readouterr().out
-    assert 'foo-bar' in captured_stdout
+    assert "foo-bar" in captured_stdout
 
     mock_k8s.get_latest_pod_name.return_value = None
-    _print_logs_to_stdout('the-namespace', 'bodywork-test-project--stage-1')
+    _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
     captured_stdout = capsys.readouterr().out
-    assert 'cannot get logs for bodywork-test-project--stage-1' in captured_stdout
+    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
 
     mock_k8s.get_latest_pod_name.side_effect = Exception
-    _print_logs_to_stdout('the-namespace', 'bodywork-test-project--stage-1')
+    _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
     captured_stdout = capsys.readouterr().out
-    assert 'cannot get logs for bodywork-test-project--stage-1' in captured_stdout
+    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout

@@ -56,7 +56,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-k8s_integration_tests -- -s -vv
+          command: tox -e py38-integration -- -s -vv
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)

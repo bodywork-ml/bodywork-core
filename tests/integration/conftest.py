@@ -29,47 +29,51 @@ from kubernetes import client as k8s, config as k8s_config
 from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.workflow_execution import image_exists_on_dockerhub
 
-NGINX_INGRESS_CONTROLLER_NAMESPACE = 'ingress-nginx'
-NGINX_INGRESS_CONTROLLER_SERVICE_NAME = 'ingress-nginx-controller'
+NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
+NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def test_namespace() -> str:
-    return 'bodywork-dev'
+    return "bodywork-dev"
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def random_test_namespace() -> str:
-    rand_test_namespace = f'bodywork-integration-tests-{randint(0, 10000)}'
-    print(f'\n|--> Bodywork integration tests running in '
-          f'namespace={rand_test_namespace}')
+    rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
+    print(
+        f"\n|--> Bodywork integration tests running in "
+        f"namespace={rand_test_namespace}"
+    )
     return rand_test_namespace
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def docker_image() -> str:
-    with open(Path('VERSION'), 'r') as file:
-        version = file.readlines()[0].replace('\n', '')
-    dev_image = f'{BODYWORK_DOCKERHUB_IMAGE_REPO}:{version}-dev'
-    if image_exists_on_dockerhub(BODYWORK_DOCKERHUB_IMAGE_REPO, f'{version}-dev'):
+    with open(Path("VERSION"), "r") as file:
+        version = file.readlines()[0].replace("\n", "")
+    dev_image = f"{BODYWORK_DOCKERHUB_IMAGE_REPO}:{version}-dev"
+    if image_exists_on_dockerhub(BODYWORK_DOCKERHUB_IMAGE_REPO, f"{version}-dev"):
         return dev_image
     else:
-        raise RuntimeError(f'{dev_image} is not available for running integration tests')
+        raise RuntimeError(
+            f"{dev_image} is not available for running integration tests"
+        )
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def set_github_ssh_private_key_env_var() -> None:
     try:
         os.environ[SSH_PRIVATE_KEY_ENV_VAR]
     except KeyError:
-        private_key = Path.home() / '.ssh/id_rsa'
+        private_key = Path.home() / ".ssh/id_rsa"
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
         else:
-            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
@@ -77,43 +81,48 @@ def ingress_load_balancer_url() -> str:
             namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
         )
         nginx_service = [
-            service for service in services_in_namespace.items
+            service
+            for service in services_in_namespace.items
             if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
         ][0]
         load_balancer = nginx_service.status.load_balancer.ingress[0].hostname
         return cast(str, load_balancer)
     except IndexError:
-        msg = (f'cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in '
-               f'namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}')
+        msg = (
+            f"cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+        )
         raise RuntimeError(msg)
     except AttributeError:
-        msg = (f'cannot find a load-balancer associated with '
-               f'service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in '
-               f'namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}')
+        msg = (
+            f"cannot find a load-balancer associated with "
+            f"service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+        )
         raise RuntimeError(msg)
     except k8s.rest.ApiException as e:
-        msg = f'k8s API error - {e}'
+        msg = f"k8s API error - {e}"
         raise RuntimeError(msg)
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def set_github_ssh_private_key_env_var() -> None:
     if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / '.ssh/id_rsa'
+        private_key = Path.home() / ".ssh/id_rsa"
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
         else:
-            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def set_gitlab_ssh_private_key_env_var() -> None:
     if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / '.ssh/id_rsa_e28827a593edd69f1a58cf07a7755107'
+        private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
         else:
-            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
 def on_error(func, path, exc_info):

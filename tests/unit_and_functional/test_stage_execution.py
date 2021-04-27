@@ -27,10 +27,9 @@ from bodywork.stage_execution import _install_python_requirements, run_stage
 
 
 def test_that_requirements_can_be_installed(
-    setup_bodywork_test_project: Iterable[bool],
-    project_repo_location: Path
+    setup_bodywork_test_project: Iterable[bool], project_repo_location: Path
 ):
-    requirements = ['wheel>=0.34.2', 'six>=1.15.0']
+    requirements = ["wheel>=0.34.2", "six>=1.15.0"]
     try:
         _install_python_requirements(requirements)
         assert True
@@ -39,30 +38,29 @@ def test_that_requirements_can_be_installed(
 
 
 def test_that_requirements_install_errors_raise_exception(
-    setup_bodywork_test_project: Iterable[bool],
-    project_repo_location: Path
+    setup_bodywork_test_project: Iterable[bool], project_repo_location: Path
 ):
-    requirements = ['invalid-package-foo==0.1.0.0.0.1']
-    with raises(RuntimeError, match=r'requirements'):
+    requirements = ["invalid-package-foo==0.1.0.0.0.1"]
+    with raises(RuntimeError, match=r"requirements"):
         _install_python_requirements(requirements)
 
 
 def test_run_stage_with_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path
+    bodywork_output_dir: Path,
 ):
     try:
-        run_stage('stage_1', project_repo_connection_string)
+        run_stage("stage_1", project_repo_connection_string)
         assert True
     except Exception:
         assert False
 
     try:
-        with open(bodywork_output_dir / 'stage_1_test_file.txt') as f:
+        with open(bodywork_output_dir / "stage_1_test_file.txt") as f:
             stage_output = f.read()
-        assert stage_output.find('Hello from stage 1') != -1
-        assert stage_output.find('numpy.sum(numpy.ones(10))=10') != 1
+        assert stage_output.find("Hello from stage 1") != -1
+        assert stage_output.find("numpy.sum(numpy.ones(10))=10") != 1
     except FileNotFoundError:
         assert False
 
@@ -70,18 +68,18 @@ def test_run_stage_with_requirements_install(
 def test_run_stage_without_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path
+    bodywork_output_dir: Path,
 ):
     try:
-        run_stage('stage_2', project_repo_connection_string)
+        run_stage("stage_2", project_repo_connection_string)
         assert True
     except Exception:
         assert False
 
     try:
-        with open(bodywork_output_dir / 'stage_2_test_file.txt') as f:
+        with open(bodywork_output_dir / "stage_2_test_file.txt") as f:
             stage_output = f.read()
-        assert stage_output.find('Hello from stage 2') != -1
+        assert stage_output.find("Hello from stage 2") != -1
     except FileNotFoundError:
         assert False
 
@@ -89,19 +87,19 @@ def test_run_stage_without_requirements_install(
 def test_run_stage_with_arguements(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path
+    bodywork_output_dir: Path,
 ):
     try:
-        run_stage('stage_3', project_repo_connection_string)
+        run_stage("stage_3", project_repo_connection_string)
         assert True
     except Exception:
         assert False
 
     try:
-        with open(bodywork_output_dir / 'stage_3_test_file.txt') as f:
+        with open(bodywork_output_dir / "stage_3_test_file.txt") as f:
             stage_output = f.read()
-        assert stage_output.find('arg1 = Hello World') != -1
-        assert stage_output.find('arg2 = 1') != -1
+        assert stage_output.find("arg1 = Hello World") != -1
+        assert stage_output.find("arg2 = 1") != -1
     except FileNotFoundError:
         assert False
 
@@ -109,7 +107,7 @@ def test_run_stage_with_arguements(
 def test_run_stage_failure_raises_exception(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path
+    bodywork_output_dir: Path,
 ):
-    with raises(BodyworkStageFailure, match=r'stage_3_bad_script'):
-        run_stage('stage_3_bad_script', project_repo_connection_string)
+    with raises(BodyworkStageFailure, match=r"stage_3_bad_script"):
+        run_stage("stage_3_bad_script", project_repo_connection_string)

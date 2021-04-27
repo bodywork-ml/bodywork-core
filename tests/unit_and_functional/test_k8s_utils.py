@@ -26,12 +26,12 @@ def test_api_exception_msg_retreives_message_str():
     mock_api_exception = Mock()
 
     mock_api_exception.body = '{"message": "foo"}'
-    assert 'foo' in api_exception_msg(mock_api_exception)
+    assert "foo" in api_exception_msg(mock_api_exception)
 
     mock_api_exception.body = '{"bar": "foo"}'
-    assert api_exception_msg(mock_api_exception) == ''
+    assert api_exception_msg(mock_api_exception) == ""
 
 
 def test_make_valid_k8s_name_corrects_invalid_names():
-    assert make_valid_k8s_name('a-valid-name') == 'a-valid-name'
-    assert make_valid_k8s_name(' an invalid_name ') == 'an-invalid-name'
+    assert make_valid_k8s_name("a-valid-name") == "a-valid-name"
+    assert make_valid_k8s_name(" an invalid_name ") == "an-invalid-name"

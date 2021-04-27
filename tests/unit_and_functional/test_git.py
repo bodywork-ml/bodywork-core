@@ -32,14 +32,14 @@ from bodywork.git import (
     download_project_code_from_repo,
     get_connection_protocol,
     setup_ssh_for_git_host,
-    get_ssh_public_key_from_domain
+    get_ssh_public_key_from_domain,
 )
 
 
 def test_that_git_project_repo_can_be_cloned(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    cloned_project_repo_location: Path
+    cloned_project_repo_location: Path,
 ):
     try:
         download_project_code_from_repo(project_repo_connection_string)
