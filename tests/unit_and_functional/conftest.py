@@ -95,9 +95,7 @@ def k8s_env_vars() -> Iterable[bool]:
 
 @fixture(scope='function')
 def set_github_ssh_private_key_env_var() -> None:
-    try:
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    except KeyError:
+    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
         private_key = Path.home() / '.ssh/id_rsa'
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
@@ -107,9 +105,7 @@ def set_github_ssh_private_key_env_var() -> None:
 
 @fixture(scope='function')
 def set_gitlab_ssh_private_key_env_var() -> None:
-    try:
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    except KeyError:
+    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
         private_key = Path.home() / '.ssh/id_rsa_e28827a593edd69f1a58cf07a7755107'
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()

@@ -160,6 +160,7 @@ def setup_ssh_for_git_host(hostname: str) -> None:
 def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -> bool:
     """Checks to see if the host is in the list of keys in the known_hosts file.
 
+    :param known_hosts_filepath: path to known_hosts file
     :param hostname: Host name to check for.
     :return: bool if the hostname is in the file
     """
