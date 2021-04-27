@@ -19,9 +19,12 @@ Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
 import stat
+import shutil
 from pathlib import Path
 from random import randint
 from typing import cast
+from subprocess import run
+from typing import Iterable
 
 from pytest import fixture
 from kubernetes import client as k8s, config as k8s_config
@@ -74,6 +77,16 @@ def set_github_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
+def set_gitlab_ssh_private_key_env_var() -> None:
+    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+        private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+
+
+@fixture(scope="function")
 def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
@@ -106,23 +119,41 @@ def ingress_load_balancer_url() -> str:
 
 
 @fixture(scope="function")
-def set_github_ssh_private_key_env_var() -> None:
-    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / ".ssh/id_rsa"
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError("cannot locate private SSH key to use for GitHub")
-
-
-@fixture(scope="function")
-def set_gitlab_ssh_private_key_env_var() -> None:
-    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+def setup_bodywork_test_project(
+    project_repo_location: Path,
+    cloned_project_repo_location: Path,
+    bodywork_output_dir: Path,
+) -> Iterable[bool]:
+    # SETUP
+    try:
+        run(["git", "init"], cwd=project_repo_location, check=True, encoding="utf-8")
+        run(
+            ["git", "add", "-A"],
+            cwd=project_repo_location,
+            check=True,
+            encoding="utf-8",
+        )  # noqa
+        run(
+            ["git", "commit", "-m", '"test"'],
+            cwd=project_repo_location,
+            check=True,
+            capture_output=True,
+            encoding="utf-8",
+        )
+        os.mkdir(bodywork_output_dir)
+        yield True
+    except Exception as e:
+        raise RuntimeError(f"Cannot create test project Git repo - {e}.")
+    finally:
+        # TEARDOWN
+        shutil.rmtree(f"{project_repo_location}/.git", onerror=on_error)
+        shutil.rmtree(
+            f"{cloned_project_repo_location}/.git", ignore_errors=True, onerror=on_error
+        )
+        shutil.rmtree(
+            cloned_project_repo_location, ignore_errors=True, onerror=on_error
+        )
+        shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
 
 
 def on_error(func, path, exc_info):
