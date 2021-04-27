@@ -37,10 +37,10 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
     key = kv_string[:equals_sign]
     if len(key) == 0:
         raise ValueError(error_msg)
-    value = kv_string[equals_sign + 1 :]
+    value = kv_string[equals_sign + 1:]
     if len(value) == 0:
         raise ValueError(error_msg)
-    return (key, value)
+    return key, value
 
 
 def parse_cli_secrets_strings(key_value_strings: Iterable[str]) -> Dict[str, str]:
