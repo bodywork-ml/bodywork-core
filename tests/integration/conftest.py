@@ -18,6 +18,7 @@
 Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
+import stat
 from pathlib import Path
 from random import randint
 from typing import cast
@@ -93,3 +94,40 @@ def ingress_load_balancer_url() -> str:
     except k8s.rest.ApiException as e:
         msg = f'k8s API error - {e}'
         raise RuntimeError(msg)
+
+
+@fixture(scope='function')
+def set_github_ssh_private_key_env_var() -> None:
+    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+        private_key = Path.home() / '.ssh/id_rsa'
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+
+
+@fixture(scope='function')
+def set_gitlab_ssh_private_key_env_var() -> None:
+    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+        private_key = Path.home() / '.ssh/id_rsa_e28827a593edd69f1a58cf07a7755107'
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError('cannot locate private SSH key to use for GitHub')
+
+
+def on_error(func, path, exc_info):
+    """Error handler for ``shutil.rmtree``.
+
+    If the error is due to an access error (read only file)
+    it attempts to add write permission and then retries.
+
+    If the error is for another reason it re-raises the error.
+
+    Usage : ``shutil.rmtree(path, onerror=on_error)``
+    """
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWUSR)
+        func(path)
+    else:
+        raise Exception

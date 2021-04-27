@@ -21,9 +21,8 @@ import os
 import shutil
 import stat
 from pathlib import Path
-from subprocess import CalledProcessError, run
+from subprocess import run
 from typing import Iterable
-from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
 
 from pytest import fixture
 
@@ -73,11 +72,11 @@ def setup_bodywork_test_project(
         os.mkdir(bodywork_output_dir)
         yield True
     except Exception as e:
-        raise RuntimeError(f'Cannot create test project Git repo - {e.output}.')
+        raise RuntimeError(f'Cannot create test project Git repo - {e}.')
     finally:
         # TEARDOWN
-        shutil.rmtree('{}/.git'.format(project_repo_location), onerror=on_error)
-        shutil.rmtree('{}/.git'.format(cloned_project_repo_location), ignore_errors=True, onerror=on_error)
+        shutil.rmtree(f'{project_repo_location}/.git', onerror=on_error)
+        shutil.rmtree(f'{cloned_project_repo_location}/.git', ignore_errors=True, onerror=on_error)
         shutil.rmtree(cloned_project_repo_location, ignore_errors=True, onerror=on_error)
         shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
 
@@ -91,26 +90,6 @@ def k8s_env_vars() -> Iterable[bool]:
     finally:
         yield True
     del os.environ['KUBERNETES_SERVICE_HOST']
-
-
-@fixture(scope='function')
-def set_github_ssh_private_key_env_var() -> None:
-    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / '.ssh/id_rsa'
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError('cannot locate private SSH key to use for GitHub')
-
-
-@fixture(scope='function')
-def set_gitlab_ssh_private_key_env_var() -> None:
-    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-        private_key = Path.home() / '.ssh/id_rsa_e28827a593edd69f1a58cf07a7755107'
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError('cannot locate private SSH key to use for GitHub')
 
 
 def on_error(func, path, exc_info):
