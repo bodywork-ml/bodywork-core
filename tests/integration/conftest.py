@@ -29,7 +29,11 @@ from typing import Iterable
 from pytest import fixture
 from kubernetes import client as k8s, config as k8s_config
 
-from bodywork.constants import BODYWORK_DOCKERHUB_IMAGE_REPO, SSH_PRIVATE_KEY_ENV_VAR
+from bodywork.constants import (
+    BODYWORK_DOCKERHUB_IMAGE_REPO,
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_DIR_NAME,
+)
 from bodywork.workflow_execution import image_exists_on_dockerhub
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
@@ -72,11 +76,6 @@ def project_repo_connection_string(project_repo_location: Path) -> str:
 
 
 @fixture(scope="function")
-def cloned_project_repo_location() -> Path:
-    return Path("bodywork_project")
-
-
-@fixture(scope="function")
 def random_test_namespace() -> str:
     rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
     print(
@@ -113,12 +112,14 @@ def set_github_ssh_private_key_env_var() -> None:
 
 @fixture(scope="function")
 def set_gitlab_ssh_private_key_env_var() -> None:
-    if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+    if "CIRCLECI" in os.environ:
         private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+    else:
+        private_key = Path.home() / ".ssh/id_rsa"
+    if private_key.exists():
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+    else:
+        raise RuntimeError("cannot locate private SSH key to use for GitLab")
 
 
 @fixture(scope="function")
@@ -151,6 +152,8 @@ def ingress_load_balancer_url() -> str:
     except k8s.rest.ApiException as e:
         msg = f"k8s API error - {e}"
         raise RuntimeError(msg)
+    except Exception as e:
+        raise RuntimeError() from e
 
 
 @fixture(scope="function")
@@ -181,6 +184,10 @@ def setup_bodywork_test_project(
         raise RuntimeError(f"Cannot create test project Git repo - {e}.")
     finally:
         # TEARDOWN
+        if "GIT_SSH_COMMAND" in os.environ:
+            del os.environ["GIT_SSH_COMMAND"]
+        ssh_dir = Path(".") / SSH_DIR_NAME
+        shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
         shutil.rmtree(f"{project_repo_location}/.git", onerror=on_error)
         shutil.rmtree(
             f"{cloned_project_repo_location}/.git", ignore_errors=True, onerror=on_error
