@@ -48,44 +48,6 @@ def bodywork_output_dir() -> Path:
 
 
 @fixture(scope="function")
-def setup_bodywork_test_project(
-    project_repo_location: Path,
-    cloned_project_repo_location: Path,
-    bodywork_output_dir: Path,
-) -> Iterable[bool]:
-    # SETUP
-    try:
-        run(["git", "init"], cwd=project_repo_location, check=True, encoding="utf-8")
-        run(
-            ["git", "add", "-A"],
-            cwd=project_repo_location,
-            check=True,
-            encoding="utf-8",
-        )  # noqa
-        run(
-            ["git", "commit", "-m", '"test"'],
-            cwd=project_repo_location,
-            check=True,
-            capture_output=True,
-            encoding="utf-8",
-        )
-        os.mkdir(bodywork_output_dir)
-        yield True
-    except Exception as e:
-        raise RuntimeError(f"Cannot create test project Git repo - {e}.")
-    finally:
-        # TEARDOWN
-        shutil.rmtree(f"{project_repo_location}/.git", onerror=on_error)
-        shutil.rmtree(
-            f"{cloned_project_repo_location}/.git", ignore_errors=True, onerror=on_error
-        )
-        shutil.rmtree(
-            cloned_project_repo_location, ignore_errors=True, onerror=on_error
-        )
-        shutil.rmtree(bodywork_output_dir, ignore_errors=True, onerror=on_error)
-
-
-@fixture(scope="function")
 def k8s_env_vars() -> Iterable[bool]:
     try:
         os.environ["KUBERNETES_SERVICE_HOST"]

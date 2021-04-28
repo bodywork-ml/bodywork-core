@@ -24,11 +24,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Configure Git
-          command: | 
-            git config --global user.name "Bodywork Machine Learning Ltd"
-            git config --global user.email "info@bodyworkml.com"
-      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
@@ -47,6 +42,11 @@ jobs:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
       - checkout
+      - run:
+          name: Configure Git
+          command: |
+            git config --global user.name "Bodywork Machine Learning Ltd"
+            git config --global user.email "info@bodyworkml.com"
       - add_ssh_keys:
           fingerprints:
             - "14:5e:d0:95:2e:2c:7d:d8:dc:f2:bb:f3:97:10:3e:c5"
@@ -56,7 +56,9 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-integration_tests -- -s -vv
+          command: tox -e py38-integration_tests -- -s -vv --junitxml=~/tox/junit.xml
+      - store_test_results:
+          path: ~/tox/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)

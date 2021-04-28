@@ -55,6 +55,7 @@ def cloned_project_repo_location() -> Path:
 def bodywork_output_dir() -> Path:
     return Path("bodywork_project_output")
 
+
 @fixture(scope="function")
 def gitlab_repo_connection_string() -> str:
     return "git@gitlab.com:bodyworkml/test-project.git"
@@ -156,7 +157,7 @@ def setup_bodywork_test_project(
             cwd=project_repo_location,
             check=True,
             encoding="utf-8",
-        )  # noqa
+        )
         run(
             ["git", "commit", "-m", '"test"'],
             cwd=project_repo_location,

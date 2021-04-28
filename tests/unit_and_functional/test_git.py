@@ -36,18 +36,6 @@ from bodywork.git import (
 )
 
 
-def test_that_git_project_repo_can_be_cloned(
-    setup_bodywork_test_project: Iterable[bool],
-    project_repo_connection_string: str,
-    cloned_project_repo_location: Path,
-):
-    try:
-        download_project_code_from_repo(project_repo_connection_string)
-        assert cloned_project_repo_location.exists()
-    except Exception:
-        assert False
-
-
 def test_that_git_project_clone_raises_exceptions():
     with raises(RuntimeError, match="git clone failed"):
         download_project_code_from_repo("file:///bad_url")
@@ -56,7 +44,7 @@ def test_that_git_project_clone_raises_exceptions():
 @patch("bodywork.git.setup_ssh_for_git_host")
 def test_that_git_project_clone_returns_git_error_in_exception(
     mock_setup_ssh: MagicMock,
-):  # noqa
+):
     with raises(RuntimeError, match="fatal: Could not read from remote repository"):
         download_project_code_from_repo("git@xyz.com:test/test.git")
 
