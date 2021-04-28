@@ -65,7 +65,9 @@ def download_project_code_from_repo(
         elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             log.warning("Not configured for use with private GitHub repos")
     except Exception as e:
-        msg = f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"  # noqa
+        msg = (
+            f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
+        )
         raise RuntimeError(msg)
     try:
         run(
@@ -118,6 +120,8 @@ def setup_ssh_for_git_host(hostname: str) -> None:
     function creates a new SSH configuration in the working directory
     and then tells Git to use it for SSH by exporting the
     GIT_SSH_COMMAND environment variable.
+
+    :param hostname:    Hostname to SSH to.
     """
     ssh_dir = Path(".") / SSH_DIR_NAME
     private_key = ssh_dir / "id_rsa"
@@ -144,7 +148,6 @@ def setup_ssh_for_git_host(hostname: str) -> None:
             known_hosts.touch(0o700, exist_ok=False)
             known_hosts.write_text(get_ssh_public_key_from_domain(hostname))
         elif not known_hosts_contains_domain_key(hostname, known_hosts):
-            known_hosts.touch(0o700)
             with known_hosts.open(mode="a") as file_handle:
                 file_handle.write(get_ssh_public_key_from_domain(hostname))
     except OSError as e:
@@ -161,7 +164,7 @@ def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -
     """Checks to see if the host is in the list of keys in the known_hosts file.
 
     :param known_hosts_filepath: path to known_hosts file
-    :param hostname: Host name to check for.
+    :param hostname: Hostname to check for.
     :return: bool if the hostname is in the file
     """
     return hostname in known_hosts_filepath.read_text()
@@ -169,9 +172,10 @@ def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -
 
 def get_ssh_public_key_from_domain(hostname: str) -> str:
     """Gets the public SSH key from the host and checks if the fingerprint matches
-     the stored fingerprint of valid servers. Output from ssh-keyscan is piped into
-     ssh-keygen by setting the input in conjunction with the trailing '-' in the
-     command.
+     the stored fingerprint of valid servers.
+
+     Output from ssh-keyscan is piped into ssh-keygen by setting the input in
+      conjunction with the trailing '-' in the command.
 
     :param hostname: Name of host to retrieve the key from e.g. Gitlab.com
     :return: The public SSH Key of the host.

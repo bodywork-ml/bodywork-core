@@ -28,10 +28,6 @@ jobs:
           command: | 
             git config --global user.name "Bodywork Machine Learning Ltd"
             git config --global user.email "info@bodyworkml.com"
-      - add_ssh_keys:
-            fingerprints:
-              - "3b:3f:26:dc:81:3b:6d:49:88:8e:da:f0:d5:9f:99:d6"
-              - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"  
       - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
@@ -53,7 +49,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "3b:3f:26:dc:81:3b:6d:49:88:8e:da:f0:d5:9f:99:d6"
+            - "14:5e:d0:95:2e:2c:7d:d8:dc:f2:bb:f3:97:10:3e:c5"
             - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"
       - run:
           name: Installing Python dependencies
@@ -68,10 +64,6 @@ jobs:
     machine: true
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "3b:3f:26:dc:81:3b:6d:49:88:8e:da:f0:d5:9f:99:d6"
-            - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"  
       - run:
           name: Build image
           command: |
@@ -82,10 +74,6 @@ jobs:
     machine: true
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "3b:3f:26:dc:81:3b:6d:49:88:8e:da:f0:d5:9f:99:d6"
-            - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07" 
       - run:
           name: Build image
           command: |

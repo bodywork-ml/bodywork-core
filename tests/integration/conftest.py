@@ -42,6 +42,30 @@ def test_namespace() -> str:
 
 
 @fixture(scope="function")
+def project_repo_location() -> Path:
+    return Path("tests/resources/project_repo")
+
+
+@fixture(scope="function")
+def cloned_project_repo_location() -> Path:
+    return Path("bodywork_project")
+
+
+@fixture(scope="function")
+def bodywork_output_dir() -> Path:
+    return Path("bodywork_project_output")
+
+@fixture(scope="function")
+def gitlab_repo_connection_string() -> str:
+    return "git@gitlab.com:bodyworkml/test-project.git"
+
+
+@fixture(scope="function")
+def github_repo_connection_string() -> str:
+    return "git@github.com:bodywork-ml/private-test-repo.git"
+
+
+@fixture(scope="function")
 def random_test_namespace() -> str:
     rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
     print(
