@@ -67,6 +67,16 @@ def github_repo_connection_string() -> str:
 
 
 @fixture(scope="function")
+def project_repo_connection_string(project_repo_location: Path) -> str:
+    return project_repo_location.absolute().as_uri()
+
+
+@fixture(scope="function")
+def cloned_project_repo_location() -> Path:
+    return Path("bodywork_project")
+
+
+@fixture(scope="function")
 def random_test_namespace() -> str:
     rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
     print(

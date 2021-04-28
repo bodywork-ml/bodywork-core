@@ -61,9 +61,9 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-integration_tests -- -s -vv --junitxml=~/tox/junit.xml
+          command: tox -e py38-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
       - store_test_results:
-          path: ~/tox/
+          path: ~/tox_int/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
