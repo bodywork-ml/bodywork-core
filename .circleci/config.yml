@@ -24,6 +24,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Configure Git
+          command: |
+            git config --global user.name "Bodywork Machine Learning Ltd"
+            git config --global user.email "info@bodyworkml.com"
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
