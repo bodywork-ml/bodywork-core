@@ -100,14 +100,11 @@ def docker_image() -> str:
 
 @fixture(scope="function")
 def set_github_ssh_private_key_env_var() -> None:
-    try:
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    except KeyError:
-        private_key = Path.home() / ".ssh/id_rsa"
-        if private_key.exists():
-            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
-        else:
-            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+    private_key = Path.home() / ".ssh/id_rsa"
+    if private_key.exists():
+        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+    else:
+        raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
 @fixture(scope="function")
