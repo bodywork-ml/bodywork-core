@@ -18,15 +18,11 @@
 Tests for Git repository interaction functions.
 """
 import os
-import shutil
-from pathlib import Path
-from typing import Iterable
 
 from pytest import raises
 from unittest.mock import patch, MagicMock
-from conftest import on_error
 
-from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR
+from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
     ConnectionProtocol,
     download_project_code_from_repo,
@@ -72,30 +68,6 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
     with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
         setup_ssh_for_git_host(hostname)
-
-
-def test_setup_ssh_for_git_host_create_known_host_and_env_var():
-    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = "MY_PRIVATE_KEY"
-
-    ssh_dir = Path(".") / SSH_DIR_NAME
-    try:
-        assert ssh_dir.exists() is False
-        setup_ssh_for_git_host("github.com")
-
-        private_key = ssh_dir / "id_rsa"
-        assert private_key.exists() is True
-        assert private_key.read_text() == "MY_PRIVATE_KEY"
-
-        known_hosts = ssh_dir / "known_hosts"
-        assert known_hosts.exists() is True
-        assert known_hosts.read_text()[:18] == "github.com ssh-rsa"
-
-        assert os.environ["GIT_SSH_COMMAND"][:3] == "ssh"
-    except Exception:
-        assert False
-    finally:
-        shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
 @patch("bodywork.git.run")
