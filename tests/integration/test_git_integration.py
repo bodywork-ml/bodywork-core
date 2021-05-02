@@ -69,6 +69,7 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var():
     except Exception:
         assert False
     finally:
+        os.environ.pop(SSH_PRIVATE_KEY_ENV_VAR)
         shutil.rmtree(ssh_dir, ignore_errors=True, onerror=on_error)
 
 
