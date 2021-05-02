@@ -51,9 +51,7 @@ def test_that_git_project_repo_can_be_cloned(
 
 
 def test_setup_ssh_for_git_host_create_known_host_and_env_var():
-    if not os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
-        os.environ[SSH_PRIVATE_KEY_ENV_VAR] = "MY_PRIVATE_KEY"
-
+    os.environ[SSH_PRIVATE_KEY_ENV_VAR] = "MY_PRIVATE_KEY"
     ssh_dir = Path(".") / SSH_DIR_NAME
     try:
         assert ssh_dir.exists() is False
