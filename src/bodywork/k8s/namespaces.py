@@ -29,14 +29,9 @@ def namespace_exists(namespace: str) -> bool:
     :param namespace: Kubernetes namespace to check.
     :return: True if the namespace was found, othewise False.
     """
-    namespace_objects = (
-        k8s.CoreV1Api()
-        .list_namespace()
-        .items
-    )
+    namespace_objects = k8s.CoreV1Api().list_namespace().items
     namespace_names = [
-        namespace_object.metadata.name
-        for namespace_object in namespace_objects
+        namespace_object.metadata.name for namespace_object in namespace_objects
     ]
     return True if namespace in namespace_names else False
 
@@ -48,9 +43,7 @@ def create_namespace(name: str) -> None:
     """
     valid_k8s_name = make_valid_k8s_name(name)
     k8s.CoreV1Api().create_namespace(
-        body=k8s.V1Namespace(
-            metadata=k8s.V1ObjectMeta(name=valid_k8s_name)
-        )
+        body=k8s.V1Namespace(metadata=k8s.V1ObjectMeta(name=valid_k8s_name))
     )
 
 
@@ -59,7 +52,4 @@ def delete_namespace(name: str) -> None:
 
     :param namespace: Kubernetes namespace to delete.
     """
-    k8s.CoreV1Api().delete_namespace(
-        name=name,
-        propagation_policy='Background'
-    )
+    k8s.CoreV1Api().delete_namespace(name=name, propagation_policy="Background")

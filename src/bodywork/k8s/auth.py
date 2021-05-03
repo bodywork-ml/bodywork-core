@@ -25,7 +25,7 @@ from kubernetes import client as k8s, config as k8s_config
 from ..constants import (
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
 )
 
 
@@ -39,7 +39,7 @@ def load_kubernetes_config() -> None:
 
     :raises RuntimeError: if a kubeconfig cannot be loaded.
     """
-    if os.getenv('KUBERNETES_SERVICE_HOST'):
+    if os.getenv("KUBERNETES_SERVICE_HOST"):
         k8s_config.load_incluster_config()
     else:
         k8s_config.load_kube_config()
@@ -53,11 +53,7 @@ def service_account_exists(namespace: str, name: str) -> bool:
     :return: True if the service-account was found, othewise False.
     """
     service_account_objects = (
-        k8s.CoreV1Api()
-        .list_namespaced_service_account(
-            namespace=namespace
-        )
-        .items
+        k8s.CoreV1Api().list_namespaced_service_account(namespace=namespace).items
     )
     service_account_names = [
         service_account_object.metadata.name
@@ -72,11 +68,7 @@ def cluster_role_exists(name: str) -> bool:
     :param name: The name of the cluster-role to check.
     :return: True if the cluster-role was found, othewise False.
     """
-    cluster_role_objects = (
-        k8s.RbacAuthorizationV1Api()
-        .list_cluster_role()
-        .items
-    )
+    cluster_role_objects = k8s.RbacAuthorizationV1Api().list_cluster_role().items
     cluster_role_names = [
         cluster_role_object.metadata.name
         for cluster_role_object in cluster_role_objects
@@ -93,7 +85,7 @@ def workflow_cluster_role_binding_name(namespace: str) -> str:
         associates the workflow cluster-role to the workflow
         service-account, within a namespace setup for Bodywork.
     """
-    return f'{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{namespace}'
+    return f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{namespace}"
 
 
 def cluster_role_binding_exists(name: str) -> bool:
@@ -103,9 +95,7 @@ def cluster_role_binding_exists(name: str) -> bool:
     :return: True if the cluster-role-binding was found, othewise False.
     """
     cluster_role_binding_objects = (
-        k8s.RbacAuthorizationV1Api()
-        .list_cluster_role_binding()
-        .items
+        k8s.RbacAuthorizationV1Api().list_cluster_role_binding().items
     )
     cluster_role_binding_names = [
         cluster_role_binding_object.metadata.name
@@ -119,9 +109,7 @@ def delete_cluster_role_binding(name: str) -> None:
 
     :param name: The name assigned to the cluster-role-binding.
     """
-    k8s.RbacAuthorizationV1Api().delete_cluster_role_binding(
-        name=name
-    )
+    k8s.RbacAuthorizationV1Api().delete_cluster_role_binding(name=name)
 
 
 def setup_workflow_service_account(namespace: str) -> None:
@@ -132,106 +120,85 @@ def setup_workflow_service_account(namespace: str) -> None:
     """
     service_account_object = k8s.V1ServiceAccount(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
         )
     )
     k8s.CoreV1Api().create_namespaced_service_account(
-        namespace=namespace,
-        body=service_account_object
+        namespace=namespace, body=service_account_object
     )
 
     role_object = k8s.V1Role(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
         ),
         rules=[
+            k8s.V1PolicyRule(api_groups=[""], resources=["*"], verbs=["*"]),
             k8s.V1PolicyRule(
-                api_groups=[''],
-                resources=['*'],
-                verbs=['*']
+                api_groups=["apps", "batch"], resources=["*"], verbs=["*"]
             ),
             k8s.V1PolicyRule(
-                api_groups=['apps', 'batch'],
-                resources=['*'],
-                verbs=['*']
+                api_groups=["extensions"], resources=["ingresses"], verbs=["*"]
             ),
-            k8s.V1PolicyRule(
-                api_groups=['extensions'],
-                resources=['ingresses'],
-                verbs=['*']
-            )
-        ]
+        ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
-        namespace=namespace,
-        body=role_object
+        namespace=namespace, body=role_object
     )
 
     role_binding_object = k8s.V1RoleBinding(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
         ),
         role_ref=k8s.V1RoleRef(
-            kind='Role',
+            kind="Role",
             name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-            api_group='rbac.authorization.k8s.io'
+            api_group="rbac.authorization.k8s.io",
         ),
         subjects=[
             k8s.V1Subject(
-                kind='ServiceAccount',
+                kind="ServiceAccount",
                 name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-                namespace=namespace
+                namespace=namespace,
             )
-        ]
+        ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role_binding(
-        namespace=namespace,
-        body=role_binding_object
+        namespace=namespace, body=role_binding_object
     )
 
     if not cluster_role_exists(BODYWORK_WORKFLOW_CLUSTER_ROLE):
         cluster_role_object = k8s.V1ClusterRole(
-            metadata=k8s.V1ObjectMeta(
-                name=BODYWORK_WORKFLOW_CLUSTER_ROLE
-            ),
+            metadata=k8s.V1ObjectMeta(name=BODYWORK_WORKFLOW_CLUSTER_ROLE),
             rules=[
                 k8s.V1PolicyRule(
-                    api_groups=[''],
-                    resources=['namespaces'],
-                    verbs=['get', 'list']
+                    api_groups=[""], resources=["namespaces"], verbs=["get", "list"]
                 ),
                 k8s.V1PolicyRule(
-                    api_groups=['rbac.authorization.k8s.io'],
-                    resources=['clusterrolebindings'],
-                    verbs=['get', 'list']
-                )
-            ]
+                    api_groups=["rbac.authorization.k8s.io"],
+                    resources=["clusterrolebindings"],
+                    verbs=["get", "list"],
+                ),
+            ],
         )
-        k8s.RbacAuthorizationV1Api().create_cluster_role(
-            body=cluster_role_object
-        )
+        k8s.RbacAuthorizationV1Api().create_cluster_role(body=cluster_role_object)
 
     if not cluster_role_binding_exists(workflow_cluster_role_binding_name(namespace)):
         cluster_role_binding_object = k8s.V1ClusterRoleBinding(
             metadata=k8s.V1ObjectMeta(
-                name=workflow_cluster_role_binding_name(namespace),
-                namespace=namespace
+                name=workflow_cluster_role_binding_name(namespace), namespace=namespace
             ),
             role_ref=k8s.V1RoleRef(
-                kind='ClusterRole',
+                kind="ClusterRole",
                 name=BODYWORK_WORKFLOW_CLUSTER_ROLE,
-                api_group='rbac.authorization.k8s.io'
+                api_group="rbac.authorization.k8s.io",
             ),
             subjects=[
                 k8s.V1Subject(
-                    kind='ServiceAccount',
+                    kind="ServiceAccount",
                     name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-                    namespace=namespace
+                    namespace=namespace,
                 )
-            ]
+            ],
         )
         k8s.RbacAuthorizationV1Api().create_cluster_role_binding(
             body=cluster_role_binding_object
@@ -246,52 +213,46 @@ def setup_job_and_deployment_service_accounts(namespace: str) -> None:
     """
     service_account_object = k8s.V1ServiceAccount(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
         )
     )
     k8s.CoreV1Api().create_namespaced_service_account(
-        namespace=namespace,
-        body=service_account_object
+        namespace=namespace, body=service_account_object
     )
 
     role_object = k8s.V1Role(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
         ),
         rules=[
             k8s.V1PolicyRule(
-                api_groups=[''],
-                resources=['secrets', 'configmaps'],
-                verbs=['get', 'list']
+                api_groups=[""],
+                resources=["secrets", "configmaps"],
+                verbs=["get", "list"],
             )
-        ]
+        ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
-        namespace=namespace,
-        body=role_object
+        namespace=namespace, body=role_object
     )
 
     role_binding_object = k8s.V1RoleBinding(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace,
-            name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
         ),
         role_ref=k8s.V1RoleRef(
-            kind='Role',
+            kind="Role",
             name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
-            api_group='rbac.authorization.k8s.io'
+            api_group="rbac.authorization.k8s.io",
         ),
         subjects=[
             k8s.V1Subject(
-                kind='ServiceAccount',
+                kind="ServiceAccount",
                 name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
-                namespace=namespace
+                namespace=namespace,
             )
-        ]
+        ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role_binding(
-        namespace=namespace,
-        body=role_binding_object
+        namespace=namespace, body=role_binding_object
     )

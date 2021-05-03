@@ -32,8 +32,8 @@ from .logs import bodywork_log_factory
 def run_stage(
     stage_name: str,
     repo_url: str,
-    repo_branch: str = 'master',
-    cloned_repo_dir: Path = DEFAULT_PROJECT_DIR
+    repo_branch: str = "master",
+    cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the chosen stage.
 
@@ -46,8 +46,10 @@ def run_stage(
         exit code (i.e. fails).
     """
     log = bodywork_log_factory()
-    log.info(f'attempting to run stage={stage_name} from {repo_branch} branch of repo'
-             f' at {repo_url}')
+    log.info(
+        f"attempting to run stage={stage_name} from {repo_branch} branch of repo"
+        f" at {repo_url}"
+    )
     try:
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         config_file_path = cloned_repo_dir / PROJECT_CONFIG_FILENAME
@@ -55,13 +57,17 @@ def run_stage(
         stage = project_config.stages[stage_name]
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        run(['python', stage.executable_module, *stage.args],
+        run(
+            ["python", stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
             capture_output=True,
-            encoding='utf-8')
-        log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of repo'
-                 f' at {repo_url}')
+            encoding="utf-8",
+        )
+        log.info(
+            f"successfully ran stage={stage_name} from {repo_branch} branch of repo"
+            f" at {repo_url}"
+        )
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e)
         log.error(stage_failure_exception)
@@ -75,10 +81,12 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        run(['pip', 'install', *requirements],
+        run(
+            ["pip", "install", *requirements],
             check=True,
             capture_output=True,
-            encoding='utf-8')
+            encoding="utf-8",
+        )
     except CalledProcessError as e:
-        msg = f'Cannot install stage requirements: {e.cmd} failed with {e.stderr}'
+        msg = f"Cannot install stage requirements: {e.cmd} failed with {e.stderr}"
         raise RuntimeError(msg)

@@ -32,10 +32,10 @@ def api_exception_msg(e: ApiException) -> str:
     """
     try:
         body = json.loads(e.body)
-        message = body['message']
+        message = body["message"]
         return cast(str, message)
     except (KeyError, TypeError):
-        return ''
+        return ""
 
 
 def make_valid_k8s_name(name: str) -> str:
@@ -44,4 +44,4 @@ def make_valid_k8s_name(name: str) -> str:
     :param name: Original intended name.
     :return: Valid Kubernetes resource name.
     """
-    return re.sub(r'(\s|_)', '-', name.strip())
+    return re.sub(r"(\s|_)", "-", name.strip())

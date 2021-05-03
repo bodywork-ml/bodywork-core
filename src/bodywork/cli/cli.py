@@ -36,27 +36,27 @@ from .workflow_jobs import (
     display_cronjobs_in_namespace,
     display_workflow_job_history,
     display_workflow_job_logs,
-    delete_workflow_cronjob_in_namespace
+    delete_workflow_cronjob_in_namespace,
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
-    display_service_deployments_in_namespace
+    display_service_deployments_in_namespace,
 )
 from .secrets import (
     create_secret_in_namespace,
     delete_secret_in_namespace,
     display_secrets_in_namespace,
-    parse_cli_secrets_strings
+    parse_cli_secrets_strings,
 )
 from .setup_namespace import (
     is_namespace_available_for_bodywork,
-    setup_namespace_with_service_accounts_and_roles
+    setup_namespace_with_service_accounts_and_roles,
 )
 from ..exceptions import (
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
-    BodyworkWorkflowExecutionError
+    BodyworkWorkflowExecutionError,
 )
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
@@ -71,251 +71,230 @@ def cli() -> None:
     """
     # top level interface
     cli_arg_parser = ArgumentParser(
-        prog='bodywork',
-        description='Deploy machine learning projects developed in Python, to k8s.')
+        prog="bodywork",
+        description="Deploy machine learning projects developed in Python, to k8s.",
+    )
     cli_arg_parser.add_argument(
-        '--version',
-        action='version',
-        version=get_distribution('bodywork').version
+        "--version", action="version", version=get_distribution("bodywork").version
     )
     cli_arg_subparser = cli_arg_parser.add_subparsers()
 
     # debug interface
-    debug_cmd_parser = cli_arg_subparser.add_parser('debug')
+    debug_cmd_parser = cli_arg_subparser.add_parser("debug")
     debug_cmd_parser.set_defaults(func=debug)
     debug_cmd_parser.add_argument(
-        'seconds',
-        type=int,
-        help='Seconds to stay alive before exiting.'
+        "seconds", type=int, help="Seconds to stay alive before exiting."
     )
 
     # deployment interface
-    deployment_cmd_parser = cli_arg_subparser.add_parser('deployment')
+    deployment_cmd_parser = cli_arg_subparser.add_parser("deployment")
     deployment_cmd_parser.set_defaults(func=deployment)
     deployment_cmd_parser.add_argument(
-        'command',
+        "command",
         type=str,
-        choices=['create', 'display', 'logs'],
-        help='Deployment action to perform.'
+        choices=["create", "display", "logs"],
+        help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
-        '--namespace',
-        '--ns',
+        "--namespace",
+        "--ns",
         required=True,
         type=str,
-        help='Kubernetes namespace to operate in.'
+        help="Kubernetes namespace to operate in.",
     )
     deployment_cmd_parser.add_argument(
-        '--name',
+        "--name", type=str, default="", help="The name given to the workflow job."
+    )
+    deployment_cmd_parser.add_argument(
+        "--git-repo-url",
         type=str,
-        default='',
-        help='The name given to the workflow job.'
+        default="",
+        help="Git repository URL containing the Bodywork project.",
     )
     deployment_cmd_parser.add_argument(
-        '--git-repo-url',
+        "--git-repo-branch",
         type=str,
-        default='',
-        help='Git repository URL containing the Bodywork project.'
+        default="master",
+        help="Git repository branch to run.",
     )
     deployment_cmd_parser.add_argument(
-        '--git-repo-branch',
-        type=str,
-        default='master',
-        help='Git repository branch to run.'
-    )
-    deployment_cmd_parser.add_argument(
-        '--retries',
+        "--retries",
         type=int,
         default=2,
-        help='Number of times to retry a failed workflow job.'
+        help="Number of times to retry a failed workflow job.",
     )
 
     # cronjob interface
-    cronjob_cmd_parser = cli_arg_subparser.add_parser('cronjob')
+    cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")
     cronjob_cmd_parser.set_defaults(func=cronjob)
     cronjob_cmd_parser.add_argument(
-        'command',
+        "command",
         type=str,
-        choices=['create', 'delete', 'display', 'history', 'logs'],
-        help='Cronjob action to perform.'
+        choices=["create", "delete", "display", "history", "logs"],
+        help="Cronjob action to perform.",
     )
     cronjob_cmd_parser.add_argument(
-        '--namespace',
-        '--ns',
+        "--namespace",
+        "--ns",
         required=True,
         type=str,
-        help='Kubernetes namespace to operate in.'
+        help="Kubernetes namespace to operate in.",
     )
     cronjob_cmd_parser.add_argument(
-        '--name',
+        "--name", type=str, default="", help="The name given to the cronjob."
+    )
+    cronjob_cmd_parser.add_argument(
+        "--schedule",
         type=str,
-        default='',
-        help='The name given to the cronjob.'
+        default="",
+        help='Workflow cronjob expressed as a cron schedule - e.g. "0,30 * * * *".',
     )
     cronjob_cmd_parser.add_argument(
-        '--schedule',
+        "--git-repo-url",
         type=str,
-        default='',
-        help='Workflow cronjob expressed as a cron schedule - e.g. "0,30 * * * *".'
+        default="",
+        help="Git repository URL containing the Bodywork project codebase.",
     )
     cronjob_cmd_parser.add_argument(
-        '--git-repo-url',
+        "--git-repo-branch",
         type=str,
-        default='',
-        help='Git repository URL containing the Bodywork project codebase.'
+        default="master",
+        help="Git repository branch to run.",
     )
     cronjob_cmd_parser.add_argument(
-        '--git-repo-branch',
-        type=str,
-        default='master',
-        help='Git repository branch to run.'
-    )
-    cronjob_cmd_parser.add_argument(
-        '--retries',
+        "--retries",
         type=int,
         default=2,
-        help='Number of times to retry a failed workflow job.'
+        help="Number of times to retry a failed workflow job.",
     )
     cronjob_cmd_parser.add_argument(
-        '--history-limit',
+        "--history-limit",
         type=int,
         default=1,
-        help='Minimum number of historic workflow jobs to keep for logs.'
+        help="Minimum number of historic workflow jobs to keep for logs.",
     )
 
     # service interface
-    service_cmd_parser = cli_arg_subparser.add_parser('service')
+    service_cmd_parser = cli_arg_subparser.add_parser("service")
     service_cmd_parser.set_defaults(func=service)
     service_cmd_parser.add_argument(
-        'command',
+        "command",
         type=str,
-        choices=['delete', 'display'],
-        help='Service action to perform.'
+        choices=["delete", "display"],
+        help="Service action to perform.",
     )
     service_cmd_parser.add_argument(
-        '--namespace',
-        '--ns',
+        "--namespace",
+        "--ns",
         required=True,
         type=str,
-        help='Kubernetes namespace to operate in.'
+        help="Kubernetes namespace to operate in.",
     )
     service_cmd_parser.add_argument(
-        '--name',
-        type=str,
-        default='',
-        help='The name given to the service.'
+        "--name", type=str, default="", help="The name given to the service."
     )
 
     # secrets interface
-    secret_cmd_parser = cli_arg_subparser.add_parser('secret')
+    secret_cmd_parser = cli_arg_subparser.add_parser("secret")
     secret_cmd_parser.set_defaults(func=secret)
     secret_cmd_parser.add_argument(
-        'command',
+        "command",
         type=str,
-        choices=['create', 'delete', 'display'],
-        help='Secrets action to perform.'
+        choices=["create", "delete", "display"],
+        help="Secrets action to perform.",
     )
     secret_cmd_parser.add_argument(
-        '--namespace',
-        '--ns',
+        "--namespace",
+        "--ns",
         required=True,
         type=str,
-        help='Kubernetes namespace to operate in.'
+        help="Kubernetes namespace to operate in.",
     )
     secret_cmd_parser.add_argument(
-        '--name',
-        type=str,
-        default='',
-        help='The name given to the Kubernetes secret.'
+        "--name", type=str, default="", help="The name given to the Kubernetes secret."
     )
     secret_cmd_parser.add_argument(
-        '--data',
+        "--data",
         type=str,
         default=[],
-        nargs='+',
-        help=('Key-values to create in secret - e.g. '
-              '--data USERNAME=alex PASSWORD=alex123')
+        nargs="+",
+        help=(
+            "Key-values to create in secret - e.g. "
+            "--data USERNAME=alex PASSWORD=alex123"
+        ),
     )
 
     # stage interface
-    stage_cmd_parser = cli_arg_subparser.add_parser('stage')
+    stage_cmd_parser = cli_arg_subparser.add_parser("stage")
     stage_cmd_parser.set_defaults(func=stage)
     stage_cmd_parser.add_argument(
-        'git_project_repo_url',
-        type=str,
-        help='Bodywork project URL.'
+        "git_project_repo_url", type=str, help="Bodywork project URL."
     )
     stage_cmd_parser.add_argument(
-        'git_branch',
-        type=str,
-        help='Bodywork project Git repo branch.'
+        "git_branch", type=str, help="Bodywork project Git repo branch."
     )
     stage_cmd_parser.add_argument(
-        'stage_name',
-        type=str,
-        help='The Bodywork project stage to execute.'
+        "stage_name", type=str, help="The Bodywork project stage to execute."
     )
 
     # workflow interface
-    workflow_cmd_parser = cli_arg_subparser.add_parser('workflow')
+    workflow_cmd_parser = cli_arg_subparser.add_parser("workflow")
     workflow_cmd_parser.set_defaults(func=workflow)
     workflow_cmd_parser.add_argument(
-        'git_project_repo_url',
-        type=str,
-        help='Bodywork project URL.'
+        "git_project_repo_url", type=str, help="Bodywork project URL."
     )
     workflow_cmd_parser.add_argument(
-        'git_branch',
-        type=str,
-        help='Bodywork project Git repo branch.'
+        "git_branch", type=str, help="Bodywork project Git repo branch."
     )
     workflow_cmd_parser.add_argument(
-        '--namespace',
-        '--ns',
+        "--namespace",
+        "--ns",
         required=True,
         type=str,
-        help='Kubernetes namespace within which to execute the workflow.'
+        help="Kubernetes namespace within which to execute the workflow.",
     )
     workflow_cmd_parser.add_argument(
-        '--bodywork-docker-image',
+        "--bodywork-docker-image",
         type=str,
-        default='',
-        help='Bodywork Docker image to use - must exist on Bodywork DockerHub repo.'
+        default="",
+        help="Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",
     )
 
     # setup-namespace interface
-    setup_namespace_cmd_parser = cli_arg_subparser.add_parser('setup-namespace')
+    setup_namespace_cmd_parser = cli_arg_subparser.add_parser("setup-namespace")
     setup_namespace_cmd_parser.set_defaults(func=setup_namespace)
     setup_namespace_cmd_parser.add_argument(
-        'namespace',
+        "namespace",
         type=str,
-        help='Kubernetes namespace to create (if necessary) and setup.'
+        help="Kubernetes namespace to create (if necessary) and setup.",
     )
 
     # validate interface
-    validate_config_file_cmd_parser = cli_arg_subparser.add_parser('validate')
+    validate_config_file_cmd_parser = cli_arg_subparser.add_parser("validate")
     validate_config_file_cmd_parser.set_defaults(func=validate_config)
     validate_config_file_cmd_parser.add_argument(
-        '--file',
+        "--file",
         type=str,
-        default='bodywork.yaml',
-        help='Path to bodywork.yaml config file.'
+        default="bodywork.yaml",
+        help="Path to bodywork.yaml config file.",
     )
     validate_config_file_cmd_parser.add_argument(
-        '--check-files',
-        action='store_true',
-        help='Cross-check config with files and directories'
+        "--check-files",
+        action="store_true",
+        help="Cross-check config with files and directories",
     )
 
     # get config and logger then execute delegated function
     args = cli_arg_parser.parse_args()
-    if hasattr(args, 'func'):
+    if hasattr(args, "func"):
         args.func(args)
     else:
         cli_arg_parser.exit(
             status=0,
-            message=('Deploy machine learning projects developed in Python, to k8s.'
-                     '\n--> see bodywork -h for help')
+            message=(
+                "Deploy machine learning projects developed in Python, to k8s."
+                "\n--> see bodywork -h for help"
+            ),
         )
 
 
@@ -326,6 +305,7 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
     :return: The original function wrapped by a function that handles
         k8s API exceptions.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> None:
         try:
@@ -333,16 +313,23 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
         except kubernetes.client.rest.ApiException:
             e_type, e_value, e_tb = sys.exc_info()
             exception_origin = traceback.extract_tb(e_tb)[2].name
-            print(f'Kubernetes API error returned when called from {exception_origin} '
-                  f'within cli.{func.__name__}: {api_exception_msg(e_value)}')
+            print(
+                f"Kubernetes API error returned when called from {exception_origin} "
+                f"within cli.{func.__name__}: {api_exception_msg(e_value)}"
+            )
         except urllib3.exceptions.MaxRetryError:
             e_type, e_value, e_tb = sys.exc_info()
             exception_origin = traceback.extract_tb(e_tb)[2].name
-            print(f'failed to connect to the Kubernetes API when called from '
-                  f'{exception_origin} within cli.{func.__name__}: {e_value}')
+            print(
+                f"failed to connect to the Kubernetes API when called from "
+                f"{exception_origin} within cli.{func.__name__}: {e_value}"
+            )
         except kubernetes.config.ConfigException as e:
-            print(f'cannot load authenticaion credentials from kubeconfig file when '
-                  f'calling cli.{func.__name__}: {e}')
+            print(
+                f"cannot load authenticaion credentials from kubeconfig file when "
+                f"calling cli.{func.__name__}: {e}"
+            )
+
     return wrapper
 
 
@@ -357,7 +344,7 @@ def debug(args: Namespace) -> None:
     :param logger: Bodywork logger.
     """
     seconds = args.seconds
-    print(f'sleeping for {seconds}s')
+    print(f"sleeping for {seconds}s")
     sleep(seconds)
     sys.exit(0)
 
@@ -375,16 +362,16 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    if (command == 'create' or command == 'logs') and name == '':
-        print('please specify --name for the deployment')
+    if (command == "create" or command == "logs") and name == "":
+        print("please specify --name for the deployment")
         sys.exit(1)
-    elif command == 'create' and git_repo_url == '':
-        print('please specify Git repo URL for the deployment you want to create')
+    elif command == "create" and git_repo_url == "":
+        print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
-    elif command == 'create':
+    elif command == "create":
         load_kubernetes_config()
         if not is_namespace_available_for_bodywork(namespace):
-            print(f'namespace={namespace} is not setup for use by Bodywork')
+            print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
         create_workflow_job_in_namespace(
             namespace,
@@ -393,7 +380,7 @@ def deployment(args: Namespace) -> None:
             git_repo_branch,
             retries,
         )
-    elif command == 'logs':
+    elif command == "logs":
         load_kubernetes_config()
         display_workflow_job_logs(namespace, name)
     else:
@@ -417,20 +404,24 @@ def cronjob(args: Namespace) -> None:
     history_limit = args.history_limit
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    if ((command == 'create' or command == 'delete' or command == 'history'
-            or command == 'logs') and name == ''):
-        print('please specify --name for the cronjob')
+    if (
+        command == "create"
+        or command == "delete"
+        or command == "history"
+        or command == "logs"
+    ) and name == "":
+        print("please specify --name for the cronjob")
         sys.exit(1)
-    elif command == 'create' and schedule == '':
-        print('please specify schedule for the cronjob you want to create')
+    elif command == "create" and schedule == "":
+        print("please specify schedule for the cronjob you want to create")
         sys.exit(1)
-    elif command == 'create' and git_repo_url == '':
-        print('please specify Git repo URL for the cronjob you want to create')
+    elif command == "create" and git_repo_url == "":
+        print("please specify Git repo URL for the cronjob you want to create")
         sys.exit(1)
-    elif command == 'create':
+    elif command == "create":
         load_kubernetes_config()
         if not is_namespace_available_for_bodywork(namespace):
-            print(f'namespace={namespace} is not setup for use by Bodywork')
+            print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
         create_workflow_cronjob_in_namespace(
             namespace,
@@ -439,15 +430,15 @@ def cronjob(args: Namespace) -> None:
             git_repo_url,
             git_repo_branch,
             retries,
-            history_limit
+            history_limit,
         )
-    elif command == 'delete':
+    elif command == "delete":
         load_kubernetes_config()
         delete_workflow_cronjob_in_namespace(namespace, name)
-    elif command == 'history':
+    elif command == "history":
         load_kubernetes_config()
         display_workflow_job_history(namespace, name)
-    elif command == 'logs':
+    elif command == "logs":
         load_kubernetes_config()
         display_workflow_job_logs(namespace, name)
     else:
@@ -466,10 +457,10 @@ def service(args: Namespace) -> None:
     command = args.command
     namespace = args.namespace
     name = args.name
-    if command == 'delete' and name == '':
-        print('please specify --name for the service')
+    if command == "delete" and name == "":
+        print("please specify --name for the service")
         sys.exit(1)
-    elif command == 'delete':
+    elif command == "delete":
         load_kubernetes_config()
         delete_service_deployment_in_namespace(namespace, name)
     else:
@@ -489,27 +480,29 @@ def secret(args: Namespace) -> None:
     namespace = args.namespace
     name = args.name
     key_value_strings = args.data
-    if (command == 'create' or command == 'delete') and name == '':
-        print('please specify a name for the secret you want to create')
+    if (command == "create" or command == "delete") and name == "":
+        print("please specify a name for the secret you want to create")
         sys.exit(1)
-    elif command == 'create' and key_value_strings == []:
-        print('please specify keys and values for the secret you want to create')
+    elif command == "create" and key_value_strings == []:
+        print("please specify keys and values for the secret you want to create")
         sys.exit(1)
-    elif command == 'create':
+    elif command == "create":
         try:
             var_names_and_values = parse_cli_secrets_strings(key_value_strings)
         except ValueError:
-            print('could not parse secret data - example format: '
-                  '--data USERNAME=alex PASSWORD=alex123')
+            print(
+                "could not parse secret data - example format: "
+                "--data USERNAME=alex PASSWORD=alex123"
+            )
             sys.exit(1)
         load_kubernetes_config()
         create_secret_in_namespace(namespace, name, var_names_and_values)
-    elif command == 'delete':
+    elif command == "delete":
         load_kubernetes_config()
         delete_secret_in_namespace(namespace, name)
     else:
         load_kubernetes_config()
-        display_secrets_in_namespace(namespace, name if name != '' else None)
+        display_secrets_in_namespace(namespace, name if name != "" else None)
     sys.exit(0)
 
 
@@ -543,13 +536,13 @@ def workflow(args: Namespace) -> None:
         docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         if not is_namespace_available_for_bodywork(namespace):
-            print(f'namespace={namespace} is not setup for use by Bodywork')
+            print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
         run_workflow(
             namespace,
             repo_url,
             repo_branch,
-            docker_image_override=(None if docker_image == '' else docker_image)
+            docker_image_override=(None if docker_image == "" else docker_image),
         )
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
@@ -579,14 +572,17 @@ def validate_config(args: Namespace) -> None:
     check_py_files = args.check_files
     try:
         BodyworkConfig(file_path, check_py_files)
-        print(f'--> {file_path} is a valid Bodywork config file.')
+        print(f"--> {file_path} is a valid Bodywork config file.")
         sys.exit(0)
-    except (FileExistsError, BodyworkConfigParsingError,
-            BodyworkConfigMissingSectionError) as e:
-        print(f'--> {e}')
+    except (
+        FileExistsError,
+        BodyworkConfigParsingError,
+        BodyworkConfigMissingSectionError,
+    ) as e:
+        print(f"--> {e}")
         sys.exit(1)
     except BodyworkConfigValidationError as e:
-        print(f'- missing or invalid parameters found in {file_path}:')
-        missing_or_invalid_param_list = '\n* '.join(e.missing_params)
-        print(f'* {missing_or_invalid_param_list}')
+        print(f"- missing or invalid parameters found in {file_path}:")
+        missing_or_invalid_param_list = "\n* ".join(e.missing_params)
+        print(f"* {missing_or_invalid_param_list}")
         sys.exit(1)
