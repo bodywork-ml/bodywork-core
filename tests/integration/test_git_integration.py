@@ -70,8 +70,10 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var():
         assert False
     finally:
         os.environ.pop(SSH_PRIVATE_KEY_ENV_VAR)
-        os.environ.pop(GIT_SSH_COMMAND)
-        shutil.rmtree(ssh_dir, onerror=remove_readonly)
+        if GIT_SSH_COMMAND in os.environ:
+            os.environ.pop(GIT_SSH_COMMAND)
+        if ssh_dir.exists():
+            shutil.rmtree(ssh_dir, onerror=remove_readonly)
 
 
 def remove_readonly(func, path, exc_info):

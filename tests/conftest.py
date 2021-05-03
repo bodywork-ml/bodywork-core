@@ -68,15 +68,14 @@ def setup_bodywork_test_project(
         if GIT_SSH_COMMAND in os.environ:
             del os.environ[GIT_SSH_COMMAND]
         ssh_dir = Path(".") / SSH_DIR_NAME
-        shutil.rmtree(ssh_dir, onerror=remove_readonly)
-        shutil.rmtree(f"{project_repo_location}/.git", onerror=remove_readonly)
-        shutil.rmtree(
-            f"{cloned_project_repo_location}/.git", onerror=remove_readonly
-        )
-        shutil.rmtree(
-            cloned_project_repo_location, onerror=remove_readonly
-        )
-        shutil.rmtree(bodywork_output_dir, onerror=remove_readonly)
+        if ssh_dir.exists():
+            shutil.rmtree(ssh_dir, onerror=remove_readonly)
+        if project_repo_location.exists():
+            shutil.rmtree(f"{project_repo_location}/.git", onerror=remove_readonly)
+        if cloned_project_repo_location.exists():
+            shutil.rmtree(cloned_project_repo_location, onerror=remove_readonly)
+        if bodywork_output_dir.exists():
+            shutil.rmtree(bodywork_output_dir, onerror=remove_readonly)
 
 
 def remove_readonly(func, path, exc_info):
