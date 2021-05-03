@@ -32,6 +32,7 @@ from .constants import (
     GITHUB_SSH_FINGERPRINT,
     GITLAB_SSH_FINGERPRINT,
     BITBUCKET_SSH_FINGERPRINT,
+    GIT_SSH_COMMAND,
 )
 from .logs import bodywork_log_factory
 
@@ -155,7 +156,7 @@ def setup_ssh_for_git_host(hostname: str) -> None:
             f"Error updating known hosts with public key from {hostname}"
         ) from e
 
-    os.environ["GIT_SSH_COMMAND"] = (
+    os.environ[GIT_SSH_COMMAND] = (
         f"ssh -i '{private_key}'" f" -o UserKnownHostsFile='{known_hosts}'"
     )
 
