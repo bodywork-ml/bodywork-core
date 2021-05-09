@@ -41,7 +41,7 @@ Bodywork is used from the command-line to deploy projects to Kubernetes clusters
 <img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/get_started_3.png"/>
 </div>
 
-You don’t need to build and manage Docker images or understand how to configure Kuberentes resources. Bodywork will fill the gap between executable Python modules and operational jobs and services on Kubernetes.
+You don’t need to build Docker images or understand how to configure Kuberentes resources. Bodywork will fill the gap between executable Python modules and operational jobs and services on Kubernetes.
 
 If you’re new to Kubernetes then check out our guide to [Kubernetes for ML](https://bodywork.readthedocs.io/en/latest/kubernetes/#getting-started-with-kubernetes) - we’ll have you up-and-running with a test cluster on your laptop, in under 10 minutes.
 
