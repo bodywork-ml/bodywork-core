@@ -20,6 +20,7 @@ Command Line Interface (CLI)
 import sys
 import traceback
 import urllib3
+import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
 from pathlib import Path
@@ -61,6 +62,8 @@ from ..exceptions import (
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from ..workflow_execution import run_workflow
+
+warnings.simplefilter(action='ignore')
 
 
 def cli() -> None:
@@ -315,7 +318,7 @@ def cli() -> None:
         cli_arg_parser.exit(
             status=0,
             message=('Deploy machine learning projects developed in Python, to k8s.'
-                     '\n--> see bodywork -h for help')
+                     '\n--> see bodywork -h for help\n')
         )
 
 
