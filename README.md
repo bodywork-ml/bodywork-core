@@ -13,7 +13,7 @@
 
 ---
 
-Bodywork deploys machine learning projects developed in Python, to Kubernetes. It helps you:
+Bodywork deploys machine learning projects developed in Python, to Kubernetes. It helps you to:
 
 * serve models as microservices
 * execute batch jobs
@@ -35,7 +35,7 @@ Add a [bodywork.yaml](https://bodywork.readthedocs.io/en/latest/user_guide/#conf
 <img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/get_started_2.png"/>
 </div>
 
-Bodywork is used from the command-line to deploy projects to Kubernetes clusters. With a single command, you can start Bodywork containers hosted by us on Docker Hub, that pull Python modules direct from your project’s Git repo, and run them:
+Bodywork is used from the command-line to deploy projects to Kubernetes clusters. With a single command, you can start Bodywork containers (hosted by us on Docker Hub), that pull Python modules directly from your project’s Git repo, and run them:
 
 <div align="center">
 <img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/get_started_3.png"/>
@@ -43,7 +43,7 @@ Bodywork is used from the command-line to deploy projects to Kubernetes clusters
 
 You don’t need to build and manage Docker images or understand how to configure Kuberentes resources. Bodywork will fill the gap between executable Python modules and operational jobs and services on Kubernetes.
 
-If you’re new to Kubernetes then check out our guide to [Kubernetes for ML](https://bodywork.readthedocs.io/en/latest/kubernetes/#getting-started-with-kubernetes) - we’ll have you up-and-running with a test cluster on your laptop in under 10 minutes.
+If you’re new to Kubernetes then check out our guide to [Kubernetes for ML](https://bodywork.readthedocs.io/en/latest/kubernetes/#getting-started-with-kubernetes) - we’ll have you up-and-running with a test cluster on your laptop, in under 10 minutes.
 
 ## Documentation
 
@@ -59,7 +59,7 @@ To accelerate your project's journey to production, we provide [deployment templ
 
 ## We want your Feedback
 
-If Bodywork sounds like a useful tool, then please submit your feedback with a GitHub Star ★.
+If Bodywork sounds like a useful tool, then please send us a signal with a GitHub ★
 
 ## Contacting Us
 
