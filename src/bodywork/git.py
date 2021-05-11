@@ -204,9 +204,9 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
                 return server_key
             else:
                 raise ConnectionAbortedError(
-                    f"SECURITY ALERT! SSH Fingerprint received from server does not match"
-                    f" the fingerprint for {hostname}. Please check and ensure that"
-                    f" {hostname} is not being impersonated"
+                    f"SECURITY ALERT! SSH Fingerprint received from server does not "
+                    f"match the fingerprint for {hostname}. Please check and ensure"
+                    f" that {hostname} is not being impersonated"
                 )
         except CalledProcessError as e:
             raise RuntimeError(
