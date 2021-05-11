@@ -243,7 +243,7 @@ def run_workflow(
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
         if cloned_repo_dir.exists():
-            rmtree(cloned_repo_dir, onerror=remove_readonly)
+            rmtree(cloned_repo_dir, onerror=_remove_readonly)
 
 
 def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
