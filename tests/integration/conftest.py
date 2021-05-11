@@ -53,7 +53,7 @@ def bitbucket_repo_connection_string() -> str:
 
 @fixture(scope="function")
 def azure_repo_connection_string() -> str:
-    return "git@ssh.dev.azure.com:v3/Bodyworkml/test-repos/test-repos"
+    return "git@ssh.dev.azure.com:v3/Bodyworkml/test-repos/private-test-repos"
 
 
 @fixture(scope="function")
