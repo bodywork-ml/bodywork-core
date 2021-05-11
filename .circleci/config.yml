@@ -24,6 +24,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Installing Python dependencies
+          command: pip install -r requirements_dev.txt
+      - run:
           name: Running tests
           command: tox -e py38-static_code_analysis -- -s -vv
   run-unit-and-functional-tests:
