@@ -27,8 +27,8 @@ from kubernetes import client as k8s
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
-    SSH_GITHUB_KEY_ENV_VAR,
-    SSH_GITHUB_SECRET_NAME
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_SECRET_NAME,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import make_valid_k8s_name
@@ -37,9 +37,9 @@ from .utils import make_valid_k8s_name
 class JobStatus(Enum):
     "Possible states of a k8s job."
 
-    ACTIVE = 'active'
-    SUCCEEDED = 'succeeded'
-    FAILED = 'failed'
+    ACTIVE = "active"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
 
 
 def configure_batch_stage_job(
@@ -47,12 +47,12 @@ def configure_batch_stage_job(
     stage_name: str,
     project_name: str,
     project_repo_url: str,
-    project_repo_branch: str = 'master',
+    project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
     container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
     cpu_request: Optional[float] = None,
-    memory_request: Optional[int] = None
+    memory_request: Optional[int] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork batch stage k8s job.
 
@@ -77,57 +77,48 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
-    job_name = make_valid_k8s_name(f'{project_name}--{stage_name}')
+    job_name = make_valid_k8s_name(f"{project_name}--{stage_name}")
     vcs_env_vars = [
         k8s.V1EnvVar(
-            name=SSH_GITHUB_KEY_ENV_VAR,
+            name=SSH_PRIVATE_KEY_ENV_VAR,
             value_from=k8s.V1EnvVarSource(
                 secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_GITHUB_KEY_ENV_VAR,
-                    name=SSH_GITHUB_SECRET_NAME,
-                    optional=True
+                    key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
                 )
-            )
+            ),
         )
     ]
     env_vars = vcs_env_vars + container_env_vars if container_env_vars else vcs_env_vars
     container_resources = k8s.V1ResourceRequirements(
         requests={
-            'cpu': f'{cpu_request}' if cpu_request else None,
-            'memory': f'{memory_request}M' if memory_request else None
+            "cpu": f"{cpu_request}" if cpu_request else None,
+            "memory": f"{memory_request}M" if memory_request else None,
         }
     )
     container = k8s.V1Container(
-        name='bodywork',
+        name="bodywork",
         image=image,
-        image_pull_policy='Always',
+        image_pull_policy="Always",
         resources=container_resources,
         env=env_vars,
-        command=['bodywork', 'stage'],
-        args=[project_repo_url, project_repo_branch, stage_name]
+        command=["bodywork", "stage"],
+        args=[project_repo_url, project_repo_branch, stage_name],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
         containers=[container],
-        restart_policy='Never'
+        restart_policy="Never",
     )
-    pod_template_spec = k8s.V1PodTemplateSpec(
-        spec=pod_spec
-    )
+    pod_template_spec = k8s.V1PodTemplateSpec(spec=pod_spec)
     job_spec = k8s.V1JobSpec(
-        template=pod_template_spec,
-        completions=1,
-        backoff_limit=retries
+        template=pod_template_spec, completions=1, backoff_limit=retries
     )
     job_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
         name=job_name,
-        labels={'app': 'bodywork', 'stage': job_name},
+        labels={"app": "bodywork", "stage": job_name},
     )
-    job = k8s.V1Job(
-        metadata=job_metadata,
-        spec=job_spec
-    )
+    job = k8s.V1Job(metadata=job_metadata, spec=job_spec)
     return job
 
 
@@ -136,10 +127,7 @@ def create_job(job: k8s.V1Job) -> None:
 
     :param job: A configured job object.
     """
-    k8s.BatchV1Api().create_namespaced_job(
-        body=job,
-        namespace=job.metadata.namespace
-    )
+    k8s.BatchV1Api().create_namespaced_job(body=job, namespace=job.metadata.namespace)
 
 
 def delete_job(namespace: str, name: str) -> None:
@@ -152,7 +140,7 @@ def delete_job(namespace: str, name: str) -> None:
     k8s.BatchV1Api().delete_namespaced_job(
         name=name,
         namespace=namespace,
-        body=k8s.V1DeleteOptions(propagation_policy='Background')
+        body=k8s.V1DeleteOptions(propagation_policy="Background"),
     )
 
 
@@ -167,12 +155,14 @@ def _get_job_status(job: k8s.V1Job) -> JobStatus:
     try:
         k8s_job_query = k8s.BatchV1Api().list_namespaced_job(
             namespace=job.metadata.namespace,
-            field_selector=f'metadata.name={job.metadata.name}'
+            field_selector=f"metadata.name={job.metadata.name}",
         )
         k8s_job_data = k8s_job_query.items[0]
     except IndexError as e:
-        msg = (f'cannot find job={job.metadata.name} in '
-               f'namespace={job.metadata.namespace}')
+        msg = (
+            f"cannot find job={job.metadata.name} in "
+            f"namespace={job.metadata.namespace}"
+        )
         raise RuntimeError(msg) from e
 
     if k8s_job_data.status.active == 1:
@@ -182,8 +172,10 @@ def _get_job_status(job: k8s.V1Job) -> JobStatus:
     elif k8s_job_data.status.failed == 1:
         return JobStatus.FAILED
     else:
-        msg = (f'cannot determine status for job={job.metadata.name} in '
-               f'namespace={job.metadata.namespace}')
+        msg = (
+            f"cannot determine status for job={job.metadata.name} in "
+            f"namespace={job.metadata.namespace}"
+        )
         raise RuntimeError(msg)
 
 
@@ -191,7 +183,7 @@ def monitor_jobs_to_completion(
     jobs: Iterable[k8s.V1Job],
     timeout_seconds: int = 10,
     polling_freq_seconds: int = 1,
-    wait_before_start_seconds: int = 5
+    wait_before_start_seconds: int = 5,
 ) -> bool:
     """Monitor job status until completion or timeout.
 
@@ -215,19 +207,19 @@ def monitor_jobs_to_completion(
         sleep(polling_freq_seconds)
         if time() - start_time >= timeout_seconds:
             unsuccessful_jobs_msg = [
-                f'job={job.metadata.name} in namespace={job.metadata.namespace}'
+                f"job={job.metadata.name} in namespace={job.metadata.namespace}"
                 for job, status in zip(jobs, jobs_status)
                 if status != JobStatus.SUCCEEDED
             ]
-            msg = (f'{"; ".join(unsuccessful_jobs_msg)} have yet to reach '
-                   f'status=succeeded after {timeout_seconds}s')
+            msg = (
+                f'{"; ".join(unsuccessful_jobs_msg)} have yet to reach '
+                f"status=succeeded after {timeout_seconds}s"
+            )
             raise TimeoutError(msg)
         jobs_status = [_get_job_status(job) for job in jobs]
     if any(job_status is JobStatus.FAILED for job_status in jobs_status):
         failed_jobs = [
-            job
-            for job, status in zip(jobs, jobs_status)
-            if status == JobStatus.FAILED
+            job for job, status in zip(jobs, jobs_status) if status == JobStatus.FAILED
         ]
         if len(failed_jobs) > 0:
             raise BodyworkJobFailure(failed_jobs)

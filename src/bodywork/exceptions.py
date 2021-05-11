@@ -31,7 +31,7 @@ from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 class BodyworkJobFailure(Exception):
     def __init__(self, failed_jobs: Iterable[V1Job]):
         failed_jobs_msg = [
-            f'job={job.metadata.name} in namespace={job.metadata.namespace}'
+            f"job={job.metadata.name} in namespace={job.metadata.namespace}"
             for job in failed_jobs
         ]
         msg = f'{"; ".join(failed_jobs_msg)} have failed'
@@ -40,29 +40,33 @@ class BodyworkJobFailure(Exception):
 
 class BodyworkConfigParsingError(Exception):
     def __init__(self, config_file_path: Path):
-        msg = (f'cannot parse YAML from {config_file_path}')
+        msg = f"cannot parse YAML from {config_file_path}"
         super().__init__(msg)
 
 
 class BodyworkConfigMissingSectionError(Exception):
     def __init__(self, missing_sections: Sequence[str]):
-        msg = (f'Bodywork config file missing sections: {", ".join(missing_sections)}')
+        msg = f'Bodywork config file missing sections: {", ".join(missing_sections)}'
         super().__init__(msg)
 
 
 class BodyworkConfigValidationError(Exception):
     def __init__(self, missing_params: Sequence[str]):
         self.missing_params = missing_params
-        msg = (f'Bodywork config missing or invalid parameters: '
-               f'{", ".join(missing_params)}')
+        msg = (
+            f"Bodywork config missing or invalid parameters: "
+            f'{", ".join(missing_params)}'
+        )
         super().__init__(msg)
 
 
 class BodyworkConfigVersionMismatchError(Exception):
     def __init__(self, version: str):
-        msg = (f'Bodywork config file has schema version {version}, when Bodywork '
-               f'version {BODYWORK_VERSION} requires schema version '
-               f'{BODYWORK_CONFIG_VERSION}')
+        msg = (
+            f"Bodywork config file has schema version {version}, when Bodywork "
+            f"version {BODYWORK_VERSION} requires schema version "
+            f"{BODYWORK_CONFIG_VERSION}"
+        )
         super().__init__(msg)
 
 
@@ -73,5 +77,5 @@ class BodyworkWorkflowExecutionError(Exception):
 
 class BodyworkStageFailure(Exception):
     def __init__(self, stage_name: str, exception: Exception):
-        msg = f'Stage {stage_name} failed - {exception}'
+        msg = f"Stage {stage_name} failed - {exception}"
         super().__init__(msg)

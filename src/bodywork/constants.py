@@ -23,19 +23,29 @@ inconsistencies.
 import pkg_resources
 from pathlib import Path
 
-BODYWORK_CONFIG_VERSION = '1.0'
-BODYWORK_DOCKERHUB_IMAGE_REPO = 'bodyworkml/bodywork-core'
-BODYWORK_DOCKER_IMAGE = f'{BODYWORK_DOCKERHUB_IMAGE_REPO}:latest'
-BODYWORK_VERSION = pkg_resources.get_distribution('bodywork').version
-BODYWORK_WORKFLOW_CLUSTER_ROLE = 'bodywork-workflow-controller'
-BODYWORK_WORKFLOW_SERVICE_ACCOUNT = 'bodywork-workflow-controller'
+BODYWORK_CONFIG_VERSION = "1.0"
+BODYWORK_DOCKERHUB_IMAGE_REPO = "bodyworkml/bodywork-core"
+BODYWORK_DOCKER_IMAGE = f"{BODYWORK_DOCKERHUB_IMAGE_REPO}:latest"
+BODYWORK_VERSION = pkg_resources.get_distribution("bodywork").version
+BODYWORK_WORKFLOW_CLUSTER_ROLE = "bodywork-workflow-controller"
+BODYWORK_WORKFLOW_SERVICE_ACCOUNT = "bodywork-workflow-controller"
 BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE = 15 * 60
-BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT = 'bodywork-jobs-and-deployments'
-DEFAULT_LOG_LEVEL = 'INFO'
-DEFAULT_LOG_LEVEL_ENV_VAR = 'BODYWORK_LOG_LEVEL'
-DEFAULT_PROJECT_DIR = Path('./bodywork_project')
-PROJECT_CONFIG_FILENAME = 'bodywork.yaml'
-SSH_DIR_NAME = '.ssh_bodywork'
-SSH_GITHUB_KEY_ENV_VAR = 'BODYWORK_GITHUB_SSH_PRIVATE_KEY'
-SSH_GITHUB_SECRET_NAME = 'ssh-github-private-key'
+BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT = "bodywork-jobs-and-deployments"
+DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_LOG_LEVEL_ENV_VAR = "BODYWORK_LOG_LEVEL"
+DEFAULT_PROJECT_DIR = Path("./bodywork_project")
+GIT_SSH_COMMAND = "GIT_SSH_COMMAND"
+PROJECT_CONFIG_FILENAME = "bodywork.yaml"
+SSH_DIR_NAME = ".ssh_bodywork"
+SSH_PRIVATE_KEY_ENV_VAR = "BODYWORK_GIT_SSH_PRIVATE_KEY"
+SSH_SECRET_NAME = "ssh-git-private-key"
 TIMEOUT_GRACE_SECONDS = 90
+
+# External SSH Fingerprints
+GITHUB_SSH_FINGERPRINT = (
+    "2048 SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8 github.com (RSA)"  # noqa
+)
+GITLAB_SSH_FINGERPRINT = (
+    "2048 SHA256:ROQFvPThGrW4RuWLoL9tq9I9zJ42fK4XywyRtbOz/EQ gitlab.com (RSA)"  # noqa
+)
+BITBUCKET_SSH_FINGERPRINT = "2048 SHA256:zzXQOXSRBEiUtuE8AikJYKwbHaxvSc0ojez9YXaGp1A bitbucket.org (RSA)"  # noqa

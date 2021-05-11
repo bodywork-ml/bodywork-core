@@ -23,15 +23,22 @@ import re
 from enum import Enum
 from pathlib import Path
 from subprocess import run, CalledProcessError, DEVNULL, PIPE
+from urllib.parse import urlparse
 
-from .constants import DEFAULT_PROJECT_DIR, SSH_DIR_NAME, SSH_GITHUB_KEY_ENV_VAR
+from .constants import (
+    DEFAULT_PROJECT_DIR,
+    SSH_DIR_NAME,
+    SSH_PRIVATE_KEY_ENV_VAR,
+    GITHUB_SSH_FINGERPRINT,
+    GITLAB_SSH_FINGERPRINT,
+    BITBUCKET_SSH_FINGERPRINT,
+    GIT_SSH_COMMAND,
+)
 from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
-    url: str,
-    branch: str = 'master',
-    destination: Path = DEFAULT_PROJECT_DIR
+    url: str, branch: str = "master", destination: Path = DEFAULT_PROJECT_DIR
 ) -> None:
     """Download Bodywork project code from Git repository,
 
@@ -44,102 +51,166 @@ def download_project_code_from_repo(
     """
     log = bodywork_log_factory()
     try:
-        run(['git', '--version'], check=True, stdout=DEVNULL)
+        run(["git", "--version"], check=True, stdout=DEVNULL)
     except CalledProcessError:
-        raise RuntimeError('git is not available')
+        raise RuntimeError("git is not available")
     try:
-        if (get_connection_protocol(url) is ConnectionPrototcol.SSH
-                and get_remote_repo_host(url) is GitRepoHost.GITHUB):
-            setup_ssh_for_github()
-        elif SSH_GITHUB_KEY_ENV_VAR not in os.environ:
-            log.warning('Not configured for use with private GitHub repos')
+        if get_connection_protocol(url) is ConnectionProtocol.SSH:
+            hostname = urlparse(f"ssh://{url}").hostname
+            if hostname:
+                setup_ssh_for_git_host(hostname)
+            else:
+                raise ValueError(
+                    f"Unable to derive hostname from URL {url}. Please check "
+                )
+        elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+            log.warning("Not configured for use with private GitHub repos")
     except Exception as e:
-        msg = f'Unable to setup SSH for Github and you are trying to connect via SSH: {e}' # noqa
+        msg = (
+            f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
+        )
         raise RuntimeError(msg)
     try:
-        run(['git', 'clone', '--branch', branch, '--single-branch', url, destination],
-            check=True, encoding='utf-8', stdout=DEVNULL, stderr=PIPE)
+        run(
+            ["git", "clone", "--branch", branch, "--single-branch", url, destination],
+            check=True,
+            encoding="utf-8",
+            stdout=DEVNULL,
+            stderr=PIPE,
+        )
     except CalledProcessError as e:
-        msg = f'git clone failed - calling {e.cmd} returned {e.stderr}'
+        msg = f"git clone failed - calling {e.cmd} returned {e.stderr}"
         raise RuntimeError(msg)
 
 
-class GitRepoHost(Enum):
-    """Remote hosting service for Git repository."""
-    GITHUB = 'github.com'
-    LOCAL_FS = 'file'
+class ConnectionProtocol(Enum):
+    """Connection protocol used to access Git repo."""
+
+    FILE = "file"
+    HTTPS = "https"
+    SSH = "ssh"
 
 
-class ConnectionPrototcol(Enum):
-    """Conenction protocol used to access Git repo."""
-    FILE = 'file'
-    HTTPS = 'https'
-    SSH = 'ssh'
+def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
+    """Derive connection protocol used to retrieve Git repo.
 
-
-def get_remote_repo_host(connection_string: str) -> GitRepoHost:
-    """Derive the remote Git repo host from connection string.
-
-    :param connection_string: The string contaiing the connection
-        details for the remote Git repository - e.g. the GitHUb URL.
-    :raises RuntimeError: if the remote Git repository cannot be
-        determined.
-    :return: The remote Git host type.
-    """
-    github = True if connection_string.find('github.com') != -1 else False
-    if github:
-        return GitRepoHost.GITHUB
-    else:
-        msg = 'unknown Git repo host - only remote repos on GitHub currently supported.'
-        raise RuntimeError(msg)
-
-
-def get_connection_protocol(connection_string: str) -> ConnectionPrototcol:
-    """Derive connection protocol used to retreive Git repo.
-
-    :param connection_string: The string contaiing the connection
+    :param connection_string: The string containing the connection
         details for the remote Git repository - e.g. the GitHUb URL.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.
     :return: The connection protocol type.
     """
-    if re.match('^https://', connection_string):
-        return ConnectionPrototcol.HTTPS
-    elif re.match('^git@', connection_string):
-        return ConnectionPrototcol.SSH
-    elif re.match('^file://', connection_string):
-        return ConnectionPrototcol.FILE
+    if re.match("^https://", connection_string):
+        return ConnectionProtocol.HTTPS
+    elif re.match("^git@", connection_string):
+        return ConnectionProtocol.SSH
+    elif re.match("^file://", connection_string):
+        return ConnectionProtocol.FILE
     else:
-        msg = (f'cannot identify connection protocol in {connection_string}'
-               f'- currently, there is only support for HTTPS and SSL')
+        msg = (
+            f"cannot identify connection protocol in {connection_string}"
+            f"- currently, there is only support for HTTPS and SSH"
+        )
         raise RuntimeError(msg)
 
 
-def setup_ssh_for_github() -> None:
+def setup_ssh_for_git_host(hostname: str) -> None:
     """Setup system for SSH interaction with GitHub.
 
     Using the private key assigned to an environment variable, this
     function creates a new SSH configuration in the working directory
     and then tells Git to use it for SSH by exporting the
     GIT_SSH_COMMAND environment variable.
+
+    :param hostname: Hostname to SSH to.
     """
-    ssh_dir = Path('.') / SSH_DIR_NAME
-    private_key = ssh_dir / 'id_rsa'
+    ssh_dir = Path(".") / SSH_DIR_NAME
+    private_key = ssh_dir / "id_rsa"
     if not private_key.exists():
-        if SSH_GITHUB_KEY_ENV_VAR not in os.environ:
-            msg = (f'failed to setup SSH for GitHub - cannot find '
-                   f'{SSH_GITHUB_KEY_ENV_VAR} environment variable')
+        if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
+            msg = (
+                f"failed to setup SSH for {hostname} - cannot find "
+                f"{SSH_PRIVATE_KEY_ENV_VAR} environment variable"
+            )
             raise KeyError(msg)
-        ssh_dir.mkdir(mode=0o700, exist_ok=True)
-        private_key.touch(0o700, exist_ok=False)
-        private_key.write_text(os.environ[SSH_GITHUB_KEY_ENV_VAR])
+        try:
+            ssh_dir.mkdir(mode=0o700, exist_ok=True)
+            private_key.touch(0o700, exist_ok=False)
+            private_key.write_text(os.environ[SSH_PRIVATE_KEY_ENV_VAR])
+        except OSError as e:
+            raise RuntimeError(
+                f"Unable to create private key {private_key} from"
+                f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable"
+            ) from e
 
-    known_hosts = ssh_dir / 'known_hosts'
-    if not known_hosts.exists():
-        ssh_public_key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='  # noqa
-        known_hosts.touch(0o700, exist_ok=False)
-        known_hosts.write_text(ssh_public_key)
+    try:
+        known_hosts = ssh_dir / "known_hosts"
+        if not known_hosts.exists():
+            known_hosts.touch(0o700, exist_ok=False)
+            known_hosts.write_text(get_ssh_public_key_from_domain(hostname))
+        elif not known_hosts_contains_domain_key(hostname, known_hosts):
+            with known_hosts.open(mode="a") as file_handle:
+                file_handle.write(get_ssh_public_key_from_domain(hostname))
+    except OSError as e:
+        raise RuntimeError(
+            f"Error updating known hosts with public key from {hostname}"
+        ) from e
 
-    os.environ['GIT_SSH_COMMAND'] = (
-        f'ssh -i {private_key} -o UserKnownHostsFile={known_hosts}'
+    os.environ[GIT_SSH_COMMAND] = (
+        f"ssh -i '{private_key}'" f" -o UserKnownHostsFile='{known_hosts}'"
     )
+
+
+def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -> bool:
+    """Checks to see if the host is in the list of keys in the known_hosts file.
+
+    :param known_hosts_filepath: path to known_hosts file
+    :param hostname: Hostname to check for.
+    :return: bool if the hostname is in the file
+    """
+    return hostname in known_hosts_filepath.read_text()
+
+
+def get_ssh_public_key_from_domain(hostname: str) -> str:
+    """Gets the public key from the host and checks the fingerprint.
+
+     Output from ssh-keyscan is piped into ssh-keygen by setting the input in
+      conjunction with the trailing '-' in the command.
+
+    :param hostname: Name of host to retrieve the key from e.g. Gitlab.com
+    :return: The public SSH Key of the host.
+    """
+    fingerprints = {
+        "github.com": GITHUB_SSH_FINGERPRINT,
+        "gitlab.com": GITLAB_SSH_FINGERPRINT,
+        "bitbucket.org": BITBUCKET_SSH_FINGERPRINT,
+    }
+    if hostname in fingerprints:
+        try:
+            server_key = run(
+                ["ssh-keyscan", "-t", "rsa", hostname],
+                check=True,
+                capture_output=True,
+                encoding="utf-8",
+            ).stdout
+            fingerprint = run(
+                ["ssh-keygen", "-l", "-f", "-"],
+                check=True,
+                capture_output=True,
+                encoding="utf-8",
+                input=server_key,
+            ).stdout.strip()
+            if fingerprint == fingerprints.get(hostname):
+                return server_key
+            else:
+                raise ConnectionAbortedError(
+                    f"SECURITY ALERT! SSH Fingerprint received from server does not "
+                    f"match the fingerprint for {hostname}. Please check and ensure"
+                    f" that {hostname} is not being impersonated"
+                )
+        except CalledProcessError as e:
+            raise RuntimeError(
+                f"Unable to retrieve public SSH key from {hostname}: {e.stdout} {e.stderr}"  # noqa
+            )
+    else:
+        raise RuntimeError(f"{hostname} is not supported by Bodywork")

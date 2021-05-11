@@ -23,13 +23,15 @@ from shutil import rmtree
 from typing import cast, Optional, Tuple
 
 import requests
+import os
+import stat
 
 from . import k8s
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
-    TIMEOUT_GRACE_SECONDS
+    TIMEOUT_GRACE_SECONDS,
 )
 from .exceptions import BodyworkWorkflowExecutionError
 from .git import download_project_code_from_repo
@@ -39,11 +41,11 @@ from .logs import bodywork_log_factory
 def run_workflow(
     namespace: str,
     repo_url: str,
-    repo_branch: str = 'master',
+    repo_branch: str = "master",
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-    docker_image_override: Optional[str] = None
+    docker_image_override: Optional[str] = None,
 ) -> None:
-    """Retreive latest project code and run the workflow.
+    """Retrieve latest project code and run the workflow.
 
     :param namespace: Kubernetes namespace to execute the workflow in.
     :param repo_url: Git repository URL.
@@ -59,13 +61,17 @@ def run_workflow(
     """
     try:
         log = bodywork_log_factory()
-        log.info(f'attempting to run workflow for project={repo_url} on '
-                 f'branch={repo_branch} in kubernetes namespace={namespace}')
+        log.info(
+            f"attempting to run workflow for project={repo_url} on "
+            f"branch={repo_branch} in kubernetes namespace={namespace}"
+        )
         if k8s.namespace_exists(namespace) is False:
-            raise ValueError(f'{namespace} is not a valid namespace on your cluster')
+            raise ValueError(f"{namespace} is not a valid namespace on your cluster")
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
-        config = BodyworkConfig(path_to_project_config_file, check_py_modules_exist=True)
+        config = BodyworkConfig(
+            path_to_project_config_file, check_py_modules_exist=True
+        )
         log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
@@ -77,11 +83,11 @@ def run_workflow(
         )
         image_name, image_tag = parse_dockerhub_image_string(docker_image)
         if not image_exists_on_dockerhub(image_name, image_tag):
-            msg = f'cannot locate {image_name}:{image_tag} on DockerHub'
+            msg = f"cannot locate {image_name}:{image_tag} on DockerHub"
             raise RuntimeError(msg)
 
         for step in workflow_dag:
-            log.info(f'attempting to execute DAG step={step}')
+            log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
                 cast(BatchStageConfig, all_stages[stage_name])
                 for stage_name in step
@@ -103,33 +109,31 @@ def run_workflow(
                         repo_branch,
                         retries=stage.retries,
                         container_env_vars=k8s.configure_env_vars_from_secrets(
-                            namespace,
-                            stage.env_vars_from_secrets
+                            namespace, stage.env_vars_from_secrets
                         ),
                         image=docker_image,
                         cpu_request=stage.cpu_request,
-                        memory_request=stage.memory_request
+                        memory_request=stage.memory_request,
                     )
                     for stage in batch_stages
                 ]
                 for job_object in job_objects:
                     job_name = job_object.metadata.name
-                    log.info(f'creating job={job_name} in namespace={namespace}')
+                    log.info(f"creating job={job_name} in namespace={namespace}")
                     k8s.create_job(job_object)
                 try:
                     timeout = max(stage.max_completion_time for stage in batch_stages)
                     k8s.monitor_jobs_to_completion(
-                        job_objects,
-                        timeout + TIMEOUT_GRACE_SECONDS
+                        job_objects, timeout + TIMEOUT_GRACE_SECONDS
                     )
                 finally:
                     for job_object in job_objects:
                         job_name = job_object.metadata.name
-                        log.info(f'completed job={job_name} from namespace={namespace}')
+                        log.info(f"completed job={job_name} from namespace={namespace}")
                         _print_logs_to_stdout(namespace, job_name)
-                        log.info(f'deleting job={job_name} from namespace={namespace}')
+                        log.info(f"deleting job={job_name} from namespace={namespace}")
                         k8s.delete_job(namespace, job_name)
-                        log.info(f'deleted job={job_name} from namespace={namespace}')
+                        log.info(f"deleted job={job_name} from namespace={namespace}")
 
             if service_stages:
                 deployment_objects = [
@@ -142,80 +146,104 @@ def run_workflow(
                         replicas=stage.replicas,
                         port=stage.port,
                         container_env_vars=k8s.configure_env_vars_from_secrets(
-                            namespace,
-                            stage.env_vars_from_secrets
+                            namespace, stage.env_vars_from_secrets
                         ),
                         image=docker_image,
                         cpu_request=stage.cpu_request,
                         memory_request=stage.memory_request,
-                        seconds_to_be_ready_before_completing=stage.max_startup_time
+                        seconds_to_be_ready_before_completing=stage.max_startup_time,
                     )
                     for stage in service_stages
                 ]
                 for deployment_object in deployment_objects:
                     deployment_name = deployment_object.metadata.name
                     if k8s.is_existing_deployment(namespace, deployment_name):
-                        log.info(f'updating deployment={deployment_name} in '
-                                 f'namespace={namespace}')
+                        log.info(
+                            f"updating deployment={deployment_name} in "
+                            f"namespace={namespace}"
+                        )
                         k8s.update_deployment(deployment_object)
                     else:
-                        log.info(f'creating deployment={deployment_name} in '
-                                 f'namespace={namespace}')
+                        log.info(
+                            f"creating deployment={deployment_name} in "
+                            f"namespace={namespace}"
+                        )
                         k8s.create_deployment(deployment_object)
                 try:
                     timeout = max(stage.max_startup_time for stage in service_stages)
                     k8s.monitor_deployments_to_completion(
-                        deployment_objects,
-                        timeout + TIMEOUT_GRACE_SECONDS
+                        deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
                     )
                 except TimeoutError as e:
-                    log.error('deployments failed to roll-out successfully')
+                    log.error("deployments failed to roll-out successfully")
                     for deployment_object in deployment_objects:
                         deployment_name = deployment_object.metadata.name
                         _print_logs_to_stdout(namespace, deployment_name)
-                        log.info(f'rolling back deployment={deployment_name} in '
-                                 f'namespace={namespace}')
+                        log.info(
+                            f"rolling back deployment={deployment_name} in "
+                            f"namespace={namespace}"
+                        )
                         k8s.rollback_deployment(deployment_object)
-                        log.info(f'rolled back deployment={deployment_name} in '
-                                 f'namespace={namespace}')
+                        log.info(
+                            f"rolled back deployment={deployment_name} in "
+                            f"namespace={namespace}"
+                        )
                     raise e
 
                 for deployment_object, stage in zip(deployment_objects, service_stages):
                     deployment_name = deployment_object.metadata.name
-                    deployment_port = deployment_object.metadata.annotations['port']
-                    log.info(f'successful deployment={deployment_name} in '
-                             f'namespace={namespace}')
+                    deployment_port = deployment_object.metadata.annotations["port"]
+                    log.info(
+                        f"successful deployment={deployment_name} in "
+                        f"namespace={namespace}"
+                    )
                     _print_logs_to_stdout(namespace, deployment_name)
-                    if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
-                        log.info(f'exposing deployment={deployment_name} in '
-                                 f'namespace={namespace} at'
-                                 f'http://{deployment_name}.{namespace}.svc.cluster'
-                                 f'.local:{deployment_port}')
+                    if not k8s.is_exposed_as_cluster_service(
+                        namespace, deployment_name
+                    ):
+                        log.info(
+                            f"exposing deployment={deployment_name} in "
+                            f"namespace={namespace} at"
+                            f"http://{deployment_name}.{namespace}.svc.cluster"
+                            f".local:{deployment_port}"
+                        )
                         k8s.expose_deployment_as_cluster_service(deployment_object)
-                    if (not k8s.has_ingress(namespace, deployment_name)
-                            and stage.create_ingress):
-                        log.info(f'creating ingress for deployment={deployment_name} in '
-                                 f'namespace={namespace} with'
-                                 f'path=/{namespace}/{deployment_name}')
+                    if (
+                        not k8s.has_ingress(namespace, deployment_name)
+                        and stage.create_ingress
+                    ):
+                        log.info(
+                            f"creating ingress for deployment={deployment_name} in "
+                            f"namespace={namespace} with"
+                            f"path=/{namespace}/{deployment_name}"
+                        )
                         k8s.create_deployment_ingress(deployment_object)
-                    if (k8s.has_ingress(namespace, deployment_name)
-                            and not stage.create_ingress):
-                        log.info(f'deleting ingress for deployment={deployment_name} in '
-                                 f'namespace={namespace} with'
-                                 f'path=/{namespace}/{deployment_name}')
+                    if (
+                        k8s.has_ingress(namespace, deployment_name)
+                        and not stage.create_ingress
+                    ):
+                        log.info(
+                            f"deleting ingress for deployment={deployment_name} in "
+                            f"namespace={namespace} with"
+                            f"path=/{namespace}/{deployment_name}"
+                        )
                         k8s.delete_deployment_ingress(namespace, deployment_name)
-            log.info(f'successfully executed DAG step={step}')
-        log.info(f'successfully ran workflow for project={repo_url} on '
-                 f'branch={repo_branch} in kubernetes namespace={namespace}')
+            log.info(f"successfully executed DAG step={step}")
+        log.info(
+            f"successfully ran workflow for project={repo_url} on "
+            f"branch={repo_branch} in kubernetes namespace={namespace}"
+        )
 
     except Exception as e:
-        msg = (f'failed to execute workflow for {repo_branch} branch of project '
-               f'repository at {repo_url}: {e}')
+        msg = (
+            f"failed to execute workflow for {repo_branch} branch of project "
+            f"repository at {repo_url}: {e}"
+        )
         log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
         if cloned_repo_dir.exists():
-            rmtree(cloned_repo_dir)
+            rmtree(cloned_repo_dir, onerror=_remove_readonly)
 
 
 def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
@@ -227,7 +255,7 @@ def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
     :raises RuntimeError: If connection to DockerHub fails.
     :return: Boolean flag for image existence on DockerHub.
     """
-    dockerhub_url = f'https://hub.docker.com/v2/repositories/{repo_name}/tags/{tag}'
+    dockerhub_url = f"https://hub.docker.com/v2/repositories/{repo_name}/tags/{tag}"
     try:
         session = requests.Session()
         session.mount(dockerhub_url, requests.adapters.HTTPAdapter(max_retries=3))
@@ -237,7 +265,7 @@ def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
         else:
             return False
     except requests.exceptions.ConnectionError as e:
-        msg = f'cannot connect to {dockerhub_url} to check image exists'
+        msg = f"cannot connect to {dockerhub_url} to check image exists"
         raise RuntimeError(msg) from e
 
 
@@ -249,17 +277,19 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
         DOCKERHUB_USERNAME/IMAGE_NAME:TAG format.
     :return: Image name and image tag tuple.
     """
-    err_msg = (f'invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME} file - '
-               f'cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG')
-    if len(image_string.split('/')) != 2:
+    err_msg = (
+        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME} file - "
+        f"cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG"
+    )
+    if len(image_string.split("/")) != 2:
         raise ValueError(err_msg)
-    parsed_image_string = image_string.split(':')
+    parsed_image_string = image_string.split(":")
     if len(parsed_image_string) == 2:
         image_name = parsed_image_string[0]
         image_tag = parsed_image_string[1]
     elif len(parsed_image_string) == 1:
         image_name = parsed_image_string[0]
-        image_tag = 'latest'
+        image_tag = "latest"
     else:
         raise ValueError(err_msg)
     return image_name, image_tag
@@ -273,15 +303,32 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
-        print('-' * 100)
-        print(f'---- pod logs for {job_or_deployment_name}')
-        print('-' * 100)
+        print("-" * 100)
+        print(f"---- pod logs for {job_or_deployment_name}")
+        print("-" * 100)
         if pod_name is not None:
             pod_logs = k8s.get_pod_logs(namespace, pod_name)
             print(pod_logs)
         else:
-            print(f'cannot get logs for {job_or_deployment_name}')
-        print('-' * 100)
-        print('-' * 100)
+            print(f"cannot get logs for {job_or_deployment_name}")
+        print("-" * 100)
+        print("-" * 100)
     except Exception:
-        print(f'cannot get logs for {job_or_deployment_name}')
+        print(f"cannot get logs for {job_or_deployment_name}")
+
+
+def _remove_readonly(func, path, exc_info):
+    """Error handler for ``shutil.rmtree``.
+
+    If the error is due to an access error (read only file) it
+    attempts to add write permission and then retries. If the error is
+    for another reason it re-raises the error. This is primarily to
+    fix Windows OS access issues.
+
+    Usage: ``shutil.rmtree(path, onerror=on_error)``
+    """
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        raise Exception
