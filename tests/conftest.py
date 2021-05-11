@@ -1,3 +1,22 @@
+# bodywork - MLOps on Kubernetes.
+# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Pytest fixtures for use with all testing modules.
+"""
 import shutil
 import os
 import stat
@@ -10,11 +29,6 @@ from bodywork.constants import (
     SSH_DIR_NAME,
     GIT_SSH_COMMAND,
 )
-
-
-@fixture(scope="function")
-def test_namespace() -> str:
-    return "bodywork-dev"
 
 
 @fixture(scope="function")

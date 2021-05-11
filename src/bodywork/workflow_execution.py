@@ -317,12 +317,13 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         print(f"cannot get logs for {job_or_deployment_name}")
 
 
-def remove_readonly(func, path, exc_info):
+def _remove_readonly(func, path, exc_info):
     """Error handler for ``shutil.rmtree``.
 
-    If the error is due to an access error (read only file) it attempts to add write
-    permission and then retries. If the error is for another reason it re-raises the
-    error. This is primarily to fix Windows OS access issues.
+    If the error is due to an access error (read only file) it
+    attempts to add write permission and then retries. If the error is
+    for another reason it re-raises the error. This is primarily to
+    fix Windows OS access issues.
 
     Usage: ``shutil.rmtree(path, onerror=on_error)``
     """

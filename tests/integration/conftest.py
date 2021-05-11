@@ -57,6 +57,11 @@ def random_test_namespace() -> str:
 
 
 @fixture(scope="function")
+def test_namespace() -> str:
+    return "bodywork-dev"
+
+
+@fixture(scope="function")
 def docker_image() -> str:
     with open(Path("VERSION"), "r") as file:
         version = file.readlines()[0].replace("\n", "")

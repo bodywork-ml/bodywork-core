@@ -57,7 +57,7 @@ def download_project_code_from_repo(
     try:
         if get_connection_protocol(url) is ConnectionProtocol.SSH:
             hostname = urlparse(f"ssh://{url}").hostname
-            if hostname is not None and hostname != "":
+            if hostname:
                 setup_ssh_for_git_host(hostname)
             else:
                 raise ValueError(
@@ -122,7 +122,7 @@ def setup_ssh_for_git_host(hostname: str) -> None:
     and then tells Git to use it for SSH by exporting the
     GIT_SSH_COMMAND environment variable.
 
-    :param hostname:    Hostname to SSH to.
+    :param hostname: Hostname to SSH to.
     """
     ssh_dir = Path(".") / SSH_DIR_NAME
     private_key = ssh_dir / "id_rsa"
@@ -172,8 +172,7 @@ def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -
 
 
 def get_ssh_public_key_from_domain(hostname: str) -> str:
-    """Gets the public SSH key from the host and checks if the fingerprint matches
-     the stored fingerprint of valid servers.
+    """Gets the public key from the host and checks the fingerprint.
 
      Output from ssh-keyscan is piped into ssh-keygen by setting the input in
       conjunction with the trailing '-' in the command.
@@ -205,8 +204,9 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
                 return server_key
             else:
                 raise ConnectionAbortedError(
-                    f"SECURITY ALERT! SSH Fingerprint received from server does not match the fingerprint for"  # noqa
-                    f" {hostname}. Please check and ensure that {hostname} is not being impersonated"  # noqa
+                    f"SECURITY ALERT! SSH Fingerprint received from server does not match"
+                    f" the fingerprint for {hostname}. Please check and ensure that"
+                    f" {hostname} is not being impersonated"
                 )
         except CalledProcessError as e:
             raise RuntimeError(

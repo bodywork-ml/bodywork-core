@@ -38,7 +38,7 @@ GIT_SSH_COMMAND = "GIT_SSH_COMMAND"
 PROJECT_CONFIG_FILENAME = "bodywork.yaml"
 SSH_DIR_NAME = ".ssh_bodywork"
 SSH_PRIVATE_KEY_ENV_VAR = "BODYWORK_GIT_SSH_PRIVATE_KEY"
-SSH_SECRET_NAME = "ssh-github-private-key"
+SSH_SECRET_NAME = "ssh-git-private-key"
 TIMEOUT_GRACE_SECONDS = 90
 
 # External SSH Fingerprints
