@@ -18,7 +18,15 @@ version: 2.1
 orbs:
   aws-eks: circleci/aws-eks@1.0.3
 jobs:
-  run-unit-and-functional-tests-and-static-code-analysis:
+  run-static-code-analysis:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Running tests
+          command: tox -e py38-static_code_analysis -- -s -vv
+  run-unit-and-functional-tests:
     docker: 
       - image: circleci/python:3.8
     steps:
@@ -33,7 +41,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv --junitxml=~/tox/junit.xml
+          command: tox -e py38-unit_and_functional_tests -- -s -vv --junitxml=~/tox/junit.xml
       - store_test_results:
           path: ~/tox/
       - run:
@@ -139,9 +147,15 @@ workflows:
   test-build-deploy:
     jobs:
       - ensure-package-version-number-incremented
-      - run-unit-and-functional-tests-and-static-code-analysis:
+      - run-static-code-analysis:
           requires:
             - ensure-package-version-number-incremented
+            filters:
+              branches:
+                ignore: master
+      - run-unit-and-functional-tests:
+          requires:
+            - run-static-code-analysis
           filters:
             branches:
               ignore: master

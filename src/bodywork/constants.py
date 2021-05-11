@@ -16,8 +16,8 @@
 
 """
 This module contains constant values (e.g. default values) to be shared
-accoss all modules and tests as required. Constants should not be
-defined within seperate modules as this can lead to duplications and
+across all modules and tests as required. Constants should not be
+defined within separate modules as this can lead to duplications and
 inconsistencies.
 """
 import pkg_resources
@@ -49,3 +49,4 @@ GITLAB_SSH_FINGERPRINT = (
     "2048 SHA256:ROQFvPThGrW4RuWLoL9tq9I9zJ42fK4XywyRtbOz/EQ gitlab.com (RSA)"  # noqa
 )
 BITBUCKET_SSH_FINGERPRINT = "2048 SHA256:zzXQOXSRBEiUtuE8AikJYKwbHaxvSc0ojez9YXaGp1A bitbucket.org (RSA)"  # noqa
+AZURE_SSH_FINGERPRINT = "2048 SHA256:ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og ssh.dev.azure.com (RSA)"  # noqa

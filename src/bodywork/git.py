@@ -33,6 +33,7 @@ from .constants import (
     GITLAB_SSH_FINGERPRINT,
     BITBUCKET_SSH_FINGERPRINT,
     GIT_SSH_COMMAND,
+    AZURE_SSH_FINGERPRINT,
 )
 from .logs import bodywork_log_factory
 
@@ -184,6 +185,7 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
         "github.com": GITHUB_SSH_FINGERPRINT,
         "gitlab.com": GITLAB_SSH_FINGERPRINT,
         "bitbucket.org": BITBUCKET_SSH_FINGERPRINT,
+        "ssh.dev.azure.com": AZURE_SSH_FINGERPRINT,
     }
     if hostname in fingerprints:
         try:

@@ -47,6 +47,16 @@ def github_repo_connection_string() -> str:
 
 
 @fixture(scope="function")
+def bitbucket_repo_connection_string() -> str:
+    return "git@bitbucket.org:bodywork/private-test-repo.git"
+
+
+@fixture(scope="function")
+def azure_repo_connection_string() -> str:
+    return "git@ssh.dev.azure.com:v3/Bodyworkml/test-repos/test-repos"
+
+
+@fixture(scope="function")
 def random_test_namespace() -> str:
     rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
     print(
@@ -84,7 +94,7 @@ def set_github_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
-def set_gitlab_ssh_private_key_env_var() -> None:
+def set_git_ssh_private_key_env_var() -> None:
     if "CIRCLECI" in os.environ:
         private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
