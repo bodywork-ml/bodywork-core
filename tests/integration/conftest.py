@@ -102,7 +102,7 @@ def set_git_ssh_private_key_env_var() -> None:
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use for GitLab")
+        raise RuntimeError("cannot locate private SSH key to use")
 
 
 @fixture(scope="function")

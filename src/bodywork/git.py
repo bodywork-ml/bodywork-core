@@ -158,7 +158,8 @@ def setup_ssh_for_git_host(hostname: str) -> None:
         ) from e
 
     os.environ[GIT_SSH_COMMAND] = (
-        f"ssh -i '{private_key}'" f" -o UserKnownHostsFile='{known_hosts}'"
+        f"ssh -i '{private_key}' -o UserKnownHostsFile='{known_hosts}'"
+        f" -o IdentitiesOnly=yes"
     )
 
 
