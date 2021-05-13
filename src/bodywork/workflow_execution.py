@@ -20,7 +20,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Optional, Tuple
+from typing import cast, Optional, Tuple, List
 
 import requests
 import os
@@ -141,14 +141,14 @@ def run_workflow(
 
 
 def _run_batch_stages(
-    batch_stages: list[BatchStageConfig],
+    batch_stages: List[BatchStageConfig],
     project_name: str,
     env_vars: list,
     log,
     namespace: str,
     repo_branch: str,
     repo_url: str,
-    docker_image: Optional[str] = None,
+    docker_image: str,
 ):
     """Run Batch Stages defined in the workflow.
 
@@ -197,14 +197,14 @@ def _run_batch_stages(
 
 
 def _run_service_stages(
-    service_stages: list[ServiceStageConfig],
+    service_stages: List[ServiceStageConfig],
     project_name: str,
     env_vars: list,
     log,
     namespace,
     repo_branch,
     repo_url,
-    docker_image: Optional[str] = None,
+    docker_image: str,
 ):
     """Run Service Stages defined in the workflow.
 
