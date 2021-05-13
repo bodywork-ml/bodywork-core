@@ -38,20 +38,42 @@ from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
 
 
-def run_workflow(
-    namespace: str,
+def get_config_from_git_repo(
     repo_url: str,
     repo_branch: str = "master",
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-    docker_image_override: Optional[str] = None,
-) -> None:
-    """Retrieve latest project code and run the workflow.
+) -> BodyworkConfig:
+    """Download project's Git repo and parse config.
 
-    :param namespace: Kubernetes namespace to execute the workflow in.
     :param repo_url: Git repository URL.
     :param repo_branch: The Git branch to download, defaults to 'master'.
     :param cloned_repo_dir: The name of the directory into which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+    """
+    try:
+        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+        path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
+        config = BodyworkConfig(
+            path_to_project_config_file, check_py_modules_exist=True
+        )
+    finally:
+        rmtree(cloned_repo_dir, onerror=_remove_readonly)
+    return config
+
+
+def run_workflow(
+    config: BodyworkConfig,
+    namespace: str,
+    repo_url: str,
+    repo_branch: str = "master",
+    docker_image_override: Optional[str] = None,
+) -> None:
+    """Retrieve latest project code and run the workflow.
+
+    :param config: Configuration data for the Bodywork deployment.
+    :param namespace: Kubernetes namespace to execute the workflow in.
+    :param repo_url: Git repository URL.
+    :param repo_branch: The Git branch to download, defaults to 'master'.
     :param docker_image_override: Docker image to use for executing all
         stages, that will override the one specified in the
         project config file. Provided purely for testing purposes and
@@ -67,11 +89,6 @@ def run_workflow(
         )
         if k8s.namespace_exists(namespace) is False:
             raise ValueError(f"{namespace} is not a valid namespace on your cluster")
-        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
-        config = BodyworkConfig(
-            path_to_project_config_file, check_py_modules_exist=True
-        )
         log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
@@ -241,9 +258,6 @@ def run_workflow(
         )
         log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
-    finally:
-        if cloned_repo_dir.exists():
-            rmtree(cloned_repo_dir, onerror=_remove_readonly)
 
 
 def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:

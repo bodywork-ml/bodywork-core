@@ -60,7 +60,7 @@ from ..exceptions import (
 )
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
-from ..workflow_execution import run_workflow
+from ..workflow_execution import get_config_from_git_repo, run_workflow
 
 
 def cli() -> None:
@@ -538,7 +538,12 @@ def workflow(args: Namespace) -> None:
         if not is_namespace_available_for_bodywork(namespace):
             print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
+        config = get_config_from_git_repo(
+            repo_url,
+            repo_branch,
+        )
         run_workflow(
+            config,
             namespace,
             repo_url,
             repo_branch,
