@@ -51,6 +51,9 @@ def make_valid_k8s_name(name: str) -> str:
 def create_k8s_environment_variables(
     key_value_pairs: List[Tuple[str, str]]
 ) -> List[k8s.V1EnvVar]:
-    return [
-        k8s.V1EnvVar(name=name, value_from=value) for name, value in key_value_pairs
-    ]
+    """Creates K8s environment variable from key/value pairs.
+
+    :param key_value_pairs: Environment variables to create.
+    :return: List of K8s environment variables.
+    """
+    return [k8s.V1EnvVar(name=name, value=value) for name, value in key_value_pairs]
