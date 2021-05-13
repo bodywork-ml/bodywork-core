@@ -48,11 +48,9 @@ def make_valid_k8s_name(name: str) -> str:
     return re.sub(r"(\s|_)", "-", name.strip())
 
 
-def create_k8s_environment_variables(key_value_pairs: List[Tuple[str, str]]) -> List[k8s.V1EnvVar]:
-    return [k8s.V1EnvVar(
-        name=name,
-        value_from=value
-        )
-        for name, value in key_value_pairs
-     ]
-
+def create_k8s_environment_variables(
+    key_value_pairs: List[Tuple[str, str]]
+) -> List[k8s.V1EnvVar]:
+    return [
+        k8s.V1EnvVar(name=name, value_from=value) for name, value in key_value_pairs
+    ]
