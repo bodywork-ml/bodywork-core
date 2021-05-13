@@ -19,9 +19,10 @@ Helper functions for working with the Kubernetes API.
 """
 import json
 import re
-from typing import cast
+from typing import cast, List, Tuple
 
 from kubernetes.client.rest import ApiException
+from kubernetes import client as k8s
 
 
 def api_exception_msg(e: ApiException) -> str:
@@ -45,3 +46,13 @@ def make_valid_k8s_name(name: str) -> str:
     :return: Valid Kubernetes resource name.
     """
     return re.sub(r"(\s|_)", "-", name.strip())
+
+
+def create_k8s_environment_variables(key_value_pairs: List[Tuple[str, str]]) -> List[k8s.V1EnvVar]:
+    return [k8s.V1EnvVar(
+        name=name,
+        value_from=value
+        )
+        for name, value in key_value_pairs
+     ]
+
