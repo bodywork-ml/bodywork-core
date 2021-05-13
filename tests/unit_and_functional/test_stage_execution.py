@@ -106,10 +106,19 @@ def test_run_stage_with_arguements(
         assert False
 
 
-def test_run_stage_failure_raises_exception(
+def test_run_stage_failure_raises_exception_with_stderr_info_for_failed_scripts(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path
 ):
-    with raises(BodyworkStageFailure, match=r'stage_3_bad_script'):
-        run_stage('stage_3_bad_script', project_repo_connection_string)
+    with raises(BodyworkStageFailure, match='this stage has failed'):
+        run_stage('stage_4', project_repo_connection_string)
+
+
+def test_run_stage_failure_raises_exception_with_repr_info_if_setup_failed(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path
+):
+    with raises(BodyworkStageFailure, match='KeyError'):
+        run_stage('stage_5', project_repo_connection_string)

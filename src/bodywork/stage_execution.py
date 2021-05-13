@@ -60,14 +60,14 @@ def run_stage(
             cwd=stage.executable_module_path.parent,
             capture_output=True,
             encoding='utf-8')
-        log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of'
+        log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of '
                  f'repo at {repo_url}')
     except CalledProcessError as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.stderr)
         log.error(stage_failure_exception)
         raise stage_failure_exception from e
     except Exception as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, str(e))
+        stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         log.error(stage_failure_exception)
         raise stage_failure_exception from e
 
