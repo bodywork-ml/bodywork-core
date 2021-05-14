@@ -36,7 +36,7 @@ from .constants import (
 )
 from .exceptions import BodyworkWorkflowExecutionError
 from .git import download_project_code_from_repo, get_git_commit_hash
-from .logs import bodywork_log_factory
+from .logs import bodywork_log_factory, Logger
 
 
 def run_workflow(
@@ -143,8 +143,8 @@ def run_workflow(
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
     project_name: str,
-    env_vars: list,
-    log,
+    env_vars: k8s.EnvVars,
+    log: Logger,
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -199,8 +199,8 @@ def _run_batch_stages(
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
-    env_vars: list,
-    log,
+    env_vars: k8s.EnvVars,
+    log: Logger,
     namespace,
     repo_branch,
     repo_url,

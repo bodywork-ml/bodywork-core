@@ -75,7 +75,7 @@ from .service_deployments import (
     delete_deployment_ingress,
     has_ingress,
 )
-from .utils import (api_exception_msg, create_k8s_environment_variables)
+from .utils import api_exception_msg, create_k8s_environment_variables, EnvVars
 
 
 __all__ = [

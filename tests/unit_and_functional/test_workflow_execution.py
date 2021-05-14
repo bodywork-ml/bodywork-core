@@ -24,7 +24,7 @@ from typing import Iterable
 import requests
 from pytest import raises
 from _pytest.capture import CaptureFixture
-from kubernetes import client as k8sClient
+from kubernetes import client as k8sclient
 
 from bodywork.constants import PROJECT_CONFIG_FILENAME, GIT_COMMIT_HASH_K8S_ENV_VAR
 from bodywork.exceptions import BodyworkWorkflowExecutionError
@@ -121,7 +121,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     commit_hash = "MY GIT COMMIT HASH"
     mock_git_hash.return_value = commit_hash
     expected_result = [
-        k8sClient.V1EnvVar(name=GIT_COMMIT_HASH_K8S_ENV_VAR, value=commit_hash)
+        k8sclient.V1EnvVar(name=GIT_COMMIT_HASH_K8S_ENV_VAR, value=commit_hash)
     ]
     mock_k8s.create_k8s_environment_variables.return_value = expected_result
     mock_k8s.configure_env_vars_from_secrets.return_value = []

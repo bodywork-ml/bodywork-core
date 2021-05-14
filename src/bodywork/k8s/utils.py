@@ -25,6 +25,9 @@ from kubernetes.client.rest import ApiException
 from kubernetes import client as k8s
 
 
+EnvVars = List[k8s.V1EnvVar]
+
+
 def api_exception_msg(e: ApiException) -> str:
     """Get k8s API error message from exception object.
 
