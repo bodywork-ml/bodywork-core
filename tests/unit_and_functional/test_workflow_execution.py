@@ -108,6 +108,7 @@ def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
 
 
 @patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
 @patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.get_git_commit_hash")
 @patch("bodywork.workflow_execution.k8s")
@@ -115,6 +116,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     mock_k8s: MagicMock,
     mock_git_hash: MagicMock,
     mock_git_download: MagicMock,
+    mock_requests: MagicMock,
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
