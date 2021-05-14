@@ -55,14 +55,18 @@ def run_stage(
         stage = project_config.stages[stage_name]
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        run(['python', stage.executable_module, *stage.args],
+        sub_process = run(
+            ['python', stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
             capture_output=True,
-            encoding='utf-8')
+            encoding='utf-8'
+        )
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of '
                  f'repo at {repo_url}')
+        print(sub_process.stdout)
     except CalledProcessError as e:
+        print(e.stdout)
         stage_failure_exception = BodyworkStageFailure(stage_name, e.stderr)
         log.error(stage_failure_exception)
         raise stage_failure_exception from e

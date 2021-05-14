@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Iterable
 
 from pytest import raises
+from _pytest.capture import CaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
 from bodywork.stage_execution import _install_python_requirements, run_stage
@@ -104,6 +105,31 @@ def test_run_stage_with_arguements(
         assert stage_output.find('arg2 = 1') != -1
     except FileNotFoundError:
         assert False
+
+
+def test_run_stage_writes_captured_subprocess_stdout_to_main_process_stdout(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+    capsys: CaptureFixture
+):
+    run_stage('stage_2', project_repo_connection_string)
+    stdout = capsys.readouterr().out
+    assert 'foo' in stdout
+
+
+def test_run_stage_writes_captured_subprocess_stdout_to_main_process_stdout_after_error(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+    capsys: CaptureFixture
+):
+    try:
+        run_stage('stage_4', project_repo_connection_string)
+        assert False
+    except BodyworkStageFailure:
+        stdout = capsys.readouterr().out
+        assert 'foo' in stdout
 
 
 def test_run_stage_failure_raises_exception_with_stderr_info_for_failed_scripts(
