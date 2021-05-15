@@ -29,6 +29,7 @@ from kubernetes import client as k8sclient
 from bodywork.constants import PROJECT_CONFIG_FILENAME, GIT_COMMIT_HASH_K8S_ENV_VAR
 from bodywork.exceptions import BodyworkWorkflowExecutionError
 from bodywork.workflow_execution import (
+    get_config_from_git_repo,
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
@@ -83,9 +84,11 @@ def test_run_workflow_raises_exception_if_namespace_does_not_exist(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path,
 ):
+    git_repo_url = f'file://{project_repo_location.absolute()}'
+    config = get_config_from_git_repo(git_repo_url)
     mock_k8s.namespace_exists.return_value = False
     with raises(BodyworkWorkflowExecutionError, match="not a valid namespace"):
-        run_workflow("foo_bar_foo_993", project_repo_location)
+        run_workflow(config, "foo_bar_foo_993", git_repo_url)
 
 
 @patch("bodywork.workflow_execution.k8s")
