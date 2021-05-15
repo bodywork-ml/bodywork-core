@@ -24,7 +24,7 @@ import stat
 from pathlib import Path
 from typing import Iterable
 
-from bodywork.git import download_project_code_from_repo, setup_ssh_for_git_host
+from bodywork.git import download_project_code_from_repo, setup_ssh_for_git_host, get_git_commit_hash
 from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR, GIT_SSH_COMMAND
 
 
@@ -116,6 +116,16 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var():
             os.environ.pop(GIT_SSH_COMMAND)
         if ssh_dir.exists():
             shutil.rmtree(ssh_dir, onerror=remove_readonly)
+
+
+def test_that_git_commit_hash_is_retrieved(
+        setup_bodywork_test_project: Iterable[bool],
+):
+    try:
+        result = get_git_commit_hash()
+        assert len(result) == 7
+    except Exception:
+        assert False
 
 
 def remove_readonly(func, path, exc_info):

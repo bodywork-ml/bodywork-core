@@ -213,7 +213,7 @@ class ProjectConfig:
     def __init__(self, config_section: Dict[str, str]):
         """Constructor.
 
-        :param config: Dictionary of configuration parameters.
+        :param config_section: Dictionary of configuration parameters.
         :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
@@ -248,7 +248,7 @@ class LoggingConfig:
     def __init__(self, config_section: Dict[str, str]):
         """Constructor.
 
-        :param config: Dictionary of configuration parameters.
+        :param config_section: Dictionary of configuration parameters.
         :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
         """
@@ -318,7 +318,7 @@ class StageConfig:
             else:
                 self.env_vars_from_secrets = []
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Object equality operator.
 
         :param other: Other Stage object to compare this one too.
@@ -373,7 +373,7 @@ class ServiceStageConfig(StageConfig):
         },
     }
 
-    def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path):
+    def __init__(self, stage_name: str, config: Dict[str, Any], root_dir: Path) -> None:
         """Constructor.
 
         :param stage_name: Name of parent stage config.

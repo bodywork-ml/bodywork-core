@@ -18,14 +18,15 @@
 Test Bodywork workflow execution.
 """
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 from typing import Iterable
 
 import requests
 from pytest import raises
 from _pytest.capture import CaptureFixture
+from kubernetes import client as k8sclient
 
-from bodywork.constants import PROJECT_CONFIG_FILENAME
+from bodywork.constants import PROJECT_CONFIG_FILENAME, GIT_COMMIT_HASH_K8S_ENV_VAR
 from bodywork.exceptions import BodyworkWorkflowExecutionError
 from bodywork.workflow_execution import (
     get_config_from_git_repo,
@@ -107,3 +108,56 @@ def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
     captured_stdout = capsys.readouterr().out
     assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_requests: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    commit_hash = "MY GIT COMMIT HASH"
+    mock_git_hash.return_value = commit_hash
+    expected_result = [
+        k8sclient.V1EnvVar(name=GIT_COMMIT_HASH_K8S_ENV_VAR, value=commit_hash)
+    ]
+    mock_k8s.create_k8s_environment_variables.return_value = expected_result
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+
+    run_workflow(
+        "foo_bar_foo_993", project_repo_location, cloned_repo_dir=project_repo_location
+    )
+
+    mock_k8s.configure_service_stage_deployment.assert_called_once_with(
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        replicas=ANY,
+        port=ANY,
+        container_env_vars=expected_result,
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+        seconds_to_be_ready_before_completing=ANY,
+    )
+    mock_k8s.configure_batch_stage_job.assert_called_with(
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        retries=ANY,
+        container_env_vars=expected_result,
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+    )

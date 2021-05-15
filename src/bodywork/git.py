@@ -24,6 +24,7 @@ from enum import Enum
 from pathlib import Path
 from subprocess import run, CalledProcessError, DEVNULL, PIPE
 from urllib.parse import urlparse
+from typing import Optional
 
 from .constants import (
     DEFAULT_PROJECT_DIR,
@@ -217,3 +218,24 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
             )
     else:
         raise RuntimeError(f"{hostname} is not supported by Bodywork")
+
+
+def get_git_commit_hash(project_path: Optional[str] = None) -> str:
+    """Retrieves the Git commit hash.
+
+    :param project_path: Git project path.
+    :return: The Git commit hash.
+    """
+    try:
+        result = run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=project_path,
+            check=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.strip()
+        return result
+    except CalledProcessError as e:
+        raise RuntimeError(
+            f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}"
+        ) from e

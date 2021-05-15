@@ -24,7 +24,7 @@ from argparse import ArgumentParser, Namespace
 from functools import wraps
 from pathlib import Path
 from time import sleep
-from typing import Callable
+from typing import Callable, Any
 
 import kubernetes
 from pkg_resources import get_distribution
@@ -307,7 +307,7 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> None:
+    def wrapper(*args: Any, **kwargs: Any) -> None:
         try:
             func(*args, **kwargs)
         except kubernetes.client.rest.ApiException:

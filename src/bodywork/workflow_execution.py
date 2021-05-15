@@ -20,7 +20,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Optional, Tuple
+from typing import cast, Optional, Tuple, List, Any
 
 import requests
 import os
@@ -32,10 +32,11 @@ from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS,
+    GIT_COMMIT_HASH_K8S_ENV_VAR,
 )
 from .exceptions import BodyworkWorkflowExecutionError
-from .git import download_project_code_from_repo
-from .logs import bodywork_log_factory
+from .git import download_project_code_from_repo, get_git_commit_hash
+from .logs import bodywork_log_factory, Logger
 
 
 def get_config_from_git_repo(
@@ -102,7 +103,9 @@ def run_workflow(
         if not image_exists_on_dockerhub(image_name, image_tag):
             msg = f"cannot locate {image_name}:{image_tag} on DockerHub"
             raise RuntimeError(msg)
-
+        env_vars = k8s.create_k8s_environment_variables(
+            [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
+        )
         for step in workflow_dag:
             log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -115,142 +118,33 @@ def run_workflow(
                 for stage_name in step
                 if type(all_stages[stage_name]) is ServiceStageConfig
             ]
-
             if batch_stages:
-                job_objects = [
-                    k8s.configure_batch_stage_job(
-                        namespace,
-                        stage.name,
-                        config.project.name,
-                        repo_url,
-                        repo_branch,
-                        retries=stage.retries,
-                        container_env_vars=k8s.configure_env_vars_from_secrets(
-                            namespace, stage.env_vars_from_secrets
-                        ),
-                        image=docker_image,
-                        cpu_request=stage.cpu_request,
-                        memory_request=stage.memory_request,
-                    )
-                    for stage in batch_stages
-                ]
-                for job_object in job_objects:
-                    job_name = job_object.metadata.name
-                    log.info(f"creating job={job_name} in namespace={namespace}")
-                    k8s.create_job(job_object)
-                try:
-                    timeout = max(stage.max_completion_time for stage in batch_stages)
-                    k8s.monitor_jobs_to_completion(
-                        job_objects, timeout + TIMEOUT_GRACE_SECONDS
-                    )
-                finally:
-                    for job_object in job_objects:
-                        job_name = job_object.metadata.name
-                        log.info(f"completed job={job_name} from namespace={namespace}")
-                        _print_logs_to_stdout(namespace, job_name)
-                        log.info(f"deleting job={job_name} from namespace={namespace}")
-                        k8s.delete_job(namespace, job_name)
-                        log.info(f"deleted job={job_name} from namespace={namespace}")
-
+                _run_batch_stages(
+                    batch_stages,
+                    config.project.name,
+                    env_vars,
+                    log,
+                    namespace,
+                    repo_branch,
+                    repo_url,
+                    docker_image,
+                )
             if service_stages:
-                deployment_objects = [
-                    k8s.configure_service_stage_deployment(
-                        namespace,
-                        stage.name,
-                        config.project.name,
-                        repo_url,
-                        repo_branch,
-                        replicas=stage.replicas,
-                        port=stage.port,
-                        container_env_vars=k8s.configure_env_vars_from_secrets(
-                            namespace, stage.env_vars_from_secrets
-                        ),
-                        image=docker_image,
-                        cpu_request=stage.cpu_request,
-                        memory_request=stage.memory_request,
-                        seconds_to_be_ready_before_completing=stage.max_startup_time,
-                    )
-                    for stage in service_stages
-                ]
-                for deployment_object in deployment_objects:
-                    deployment_name = deployment_object.metadata.name
-                    if k8s.is_existing_deployment(namespace, deployment_name):
-                        log.info(
-                            f"updating deployment={deployment_name} in "
-                            f"namespace={namespace}"
-                        )
-                        k8s.update_deployment(deployment_object)
-                    else:
-                        log.info(
-                            f"creating deployment={deployment_name} in "
-                            f"namespace={namespace}"
-                        )
-                        k8s.create_deployment(deployment_object)
-                try:
-                    timeout = max(stage.max_startup_time for stage in service_stages)
-                    k8s.monitor_deployments_to_completion(
-                        deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
-                    )
-                except TimeoutError as e:
-                    log.error("deployments failed to roll-out successfully")
-                    for deployment_object in deployment_objects:
-                        deployment_name = deployment_object.metadata.name
-                        _print_logs_to_stdout(namespace, deployment_name)
-                        log.info(
-                            f"rolling back deployment={deployment_name} in "
-                            f"namespace={namespace}"
-                        )
-                        k8s.rollback_deployment(deployment_object)
-                        log.info(
-                            f"rolled back deployment={deployment_name} in "
-                            f"namespace={namespace}"
-                        )
-                    raise e
-
-                for deployment_object, stage in zip(deployment_objects, service_stages):
-                    deployment_name = deployment_object.metadata.name
-                    deployment_port = deployment_object.metadata.annotations["port"]
-                    log.info(
-                        f"successful deployment={deployment_name} in "
-                        f"namespace={namespace}"
-                    )
-                    _print_logs_to_stdout(namespace, deployment_name)
-                    if not k8s.is_exposed_as_cluster_service(
-                        namespace, deployment_name
-                    ):
-                        log.info(
-                            f"exposing deployment={deployment_name} in "
-                            f"namespace={namespace} at"
-                            f"http://{deployment_name}.{namespace}.svc.cluster"
-                            f".local:{deployment_port}"
-                        )
-                        k8s.expose_deployment_as_cluster_service(deployment_object)
-                    if (
-                        not k8s.has_ingress(namespace, deployment_name)
-                        and stage.create_ingress
-                    ):
-                        log.info(
-                            f"creating ingress for deployment={deployment_name} in "
-                            f"namespace={namespace} with"
-                            f"path=/{namespace}/{deployment_name}"
-                        )
-                        k8s.create_deployment_ingress(deployment_object)
-                    if (
-                        k8s.has_ingress(namespace, deployment_name)
-                        and not stage.create_ingress
-                    ):
-                        log.info(
-                            f"deleting ingress for deployment={deployment_name} in "
-                            f"namespace={namespace} with"
-                            f"path=/{namespace}/{deployment_name}"
-                        )
-                        k8s.delete_deployment_ingress(namespace, deployment_name)
+                _run_service_stages(
+                    service_stages,
+                    config.project.name,
+                    env_vars,
+                    log,
+                    namespace,
+                    repo_branch,
+                    repo_url,
+                    docker_image,
+                )
             log.info(f"successfully executed DAG step={step}")
         log.info(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-
     except Exception as e:
         msg = (
             f"failed to execute workflow for {repo_branch} branch of project "
@@ -258,6 +152,166 @@ def run_workflow(
         )
         log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
+
+
+def _run_batch_stages(
+    batch_stages: List[BatchStageConfig],
+    project_name: str,
+    env_vars: k8s.EnvVars,
+    log: Logger,
+    namespace: str,
+    repo_branch: str,
+    repo_url: str,
+    docker_image: str,
+) -> None:
+    """Run Batch Stages defined in the workflow.
+
+    :param batch_stages: List of batch stages to execute.
+    :param project_name: Project name
+    :param env_vars: List of k8s environment variables to add.
+    :param log: Logger.
+    :param namespace: K8s namespace to execute the batch stage in.
+    :param repo_branch: The Git branch to download'.
+    :param repo_url: Git repository URL.
+    :param docker_image: Docker Image to use.
+    """
+    job_objects = [
+        k8s.configure_batch_stage_job(
+            namespace,
+            stage.name,
+            project_name,
+            repo_url,
+            repo_branch,
+            retries=stage.retries,
+            container_env_vars=k8s.configure_env_vars_from_secrets(
+                namespace, stage.env_vars_from_secrets
+            )
+            + env_vars,
+            image=docker_image,
+            cpu_request=stage.cpu_request,
+            memory_request=stage.memory_request,
+        )
+        for stage in batch_stages
+    ]
+    for job_object in job_objects:
+        job_name = job_object.metadata.name
+        log.info(f"creating job={job_name} in namespace={namespace}")
+        k8s.create_job(job_object)
+    try:
+        timeout = max(stage.max_completion_time for stage in batch_stages)
+        k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
+    finally:
+        for job_object in job_objects:
+            job_name = job_object.metadata.name
+            log.info(f"completed job={job_name} from namespace={namespace}")
+            _print_logs_to_stdout(namespace, job_name)
+            log.info(f"deleting job={job_name} from namespace={namespace}")
+            k8s.delete_job(namespace, job_name)
+            log.info(f"deleted job={job_name} from namespace={namespace}")
+
+
+def _run_service_stages(
+    service_stages: List[ServiceStageConfig],
+    project_name: str,
+    env_vars: k8s.EnvVars,
+    log: Logger,
+    namespace: str,
+    repo_branch: str,
+    repo_url: str,
+    docker_image: str,
+) -> None:
+    """Run Service Stages defined in the workflow.
+
+    :param service_stages: List of service stages to execute.
+    :param project_name: Project name
+    :param env_vars: List of k8s environment variables to add.
+    :param log: Logger.
+    :param namespace: K8s namespace to execute the service stage in.
+    :param repo_branch: The Git branch to download.
+    :param repo_url: Git repository URL.
+    :param docker_image: Docker Image to use.
+    """
+    deployment_objects = [
+        k8s.configure_service_stage_deployment(
+            namespace,
+            stage.name,
+            project_name,
+            repo_url,
+            repo_branch,
+            replicas=stage.replicas,
+            port=stage.port,
+            container_env_vars=k8s.configure_env_vars_from_secrets(
+                namespace, stage.env_vars_from_secrets
+            )
+            + env_vars,
+            image=docker_image,
+            cpu_request=stage.cpu_request,
+            memory_request=stage.memory_request,
+            seconds_to_be_ready_before_completing=stage.max_startup_time,
+        )
+        for stage in service_stages
+    ]
+    for deployment_object in deployment_objects:
+        deployment_name = deployment_object.metadata.name
+        if k8s.is_existing_deployment(namespace, deployment_name):
+            log.info(
+                f"updating deployment={deployment_name} in " f"namespace={namespace}"
+            )
+            k8s.update_deployment(deployment_object)
+        else:
+            log.info(
+                f"creating deployment={deployment_name} in " f"namespace={namespace}"
+            )
+            k8s.create_deployment(deployment_object)
+    try:
+        timeout = max(stage.max_startup_time for stage in service_stages)
+        k8s.monitor_deployments_to_completion(
+            deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
+        )
+    except TimeoutError as e:
+        log.error("deployments failed to roll-out successfully")
+        for deployment_object in deployment_objects:
+            deployment_name = deployment_object.metadata.name
+            _print_logs_to_stdout(namespace, deployment_name)
+            log.info(
+                f"rolling back deployment={deployment_name} in "
+                f"namespace={namespace}"
+            )
+            k8s.rollback_deployment(deployment_object)
+            log.info(
+                f"rolled back deployment={deployment_name} in " f"namespace={namespace}"
+            )
+        raise e
+
+    for deployment_object, stage in zip(deployment_objects, service_stages):
+        deployment_name = deployment_object.metadata.name
+        deployment_port = deployment_object.metadata.annotations["port"]
+        log.info(
+            f"successful deployment={deployment_name} in " f"namespace={namespace}"
+        )
+        _print_logs_to_stdout(namespace, deployment_name)
+        if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
+            log.info(
+                f"exposing deployment={deployment_name} in "
+                f"namespace={namespace} at"
+                f"http://{deployment_name}.{namespace}.svc.cluster"
+                f".local:{deployment_port}"
+            )
+            k8s.expose_deployment_as_cluster_service(deployment_object)
+        if not k8s.has_ingress(namespace, deployment_name) and stage.create_ingress:
+            log.info(
+                f"creating ingress for deployment={deployment_name} in "
+                f"namespace={namespace} with"
+                f"path=/{namespace}/{deployment_name}"
+            )
+            k8s.create_deployment_ingress(deployment_object)
+        if k8s.has_ingress(namespace, deployment_name) and not stage.create_ingress:
+            log.info(
+                f"deleting ingress for deployment={deployment_name} in "
+                f"namespace={namespace} with"
+                f"path=/{namespace}/{deployment_name}"
+            )
+            k8s.delete_deployment_ingress(namespace, deployment_name)
 
 
 def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
@@ -331,7 +385,7 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         print(f"cannot get logs for {job_or_deployment_name}")
 
 
-def _remove_readonly(func, path, exc_info):
+def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
     """Error handler for ``shutil.rmtree``.
 
     If the error is due to an access error (read only file) it
@@ -339,7 +393,7 @@ def _remove_readonly(func, path, exc_info):
     for another reason it re-raises the error. This is primarily to
     fix Windows OS access issues.
 
-    Usage: ``shutil.rmtree(path, onerror=on_error)``
+    Usage: ``shutil.rmtree(path, onerror=_remove_readonly)``
     """
     if not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWRITE)
