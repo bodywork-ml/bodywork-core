@@ -84,7 +84,7 @@ def test_run_workflow_raises_exception_if_namespace_does_not_exist(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path,
 ):
-    git_repo_url = f'file://{project_repo_location.absolute()}'
+    git_repo_url = f"file://{project_repo_location.absolute()}"
     config = get_config_from_git_repo(git_repo_url)
     mock_k8s.namespace_exists.return_value = False
     with raises(BodyworkWorkflowExecutionError, match="not a valid namespace"):
@@ -130,10 +130,10 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     ]
     mock_k8s.create_k8s_environment_variables.return_value = expected_result
     mock_k8s.configure_env_vars_from_secrets.return_value = []
+    git_repo_url = f"file://{project_repo_location.absolute()}"
+    config = get_config_from_git_repo(git_repo_url, cloned_repo_dir=project_repo_location)
 
-    run_workflow(
-        "foo_bar_foo_993", project_repo_location, cloned_repo_dir=project_repo_location
-    )
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
     mock_k8s.configure_service_stage_deployment.assert_called_once_with(
         ANY,
