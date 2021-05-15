@@ -71,7 +71,7 @@ class BodyworkConfigVersionMismatchError(Exception):
 
 
 class BodyworkWorkflowExecutionError(Exception):
-    def __init__(self, msg):
+    def __init__(self, msg) -> None:
         super().__init__(msg)
 
 

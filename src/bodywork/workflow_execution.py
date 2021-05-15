@@ -149,7 +149,7 @@ def _run_batch_stages(
     repo_branch: str,
     repo_url: str,
     docker_image: str,
-):
+) -> None:
     """Run Batch Stages defined in the workflow.
 
     :param batch_stages: List of batch stages to execute.
@@ -205,7 +205,7 @@ def _run_service_stages(
     repo_branch: str,
     repo_url: str,
     docker_image: str,
-):
+) -> None:
     """Run Service Stages defined in the workflow.
 
     :param service_stages: List of service stages to execute.
@@ -371,7 +371,7 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         print(f"cannot get logs for {job_or_deployment_name}")
 
 
-def _remove_readonly(func, path, exc_info):
+def _remove_readonly(func, path, exc_info) -> None:
     """Error handler for ``shutil.rmtree``.
 
     If the error is due to an access error (read only file) it

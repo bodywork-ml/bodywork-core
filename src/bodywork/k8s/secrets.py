@@ -111,7 +111,7 @@ def create_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) ->
     k8s.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
 
 
-def delete_secret(namespace: str, name) -> None:
+def delete_secret(namespace: str, name: str) -> None:
     """Delete a secret from within a namespace.
 
     :param namespace: Namespace in which to look for the secret to

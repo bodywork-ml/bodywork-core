@@ -409,7 +409,7 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
     return deployment_info
 
 
-def cluster_service_url(namespace: str, deployment_name) -> str:
+def cluster_service_url(namespace: str, deployment_name: str) -> str:
     """Standardised URL to a service deployment.
 
     :param namespace: Namespace in which the deployment exists.

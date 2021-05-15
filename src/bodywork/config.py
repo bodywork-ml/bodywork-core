@@ -318,7 +318,7 @@ class StageConfig:
             else:
                 self.env_vars_from_secrets = []
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: str) -> bool:
         """Object equality operator.
 
         :param other: Other Stage object to compare this one too.
@@ -373,7 +373,7 @@ class ServiceStageConfig(StageConfig):
         },
     }
 
-    def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path):
+    def __init__(self, stage_name, config: Dict[str, Any], root_dir: Path) -> None:
         """Constructor.
 
         :param stage_name: Name of parent stage config.
