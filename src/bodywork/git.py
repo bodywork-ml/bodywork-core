@@ -236,4 +236,4 @@ def get_git_commit_hash(project_path: Optional[str] = None) -> str:
         ).stdout.strip()
         return result
     except CalledProcessError as e:
-        raise RuntimeError(f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}")
+        raise RuntimeError(f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}") from e

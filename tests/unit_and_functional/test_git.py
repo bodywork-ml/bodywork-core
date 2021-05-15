@@ -21,6 +21,7 @@ import os
 
 from pytest import raises
 from unittest.mock import patch, MagicMock
+from subprocess import CalledProcessError
 
 from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
@@ -29,6 +30,7 @@ from bodywork.git import (
     get_connection_protocol,
     setup_ssh_for_git_host,
     get_ssh_public_key_from_domain,
+    get_git_commit_hash,
 )
 
 
@@ -75,10 +77,17 @@ def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_
     mock_run: MagicMock,
 ):
     hostname = "github.com"
-
     with raises(
         ConnectionAbortedError,
         match=f"SECURITY ALERT! SSH Fingerprint received "
         f"from server does not match the fingerprint for {hostname}.",
     ):
         get_ssh_public_key_from_domain(hostname)
+
+
+@patch("bodywork.git.run", side_effect=CalledProcessError(999, "git rev-parse"))
+def test_get_git_commit_hash_throws_runtime_exception_on_fail(
+    mock_run: MagicMock,
+):
+    with raises(RuntimeError, match=f"Unable to retrieve git commit hash:"):
+        get_git_commit_hash()

@@ -201,9 +201,9 @@ def _run_service_stages(
     project_name: str,
     env_vars: k8s.EnvVars,
     log: Logger,
-    namespace,
-    repo_branch,
-    repo_url,
+    namespace: str,
+    repo_branch: str,
+    repo_url: str,
     docker_image: str,
 ):
     """Run Service Stages defined in the workflow.
