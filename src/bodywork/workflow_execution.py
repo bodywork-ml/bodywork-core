@@ -20,7 +20,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Optional, Tuple, List
+from typing import cast, Optional, Tuple, List, Any
 
 import requests
 import os
@@ -371,7 +371,7 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         print(f"cannot get logs for {job_or_deployment_name}")
 
 
-def _remove_readonly(func, path, exc_info) -> None:
+def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
     """Error handler for ``shutil.rmtree``.
 
     If the error is due to an access error (read only file) it
@@ -379,7 +379,7 @@ def _remove_readonly(func, path, exc_info) -> None:
     for another reason it re-raises the error. This is primarily to
     fix Windows OS access issues.
 
-    Usage: ``shutil.rmtree(path, onerror=on_error)``
+    Usage: ``shutil.rmtree(path, onerror=_remove_readonly)``
     """
     if not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWRITE)
