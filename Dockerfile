@@ -17,9 +17,9 @@
 FROM python:3.8-slim as py38-base
 RUN apt -y update &&\
     apt-get install -y git &&\
+    apt-get install -y iputils &&\
     apt -y install build-essential &&\
     apt-get clean
-    apt-get install -y iputils &&\
 WORKDIR /home/app
 
 FROM py38-base as builder
