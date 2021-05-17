@@ -208,6 +208,7 @@ class ProjectConfig:
         "name": {"type": "string", "required": True, "regex": VALID_K8S_NAME_REGEX},
         "docker_image": {"type": "string", "required": True},
         "DAG": {"type": "string", "required": True},
+        "usage_stats": {"type": "boolean", "required": False},
     }
 
     def __init__(self, config_section: Dict[str, str]):
@@ -228,6 +229,11 @@ class ProjectConfig:
             self.name = config_section["name"]
             self.docker_image = config_section["docker_image"]
             self.DAG = config_section["DAG"]
+            self.usage_stats = (
+                config_section["usage_stats"]
+                if "usage_stats" in config_section
+                else True
+            )
             try:
                 self.workflow = _parse_dag_definition(config_section["DAG"])
             except ValueError as e:
