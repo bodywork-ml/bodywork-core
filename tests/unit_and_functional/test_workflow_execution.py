@@ -22,7 +22,6 @@ from unittest.mock import MagicMock, patch, ANY
 from typing import Iterable
 
 import requests
-import asyncio
 from pytest import raises
 from _pytest.capture import CaptureFixture
 from kubernetes import client as k8sclient
@@ -94,9 +93,7 @@ def test_run_workflow_raises_exception_if_namespace_does_not_exist(
     config = get_config_from_git_repo(git_repo_url)
     mock_k8s.namespace_exists.return_value = False
     with raises(BodyworkWorkflowExecutionError, match="not a valid namespace"):
-        asyncio.get_event_loop().run_until_complete(
-            run_workflow(config, "foo_bar_foo_993", git_repo_url)
-        )
+        run_workflow(config, "foo_bar_foo_993", git_repo_url)
 
 
 @patch("bodywork.workflow_execution.k8s")
@@ -141,9 +138,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
-    asyncio.get_event_loop().run_until_complete(
-        run_workflow(config, "foo_bar_foo_993", project_repo_location)
-    )
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
     mock_k8s.configure_service_stage_deployment.assert_called_once_with(
         ANY,
@@ -190,9 +185,7 @@ def test_run_workflow_pings_usage_stats_server(
     config = BodyworkConfig(config_path)
     config.project.usage_stats = True
 
-    asyncio.get_event_loop().run_until_complete(
-        run_workflow(config, "foo_bar_foo_993", project_repo_location)
-    )
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
     mock_session().get.assert_called_with(USAGE_STATS_SERVER_URL)
 
@@ -213,8 +206,6 @@ def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
-    asyncio.get_event_loop().run_until_complete(
-        run_workflow(config, "foo_bar_foo_993", project_repo_location)
-    )
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
     mock_session().get.assert_called_once()

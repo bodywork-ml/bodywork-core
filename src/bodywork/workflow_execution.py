@@ -25,7 +25,6 @@ from typing import cast, Optional, Tuple, List, Any
 import requests
 import os
 import stat
-import asyncio
 
 from . import k8s
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
@@ -66,7 +65,7 @@ def get_config_from_git_repo(
     return config
 
 
-async def run_workflow(
+def run_workflow(
     config: BodyworkConfig,
     namespace: str,
     repo_url: str,
@@ -109,8 +108,6 @@ async def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
         )
-        if config.project.usage_stats:
-            asyncio.create_task(_ping_usage_stats_server())
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -155,6 +152,9 @@ async def run_workflow(
         )
         _log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
+    finally:
+        if config.project.usage_stats:
+            _ping_usage_stats_server()
 
 
 def _run_batch_stages(
@@ -401,7 +401,7 @@ def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
         raise Exception
 
 
-async def _ping_usage_stats_server() -> None:
+def _ping_usage_stats_server() -> None:
     """Pings the usage stats server."""
     try:
         session = requests.Session()

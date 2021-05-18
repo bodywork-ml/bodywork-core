@@ -20,7 +20,6 @@ Command Line Interface (CLI)
 import sys
 import traceback
 import urllib3
-import asyncio
 from argparse import ArgumentParser, Namespace
 from functools import wraps
 from pathlib import Path
@@ -342,7 +341,6 @@ def debug(args: Namespace) -> None:
     `kubectl exec NAME_OF_POD` for debugging from withint he a cluster.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     seconds = args.seconds
     print(f"sleeping for {seconds}s")
@@ -355,7 +353,6 @@ def deployment(args: Namespace) -> None:
     """Deploy command handler.
 
     :param args: Arguments passed to the deploy command from the CLI.
-    :param logger: Bodywork logger.
     """
     command = args.command
     namespace = args.namespace
@@ -395,7 +392,6 @@ def cronjob(args: Namespace) -> None:
     """Cronjob command handler.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     command = args.command
     namespace = args.namespace
@@ -453,7 +449,6 @@ def service(args: Namespace) -> None:
     """Service deployment command handler.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     command = args.command
     namespace = args.namespace
@@ -475,7 +470,6 @@ def secret(args: Namespace) -> None:
     """Stage command handler.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     command = args.command
     namespace = args.namespace
@@ -511,7 +505,6 @@ def stage(args: Namespace) -> None:
     """Stage command handler
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     try:
         repo_url = args.git_project_repo_url
@@ -528,7 +521,6 @@ def workflow(args: Namespace) -> None:
     """Workflow execution handler
 
     :param args: Arguments passed to the workflow command from the CLI.
-    :param logger: Bodywork logger.
     """
     try:
         namespace = args.namespace
@@ -543,14 +535,12 @@ def workflow(args: Namespace) -> None:
             repo_url,
             repo_branch,
         )
-        asyncio.get_event_loop().run_until_complete(
-            run_workflow(
-                config,
-                namespace,
-                repo_url,
-                repo_branch,
-                docker_image_override=(None if docker_image == "" else docker_image),
-            )
+        run_workflow(
+            config,
+            namespace,
+            repo_url,
+            repo_branch,
+            docker_image_override=(None if docker_image == "" else docker_image),
         )
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
@@ -562,7 +552,6 @@ def setup_namespace(args: Namespace) -> None:
     """Setup namespace command handler.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     namespace = args.namespace
     load_kubernetes_config()
@@ -574,7 +563,6 @@ def validate_config(args: Namespace) -> None:
     """Validates a Bodywork config file and returns errors.
 
     :param args: Arguments passed to the run command from the CLI.
-    :param logger: Bodywork logger.
     """
     file_path = Path(args.file)
     check_py_files = args.check_files
