@@ -26,7 +26,11 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 from kubernetes import client as k8sclient
 
-from bodywork.constants import PROJECT_CONFIG_FILENAME, GIT_COMMIT_HASH_K8S_ENV_VAR
+from bodywork.constants import (
+    PROJECT_CONFIG_FILENAME,
+    GIT_COMMIT_HASH_K8S_ENV_VAR,
+    USAGE_STATS_SERVER_URL,
+)
 from bodywork.exceptions import BodyworkWorkflowExecutionError
 from bodywork.workflow_execution import (
     get_config_from_git_repo,
@@ -35,6 +39,7 @@ from bodywork.workflow_execution import (
     run_workflow,
     _print_logs_to_stdout,
 )
+from bodywork.config import BodyworkConfig
 
 
 @patch("requests.Session")
@@ -130,8 +135,8 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     ]
     mock_k8s.create_k8s_environment_variables.return_value = expected_result
     mock_k8s.configure_env_vars_from_secrets.return_value = []
-    git_repo_url = f"file://{project_repo_location.absolute()}"
-    config = get_config_from_git_repo(git_repo_url, cloned_repo_dir=project_repo_location)
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
 
     run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
@@ -161,3 +166,46 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         cpu_request=ANY,
         memory_request=ANY,
     )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_run_workflow_pings_usage_stats_server(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+    config.project.usage_stats = True
+
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
+
+    mock_session().get.assert_called_with(USAGE_STATS_SERVER_URL)
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    run_workflow(config, "foo_bar_foo_993", project_repo_location)
+
+    mock_session().get.assert_called_once()

@@ -144,3 +144,4 @@ bodywork_project/
 .idea/bodywork-core.iml
 .idea/workspace.xml
 .idea/workspace.xml~
+.idea/mypy.xml

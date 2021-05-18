@@ -33,10 +33,13 @@ from .constants import (
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS,
     GIT_COMMIT_HASH_K8S_ENV_VAR,
+    USAGE_STATS_SERVER_URL,
 )
 from .exceptions import BodyworkWorkflowExecutionError
 from .git import download_project_code_from_repo, get_git_commit_hash
-from .logs import bodywork_log_factory, Logger
+from .logs import bodywork_log_factory
+
+_log = bodywork_log_factory()
 
 
 def get_config_from_git_repo(
@@ -83,14 +86,13 @@ def run_workflow(
         run for any reason.
     """
     try:
-        log = bodywork_log_factory()
-        log.info(
+        _log.info(
             f"attempting to run workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
         if k8s.namespace_exists(namespace) is False:
             raise ValueError(f"{namespace} is not a valid namespace on your cluster")
-        log.setLevel(config.logging.log_level)
+        _log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
 
@@ -107,7 +109,7 @@ def run_workflow(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
         )
         for step in workflow_dag:
-            log.info(f"attempting to execute DAG step={step}")
+            _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
                 cast(BatchStageConfig, all_stages[stage_name])
                 for stage_name in step
@@ -123,7 +125,6 @@ def run_workflow(
                     batch_stages,
                     config.project.name,
                     env_vars,
-                    log,
                     namespace,
                     repo_branch,
                     repo_url,
@@ -134,14 +135,13 @@ def run_workflow(
                     service_stages,
                     config.project.name,
                     env_vars,
-                    log,
                     namespace,
                     repo_branch,
                     repo_url,
                     docker_image,
                 )
-            log.info(f"successfully executed DAG step={step}")
-        log.info(
+            _log.info(f"successfully executed DAG step={step}")
+        _log.info(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
@@ -150,15 +150,17 @@ def run_workflow(
             f"failed to execute workflow for {repo_branch} branch of project "
             f"repository at {repo_url}: {e}"
         )
-        log.error(msg)
+        _log.error(msg)
         raise BodyworkWorkflowExecutionError(msg) from e
+    finally:
+        if config.project.usage_stats:
+            _ping_usage_stats_server()
 
 
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
     project_name: str,
     env_vars: k8s.EnvVars,
-    log: Logger,
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -169,7 +171,6 @@ def _run_batch_stages(
     :param batch_stages: List of batch stages to execute.
     :param project_name: Project name
     :param env_vars: List of k8s environment variables to add.
-    :param log: Logger.
     :param namespace: K8s namespace to execute the batch stage in.
     :param repo_branch: The Git branch to download'.
     :param repo_url: Git repository URL.
@@ -195,7 +196,7 @@ def _run_batch_stages(
     ]
     for job_object in job_objects:
         job_name = job_object.metadata.name
-        log.info(f"creating job={job_name} in namespace={namespace}")
+        _log.info(f"creating job={job_name} in namespace={namespace}")
         k8s.create_job(job_object)
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
@@ -203,18 +204,17 @@ def _run_batch_stages(
     finally:
         for job_object in job_objects:
             job_name = job_object.metadata.name
-            log.info(f"completed job={job_name} from namespace={namespace}")
+            _log.info(f"completed job={job_name} from namespace={namespace}")
             _print_logs_to_stdout(namespace, job_name)
-            log.info(f"deleting job={job_name} from namespace={namespace}")
+            _log.info(f"deleting job={job_name} from namespace={namespace}")
             k8s.delete_job(namespace, job_name)
-            log.info(f"deleted job={job_name} from namespace={namespace}")
+            _log.info(f"deleted job={job_name} from namespace={namespace}")
 
 
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
     env_vars: k8s.EnvVars,
-    log: Logger,
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -225,7 +225,6 @@ def _run_service_stages(
     :param service_stages: List of service stages to execute.
     :param project_name: Project name
     :param env_vars: List of k8s environment variables to add.
-    :param log: Logger.
     :param namespace: K8s namespace to execute the service stage in.
     :param repo_branch: The Git branch to download.
     :param repo_url: Git repository URL.
@@ -254,12 +253,12 @@ def _run_service_stages(
     for deployment_object in deployment_objects:
         deployment_name = deployment_object.metadata.name
         if k8s.is_existing_deployment(namespace, deployment_name):
-            log.info(
+            _log.info(
                 f"updating deployment={deployment_name} in " f"namespace={namespace}"
             )
             k8s.update_deployment(deployment_object)
         else:
-            log.info(
+            _log.info(
                 f"creating deployment={deployment_name} in " f"namespace={namespace}"
             )
             k8s.create_deployment(deployment_object)
@@ -269,16 +268,16 @@ def _run_service_stages(
             deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
         )
     except TimeoutError as e:
-        log.error("deployments failed to roll-out successfully")
+        _log.error("deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
             deployment_name = deployment_object.metadata.name
             _print_logs_to_stdout(namespace, deployment_name)
-            log.info(
+            _log.info(
                 f"rolling back deployment={deployment_name} in "
                 f"namespace={namespace}"
             )
             k8s.rollback_deployment(deployment_object)
-            log.info(
+            _log.info(
                 f"rolled back deployment={deployment_name} in " f"namespace={namespace}"
             )
         raise e
@@ -286,12 +285,12 @@ def _run_service_stages(
     for deployment_object, stage in zip(deployment_objects, service_stages):
         deployment_name = deployment_object.metadata.name
         deployment_port = deployment_object.metadata.annotations["port"]
-        log.info(
+        _log.info(
             f"successful deployment={deployment_name} in " f"namespace={namespace}"
         )
         _print_logs_to_stdout(namespace, deployment_name)
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
-            log.info(
+            _log.info(
                 f"exposing deployment={deployment_name} in "
                 f"namespace={namespace} at"
                 f"http://{deployment_name}.{namespace}.svc.cluster"
@@ -299,14 +298,14 @@ def _run_service_stages(
             )
             k8s.expose_deployment_as_cluster_service(deployment_object)
         if not k8s.has_ingress(namespace, deployment_name) and stage.create_ingress:
-            log.info(
+            _log.info(
                 f"creating ingress for deployment={deployment_name} in "
                 f"namespace={namespace} with"
                 f"path=/{namespace}/{deployment_name}"
             )
             k8s.create_deployment_ingress(deployment_object)
         if k8s.has_ingress(namespace, deployment_name) and not stage.create_ingress:
-            log.info(
+            _log.info(
                 f"deleting ingress for deployment={deployment_name} in "
                 f"namespace={namespace} with"
                 f"path=/{namespace}/{deployment_name}"
@@ -400,3 +399,17 @@ def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
         func(path)
     else:
         raise Exception
+
+
+def _ping_usage_stats_server() -> None:
+    """Pings the usage stats server."""
+    try:
+        session = requests.Session()
+        session.mount(
+            USAGE_STATS_SERVER_URL, requests.adapters.HTTPAdapter(max_retries=0)
+        )
+        response = session.get(USAGE_STATS_SERVER_URL)
+        if not response.ok:
+            _log.info("Unable to contact usage stats server")
+    except requests.exceptions.RequestException:
+        _log.info("Unable to contact usage stats server")
