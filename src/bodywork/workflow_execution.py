@@ -21,12 +21,11 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 from pathlib import Path
 from shutil import rmtree
 from typing import cast, Optional, Tuple, List, Any
-from subprocess import run, CalledProcessError
 
 import requests
 import os
 import stat
-import platform
+import asyncio
 
 from . import k8s
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
@@ -67,7 +66,7 @@ def get_config_from_git_repo(
     return config
 
 
-def run_workflow(
+async def run_workflow(
     config: BodyworkConfig,
     namespace: str,
     repo_url: str,
@@ -111,7 +110,7 @@ def run_workflow(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
         )
         if config.project.usage_stats:
-            _ping_usage_stats_server()
+            asyncio.create_task(_ping_usage_stats_server())
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -402,17 +401,15 @@ def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
         raise Exception
 
 
-def _ping_usage_stats_server() -> None:
+async def _ping_usage_stats_server() -> None:
     """Pings the usage stats server."""
     try:
-        param = "-n" if platform.system() == "Windows" else "-c"
-        output = run(
-            ["ping", param, "1", USAGE_STATS_SERVER_URL],
-            check=True,
-            capture_output=True,
-            encoding='utf-8'
-        ).stdout
-        if "Lost = 1" in output:
+        session = requests.Session()
+        session.mount(
+            USAGE_STATS_SERVER_URL, requests.adapters.HTTPAdapter(max_retries=0)
+        )
+        response = session.get(USAGE_STATS_SERVER_URL)
+        if not response.ok:
             _log.warning("Unable to contact usage stats server")
-    except CalledProcessError:
+    except requests.exceptions.RequestException:
         _log.warning("Unable to contact usage stats server")

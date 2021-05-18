@@ -20,6 +20,7 @@ Command Line Interface (CLI)
 import sys
 import traceback
 import urllib3
+import asyncio
 from argparse import ArgumentParser, Namespace
 from functools import wraps
 from pathlib import Path
@@ -542,12 +543,14 @@ def workflow(args: Namespace) -> None:
             repo_url,
             repo_branch,
         )
-        run_workflow(
-            config,
-            namespace,
-            repo_url,
-            repo_branch,
-            docker_image_override=(None if docker_image == "" else docker_image),
+        asyncio.get_event_loop().run_until_complete(
+            run_workflow(
+                config,
+                namespace,
+                repo_url,
+                repo_branch,
+                docker_image_override=(None if docker_image == "" else docker_image),
+            )
         )
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
