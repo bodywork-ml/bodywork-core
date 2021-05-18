@@ -410,6 +410,6 @@ def _ping_usage_stats_server() -> None:
         )
         response = session.get(USAGE_STATS_SERVER_URL)
         if not response.ok:
-            _log.warning("Unable to contact usage stats server")
+            _log.info("Unable to contact usage stats server")
     except requests.exceptions.RequestException:
-        _log.warning("Unable to contact usage stats server")
+        _log.info("Unable to contact usage stats server")
