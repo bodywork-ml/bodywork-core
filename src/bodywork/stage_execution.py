@@ -19,7 +19,6 @@ This module contains all of the functions and classes required to
 download the project code and run stages.
 """
 from pathlib import Path
-import subprocess
 from subprocess import run, CalledProcessError
 from typing import Sequence
 
