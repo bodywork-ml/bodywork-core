@@ -107,41 +107,44 @@ def test_run_stage_with_arguements(
         assert False
 
 
-def test_run_stage_writes_captured_subprocess_stdout_to_main_process_stdout(
+def test_run_stage_writes_subprocess_stdout_to_process_stdout(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path,
-    capsys: CaptureFixture
+    capfd: CaptureFixture
 ):
     run_stage('stage_2', project_repo_connection_string)
-    stdout = capsys.readouterr().out
+    stdout = capfd.readouterr().out
     assert 'foo' in stdout
 
 
-def test_run_stage_writes_captured_subprocess_stdout_to_main_process_stdout_after_error(
+def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_stderr(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path,
-    capsys: CaptureFixture
+    capfd: CaptureFixture
 ):
     try:
         run_stage('stage_4', project_repo_connection_string)
         assert False
     except BodyworkStageFailure:
-        stdout = capsys.readouterr().out
+        captured_output = capfd.readouterr()
+        stdout = captured_output.out
+        stdrr = captured_output.err
         assert 'foo' in stdout
+        assert 'this stage has failed' in stdrr
 
 
-def test_run_stage_failure_raises_exception_with_stderr_info_for_failed_scripts(
+def test_run_stage_failure_raises_exception_for_failed_scripts(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path
+    bodywork_output_dir: Path,
 ):
-    with raises(BodyworkStageFailure, match='this stage has failed'):
+    with raises(BodyworkStageFailure, match='CalledProcessError'):
         run_stage('stage_4', project_repo_connection_string)
 
 
-def test_run_stage_failure_raises_exception_with_repr_info_if_setup_failed(
+def test_run_stage_failure_raises_exception_for_failed_setup(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path

@@ -19,6 +19,7 @@ This module contains all of the functions and classes required to
 download the project code and run stages.
 """
 from pathlib import Path
+import subprocess
 from subprocess import run, CalledProcessError
 from typing import Sequence
 
@@ -55,21 +56,14 @@ def run_stage(
         stage = project_config.stages[stage_name]
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        sub_process = run(
+        run(
             ['python', stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
-            capture_output=True,
             encoding='utf-8'
         )
         log.info(f'successfully ran stage={stage_name} from {repo_branch} branch of '
                  f'repo at {repo_url}')
-        print(sub_process.stdout)
-    except CalledProcessError as e:
-        print(e.stdout)
-        stage_failure_exception = BodyworkStageFailure(stage_name, e.stderr)
-        log.error(stage_failure_exception)
-        raise stage_failure_exception from e
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         log.error(stage_failure_exception)
