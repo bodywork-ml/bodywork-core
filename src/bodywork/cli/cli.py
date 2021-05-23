@@ -234,10 +234,10 @@ def cli() -> None:
     stage_cmd_parser = cli_arg_subparser.add_parser("stage")
     stage_cmd_parser.set_defaults(func=stage)
     stage_cmd_parser.add_argument(
-        "git_project_repo_url", type=str, help="Bodywork project URL."
+        "git_repo_url", type=str, help="Bodywork project URL."
     )
     stage_cmd_parser.add_argument(
-        "git_branch", type=str, help="Bodywork project Git repo branch."
+        "git_repo_branch", type=str, help="Bodywork project Git repo branch."
     )
     stage_cmd_parser.add_argument(
         "stage_name", type=str, help="The Bodywork project stage to execute."
@@ -247,10 +247,10 @@ def cli() -> None:
     workflow_cmd_parser = cli_arg_subparser.add_parser("workflow")
     workflow_cmd_parser.set_defaults(func=workflow)
     workflow_cmd_parser.add_argument(
-        "git_project_repo_url", type=str, help="Bodywork project URL."
+        "git_repo_url", type=str, help="Bodywork project URL."
     )
     workflow_cmd_parser.add_argument(
-        "git_branch", type=str, help="Bodywork project Git repo branch."
+        "git_repo_branch", type=str, help="Bodywork project Git repo branch."
     )
     workflow_cmd_parser.add_argument(
         "--namespace",
@@ -377,8 +377,8 @@ def deployment(args: Namespace) -> None:
         if run_workflow_controller_locally:
             pass_through_args = Namespace(
                 namespace=namespace,
-                git_project_repo_url=git_repo_url,
-                git_branch=git_repo_branch,
+                git_repo_url=git_repo_url,
+                git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
             )
             print("testing with local workflow-controller - retries are inactive")
@@ -524,8 +524,8 @@ def stage(args: Namespace) -> None:
     :param args: Arguments passed to the run command from the CLI.
     """
     try:
-        repo_url = args.git_project_repo_url
-        repo_branch = args.git_branch
+        repo_url = args.git_repo_url
+        repo_branch = args.git_repo_branch
         stage_name = args.stage_name
         run_stage(stage_name, repo_url, repo_branch)
         sys.exit(0)
@@ -541,8 +541,8 @@ def workflow(args: Namespace) -> None:
     """
     try:
         namespace = args.namespace
-        repo_url = args.git_project_repo_url
-        repo_branch = args.git_branch
+        repo_url = args.git_repo_url
+        repo_branch = args.git_repo_branch
         docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         if not is_namespace_available_for_bodywork(namespace):

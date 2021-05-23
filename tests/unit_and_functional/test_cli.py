@@ -120,8 +120,8 @@ def test_workflow_subcommand_exists():
     process = run(["bodywork", "workflow", "-h"], encoding="utf-8", capture_output=True)
     expected_output = (
         "usage: bodywork workflow [-h] [--bodywork-docker-image"
-        "BODYWORK_DOCKER_IMAGE] namespace git_project_repo_url"
-        " git_branch"
+        "BODYWORK_DOCKER_IMAGE] namespace git_repo_url"
+        " git_repo_branch"
     )
     assert process.stdout.find(expected_output) != 0
 
@@ -220,8 +220,8 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
     deployment(args)
     expected_pass_through_args = Namespace(
         namespace="foo1",
-        git_project_repo_url="foo3",
-        git_branch="foo4",
+        git_repo_url="foo3",
+        git_repo_branch="foo4",
         bodywork_docker_image="",
     )
     stdout = capsys.readouterr().out
