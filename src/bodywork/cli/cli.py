@@ -123,6 +123,12 @@ def cli() -> None:
         default=2,
         help="Number of times to retry a failed workflow job.",
     )
+    deployment_cmd_parser.add_argument(
+        "--test-locally",
+        default=False,
+        action="store_true",
+        help="Run the workflow-controller locally.",
+    )
 
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")
@@ -360,6 +366,7 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
+    run_workflow_controller_locally = args.test_locally
     if (command == "create" or command == "logs") and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
@@ -367,17 +374,27 @@ def deployment(args: Namespace) -> None:
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
     elif command == "create":
-        load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(namespace):
-            print(f"namespace={namespace} is not setup for use by Bodywork")
-            sys.exit(1)
-        create_workflow_job_in_namespace(
-            namespace,
-            name,
-            git_repo_url,
-            git_repo_branch,
-            retries,
-        )
+        if run_workflow_controller_locally:
+            pass_through_args = Namespace(
+                namespace=namespace,
+                git_project_repo_url=git_repo_url,
+                git_branch=git_repo_branch,
+                bodywork_docker_image="",
+            )
+            print("testing with local workflow-controller - retries are inactive")
+            workflow(pass_through_args)
+        else:
+            load_kubernetes_config()
+            if not is_namespace_available_for_bodywork(namespace):
+                print(f"namespace={namespace} is not setup for use by Bodywork")
+                sys.exit(1)
+            create_workflow_job_in_namespace(
+                namespace,
+                name,
+                git_repo_url,
+                git_repo_branch,
+                retries,
+            )
     elif command == "logs":
         load_kubernetes_config()
         display_workflow_job_logs(namespace, name)
