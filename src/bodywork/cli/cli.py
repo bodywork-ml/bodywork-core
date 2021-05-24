@@ -361,7 +361,9 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    if (command == "create" or command == "logs" or command == "delete_job") and name == "":
+    if (
+        command == "create" or command == "logs" or command == "delete_job"
+    ) and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
     if command == "create" and git_repo_url == "":
