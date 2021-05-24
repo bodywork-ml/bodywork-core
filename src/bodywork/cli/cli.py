@@ -37,6 +37,7 @@ from .workflow_jobs import (
     display_workflow_job_history,
     display_workflow_job_logs,
     delete_workflow_cronjob_in_namespace,
+    delete_workflow_job_in_namespace,
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
@@ -92,7 +93,7 @@ def cli() -> None:
     deployment_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "display", "logs"],
+        choices=["create", "display", "logs", "delete_job"],
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
@@ -346,7 +347,7 @@ def debug(args: Namespace) -> None:
 
     Runs a blocking sleep process, for use with ad hoc images deployed
     to a kubernetes namespace that can then be logged onto using
-    `kubectl exec NAME_OF_POD` for debugging from withint he a cluster.
+    `kubectl exec NAME_OF_POD` for debugging from within the cluster.
 
     :param args: Arguments passed to the run command from the CLI.
     """
@@ -369,13 +370,15 @@ def deployment(args: Namespace) -> None:
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
-    if (command == "create" or command == "logs") and name == "":
+    if (
+        command == "create" or command == "logs" or command == "delete_job"
+    ) and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
-    elif command == "create" and git_repo_url == "":
+    if command == "create" and git_repo_url == "":
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
-    elif command == "create":
+    if command == "create":
         if run_workflow_controller_locally:
             pass_through_args = Namespace(
                 namespace=namespace,
@@ -400,6 +403,9 @@ def deployment(args: Namespace) -> None:
     elif command == "logs":
         load_kubernetes_config()
         display_workflow_job_logs(namespace, name)
+    elif command == "delete_job":
+        load_kubernetes_config()
+        delete_workflow_job_in_namespace(namespace, name)
     else:
         load_kubernetes_config()
         display_workflow_job_history(namespace, name)
