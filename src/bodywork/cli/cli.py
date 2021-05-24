@@ -124,7 +124,9 @@ def cli() -> None:
         help="Number of times to retry a failed workflow job.",
     )
     deployment_cmd_parser.add_argument(
-        "--test-locally",
+        "--local-workflow-controller",
+        "--local",
+        "-L",
         default=False,
         action="store_true",
         help="Run the workflow-controller locally.",
@@ -366,7 +368,7 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    run_workflow_controller_locally = args.test_locally
+    run_workflow_controller_locally = args.local_workflow_controller
     if (command == "create" or command == "logs") and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
