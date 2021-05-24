@@ -339,7 +339,7 @@ def debug(args: Namespace) -> None:
 
     Runs a blocking sleep process, for use with ad hoc images deployed
     to a kubernetes namespace that can then be logged onto using
-    `kubectl exec NAME_OF_POD` for debugging from withint he a cluster.
+    `kubectl exec NAME_OF_POD` for debugging from within the cluster.
 
     :param args: Arguments passed to the run command from the CLI.
     """
@@ -361,7 +361,7 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    if (command == "create" or command == "logs" or command == "delete") and name == "":
+    if (command == "create" or command == "logs" or command == "delete_job") and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
     if command == "create" and git_repo_url == "":
@@ -381,7 +381,7 @@ def deployment(args: Namespace) -> None:
         )
     elif command == "logs":
         display_workflow_job_logs(namespace, name)
-    elif command == "delete":
+    elif command == "delete_job":
         delete_workflow_job_in_namespace(namespace, name)
     else:
         display_workflow_job_history(namespace, name)
