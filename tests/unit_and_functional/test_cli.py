@@ -215,7 +215,7 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
         retries=0,
         git_repo_url="foo3",
         git_repo_branch="foo4",
-        test_locally=True,
+        local_workflow_controller=True,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
