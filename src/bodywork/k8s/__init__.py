@@ -129,5 +129,5 @@ __all__ = [
     "has_ingress",
     "api_exception_msg",
     "create_k8s_environment_variables",
-    "EnvVars"
+    "EnvVars",
 ]

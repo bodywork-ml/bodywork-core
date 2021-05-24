@@ -248,6 +248,47 @@ def test_rollback_deployment_tries_to_patch_deployment_to_force_rollback(
 
 
 @patch("kubernetes.client.AppsV1Api")
+@patch("bodywork.k8s.service_deployments.delete_deployment")
+def test_rollback_deployment_tries_to_delete_new_deployments(
+    mock_delete_deployment: MagicMock,
+    mock_k8s_apps_api: MagicMock,
+    service_stage_deployment_object: kubernetes.client.V1Deployment,
+):
+    template_spec_revision_one = deepcopy(service_stage_deployment_object.spec.template)
+    template_spec_revision_one.metadata.annotations["last-updated"] = datetime(
+        2020, 11, 6, 7
+    ).isoformat()
+
+    mock_k8s_apps_api().list_namespaced_replica_set.return_value = (
+        kubernetes.client.V1ReplicaSetList(
+            items=[
+                kubernetes.client.V1ReplicaSet(
+                    metadata=kubernetes.client.V1ObjectMeta(
+                        name=f"{service_stage_deployment_object.metadata.name}-1234",
+                        namespace=service_stage_deployment_object.metadata.namespace,
+                        annotations={
+                            "deployment.kubernetes.io/revision": "1",
+                            "port": "5000",
+                        },
+                    ),
+                    spec=kubernetes.client.V1ReplicaSetSpec(
+                        selector=kubernetes.client.V1LabelSelector(
+                            match_labels={"stage": "my-app"}
+                        ),
+                        template=template_spec_revision_one,
+                    ),
+                ),
+            ]
+        )
+    )
+
+    rollback_deployment(service_stage_deployment_object)
+    namespace = service_stage_deployment_object.metadata.namespace
+    name = service_stage_deployment_object.metadata.name
+    mock_delete_deployment.assert_called_once_with(namespace, name)
+
+
+@patch("kubernetes.client.AppsV1Api")
 def test_delete_deployment_tries_to_delete_deployment_with_k8s_api(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
