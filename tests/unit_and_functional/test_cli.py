@@ -18,15 +18,17 @@
 Test the Bodywork CLI.
 """
 import urllib3
+from argparse import Namespace
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Iterable
+from unittest.mock import MagicMock, patch
 
 import kubernetes
 from pytest import raises
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cli import handle_k8s_exceptions
+from bodywork.cli.cli import deployment, handle_k8s_exceptions
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
@@ -118,8 +120,8 @@ def test_workflow_subcommand_exists():
     process = run(["bodywork", "workflow", "-h"], encoding="utf-8", capture_output=True)
     expected_output = (
         "usage: bodywork workflow [-h] [--bodywork-docker-image"
-        "BODYWORK_DOCKER_IMAGE] namespace git_project_repo_url"
-        " git_branch"
+        "BODYWORK_DOCKER_IMAGE] namespace git_repo_url"
+        " git_repo_branch"
     )
     assert process.stdout.find(expected_output) != 0
 
@@ -197,6 +199,34 @@ def test_deployment_subcommand_exists():
     )
     expected_output = "usage: bodywork deployment [-h]"
     assert process.stdout.find(expected_output) != -1
+
+
+@patch("bodywork.cli.cli.workflow")
+@patch("sys.exit")
+def test_deployment_test_locally_option_calls_run_workflow_handler(
+    mock_sys_exit: MagicMock,
+    mock_workflow_cli_handler: MagicMock,
+    capsys: CaptureFixture
+):
+    args = Namespace(
+        command="create",
+        namespace="foo1",
+        name="foo2",
+        retries=0,
+        git_repo_url="foo3",
+        git_repo_branch="foo4",
+        local_workflow_controller=True,
+    )
+    deployment(args)
+    expected_pass_through_args = Namespace(
+        namespace="foo1",
+        git_repo_url="foo3",
+        git_repo_branch="foo4",
+        bodywork_docker_image="",
+    )
+    stdout = capsys.readouterr().out
+    assert "testing with local workflow-controller - retries are inactive" in stdout
+    mock_workflow_cli_handler.assert_called_once_with(expected_pass_through_args)
 
 
 def test_cli_deployment_handler_error_handling():
