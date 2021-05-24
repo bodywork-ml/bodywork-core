@@ -172,9 +172,9 @@ def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
 def delete_workflow_cronjob(namespace: str, name: str) -> None:
     """Delete a cron-job on a k8s cluster.
 
-    :param namespace: Namespace in which to look for the secret to
+    :param namespace: Namespace in which to look for the cronjob to
         delete.
-    :param name: The name of the secret to be deleted.
+    :param name: The name of the cronjob to be deleted.
     """
     k8s.BatchV1beta1Api().delete_namespaced_cron_job(
         name=name,

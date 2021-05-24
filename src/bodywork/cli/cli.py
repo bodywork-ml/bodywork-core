@@ -37,6 +37,7 @@ from .workflow_jobs import (
     display_workflow_job_history,
     display_workflow_job_logs,
     delete_workflow_cronjob_in_namespace,
+    delete_workflow_job_in_namespace,
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
@@ -92,7 +93,7 @@ def cli() -> None:
     deployment_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "display", "logs"],
+        choices=["create", "display", "logs", "delete"],
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
@@ -360,14 +361,14 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    if (command == "create" or command == "logs") and name == "":
+    if (command == "create" or command == "logs" or command == "delete") and name == "":
         print("please specify --name for the deployment")
         sys.exit(1)
-    elif command == "create" and git_repo_url == "":
+    if command == "create" and git_repo_url == "":
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
-    elif command == "create":
-        load_kubernetes_config()
+    load_kubernetes_config()
+    if command == "create":
         if not is_namespace_available_for_bodywork(namespace):
             print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
@@ -379,10 +380,10 @@ def deployment(args: Namespace) -> None:
             retries,
         )
     elif command == "logs":
-        load_kubernetes_config()
         display_workflow_job_logs(namespace, name)
+    elif command == "delete":
+        delete_workflow_job_in_namespace(namespace, name)
     else:
-        load_kubernetes_config()
         display_workflow_job_history(namespace, name)
     sys.exit(0)
 

@@ -33,6 +33,7 @@ from bodywork.cli.workflow_jobs import (
     _is_existing_workflow_job,
     _is_existing_workflow_cronjob,
     _is_valid_cron_schedule,
+    delete_workflow_job_in_namespace,
 )
 
 
@@ -79,6 +80,29 @@ def test_create_workflow_job_in_namespace(
     )
     captured_three = capsys.readouterr()
     assert "job=bodywork-test-project created in namespace" in captured_three.out
+
+
+@patch("bodywork.cli.workflow_jobs.k8s")
+def test_delete_workflow_job_in_namespace(
+    mock_k8s_module: MagicMock, capsys: CaptureFixture
+):
+    mock_k8s_module.namespace_exists.return_value = False
+    delete_workflow_job_in_namespace("bodywork-dev", "bodywork-test-project")
+    captured_one = capsys.readouterr()
+    assert "namespace=bodywork-dev could not be found" in captured_one.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_workflow_jobs.return_value = {"foo": {}}
+    delete_workflow_job_in_namespace("bodywork-dev", "bodywork-test-project")
+    captured_two = capsys.readouterr()
+    assert "job=bodywork-test-project not found" in captured_two.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_workflow_jobs.return_value = {"bodywork-test-project": {}}
+    mock_k8s_module.delete_job.side_effect = None
+    delete_workflow_job_in_namespace("bodywork-dev", "bodywork-test-project")
+    captured_three = capsys.readouterr()
+    assert "job=bodywork-test-project deleted from namespace" in captured_three.out
 
 
 @patch("bodywork.cli.workflow_jobs.k8s")

@@ -56,6 +56,22 @@ def create_workflow_job_in_namespace(
     print(f"workflow job={project_name} created in namespace={namespace}")
 
 
+def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
+    """Delete workflow job from a specific namespace.
+
+    :param namespace: Namespace where the job resides.
+    :param job_name: Name of the job to delete.
+    """
+    if not k8s.namespace_exists(namespace):
+        print(f"namespace={namespace} could not be found on k8s cluster")
+        return None
+    if not _is_existing_workflow_job(namespace, job_name):
+        print(f"job={job_name} not found in namespace={namespace}")
+        return None
+    k8s.delete_job(namespace, job_name)
+    print(f"workflow job={job_name} deleted from namespace={namespace}")
+
+
 def create_workflow_cronjob_in_namespace(
     namespace: str,
     schedule: str,
