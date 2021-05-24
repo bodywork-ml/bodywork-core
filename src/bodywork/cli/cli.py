@@ -93,7 +93,7 @@ def cli() -> None:
     deployment_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "display", "logs", "delete"],
+        choices=["create", "display", "logs", "delete_job"],
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
