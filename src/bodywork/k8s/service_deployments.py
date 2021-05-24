@@ -211,25 +211,31 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
         "deployment.kubernetes.io/revision"
     ]
 
-    patch = [
-        {
-            "op": "replace",
-            "path": "/spec/template",
-            "value": rollback_replica_set.spec.template,
-        },
-        {
-            "op": "replace",
-            "path": "/metadata/annotations",
-            "value": {
-                "deployment.kubernetes.io/revision": rollback_revision_number,
-                **deployment.metadata.annotations,
-            },
-        },
-    ]
-
-    k8s.AppsV1Api().patch_namespaced_deployment(
-        body=patch, name=name, namespace=namespace
+    is_new_deployment = (
+        rollback_revision_number == "1" and len(revision_ordered_replica_sets) == 1
     )
+
+    if is_new_deployment:
+        delete_deployment(namespace, name)
+    else:
+        patch = [
+            {
+                "op": "replace",
+                "path": "/spec/template",
+                "value": rollback_replica_set.spec.template,
+            },
+            {
+                "op": "replace",
+                "path": "/metadata/annotations",
+                "value": {
+                    "deployment.kubernetes.io/revision": rollback_revision_number,
+                    **deployment.metadata.annotations,
+                },
+            },
+        ]
+        k8s.AppsV1Api().patch_namespaced_deployment(
+            body=patch, name=name, namespace=namespace
+        )
 
 
 def delete_all_namespace_deployments(namespace: str) -> None:
