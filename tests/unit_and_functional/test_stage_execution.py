@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Iterable
 
 from pytest import raises
+from _pytest.capture import CaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
 from bodywork.stage_execution import _install_python_requirements, run_stage
@@ -104,10 +105,47 @@ def test_run_stage_with_arguements(
         assert False
 
 
-def test_run_stage_failure_raises_exception(
+def test_run_stage_writes_subprocess_stdout_to_process_stdout(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+    capfd: CaptureFixture
+):
+    run_stage('stage_2', project_repo_connection_string)
+    stdout = capfd.readouterr().out
+    assert 'foo' in stdout
+
+
+def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_stderr(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+    capfd: CaptureFixture
+):
+    try:
+        run_stage('stage_4', project_repo_connection_string)
+        assert False
+    except BodyworkStageFailure:
+        captured_output = capfd.readouterr()
+        stdout = captured_output.out
+        stdrr = captured_output.err
+        assert 'foo' in stdout
+        assert 'this stage has failed' in stdrr
+
+
+def test_run_stage_failure_raises_exception_for_failed_scripts(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Path,
 ):
-    with raises(BodyworkStageFailure, match=r"stage_3_bad_script"):
-        run_stage("stage_3_bad_script", project_repo_connection_string)
+    with raises(BodyworkStageFailure, match='CalledProcessError'):
+        run_stage('stage_4', project_repo_connection_string)
+
+
+def test_run_stage_failure_raises_exception_for_failed_setup(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+):
+    with raises(BodyworkStageFailure, match='KeyError'):
+        run_stage('stage_5', project_repo_connection_string)

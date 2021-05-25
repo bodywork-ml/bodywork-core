@@ -20,6 +20,7 @@ Command Line Interface (CLI)
 import sys
 import traceback
 import urllib3
+import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
 from pathlib import Path
@@ -62,6 +63,8 @@ from ..exceptions import (
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from ..workflow_execution import get_config_from_git_repo, run_workflow
+
+warnings.simplefilter(action='ignore')
 
 
 def cli() -> None:

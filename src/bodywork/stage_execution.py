@@ -69,7 +69,7 @@ def run_stage(
             f" at {repo_url}"
         )
     except Exception as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, e)
+        stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         log.error(stage_failure_exception)
         raise stage_failure_exception from e
 

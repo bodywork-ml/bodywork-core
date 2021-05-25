@@ -76,6 +76,6 @@ class BodyworkWorkflowExecutionError(Exception):
 
 
 class BodyworkStageFailure(Exception):
-    def __init__(self, stage_name: str, exception: Exception):
-        msg = f"Stage {stage_name} failed - {exception}"
+    def __init__(self, stage_name: str, info: str):
+        msg = f'Stage {stage_name} failed - {info}'
         super().__init__(msg)
