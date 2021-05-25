@@ -61,7 +61,6 @@ def run_stage(
             ["python", stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
-            capture_output=True,
             encoding="utf-8",
         )
         log.info(
