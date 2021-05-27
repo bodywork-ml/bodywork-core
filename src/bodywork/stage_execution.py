@@ -61,7 +61,6 @@ def run_stage(
             ["python", stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
-            capture_output=True,
             encoding="utf-8",
         )
         log.info(
@@ -69,7 +68,7 @@ def run_stage(
             f" at {repo_url}"
         )
     except Exception as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, e)
+        stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         log.error(stage_failure_exception)
         raise stage_failure_exception from e
 

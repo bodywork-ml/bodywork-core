@@ -72,6 +72,22 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
         setup_ssh_for_git_host(hostname)
 
 
+@patch("bodywork.git.Path.read_text")
+@patch("bodywork.git.Path.exists")
+def test_setup_ssh_for_github_raises_exception_on_known_hosts_file_exception(
+    mock_path: MagicMock,
+    mock_path_read: MagicMock,
+):
+    hostname = "github.com"
+    mock_path_read.side_effect = OSError("Test Exception")
+
+    with raises(
+        RuntimeError,
+        match=f"Error updating known hosts with public key from {hostname}",
+    ):
+        setup_ssh_for_git_host(hostname)
+
+
 @patch("bodywork.git.run")
 def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_not_match(
     mock_run: MagicMock,
