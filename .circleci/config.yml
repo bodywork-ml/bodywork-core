@@ -18,14 +18,25 @@ version: 2.1
 orbs:
   aws-eks: circleci/aws-eks@1.0.3
 jobs:
-  run-unit-and-functional-tests-and-static-code-analysis:
+  run-static-code-analysis:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Installing Python dependencies
+          command: pip install -r requirements_dev.txt
+      - run:
+          name: Running tests
+          command: tox -e py38-static_code_analysis -- -s -vv
+  run-unit-and-functional-tests:
     docker: 
       - image: circleci/python:3.8
     steps:
       - checkout
       - run:
           name: Configure Git
-          command: | 
+          command: |
             git config --global user.name "Bodywork Machine Learning Ltd"
             git config --global user.email "info@bodyworkml.com"
       - run:
@@ -33,11 +44,13 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-unit_and_functional_tests,py38-static_code_analysis -- -s -vv
+          command: tox -e py38-unit_and_functional_tests -- -s -vv --junitxml=~/tox/junit.xml
+      - store_test_results:
+          path: ~/tox/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
-  run-k8s-integration-tests:
+  run-integration-tests:
     executor:
       name: aws-eks/python
       tag: "3.8"
@@ -46,11 +59,22 @@ jobs:
           cluster-name: bodywork-dev
       - checkout
       - run:
+          name: Configure Git
+          command: |
+            git config --global user.name "Bodywork Machine Learning Ltd"
+            git config --global user.email "info@bodyworkml.com"
+      - add_ssh_keys:
+          fingerprints:
+            - "14:5e:d0:95:2e:2c:7d:d8:dc:f2:bb:f3:97:10:3e:c5"
+            - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
           name: Running tests
-          command: tox -e py38-k8s_integration_tests -- -s -vv
+          command: tox -e py38-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
+      - store_test_results:
+          path: ~/tox_int/
       - run:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
@@ -126,19 +150,25 @@ workflows:
   test-build-deploy:
     jobs:
       - ensure-package-version-number-incremented
-      - run-unit-and-functional-tests-and-static-code-analysis:
+      - run-static-code-analysis:
           requires:
             - ensure-package-version-number-incremented
           filters:
             branches:
               ignore: master
-      - build-dev-docker-image-push-to-dockerhub:
+      - run-unit-and-functional-tests:
           requires:
-            - run-unit-and-functional-tests-and-static-code-analysis
+            - run-static-code-analysis
           filters:
             branches:
               ignore: master
-      - run-k8s-integration-tests:
+      - build-dev-docker-image-push-to-dockerhub:
+          requires:
+            - run-unit-and-functional-tests
+          filters:
+            branches:
+              ignore: master
+      - run-integration-tests:
           requires:
             - build-dev-docker-image-push-to-dockerhub
       - build-master-docker-image-push-to-dockerhub:

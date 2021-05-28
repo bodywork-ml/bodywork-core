@@ -27,8 +27,8 @@ def create_workflow_job_in_namespace(
     namespace: str,
     project_name: str,
     project_repo_url: str,
-    project_repo_branch: str = 'master',
-    retries: int = 2
+    project_repo_branch: str = "master",
+    retries: int = 2,
 ) -> None:
     """Create a new workflow job within a namespace.
 
@@ -44,20 +44,32 @@ def create_workflow_job_in_namespace(
         completion (if necessary), defaults to 2.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     if _is_existing_workflow_job(namespace, project_name):
-        print(f'workflow job={project_name} already exists in namespace={namespace}')
+        print(f"workflow job={project_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
-        namespace,
-        project_name,
-        project_repo_url,
-        project_repo_branch,
-        retries
+        namespace, project_name, project_repo_url, project_repo_branch, retries
     )
     k8s.create_workflow_job(configured_job)
-    print(f'workflow job={project_name} created in namespace={namespace}')
+    print(f"workflow job={project_name} created in namespace={namespace}")
+
+
+def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
+    """Delete workflow job from a specific namespace.
+
+    :param namespace: Namespace where the job resides.
+    :param job_name: Name of the job to delete.
+    """
+    if not k8s.namespace_exists(namespace):
+        print(f"namespace={namespace} could not be found on k8s cluster")
+        return None
+    if not _is_existing_workflow_job(namespace, job_name):
+        print(f"job={job_name} not found in namespace={namespace}")
+        return None
+    k8s.delete_job(namespace, job_name)
+    print(f"workflow job={job_name} deleted from namespace={namespace}")
 
 
 def create_workflow_cronjob_in_namespace(
@@ -65,9 +77,9 @@ def create_workflow_cronjob_in_namespace(
     schedule: str,
     project_name: str,
     project_repo_url: str,
-    project_repo_branch: str = 'master',
+    project_repo_branch: str = "master",
     retries: int = 2,
-    workflow_job_history_limit: int = 1
+    workflow_job_history_limit: int = 1,
 ) -> None:
     """Create a new cronjob within a namespace.
 
@@ -86,13 +98,13 @@ def create_workflow_cronjob_in_namespace(
         historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     if _is_existing_workflow_cronjob(namespace, project_name):
-        print(f'cronjob={project_name} already exists in namespace={namespace}')
+        print(f"cronjob={project_name} already exists in namespace={namespace}")
         return None
     if not _is_valid_cron_schedule(schedule):
-        print(f'schedule={schedule} is not a valid cron schedule')
+        print(f"schedule={schedule} is not a valid cron schedule")
         return None
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
@@ -102,10 +114,10 @@ def create_workflow_cronjob_in_namespace(
         project_repo_branch,
         retries,
         workflow_job_history_limit,
-        workflow_job_history_limit
+        workflow_job_history_limit,
     )
     k8s.create_workflow_cronjob(configured_job)
-    print(f'workflow cronjob={project_name} created in namespace={namespace}')
+    print(f"workflow cronjob={project_name} created in namespace={namespace}")
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> None:
@@ -116,13 +128,13 @@ def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> N
         the cronjob to be deleted.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     if not _is_existing_workflow_cronjob(namespace, project_name):
-        print(f'cronjob={project_name} not found in namespace={namespace}')
+        print(f"cronjob={project_name} not found in namespace={namespace}")
         return None
     k8s.delete_workflow_cronjob(namespace, project_name)
-    print(f'workflow cronjob={project_name} deleted from namespace={namespace}')
+    print(f"workflow cronjob={project_name} deleted from namespace={namespace}")
 
 
 def display_cronjobs_in_namespace(namespace: str) -> None:
@@ -131,14 +143,14 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
     :param namespace: Namespace in which to look for cronjobs.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     cronjobs_info = k8s.list_workflow_cronjobs(namespace)
-    print(f'cronjobs in namespace={namespace}:\n')
+    print(f"cronjobs in namespace={namespace}:\n")
     for name, data in cronjobs_info.items():
         print(
             f'\n{"-"*len(name)}-\n'
-            f'{name}:\n'
+            f"{name}:\n"
             f'{"-"*len(name)}-\n'
             f'|- {"NAME":<22}{name}\n'
             f'|- {"SCHEDULE":<22}{data["schedule"]}\n'
@@ -156,12 +168,12 @@ def display_workflow_job_history(namespace: str, project_name: str) -> None:
     :param project_name: Name given to cronjob.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     workflow_jobs_info = k8s.list_workflow_jobs(namespace, project_name)
     print(
-        f'recent workflow executions for cronjob={project_name} in '
-        f'namespace={namespace}:\n'
+        f"recent workflow executions for cronjob={project_name} in "
+        f"namespace={namespace}:\n"
     )
     print(
         f'{"JOB_NAME":<40}'
@@ -173,7 +185,7 @@ def display_workflow_job_history(namespace: str, project_name: str) -> None:
     )
     for name, data in workflow_jobs_info.items():
         print(
-            f'{name:<40}'
+            f"{name:<40}"
             f'{str(data["start_time"]):<30}'
             f'{str(data["completion_time"]):<30}'
             f'{data["active"]:<20}'
@@ -190,11 +202,11 @@ def display_workflow_job_logs(namespace: str, workflow_job_name: str) -> None:
         executed - e.g. NAME_OF_PROJECT-12345.
     """
     if not k8s.namespace_exists(namespace):
-        print(f'namespace={namespace} could not be found on k8s cluster')
+        print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     workflow_job_pod_name = k8s.get_latest_pod_name(namespace, workflow_job_name)
     if workflow_job_pod_name is None:
-        print(f'cannot find pod for workflow job={workflow_job_name}')
+        print(f"cannot find pod for workflow job={workflow_job_name}")
         return None
     workflow_job_logs = k8s.get_pod_logs(namespace, workflow_job_pod_name)
     print(workflow_job_logs)
@@ -230,46 +242,43 @@ def _is_valid_cron_schedule(schedule: str) -> bool:
     :param schedule: A string describing a cron schedule.
     :return: A boolean flag.
     """
-    parsed_schedule = [e for e in schedule.split(' ')]
+    parsed_schedule = [e for e in schedule.split(" ")]
     if len(parsed_schedule) != 5:
         return False
 
     minutes_pattern_matches = re.fullmatch(
-        r'^([1-5]?[0-9](,|$))+'
-        r'|^(\*|[1-5]?[0-9]-[1-5]?[0-9])(\/[1-5]?[0-9]$|$)',
-        parsed_schedule[0]
+        r"^([1-5]?[0-9](,|$))+" r"|^(\*|[1-5]?[0-9]-[1-5]?[0-9])(\/[1-5]?[0-9]$|$)",
+        parsed_schedule[0],
     )
     if minutes_pattern_matches is None:
         return False
 
     hours_pattern_matches = re.fullmatch(
-        r'^((2[0-3]|1?[0-9])(,|$))+'
-        r'|^(\*|(2[0-3]|1?[0-9])-(2[0-3]|1?[0-9]))(\/(2[0-3]|1?[0-9])$|$)',
-        parsed_schedule[1]
+        r"^((2[0-3]|1?[0-9])(,|$))+"
+        r"|^(\*|(2[0-3]|1?[0-9])-(2[0-3]|1?[0-9]))(\/(2[0-3]|1?[0-9])$|$)",
+        parsed_schedule[1],
     )
     if hours_pattern_matches is None:
         return False
 
     day_of_the_month_pattern_matches = re.fullmatch(
-        r'^((3[0-1]|[1-2]?[0-9])(,|$))+'
-        r'|^(\*|(3[0-1]|[1-2]?[0-9])-(3[0-1]|[1-2]?[0-9]))(\/(3[0-1]|[1-2]?[0-9])$|$)',  # noqa
-        parsed_schedule[2]
+        r"^((3[0-1]|[1-2]?[0-9])(,|$))+"
+        r"|^(\*|(3[0-1]|[1-2]?[0-9])-(3[0-1]|[1-2]?[0-9]))(\/(3[0-1]|[1-2]?[0-9])$|$)",  # noqa
+        parsed_schedule[2],
     )
     if day_of_the_month_pattern_matches is None:
         return False
 
     month_pattern_matches = re.fullmatch(
-        r'^((1[0-2]|[0-9])(,|$))+'
-        r'|^(\*|(1[0-2]|[0-9])-(1[0-2]|[0-9]))(\/(1[0-2]|[0-9])$|$)',
-        parsed_schedule[3]
+        r"^((1[0-2]|[0-9])(,|$))+"
+        r"|^(\*|(1[0-2]|[0-9])-(1[0-2]|[0-9]))(\/(1[0-2]|[0-9])$|$)",
+        parsed_schedule[3],
     )
     if month_pattern_matches is None:
         return False
 
     day_of_week_pattern_matches = re.fullmatch(
-        r'^([0-6](,|$))+'
-        r'|^(\*|[0-6]-[0-6])(\/[0-6]$|$)',
-        parsed_schedule[4]
+        r"^([0-6](,|$))+" r"|^(\*|[0-6]-[0-6])(\/[0-6]$|$)", parsed_schedule[4]
     )
     if day_of_week_pattern_matches is None:
         return False
