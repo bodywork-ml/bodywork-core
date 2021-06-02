@@ -160,16 +160,19 @@ def run_workflow(
         )
         _log.error(msg)
         try:
-            if type(e) not in [
+            if config.project.run_on_failure and type(e) not in [
                 BodyworkNamespaceError,
                 BodyworkDockerImageError,
                 BodyworkGitError,
             ]:
-                run_failure_stage(
+                _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
         except Exception as ex:
-            failure_msg = f"Error executing failure stage: {config.project.run_on_failure} after failed workflow : {ex}"
+            failure_msg = (
+                f"Error executing failure stage: {config.project.run_on_failure}"
+                f" after failed workflow : {ex}"
+            )
             _log.error(failure_msg)
             msg = f"{msg}\n{failure_msg}"
         raise BodyworkWorkflowExecutionError(msg) from e
@@ -334,7 +337,7 @@ def _run_service_stages(
             k8s.delete_deployment_ingress(namespace, deployment_name)
 
 
-def run_failure_stage(
+def _run_failure_stage(
     config: BodyworkConfig,
     exception: Exception,
     namespace: str,
