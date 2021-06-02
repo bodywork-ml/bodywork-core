@@ -34,8 +34,14 @@ from .constants import (
     TIMEOUT_GRACE_SECONDS,
     GIT_COMMIT_HASH_K8S_ENV_VAR,
     USAGE_STATS_SERVER_URL,
+    FAILURE_EXCEPTION_K8S_ENV_VAR,
 )
-from .exceptions import BodyworkWorkflowExecutionError
+from .exceptions import (
+    BodyworkWorkflowExecutionError,
+    BodyworkNamespaceError,
+    BodyworkDockerImageError,
+    BodyworkGitError,
+)
 from .git import download_project_code_from_repo, get_git_commit_hash
 from .logs import bodywork_log_factory
 
@@ -91,7 +97,9 @@ def run_workflow(
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
         if k8s.namespace_exists(namespace) is False:
-            raise ValueError(f"{namespace} is not a valid namespace on your cluster")
+            raise BodyworkNamespaceError(
+                f"{namespace} is not a valid namespace on your cluster"
+            )
         _log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
@@ -104,7 +112,7 @@ def run_workflow(
         image_name, image_tag = parse_dockerhub_image_string(docker_image)
         if not image_exists_on_dockerhub(image_name, image_tag):
             msg = f"cannot locate {image_name}:{image_tag} on DockerHub"
-            raise RuntimeError(msg)
+            raise BodyworkDockerImageError(msg)
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
         )
@@ -151,6 +159,19 @@ def run_workflow(
             f"repository at {repo_url}: {e}"
         )
         _log.error(msg)
+        try:
+            if type(e) not in [
+                BodyworkNamespaceError,
+                BodyworkDockerImageError,
+                BodyworkGitError,
+            ]:
+                run_failure_stage(
+                    config, e, namespace, repo_url, repo_branch, docker_image
+                )
+        except Exception as ex:
+            failure_msg = f"Error executing failure stage: {config.project.run_on_failure} after failed workflow : {ex}"
+            _log.error(failure_msg)
+            msg = f"{msg}\n{failure_msg}"
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
         if config.project.usage_stats:
@@ -313,6 +334,31 @@ def _run_service_stages(
             k8s.delete_deployment_ingress(namespace, deployment_name)
 
 
+def run_failure_stage(
+    config: BodyworkConfig,
+    exception: Exception,
+    namespace: str,
+    repo_url: str,
+    repo_branch: str,
+    docker_image: str,
+) -> None:
+    stage_name = config.project.run_on_failure
+    _log.info(f"Executing Stage: {stage_name}")
+    stage = [cast(BatchStageConfig, config.stages[stage_name])]
+    env_vars = k8s.create_k8s_environment_variables(
+        [(FAILURE_EXCEPTION_K8S_ENV_VAR, str(exception))]
+    )
+    _run_batch_stages(
+        stage,
+        config.project.name,
+        env_vars,
+        namespace,
+        repo_branch,
+        repo_url,
+        docker_image,
+    )
+
+
 def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
     """Check DockerHub to see if named Bodywork image exists.
 
@@ -333,14 +379,14 @@ def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
             return False
     except requests.exceptions.ConnectionError as e:
         msg = f"cannot connect to {dockerhub_url} to check image exists"
-        raise RuntimeError(msg) from e
+        raise BodyworkDockerImageError(msg) from e
 
 
 def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     """Split a DockerHub image string into name and tag.
 
     :param image_string: The DockerHub image string to parse.
-    :raises ValueError: If the string is not in the
+    :raises BodyworkDockerImageError: If the string is not in the
         DOCKERHUB_USERNAME/IMAGE_NAME:TAG format.
     :return: Image name and image tag tuple.
     """
@@ -349,7 +395,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
         f"cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG"
     )
     if len(image_string.split("/")) != 2:
-        raise ValueError(err_msg)
+        raise BodyworkDockerImageError(err_msg)
     parsed_image_string = image_string.split(":")
     if len(parsed_image_string) == 2:
         image_name = parsed_image_string[0]
@@ -358,7 +404,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
         image_name = parsed_image_string[0]
         image_tag = "latest"
     else:
-        raise ValueError(err_msg)
+        raise BodyworkDockerImageError(err_msg)
     return image_name, image_tag
 
 

@@ -79,3 +79,18 @@ class BodyworkStageFailure(Exception):
     def __init__(self, stage_name: str, info: str):
         msg = f'Stage {stage_name} failed - {info}'
         super().__init__(msg)
+
+
+class BodyworkNamespaceError(Exception):
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
+
+
+class BodyworkDockerImageError(Exception):
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
+
+
+class BodyworkGitError(Exception):
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)

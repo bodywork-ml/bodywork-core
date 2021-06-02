@@ -117,14 +117,14 @@ class BodyworkConfig:
     def _validate_parsed_config(self) -> None:
         """Validate configuration parameters.
 
-        This function exists seperately to the class constructor purely
+        This function exists separately to the class constructor purely
         to facilitate easier testing.
 
         :raises BodyworkConfigMissingSectionError: if config file does
             not contain all of the following sections: version,
             project, stages and logging.
         :raises BodyworkConfigVersionMismatchError: if config file
-            schema version does not match the schame version supported
+            schema version does not match the schema version supported
             by the current Bodywork version.
         :raises BodyworkConfigValidationError: if a config
             parameter is missing or has been set to an invalid value.
@@ -188,7 +188,11 @@ class BodyworkConfig:
             self.project.workflow, self.stages.keys()
         )
         missing_or_invalid_param += stages_in_workflow_without_valid_config
-
+        if self.project.run_on_failure:
+            if self.project.run_on_failure not in self.stages.keys():
+                missing_or_invalid_param.append(
+                    f"project.run_on_failure -> cannot find valid stage: {self.project.run_on_failure} to run on workflow failure."
+                )
         if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
                 if not stage.executable_module_path.exists():
@@ -209,6 +213,7 @@ class ProjectConfig:
         "docker_image": {"type": "string", "required": True},
         "DAG": {"type": "string", "required": True},
         "usage_stats": {"type": "boolean", "required": False},
+        "run_on_failure": {"type": "string", "required": False},
     }
 
     def __init__(self, config_section: Dict[str, str]):
@@ -233,6 +238,11 @@ class ProjectConfig:
                 config_section["usage_stats"]
                 if "usage_stats" in config_section
                 else True
+            )
+            self.run_on_failure = (
+                config_section["run_on_failure"]
+                if "run_on_failure" in config_section
+                else None
             )
             try:
                 self.workflow = _parse_dag_definition(config_section["DAG"])
@@ -315,7 +325,7 @@ class StageConfig:
             self.memory_request = config["memory_request_mb"]
             self.requirements = (
                 config["requirements"] if "requirements" in config else []
-            )  # noqa
+            )
             if "secrets" in config:
                 self.env_vars_from_secrets = [
                     (secret_name, secret_key)
