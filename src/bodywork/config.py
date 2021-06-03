@@ -191,7 +191,8 @@ class BodyworkConfig:
         if self.project.run_on_failure:
             if self.project.run_on_failure not in self.stages.keys():
                 missing_or_invalid_param.append(
-                    f"project.run_on_failure -> cannot find valid stage: {self.project.run_on_failure} to run on workflow failure."
+                    f"project.run_on_failure -> cannot find valid stage: "
+                    f"{self.project.run_on_failure} to run on workflow failure."
                 )
         if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
