@@ -176,13 +176,13 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             "deployment=bodywork-test-project--stage-3 deleted" in process_five.stdout
         )
         assert (
-            f"service at http://bodywork-test-project--stage-3.{random_test_namespace}.svc.cluster.local deleted"
+            f"service at http://bodywork-test-project--stage-3.{random_test_namespace}.svc.cluster.local deleted"  # noqa
             in process_five.stdout
         )  # noqa
         assert (
-            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-3 deleted"
+            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-3 deleted"  # noqa
             in process_five.stdout
-        )  # noqa
+        )
         assert process_five.returncode == 0
 
         process_six = run(
@@ -198,11 +198,11 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         )
         assert "deployment=bodywork-test-project--stage-4 deleted" in process_six.stdout
         assert (
-            f"service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted"
+            f"service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted"  # noqa
             in process_six.stdout
         )  # noqa
         assert (
-            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted"
+            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted"  # noqa
             not in process_six.stdout
         )  # noqa
         assert process_six.returncode == 0
@@ -282,6 +282,32 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         workflow_sa_crb = workflow_cluster_role_binding_name(random_test_namespace)
         if cluster_role_binding_exists(workflow_sa_crb):
             delete_cluster_role_binding(workflow_sa_crb)
+
+
+def test_workflow_will_run_failure_stage_on_workflow_failure(
+    test_namespace: str, docker_image: str
+):
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "workflow",
+                f"--namespace={test_namespace}",
+                "https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
+                "master",
+                f"--bodywork-docker-image={docker_image}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+
+        expected_output_0 = "ERROR - workflow_execution.run_workflow - failed to execute workflow for master branch"  # noqa
+        expected_output_1 = "successfully ran stage=on_fail_stage"
+        assert expected_output_0 in process_one.stdout
+        assert expected_output_1 in process_one.stdout
+        assert process_one.returncode == 1
+    except Exception:
+        assert False
 
 
 def test_workflow_will_not_run_if_namespace_is_not_setup_for_bodywork(
