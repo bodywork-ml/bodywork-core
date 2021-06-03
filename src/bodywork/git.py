@@ -49,7 +49,7 @@ def download_project_code_from_repo(
     :param branch: The Git branch to download, defaults to 'master'.
     :param destination: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
-    :raises RuntimeError: If Git is not available on the system or the
+    :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
     log = bodywork_log_factory()
@@ -72,7 +72,7 @@ def download_project_code_from_repo(
         msg = (
             f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
         )
-        raise RuntimeError(msg)
+        raise BodyworkGitError(msg)
     try:
         run(
             ["git", "clone", "--branch", branch, "--single-branch", url, destination],

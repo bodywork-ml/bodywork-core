@@ -339,17 +339,26 @@ def _run_service_stages(
 
 def _run_failure_stage(
     config: BodyworkConfig,
-    exception: Exception,
+    workflow_exception: Exception,
     namespace: str,
     repo_url: str,
     repo_branch: str,
     docker_image: str,
 ) -> None:
+    """Runs the configured Batch Stage if the workflow fails.
+
+    :param config: Configuration data for the Bodywork deployment.
+    :param workflow_exception: Exception from workflow failure.
+    :param namespace: K8s namespace to execute the service stage in.
+    :param repo_url: Git repository URL.
+    :param repo_branch: The Git branch to download.
+    :param docker_image: Docker Image to use.
+    """
     stage_name = config.project.run_on_failure
     _log.info(f"Executing Stage: {stage_name}")
     stage = [cast(BatchStageConfig, config.stages[stage_name])]
     env_vars = k8s.create_k8s_environment_variables(
-        [(FAILURE_EXCEPTION_K8S_ENV_VAR, str(exception))]
+        [(FAILURE_EXCEPTION_K8S_ENV_VAR, str(workflow_exception))]
     )
     _run_batch_stages(
         stage,

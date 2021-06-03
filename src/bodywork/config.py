@@ -242,7 +242,7 @@ class ProjectConfig:
             self.run_on_failure = (
                 config_section["run_on_failure"]
                 if "run_on_failure" in config_section
-                else None
+                else ""
             )
             try:
                 self.workflow = _parse_dag_definition(config_section["DAG"])
