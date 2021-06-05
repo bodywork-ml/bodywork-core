@@ -128,12 +128,12 @@ def test_that_config_file_with_non_list_stages_raises_error(
 ):
     bodywork_config._config["stages"] = "bad"
     expected_exception_msg = (
-        'missing or invalid parameters: '
-        'project.workflow -> cannot find valid stage @ stages.stage_1, '
-        'project.workflow -> cannot find valid stage @ stages.stage_2, '
-        'project.workflow -> cannot find valid stage @ stages.stage_3, '
-        'project.workflow -> cannot find valid stage @ stages.stage_4, '
-        'stages._ - no stage configs provided'
+        "missing or invalid parameters: "
+        "project.workflow -> cannot find valid stage @ stages.stage_1, "
+        "project.workflow -> cannot find valid stage @ stages.stage_2, "
+        "project.workflow -> cannot find valid stage @ stages.stage_3, "
+        "project.workflow -> cannot find valid stage @ stages.stage_4, "
+        "stages._ - no stage configs provided"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
@@ -388,9 +388,9 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     config = bodywork_config
     root_dir = bodywork_config._root_dir
 
-    assert config.project.name == 'bodywork-test-project'
-    assert config.logging.log_level == 'INFO'
-    assert len(config.stages) == 4
+    assert config.project.name == "bodywork-test-project"
+    assert config.logging.log_level == "INFO"
+    assert len(config.stages) == 5
 
     assert "stage_1" in config.stages
     assert config.stages["stage_1"].executable_module == "main.py"
@@ -445,3 +445,13 @@ def test_check_workflow_stages_are_configured():
         "project.workflow -> cannot find valid stage @ stages.c"
     ]
     assert _check_workflow_stages_are_configured(["a"], ["a"]) == []
+
+
+def test_check_failure_stage_is_configured(
+    bodywork_config: BodyworkConfig,
+):
+    bodywork_config._config["project"]["run_on_failure"] = "x"
+    expected_exception_msg = f"project.run_on_failure -> cannot find valid stage: x to run on workflow failure."
+
+    with raises(BodyworkConfigValidationError, match=expected_exception_msg):
+        bodywork_config._validate_parsed_config()

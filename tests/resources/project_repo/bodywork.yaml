@@ -46,5 +46,12 @@ stages:
     batch:
       max_completion_time_seconds: 60
       retries: 4
+  on_fail_stage:
+    executable_module_path: on_fail_stage/main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
 logging:
   log_level: INFO
