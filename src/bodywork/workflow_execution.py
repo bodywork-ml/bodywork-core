@@ -21,7 +21,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 from pathlib import Path
 from shutil import rmtree
 from typing import cast, Optional, Tuple, List, Any
-from kubernetes.client.exceptions import  ApiException
+from kubernetes.client.exceptions import ApiException
 
 import requests
 import os
@@ -104,8 +104,8 @@ def run_workflow(
                 )
         except ApiException as e:
             raise BodyworkNamespaceError(
-                    f"Unable to check namespace: {namespace} : {e}"
-                ) from e
+                f"Unable to check namespace: {namespace} : {e}"
+            ) from e
 
         _log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
