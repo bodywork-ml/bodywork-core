@@ -23,6 +23,7 @@ from pytest import raises
 from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
 
+from bodywork.exceptions import BodyworkGitError
 from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
 from bodywork.git import (
     ConnectionProtocol,
@@ -35,7 +36,7 @@ from bodywork.git import (
 
 
 def test_that_git_project_clone_raises_exceptions():
-    with raises(RuntimeError, match="git clone failed"):
+    with raises(BodyworkGitError, match="git clone failed"):
         download_project_code_from_repo("file:///bad_url")
 
 
@@ -43,7 +44,7 @@ def test_that_git_project_clone_raises_exceptions():
 def test_that_git_project_clone_returns_git_error_in_exception(
     mock_setup_ssh: MagicMock,
 ):
-    with raises(RuntimeError, match="fatal: Could not read from remote repository"):
+    with raises(BodyworkGitError, match="fatal: Could not read from remote repository"):
         download_project_code_from_repo("git@xyz.com:test/test.git")
 
 
@@ -102,8 +103,8 @@ def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_
 
 
 @patch("bodywork.git.run", side_effect=CalledProcessError(999, "git rev-parse"))
-def test_get_git_commit_hash_throws_runtime_exception_on_fail(
+def test_get_git_commit_hash_throws_exception_on_fail(
     mock_run: MagicMock,
 ):
-    with raises(RuntimeError, match=f"Unable to retrieve git commit hash:"):
+    with raises(BodyworkGitError, match=f"Unable to retrieve git commit hash:"):
         get_git_commit_hash()

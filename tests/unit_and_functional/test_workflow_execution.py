@@ -30,8 +30,9 @@ from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
     GIT_COMMIT_HASH_K8S_ENV_VAR,
     USAGE_STATS_SERVER_URL,
+    FAILURE_EXCEPTION_K8S_ENV_VAR,
 )
-from bodywork.exceptions import BodyworkWorkflowExecutionError
+from bodywork.exceptions import BodyworkWorkflowExecutionError, BodyworkDockerImageError
 from bodywork.workflow_execution import (
     get_config_from_git_repo,
     image_exists_on_dockerhub,
@@ -47,7 +48,7 @@ def test_image_exists_on_dockerhub_handles_connection_error(
     mock_requests_session: MagicMock,
 ):
     mock_requests_session().get.side_effect = requests.exceptions.ConnectionError
-    with raises(RuntimeError, match="cannot connect to"):
+    with raises(BodyworkDockerImageError, match="cannot connect to"):
         image_exists_on_dockerhub("bodywork-ml/bodywork-core", "latest")
 
 
@@ -66,7 +67,8 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
-        ValueError, match=f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}"
+        BodyworkDockerImageError,
+        match=f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}",
     ):
         parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
         parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
@@ -166,6 +168,114 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         cpu_request=ANY,
         memory_request=ANY,
     )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_run_workflow_runs_failure_stage_on_failure(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_requests: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+    config.project.run_on_failure = "on_fail_stage"
+
+    error_message = "Test Error"
+    mock_job = MagicMock(k8sclient.V1Job)
+    mock_k8s.configure_batch_stage_job.side_effect = [
+        k8sclient.ApiException(error_message),
+        mock_job,
+    ]
+    expected_result = [
+        k8sclient.V1EnvVar(name=FAILURE_EXCEPTION_K8S_ENV_VAR, value=error_message)
+    ]
+    mock_k8s.create_k8s_environment_variables.return_value = expected_result
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+
+    try:
+        run_workflow(config, "foo_bar_foo_993", project_repo_location)
+    except BodyworkWorkflowExecutionError:
+        pass
+
+    mock_k8s.configure_batch_stage_job.assert_called_with(
+        ANY,
+        "on_fail_stage",
+        ANY,
+        ANY,
+        ANY,
+        retries=ANY,
+        container_env_vars=expected_result,
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+    )
+
+
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.k8s")
+def test_failure_stage_does_not_run_for_docker_image_exception(
+    mock_k8s: MagicMock, mock_session: MagicMock, project_repo_location: Path
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+    mock_session().get.return_value = requests.Response().status_code = 401
+
+    try:
+        run_workflow(config, "foo_bar_foo_993", project_repo_location)
+    except BodyworkWorkflowExecutionError:
+        pass
+
+    mock_k8s.configure_batch_stage_job.assert_not_called()
+
+
+@patch("bodywork.workflow_execution.k8s")
+def test_failure_stage_does_not_run_for_namespace_exception(
+    mock_k8s: MagicMock, project_repo_location: Path
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+    mock_k8s.namespace_exists.return_value = False
+    try:
+        run_workflow(config, "foo_bar_foo_993", project_repo_location)
+    except BodyworkWorkflowExecutionError:
+        pass
+
+    mock_k8s.configure_batch_stage_job.assert_not_called()
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_failure_of_failure_stage_is_recorded_in_exception(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_requests: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+    config.project.run_on_failure = "on_fail_stage"
+
+    error_message = "The run-on-failure stage experienced an error"
+    mock_k8s.configure_batch_stage_job.side_effect = [
+        k8sclient.ApiException("Original Error"),
+        k8sclient.ApiException(reason=error_message),
+    ]
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+
+    with raises(BodyworkWorkflowExecutionError, match=f"{error_message}"):
+        run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
 
 @patch("bodywork.workflow_execution.rmtree")

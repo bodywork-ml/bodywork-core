@@ -26,6 +26,7 @@ from subprocess import run, CalledProcessError, DEVNULL, PIPE
 from urllib.parse import urlparse
 from typing import Optional
 
+from .exceptions import BodyworkGitError
 from .constants import (
     DEFAULT_PROJECT_DIR,
     SSH_DIR_NAME,
@@ -48,14 +49,14 @@ def download_project_code_from_repo(
     :param branch: The Git branch to download, defaults to 'master'.
     :param destination: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
-    :raises RuntimeError: If Git is not available on the system or the
+    :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
     log = bodywork_log_factory()
     try:
         run(["git", "--version"], check=True, stdout=DEVNULL)
     except CalledProcessError:
-        raise RuntimeError("git is not available")
+        raise BodyworkGitError("git is not available")
     try:
         if get_connection_protocol(url) is ConnectionProtocol.SSH:
             hostname = urlparse(f"ssh://{url}").hostname
@@ -71,7 +72,7 @@ def download_project_code_from_repo(
         msg = (
             f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
         )
-        raise RuntimeError(msg)
+        raise BodyworkGitError(msg)
     try:
         run(
             ["git", "clone", "--branch", branch, "--single-branch", url, destination],
@@ -82,7 +83,7 @@ def download_project_code_from_repo(
         )
     except CalledProcessError as e:
         msg = f"git clone failed - calling {e.cmd} returned {e.stderr}"
-        raise RuntimeError(msg)
+        raise BodyworkGitError(msg)
 
 
 class ConnectionProtocol(Enum):
@@ -236,6 +237,6 @@ def get_git_commit_hash(project_path: Optional[str] = None) -> str:
         ).stdout.strip()
         return result
     except CalledProcessError as e:
-        raise RuntimeError(
+        raise BodyworkGitError(
             f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}"
         ) from e
