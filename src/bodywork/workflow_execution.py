@@ -21,6 +21,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 from pathlib import Path
 from shutil import rmtree
 from typing import cast, Optional, Tuple, List, Any
+from kubernetes.client.exceptions import  ApiException
 
 import requests
 import os
@@ -96,10 +97,16 @@ def run_workflow(
             f"attempting to run workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-        if k8s.namespace_exists(namespace) is False:
+        try:
+            if k8s.namespace_exists(namespace) is False:
+                raise BodyworkNamespaceError(
+                    f"{namespace} is not a valid namespace on your cluster."
+                )
+        except ApiException as e:
             raise BodyworkNamespaceError(
-                f"{namespace} is not a valid namespace on your cluster"
-            )
+                    f"Unable to check namespace: {namespace} : {e}"
+                ) from e
+
         _log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
@@ -346,9 +353,8 @@ def _run_failure_stage(
     docker_image: str,
 ) -> None:
     """Runs the configured Batch Stage if the workflow fails.
-
     :param config: Configuration data for the Bodywork deployment.
-    :param workflow_exception: Exception from workflow failure.
+    :param workflow_exception: Exception from workflow f
     :param namespace: K8s namespace to execute the service stage in.
     :param repo_url: Git repository URL.
     :param repo_branch: The Git branch to download.
@@ -377,7 +383,7 @@ def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
     :param repo_name: The name of the DockerHub repository containing
         the Bodywork images.
     :param tag: The specific image tag to check.
-    :raises RuntimeError: If connection to DockerHub fails.
+    :raises BodyworkDockerImageError: If connection to DockerHub fails.
     :return: Boolean flag for image existence on DockerHub.
     """
     dockerhub_url = f"https://hub.docker.com/v2/repositories/{repo_name}/tags/{tag}"

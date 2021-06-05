@@ -225,9 +225,7 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
-    response = requests.Response()
-    response.status_code = 401
-    mock_session().get.return_value = response
+    mock_session().get.return_value = requests.Response().status_code = 401
 
     try:
         run_workflow(config, "foo_bar_foo_993", project_repo_location)
@@ -269,7 +267,7 @@ def test_failure_of_failure_stage_is_recorded_in_exception(
     config = BodyworkConfig(config_path)
     config.project.run_on_failure = "on_fail_stage"
 
-    error_message = "Failure Stage Error"
+    error_message = "The run-on-failure stage experienced an error"
     mock_k8s.configure_batch_stage_job.side_effect = [
         k8sclient.ApiException("Original Error"),
         k8sclient.ApiException(reason=error_message),

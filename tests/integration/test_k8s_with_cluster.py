@@ -303,8 +303,10 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(
 
         expected_output_0 = "ERROR - workflow_execution.run_workflow - failed to execute workflow for master branch"  # noqa
         expected_output_1 = "successfully ran stage=on_fail_stage"
+        expected_output_2 = "I have successfully been executed"
         assert expected_output_0 in process_one.stdout
         assert expected_output_1 in process_one.stdout
+        assert expected_output_2 in process_one.stdout
         assert process_one.returncode == 1
     except Exception:
         assert False
