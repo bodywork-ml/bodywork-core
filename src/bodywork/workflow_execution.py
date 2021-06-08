@@ -472,7 +472,7 @@ def _ping_usage_stats_server() -> None:
         session.mount(
             USAGE_STATS_SERVER_URL, requests.adapters.HTTPAdapter(max_retries=0)
         )
-        response = session.get(USAGE_STATS_SERVER_URL)
+        response = session.get(USAGE_STATS_SERVER_URL, params={"type": "workflow"})
         if not response.ok:
             _log.info("Unable to contact usage stats server")
     except requests.exceptions.RequestException:

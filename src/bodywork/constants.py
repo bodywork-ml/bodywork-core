@@ -42,8 +42,8 @@ SSH_DIR_NAME = ".ssh_bodywork"
 SSH_PRIVATE_KEY_ENV_VAR = "BODYWORK_GIT_SSH_PRIVATE_KEY"
 SSH_SECRET_NAME = "ssh-git-private-key"
 TIMEOUT_GRACE_SECONDS = 90
-USAGE_STATS_SERVER_URL = "http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter"  # noqa
-
+#USAGE_STATS_SERVER_URL = "http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter"  # noqa
+USAGE_STATS_SERVER_URL = "http://0.0.0.0:8000/workflow-execution-counter"
 # External SSH Fingerprints
 GITHUB_SSH_FINGERPRINT = (
     "2048 SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8 github.com (RSA)"  # noqa

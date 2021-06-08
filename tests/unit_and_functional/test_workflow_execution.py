@@ -297,7 +297,7 @@ def test_run_workflow_pings_usage_stats_server(
 
     run_workflow(config, "foo_bar_foo_993", project_repo_location)
 
-    mock_session().get.assert_called_with(USAGE_STATS_SERVER_URL)
+    mock_session().get.assert_called_with(USAGE_STATS_SERVER_URL, params={"type": "workflow"})
 
 
 @patch("bodywork.workflow_execution.rmtree")
