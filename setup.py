@@ -15,8 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
-import urllib.request
-import urllib.parse
+from urllib import request, parse, error
 
 
 # get package version
@@ -63,7 +62,10 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
 )
-query_string = urllib.parse.urlencode({"type": "pip-install"})
-url = f"http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"  # noqa
 
-urllib.request.urlopen(url)
+query_string = parse.urlencode({"type": "pip-install"})
+url = f"http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"  # noqa
+try:
+    request.urlopen(url)
+except error.HTTPError:
+    pass
