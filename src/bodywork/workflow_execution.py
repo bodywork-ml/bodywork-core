@@ -68,7 +68,8 @@ def get_config_from_git_repo(
             path_to_project_config_file, check_py_modules_exist=True
         )
     finally:
-        rmtree(cloned_repo_dir, onerror=_remove_readonly)
+        if cloned_repo_dir.exists():
+            rmtree(cloned_repo_dir, onerror=_remove_readonly)
     return config
 
 
@@ -429,8 +430,8 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
 def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
     """Replay pod logs from a job or deployment to stdout.
 
-    :param namespace: The namspace the
-    :param job_or_deployment_name: THe name of the pod or deployment.
+    :param namespace: The namespace the job/deployment is in.
+    :param job_or_deployment_name: The name of the pod or deployment.
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
@@ -462,7 +463,7 @@ def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
         os.chmod(path, stat.S_IWRITE)
         func(path)
     else:
-        raise Exception
+        _log.warning(f"Could not remove file/directory: {path}")
 
 
 def _ping_usage_stats_server() -> None:

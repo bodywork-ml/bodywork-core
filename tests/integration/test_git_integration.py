@@ -120,9 +120,10 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var():
 
 def test_that_git_commit_hash_is_retrieved(
         setup_bodywork_test_project: Iterable[bool],
+        project_repo_location,
 ):
     try:
-        result = get_git_commit_hash()
+        result = get_git_commit_hash(project_repo_location)
         assert len(result) == 7
     except Exception:
         assert False
