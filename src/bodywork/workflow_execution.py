@@ -42,6 +42,7 @@ from .exceptions import (
     BodyworkNamespaceError,
     BodyworkDockerImageError,
     BodyworkGitError,
+    BodyworkConfigError,
 )
 from .git import download_project_code_from_repo, get_git_commit_hash
 from .logs import bodywork_log_factory
@@ -78,7 +79,7 @@ def run_workflow(
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        if not config:
+        if config is None:
             config = BodyworkConfig(
                 cloned_repo_dir / PROJECT_CONFIG_FILENAME, check_py_modules_exist=True
             )
@@ -151,11 +152,12 @@ def run_workflow(
         )
         _log.error(msg)
         try:
-            if config.project.run_on_failure and type(e) not in [
+            if type(e) not in [
                 BodyworkNamespaceError,
                 BodyworkDockerImageError,
                 BodyworkGitError,
-            ]:
+                BodyworkConfigError,
+            ] and config.project.run_on_failure:
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )

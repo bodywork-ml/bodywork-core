@@ -38,19 +38,23 @@ class BodyworkJobFailure(Exception):
         super().__init__(msg)
 
 
-class BodyworkConfigParsingError(Exception):
+class BodyworkConfigError(Exception):
+    pass
+
+
+class BodyworkConfigParsingError(BodyworkConfigError):
     def __init__(self, config_file_path: Path):
         msg = f"cannot parse YAML from {config_file_path}"
         super().__init__(msg)
 
 
-class BodyworkConfigMissingSectionError(Exception):
+class BodyworkConfigMissingSectionError(BodyworkConfigError):
     def __init__(self, missing_sections: Sequence[str]):
         msg = f'Bodywork config file missing sections: {", ".join(missing_sections)}'
         super().__init__(msg)
 
 
-class BodyworkConfigValidationError(Exception):
+class BodyworkConfigValidationError(BodyworkConfigError):
     def __init__(self, missing_params: Sequence[str]):
         self.missing_params = missing_params
         msg = (
@@ -60,7 +64,7 @@ class BodyworkConfigValidationError(Exception):
         super().__init__(msg)
 
 
-class BodyworkConfigVersionMismatchError(Exception):
+class BodyworkConfigVersionMismatchError(BodyworkConfigError):
     def __init__(self, version: str):
         msg = (
             f"Bodywork config file has schema version {version}, when Bodywork "
