@@ -168,7 +168,7 @@ def run_workflow(
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore # noqa
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
