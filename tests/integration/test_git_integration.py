@@ -101,7 +101,7 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var():
 
         private_key = ssh_dir / "id_rsa"
         assert private_key.exists() is True
-        assert private_key.read_text() == "MY_PRIVATE_KEY"
+        assert private_key.read_text() == "MY_PRIVATE_KEY\n"
 
         known_hosts = ssh_dir / "known_hosts"
         assert known_hosts.exists() is True
