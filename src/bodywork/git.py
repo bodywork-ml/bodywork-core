@@ -235,7 +235,11 @@ def get_git_commit_hash(project_path: Path = DEFAULT_PROJECT_DIR) -> str:
             encoding="utf-8",
         ).stdout.strip()
         return result
-    except (CalledProcessError, OSError) as e:
+    except CalledProcessError as e:
         raise BodyworkGitError(
             f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}"
+        ) from e
+    except OSError as e:
+        raise BodyworkGitError(
+            f"Unable to retrieve git commit hash, path: {project_path} is invalid - {e}"
         ) from e
