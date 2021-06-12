@@ -168,7 +168,7 @@ def run_workflow(
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
@@ -177,7 +177,7 @@ def run_workflow(
     finally:
         if cloned_repo_dir.exists():
             rmtree(cloned_repo_dir, onerror=_remove_readonly)
-        if config.project.usage_stats:
+        if config is not None and config.project.usage_stats:
             _ping_usage_stats_server()
 
 
