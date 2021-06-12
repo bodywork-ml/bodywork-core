@@ -138,7 +138,10 @@ def setup_ssh_for_git_host(hostname: str) -> None:
         try:
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
             private_key.touch(0o700, exist_ok=False)
-            private_key.write_text(os.environ[SSH_PRIVATE_KEY_ENV_VAR].strip("\n"))
+            key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+            if key[-1] != "\n":
+                key = f"{key}\n"
+            private_key.write_text(key)
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
