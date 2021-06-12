@@ -152,12 +152,17 @@ def run_workflow(
         )
         _log.error(msg)
         try:
-            if type(e) not in [
-                BodyworkNamespaceError,
-                BodyworkDockerImageError,
-                BodyworkGitError,
-                BodyworkConfigError,
-            ] and config.project.run_on_failure:
+            if (
+                config is not None
+                and config.project.run_on_failure
+                and type(e)
+                not in [
+                    BodyworkNamespaceError,
+                    BodyworkDockerImageError,
+                    BodyworkGitError,
+                    BodyworkConfigError,
+                ]
+            ):
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
