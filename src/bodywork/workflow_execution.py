@@ -49,40 +49,16 @@ from .logs import bodywork_log_factory
 _log = bodywork_log_factory()
 
 
-def get_config_from_git_repo(
-    repo_url: str,
-    repo_branch: str = "master",
-    cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-) -> BodyworkConfig:
-    """Download project's Git repo and parse config.
-
-    :param repo_url: Git repository URL.
-    :param repo_branch: The Git branch to download, defaults to 'master'.
-    :param cloned_repo_dir: The name of the directory into which the
-        repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
-    """
-    try:
-        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        path_to_project_config_file = cloned_repo_dir / PROJECT_CONFIG_FILENAME
-        config = BodyworkConfig(
-            path_to_project_config_file, check_py_modules_exist=True
-        )
-    finally:
-        if cloned_repo_dir.exists():
-            rmtree(cloned_repo_dir, onerror=_remove_readonly)
-    return config
-
-
 def run_workflow(
-    config: BodyworkConfig,
     namespace: str,
     repo_url: str,
     repo_branch: str = "master",
     docker_image_override: Optional[str] = None,
+    config: Optional[BodyworkConfig] = None,
+    cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the workflow.
 
-    :param config: Configuration data for the Bodywork deployment.
     :param namespace: Kubernetes namespace to execute the workflow in.
     :param repo_url: Git repository URL.
     :param repo_branch: The Git branch to download, defaults to 'master'.
@@ -90,6 +66,9 @@ def run_workflow(
         stages, that will override the one specified in the
         project config file. Provided purely for testing purposes and
         defaults to None.
+    :param config: Configuration data for the Bodywork deployment.
+    :param cloned_repo_dir: The name of the directory into which the
+    repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
         run for any reason.
     """
@@ -98,6 +77,12 @@ def run_workflow(
             f"attempting to run workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
+        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+        if not config:
+            config = BodyworkConfig(
+                cloned_repo_dir / PROJECT_CONFIG_FILENAME, check_py_modules_exist=True
+            )
+        _log.setLevel(config.logging.log_level)
         try:
             if k8s.namespace_exists(namespace) is False:
                 raise BodyworkNamespaceError(
@@ -108,10 +93,8 @@ def run_workflow(
                 f"Unable to check namespace: {namespace} : {e}"
             ) from e
 
-        _log.setLevel(config.logging.log_level)
         workflow_dag = config.project.workflow
         all_stages = config.stages
-
         docker_image = (
             config.project.docker_image
             if docker_image_override is None
@@ -122,7 +105,7 @@ def run_workflow(
             msg = f"cannot locate {image_name}:{image_tag} on DockerHub"
             raise BodyworkDockerImageError(msg)
         env_vars = k8s.create_k8s_environment_variables(
-            [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash())]
+            [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
@@ -185,6 +168,8 @@ def run_workflow(
             msg = f"{msg}\n{failure_msg}"
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
+        if cloned_repo_dir.exists():
+            rmtree(cloned_repo_dir, onerror=_remove_readonly)
         if config.project.usage_stats:
             _ping_usage_stats_server()
 
