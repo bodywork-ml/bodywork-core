@@ -217,10 +217,11 @@ def test_run_workflow_runs_failure_stage_on_failure(
     )
 
 
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.requests.Session")
 @patch("bodywork.workflow_execution.k8s")
 def test_failure_stage_does_not_run_for_docker_image_exception(
-    mock_k8s: MagicMock, mock_session: MagicMock, project_repo_location: Path
+    mock_k8s: MagicMock, mock_session: MagicMock, mock_git_download: MagicMock, project_repo_location: Path
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
@@ -234,9 +235,10 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
     mock_k8s.configure_batch_stage_job.assert_not_called()
 
 
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.k8s")
 def test_failure_stage_does_not_run_for_namespace_exception(
-    mock_k8s: MagicMock, project_repo_location: Path
+    mock_k8s: MagicMock, mock_git_download: MagicMock, project_repo_location: Path
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
