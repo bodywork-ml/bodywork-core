@@ -55,7 +55,7 @@ def run_workflow(
     repo_url: str,
     repo_branch: str = "master",
     docker_image_override: Optional[str] = None,
-    config: Optional[BodyworkConfig] = None,
+    config_override: Optional[BodyworkConfig] = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the workflow.
@@ -67,9 +67,9 @@ def run_workflow(
         stages, that will override the one specified in the
         project config file. Provided purely for testing purposes and
         defaults to None.
-    :param config: Configuration data for the Bodywork deployment.
+    :param config_override: Configuration data for the Bodywork deployment.
     :param cloned_repo_dir: The name of the directory into which the
-    repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+        repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
         run for any reason.
     """
@@ -79,10 +79,11 @@ def run_workflow(
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        if config is None:
-            config = BodyworkConfig(
-                cloned_repo_dir / PROJECT_CONFIG_FILENAME, check_py_modules_exist=True
-            )
+        config = (
+            config_override
+            if config_override is not None
+            else BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
+        )
         _log.setLevel(config.logging.log_level)
         try:
             if k8s.namespace_exists(namespace) is False:
@@ -152,23 +153,18 @@ def run_workflow(
         )
         _log.error(msg)
         try:
-            if (
-                config is not None
-                and config.project.run_on_failure
-                and type(e)
-                not in [
-                    BodyworkNamespaceError,
-                    BodyworkDockerImageError,
-                    BodyworkGitError,
-                    BodyworkConfigError,
-                ]
-            ):
+            if config.project.run_on_failure and type(e) not in [
+                BodyworkNamespaceError,
+                BodyworkDockerImageError,
+                BodyworkGitError,
+                BodyworkConfigError,
+            ]:
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore # noqa
+                f"Error executing failure stage: {config.project.run_on_failure}"
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
