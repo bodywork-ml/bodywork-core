@@ -138,7 +138,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
 
     run_workflow(
-        "foo_bar_foo_993", project_repo_location, config=BodyworkConfig(config_path)
+        "foo_bar_foo_993", project_repo_location, config_override=BodyworkConfig(config_path)
     )
 
     mock_k8s.configure_service_stage_deployment.assert_called_once_with(
@@ -199,7 +199,7 @@ def test_run_workflow_runs_failure_stage_on_failure(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
 
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -227,7 +227,7 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
     mock_session().get.return_value = requests.Response().status_code = 401
 
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -242,7 +242,7 @@ def test_failure_stage_does_not_run_for_namespace_exception(
     config = BodyworkConfig(config_path)
     mock_k8s.namespace_exists.return_value = False
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -274,7 +274,7 @@ def test_failure_of_failure_stage_is_recorded_in_exception(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
 
     with raises(BodyworkWorkflowExecutionError, match=f"{error_message}"):
-        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
 
 
 @patch("bodywork.workflow_execution.rmtree")
@@ -294,7 +294,7 @@ def test_run_workflow_pings_usage_stats_server(
     config = BodyworkConfig(config_path)
     config.project.usage_stats = True
 
-    run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+    run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
 
     mock_session().get.assert_called_with(
         USAGE_STATS_SERVER_URL, params={"type": "workflow"}
@@ -317,7 +317,7 @@ def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
 
     run_workflow(
-        "foo_bar_foo_993", project_repo_location, config=BodyworkConfig(config_path)
+        "foo_bar_foo_993", project_repo_location, config_override=BodyworkConfig(config_path)
     )
 
     mock_session().get.assert_called_once()
