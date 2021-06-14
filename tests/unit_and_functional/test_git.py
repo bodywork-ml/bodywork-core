@@ -24,7 +24,7 @@ from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
 
 from bodywork.exceptions import BodyworkGitError
-from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR
+from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR, DEFAULT_PROJECT_DIR
 from bodywork.git import (
     ConnectionProtocol,
     download_project_code_from_repo,
@@ -103,8 +103,20 @@ def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_
 
 
 @patch("bodywork.git.run", side_effect=CalledProcessError(999, "git rev-parse"))
-def test_get_git_commit_hash_throws_exception_on_fail(
+def test_get_git_commit_hash_throws_bodyworkgiterror_on_fail(
     mock_run: MagicMock,
 ):
-    with raises(BodyworkGitError, match=f"Unable to retrieve git commit hash:"):
+    with raises(BodyworkGitError, match="Unable to retrieve git commit hash:"):
+        get_git_commit_hash()
+
+
+@patch("bodywork.git.run", side_effect=OSError("Invalid Path"))
+def test_get_git_commit_hash_throws_bodyworkgiterror_when_invalid_path(
+    mock_run: MagicMock,
+):
+    with raises(
+        BodyworkGitError,
+        match=f"Unable to retrieve git commit hash, path: {DEFAULT_PROJECT_DIR}"
+        f" is invalid - Invalid Path",
+    ):
         get_git_commit_hash()

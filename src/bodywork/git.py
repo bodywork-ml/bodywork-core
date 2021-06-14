@@ -24,7 +24,6 @@ from enum import Enum
 from pathlib import Path
 from subprocess import run, CalledProcessError, DEVNULL, PIPE
 from urllib.parse import urlparse
-from typing import Optional
 
 from .exceptions import BodyworkGitError
 from .constants import (
@@ -139,7 +138,10 @@ def setup_ssh_for_git_host(hostname: str) -> None:
         try:
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
             private_key.touch(0o700, exist_ok=False)
-            private_key.write_text(os.environ[SSH_PRIVATE_KEY_ENV_VAR])
+            key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+            if key[-1] != "\n":
+                key = f"{key}\n"
+            private_key.write_text(key)
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
@@ -221,7 +223,7 @@ def get_ssh_public_key_from_domain(hostname: str) -> str:
         raise RuntimeError(f"{hostname} is not supported by Bodywork")
 
 
-def get_git_commit_hash(project_path: Optional[str] = None) -> str:
+def get_git_commit_hash(project_path: Path = DEFAULT_PROJECT_DIR) -> str:
     """Retrieves the Git commit hash.
 
     :param project_path: Git project path.
@@ -239,4 +241,8 @@ def get_git_commit_hash(project_path: Optional[str] = None) -> str:
     except CalledProcessError as e:
         raise BodyworkGitError(
             f"Unable to retrieve git commit hash: {e.stdout} {e.stderr}"
+        ) from e
+    except OSError as e:
+        raise BodyworkGitError(
+            f"Unable to retrieve git commit hash, path: {project_path} is invalid - {e}"
         ) from e
