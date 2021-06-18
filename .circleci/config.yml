@@ -108,7 +108,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run:
           name: Building wheel
-          command: python setup.py sdist bdist_wheel
+          command: python setup.py sdist
       - run:
           name: Push to PyPI
           command: twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD --verbose
