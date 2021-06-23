@@ -78,6 +78,7 @@ def run_workflow(
             f"attempting to run workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
+        config = None
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         config = (
             config_override
@@ -153,18 +154,22 @@ def run_workflow(
         )
         _log.error(msg)
         try:
-            if config.project.run_on_failure and type(e) not in [
-                BodyworkNamespaceError,
-                BodyworkDockerImageError,
-                BodyworkGitError,
-                BodyworkConfigError,
-            ]:
+            if (
+                type(e)
+                not in [
+                    BodyworkNamespaceError,
+                    BodyworkDockerImageError,
+                    BodyworkGitError,
+                    BodyworkConfigError,
+                ]
+                and config.project.run_on_failure   # type: ignore  # noqa
+            ):
                 _run_failure_stage(
-                    config, e, namespace, repo_url, repo_branch, docker_image
+                    config, e, namespace, repo_url, repo_branch, docker_image   # type: ignore  # noqa
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore  # noqa  
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
