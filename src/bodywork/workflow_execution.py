@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# type: ignore
 """
 This module contains all of the functions required to execute and manage
 a Bodywork project workflow - a sequence of stages represented as a DAG.
@@ -163,14 +162,14 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config.project.run_on_failure
+                and config.project.run_on_failure   # type: ignore  # noqa
             ):
                 _run_failure_stage(
-                    config, e, namespace, repo_url, repo_branch, docker_image
+                    config, e, namespace, repo_url, repo_branch, docker_image   # type: ignore  # noqa
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"  
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore  # noqa  
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
