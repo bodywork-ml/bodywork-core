@@ -78,7 +78,6 @@ def run_workflow(
             f"attempting to run workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-        config = None
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
         config = (
             config_override
@@ -147,6 +146,8 @@ def run_workflow(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
+        if config.project.usage_stats:
+            _ping_usage_stats_server()
     except Exception as e:
         msg = (
             f"failed to execute workflow for {repo_branch} branch of project "
@@ -162,24 +163,24 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config.project.run_on_failure   # type: ignore  # noqa
+                and config.project.run_on_failure
             ):
                 _run_failure_stage(
-                    config, e, namespace, repo_url, repo_branch, docker_image   # type: ignore  # noqa
+                    config, e, namespace, repo_url, repo_branch, docker_image
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore  # noqa  
+                f"Error executing failure stage: {config.project.run_on_failure}"
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
             msg = f"{msg}\n{failure_msg}"
+        if config.project.usage_stats:
+            _ping_usage_stats_server()
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
         if cloned_repo_dir.exists():
             rmtree(cloned_repo_dir, onerror=_remove_readonly)
-        if config is not None and config.project.usage_stats:
-            _ping_usage_stats_server()
 
 
 def _run_batch_stages(
