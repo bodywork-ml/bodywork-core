@@ -57,7 +57,7 @@ def run_workflow(
     docker_image_override: Optional[str] = None,
     config_override: Optional[BodyworkConfig] = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-) -> None:
+) -> None:  # type: ignore
     """Retrieve latest project code and run the workflow.
 
     :param namespace: Kubernetes namespace to execute the workflow in.
@@ -162,16 +162,16 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config.project.run_on_failure  # type: ignore
+                and config.project.run_on_failure
             ):
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
-                )   # type: ignore
+                )
         except Exception as ex:
             failure_msg = (
                 f"Error executing failure stage: {config.project.run_on_failure}"  
                 f" after failed workflow : {ex}"
-            )   # type: ignore
+            )
             _log.error(failure_msg)
             msg = f"{msg}\n{failure_msg}"
         raise BodyworkWorkflowExecutionError(msg) from e
