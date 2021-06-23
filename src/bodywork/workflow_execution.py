@@ -162,14 +162,14 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config.project.run_on_failure
+                and config.project.run_on_failure   # type: ignore
             ):
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
