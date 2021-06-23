@@ -165,7 +165,7 @@ def run_workflow(
                 and config.project.run_on_failure   # type: ignore
             ):
                 _run_failure_stage(
-                    config, e, namespace, repo_url, repo_branch, docker_image
+                    config, e, namespace, repo_url, repo_branch, docker_image   # type: ignore
                 )
         except Exception as ex:
             failure_msg = (
