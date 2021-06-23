@@ -165,6 +165,8 @@ def run_workflow(
                 ]
                 and config.project.run_on_failure
             ):
+                if config.project.usage_stats:
+                    _ping_usage_stats_server()
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
@@ -175,8 +177,6 @@ def run_workflow(
             )
             _log.error(failure_msg)
             msg = f"{msg}\n{failure_msg}"
-        if config.project.usage_stats:
-            _ping_usage_stats_server()
         raise BodyworkWorkflowExecutionError(msg) from e
     finally:
         if cloned_repo_dir.exists():
