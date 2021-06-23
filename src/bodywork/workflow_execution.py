@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# type: ignore
 """
 This module contains all of the functions required to execute and manage
 a Bodywork project workflow - a sequence of stages represented as a DAG.
@@ -57,7 +58,7 @@ def run_workflow(
     docker_image_override: Optional[str] = None,
     config_override: Optional[BodyworkConfig] = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-) -> None:  # type: ignore
+) -> None:
     """Retrieve latest project code and run the workflow.
 
     :param namespace: Kubernetes namespace to execute the workflow in.
