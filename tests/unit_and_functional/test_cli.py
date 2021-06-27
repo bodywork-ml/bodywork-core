@@ -371,6 +371,12 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
+def test_configure_cluster_subcommand_exists():
+    process = run(["bodywork", "configure-cluster", "-h"], encoding="utf-8", capture_output=True)
+    expected_output = "bodywork configure-cluster [-h]"
+    assert process.stdout.find(expected_output) != -1
+
+
 def test_graceful_exit_when_no_command_specified():
     process = run(
         ["bodywork"],

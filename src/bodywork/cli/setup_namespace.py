@@ -87,7 +87,7 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     Bodywork containers will be created.
 
     Note, that to use this function the Kubernetes user running the
-    command must be authrised to create namespaces, service accounts,
+    command must be authorised to create namespaces, service accounts,
     roles and cluster-roles.
 
     :param namespace: Name of namespace.

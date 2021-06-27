@@ -60,11 +60,12 @@ from ..exceptions import (
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
+from ..constants import BODYWORK_JOBS_DEPLOYMENTS_NAMESPACE
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from ..workflow_execution import run_workflow
 
-warnings.simplefilter(action='ignore')
+warnings.simplefilter(action="ignore")
 
 
 def cli() -> None:
@@ -295,6 +296,10 @@ def cli() -> None:
         action="store_true",
         help="Cross-check config with files and directories",
     )
+
+    # Configure Deployment Interface
+    configure_cmd_parser = cli_arg_subparser.add_parser("configure-cluster")
+    configure_cmd_parser.set_defaults(func=configure_cluster)
 
     # get config and logger then execute delegated function
     args = cli_arg_parser.parse_args()
@@ -605,3 +610,13 @@ def validate_config(args: Namespace) -> None:
         missing_or_invalid_param_list = "\n* ".join(e.missing_params)
         print(f"* {missing_or_invalid_param_list}")
         sys.exit(1)
+
+
+def configure_cluster(args: Namespace):
+    """Configures the cluster with Bodywork namespace and accounts
+
+    :param args: Arguments passed to the run command from the CLI.
+    """
+    load_kubernetes_config()
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_JOBS_DEPLOYMENTS_NAMESPACE)
+    sys.exit(0)
