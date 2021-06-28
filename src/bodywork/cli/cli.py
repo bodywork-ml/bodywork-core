@@ -60,7 +60,7 @@ from ..exceptions import (
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
-from ..constants import BODYWORK_JOBS_DEPLOYMENTS_NAMESPACE
+from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from ..workflow_execution import run_workflow
@@ -612,11 +612,12 @@ def validate_config(args: Namespace) -> None:
         sys.exit(1)
 
 
+@handle_k8s_exceptions
 def configure_cluster(args: Namespace):
     """Configures the cluster with Bodywork namespace and accounts
 
     :param args: Arguments passed to the run command from the CLI.
     """
     load_kubernetes_config()
-    setup_namespace_with_service_accounts_and_roles(BODYWORK_JOBS_DEPLOYMENTS_NAMESPACE)
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
     sys.exit(0)

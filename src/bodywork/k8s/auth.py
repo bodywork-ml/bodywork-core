@@ -25,7 +25,7 @@ from kubernetes import client as k8s, config as k8s_config
 from ..constants import (
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+    BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT,
 )
 
 
@@ -139,6 +139,10 @@ def setup_workflow_service_account(namespace: str) -> None:
             k8s.V1PolicyRule(
                 api_groups=["extensions"], resources=["ingresses"], verbs=["*"]
             ),
+            k8s.V1PolicyRule(
+                api_groups=[""],
+                resources=["namespaces"],
+                verbs=["get", "list", "create"]),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -213,7 +217,7 @@ def setup_job_and_deployment_service_accounts(namespace: str) -> None:
     """
     service_account_object = k8s.V1ServiceAccount(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT
         )
     )
     k8s.CoreV1Api().create_namespaced_service_account(
@@ -222,18 +226,14 @@ def setup_job_and_deployment_service_accounts(namespace: str) -> None:
 
     role_object = k8s.V1Role(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT
         ),
         rules=[
             k8s.V1PolicyRule(
                 api_groups=[""],
                 resources=["secrets", "configmaps"],
                 verbs=["get", "list"],
-            ),
-            k8s.V1PolicyRule(
-                api_groups=[""],
-                resources=["namespaces"],
-                verbs=["get", "list", "create"])
+            )
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -242,17 +242,17 @@ def setup_job_and_deployment_service_accounts(namespace: str) -> None:
 
     role_binding_object = k8s.V1RoleBinding(
         metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+            namespace=namespace, name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT
         ),
         role_ref=k8s.V1RoleRef(
             kind="Role",
-            name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+            name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT,
             api_group="rbac.authorization.k8s.io",
         ),
         subjects=[
             k8s.V1Subject(
                 kind="ServiceAccount",
-                name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+                name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT,
                 namespace=namespace,
             )
         ],
