@@ -24,7 +24,7 @@ from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
 
-from pytest import raises
+from pytest import raises, mark
 
 from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
@@ -41,6 +41,7 @@ from bodywork.k8s import (
 )
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_and_service_management_end_to_end_from_cli(
     random_test_namespace: str, docker_image: str, ingress_load_balancer_url: str
 ):
@@ -284,6 +285,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_run_failure_stage_on_workflow_failure(
     test_namespace: str, docker_image: str
 ):
@@ -330,6 +332,7 @@ def test_workflow_will_not_run_if_namespace_is_not_setup_for_bodywork(
     assert process_one.returncode == 1
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
     test_namespace: str,
 ):
@@ -619,6 +622,7 @@ def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
     assert process_one.returncode == 1
 
 
+@mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud(test_namespace: str):
     process_one = run(
         [

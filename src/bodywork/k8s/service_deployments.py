@@ -27,7 +27,7 @@ from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
-    BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
 )
@@ -110,7 +110,7 @@ def configure_service_stage_deployment(
         args=[project_repo_url, project_repo_branch, stage_name],
     )
     pod_spec = k8s.V1PodSpec(
-        service_account_name=BODYWORK_DEPLOYMENT_JOBS_SERVICE_ACCOUNT,
+        service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
         containers=[container],
         restart_policy="Always",
     )
