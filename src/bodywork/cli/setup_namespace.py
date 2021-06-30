@@ -23,7 +23,7 @@ being called from the CLI.
 from .. import k8s
 from ..constants import (
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 
 
@@ -46,7 +46,7 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
         )
     )
     jobs_and_deployments_sa_exists = k8s.service_account_exists(
-        namespace, BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+        namespace, BODYWORK_STAGES_SERVICE_ACCOUNT
     )
     is_namespace_setup = (
         True
@@ -73,7 +73,7 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
             )
         if not jobs_and_deployments_sa_exists:
             print(
-                f"service-account={BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT} is "
+                f"service-account={BODYWORK_STAGES_SERVICE_ACCOUNT} is "
                 f"missing from namespace={namespace}"
             )
         return False
@@ -87,7 +87,7 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     Bodywork containers will be created.
 
     Note, that to use this function the Kubernetes user running the
-    command must be authrised to create namespaces, service accounts,
+    command must be authorised to create namespaces, service accounts,
     roles and cluster-roles.
 
     :param namespace: Name of namespace.
@@ -107,7 +107,7 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
         print(f"creating cluster-role-binding={workflow_crb}")
         k8s.setup_workflow_service_account(namespace)
 
-    jobs_deps_sa = BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT
+    jobs_deps_sa = BODYWORK_STAGES_SERVICE_ACCOUNT
     if k8s.service_account_exists(namespace, jobs_deps_sa):
         print(f"service-account={jobs_deps_sa} already exists in namespace={namespace}")
     else:

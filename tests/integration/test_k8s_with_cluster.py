@@ -24,13 +24,16 @@ from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
 
-from pytest import raises
+from pytest import raises, mark
 
 from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
+    BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
+    BODYWORK_WORKFLOW_CLUSTER_ROLE,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -41,6 +44,7 @@ from bodywork.k8s import (
 )
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_and_service_management_end_to_end_from_cli(
     random_test_namespace: str, docker_image: str, ingress_load_balancer_url: str
 ):
@@ -53,9 +57,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True,
         )
         assert f"creating namespace={random_test_namespace}" in process_zero.stdout
-        assert "creating service-account=bodywork-workflow-" in process_zero.stdout
-        assert "creating cluster-role-binding=bodywork-workflow-" in process_zero.stdout
-        assert "creating service-account=bodywork-jobs-" in process_zero.stdout
+        assert f"creating service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT}" in process_zero.stdout
+        assert f"creating cluster-role-binding={BODYWORK_WORKFLOW_CLUSTER_ROLE}" in process_zero.stdout
+        assert f"creating service-account={BODYWORK_STAGES_SERVICE_ACCOUNT}" in process_zero.stdout
         assert process_zero.returncode == 0
 
         process_one = run(
@@ -284,6 +288,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_run_failure_stage_on_workflow_failure(
     test_namespace: str, docker_image: str
 ):
@@ -330,6 +335,7 @@ def test_workflow_will_not_run_if_namespace_is_not_setup_for_bodywork(
     assert process_one.returncode == 1
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
     test_namespace: str,
 ):
@@ -619,6 +625,7 @@ def test_cronjob_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
     assert process_one.returncode == 1
 
 
+@mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud(test_namespace: str):
     process_one = run(
         [
