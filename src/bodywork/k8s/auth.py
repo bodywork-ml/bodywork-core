@@ -142,7 +142,7 @@ def setup_workflow_service_account(namespace: str) -> None:
             k8s.V1PolicyRule(
                 api_groups=[""],
                 resources=["namespaces"],
-                verbs=["get", "list", "create"]),
+                verbs=["get", "list", "create", "delete"]),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(

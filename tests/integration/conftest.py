@@ -21,13 +21,12 @@ import os
 from pathlib import Path
 from random import randint
 from typing import cast
-from pytest import fixture
+from pytest import fixture, FixtureRequest
 from kubernetes import client as k8s, config as k8s_config
 
 from bodywork.constants import (
     BODYWORK_DOCKERHUB_IMAGE_REPO,
     SSH_PRIVATE_KEY_ENV_VAR,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
@@ -142,7 +141,7 @@ def ingress_load_balancer_url() -> str:
 
 
 @fixture(scope="session")
-def setup_cluster(request):
+def setup_cluster(request: FixtureRequest) -> None:
     load_kubernetes_config()
     setup_namespace_with_service_accounts_and_roles("bodywork-dev")
 
