@@ -21,7 +21,8 @@ import os
 from pathlib import Path
 from random import randint
 from typing import cast
-from pytest import fixture, FixtureRequest
+from pytest import fixture
+from _pytest.fixtures import FixtureRequest
 from kubernetes import client as k8s, config as k8s_config
 
 from bodywork.constants import (
