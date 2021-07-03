@@ -61,6 +61,7 @@ def run_stage(
             ["python", stage.executable_module, *stage.args],
             check=True,
             cwd=stage.executable_module_path.parent,
+            env={"PYTHONPATH": str(cloned_repo_dir.absolute())},
             encoding="utf-8",
         )
         log.info(
