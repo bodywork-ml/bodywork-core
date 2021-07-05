@@ -18,6 +18,7 @@
 This module contains all of the functions and classes required to
 download the project code and run stages.
 """
+from os import environ
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Sequence
@@ -55,6 +56,7 @@ def run_stage(
         config_file_path = cloned_repo_dir / PROJECT_CONFIG_FILENAME
         project_config = BodyworkConfig(config_file_path)
         stage = project_config.stages[stage_name]
+        environ["PYTHONPATH"] = str(cloned_repo_dir.absolute())
         if stage.requirements:
             _install_python_requirements(stage.requirements)
         run(

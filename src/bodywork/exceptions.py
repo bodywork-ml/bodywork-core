@@ -42,6 +42,12 @@ class BodyworkConfigError(Exception):
     pass
 
 
+class BodyworkConfigFileExistsError(BodyworkConfigError):
+    def __init__(self, config_file_path: Path):
+        msg = f"no config file found at {config_file_path}"
+        super().__init__(msg)
+
+
 class BodyworkConfigParsingError(BodyworkConfigError):
     def __init__(self, config_file_path: Path):
         msg = f"cannot parse YAML from {config_file_path}"
@@ -81,7 +87,7 @@ class BodyworkWorkflowExecutionError(Exception):
 
 class BodyworkStageFailure(Exception):
     def __init__(self, stage_name: str, info: str):
-        msg = f'Stage {stage_name} failed - {info}'
+        msg = f"Stage {stage_name} failed - {info}"
         super().__init__(msg)
 
 
