@@ -162,7 +162,6 @@ def run_workflow(
                     BodyworkDockerImageError,
                     BodyworkGitError,
                     BodyworkConfigError,
-                    FileExistsError
                 ]
                 and config.project.run_on_failure
             ):
