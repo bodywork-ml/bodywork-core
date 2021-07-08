@@ -557,9 +557,7 @@ def workflow(args: Namespace) -> None:
             None if args.bodywork_docker_image == "" else args.bodywork_docker_image
         )
         load_kubernetes_config()
-        run_workflow(
-             repo_url, repo_branch, docker_image_override=docker_image
-        )
+        run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
         sys.exit(1)

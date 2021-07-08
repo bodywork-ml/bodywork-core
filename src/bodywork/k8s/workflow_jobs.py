@@ -86,7 +86,9 @@ def configure_workflow_job(
     )
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
-            name=make_valid_k8s_name(_create_project_name(project_repo_url, project_repo_branch)),
+            name=make_valid_k8s_name(
+                _create_project_name(project_repo_url, project_repo_branch)
+            ),
             namespace=namespace,
             labels={"app": "bodywork"},
         ),
