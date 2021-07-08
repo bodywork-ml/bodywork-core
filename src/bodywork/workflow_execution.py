@@ -154,7 +154,7 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config.project.run_on_failure
+                and config and config.project.run_on_failure
             ):
                 if config.project.usage_stats:
                     _ping_usage_stats_server()
@@ -163,7 +163,7 @@ def run_workflow(
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"
+                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore  # noqa
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
@@ -180,6 +180,7 @@ def _setup_namespace(config) -> str:
     :param config: Bodywork config.
     :return: Name of namespace.
     """
+    namespace = ""
     try:
         if config.project.namespace:
             namespace = config.project.namespace
@@ -188,11 +189,11 @@ def _setup_namespace(config) -> str:
         if k8s.namespace_exists(namespace) is False:
             _log.info(f"Creating namespace: {namespace}")
             k8s.create_namespace(namespace)
+        return namespace
     except ApiException as e:
         raise BodyworkNamespaceError(
             f"Unable to setup namespace: {namespace}"
         ) from e
-    return namespace
 
 
 def _run_batch_stages(

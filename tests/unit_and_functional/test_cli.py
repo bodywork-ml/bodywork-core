@@ -218,6 +218,7 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
     )
     deployment(args)
     expected_pass_through_args = Namespace(
+        namespace="bodywork-deployment-jobs",
         git_repo_url="foo3",
         git_repo_branch="foo4",
         bodywork_docker_image="",

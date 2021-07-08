@@ -551,18 +551,14 @@ def workflow(args: Namespace) -> None:
     :param args: Arguments passed to the workflow command from the CLI.
     """
     try:
-        namespace = args.namespace
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
         docker_image = (
             None if args.bodywork_docker_image == "" else args.bodywork_docker_image
         )
         load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(namespace):
-            print(f"namespace={namespace} is not setup for use by Bodywork")
-            sys.exit(1)
         run_workflow(
-            namespace, repo_url, repo_branch, docker_image_override=docker_image
+             repo_url, repo_branch, docker_image_override=docker_image
         )
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
