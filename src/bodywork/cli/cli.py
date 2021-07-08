@@ -393,8 +393,8 @@ def deployment(args: Namespace) -> None:
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
             ):
                 print(
-                    f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for use"
-                    f" by Bodywork. Have you run 'bodywork configure cluster' first?"
+                    f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
+                    f" use by Bodywork. Have you run 'bodywork configure cluster' first?"
                 )
                 sys.exit(1)
             create_workflow_job_in_namespace(
