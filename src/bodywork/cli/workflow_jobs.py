@@ -50,7 +50,7 @@ def create_workflow_job_in_namespace(
         print(f"workflow job={project_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
-        namespace, project_name, project_repo_url, project_repo_branch, retries
+        namespace, project_repo_url, project_repo_branch, retries
     )
     k8s.create_workflow_job(configured_job)
     print(f"workflow job={project_name} created in namespace={namespace}")
@@ -109,7 +109,6 @@ def create_workflow_cronjob_in_namespace(
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
         namespace,
-        project_name,
         project_repo_url,
         project_repo_branch,
         retries,

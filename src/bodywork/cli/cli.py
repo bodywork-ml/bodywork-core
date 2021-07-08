@@ -101,13 +101,6 @@ def cli() -> None:
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace to operate in.",
-    )
-    deployment_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the workflow job."
     )
     deployment_cmd_parser.add_argument(
@@ -343,7 +336,7 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
             )
         except kubernetes.config.ConfigException as e:
             print(
-                f"cannot load authenticaion credentials from kubeconfig file when "
+                f"cannot load authentication credentials from kubeconfig file when "
                 f"calling cli.{func.__name__}: {e}"
             )
 
@@ -371,25 +364,23 @@ def deployment(args: Namespace) -> None:
 
     :param args: Arguments passed to the deploy command from the CLI.
     """
-    command = args.command
-    namespace = args.namespace
     name = args.name
+    command = args.command
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
-    if (
-        command == "create" or command == "logs" or command == "delete_job"
-    ) and name == "":
-        print("please specify --name for the deployment")
-        sys.exit(1)
+
     if command == "create" and git_repo_url == "":
         print("please specify Git repo URL for the deployment you want to create")
+        sys.exit(1)
+    if command != "create" and name == "":
+        print("please specify --name for the job")
         sys.exit(1)
     if command == "create":
         if run_workflow_controller_locally:
             pass_through_args = Namespace(
-                namespace=namespace,
+                namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
@@ -398,25 +389,29 @@ def deployment(args: Namespace) -> None:
             workflow(pass_through_args)
         else:
             load_kubernetes_config()
-            if not is_namespace_available_for_bodywork(namespace):
-                print(f"namespace={namespace} is not setup for use by Bodywork")
+            if not is_namespace_available_for_bodywork(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+            ):
+                print(
+                    f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for use"
+                    f" by Bodywork. Have you run 'bodywork configure cluster' first?"
+                )
                 sys.exit(1)
             create_workflow_job_in_namespace(
-                namespace,
-                name,
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 git_repo_url,
                 git_repo_branch,
                 retries,
             )
     elif command == "logs":
         load_kubernetes_config()
-        display_workflow_job_logs(namespace, name)
+        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "delete_job":
         load_kubernetes_config()
-        delete_workflow_job_in_namespace(namespace, name)
+        delete_workflow_job_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         load_kubernetes_config()
-        display_workflow_job_history(namespace, name)
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 
@@ -559,16 +554,15 @@ def workflow(args: Namespace) -> None:
         namespace = args.namespace
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
-        docker_image = args.bodywork_docker_image
+        docker_image = (
+            None if args.bodywork_docker_image == "" else args.bodywork_docker_image
+        )
         load_kubernetes_config()
         if not is_namespace_available_for_bodywork(namespace):
             print(f"namespace={namespace} is not setup for use by Bodywork")
             sys.exit(1)
         run_workflow(
-            namespace,
-            repo_url,
-            repo_branch,
-            docker_image_override=(None if docker_image == "" else docker_image),
+            namespace, repo_url, repo_branch, docker_image_override=docker_image
         )
         sys.exit(0)
     except BodyworkWorkflowExecutionError:

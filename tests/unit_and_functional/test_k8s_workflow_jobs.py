@@ -25,7 +25,7 @@ from unittest.mock import MagicMock, patch
 import kubernetes
 from pytest import fixture
 
-from bodywork.constants import BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
+from bodywork.constants import BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 from bodywork.k8s.workflow_jobs import (
     configure_workflow_job,
     create_workflow_job,
@@ -65,16 +65,18 @@ def workflow_job_object() -> kubernetes.client.V1Job:
     return job
 
 
-def test_configure_workflow_job():
+@patch("bodywork.k8s.workflow_jobs.datetime")
+def test_configure_workflow_job(mock_datetime: MagicMock):
+    mock_datetime.now.return_value = datetime.today().strftime("%d/%m/%Y")
     job_definition = configure_workflow_job(
         namespace="bodywork-dev",
-        project_name="bodywork-test-project",
         project_repo_url="bodywork-ml/bodywork-test-project",
         project_repo_branch="dev",
         retries=2,
         image="bodyworkml/bodywork-core:0.0.7",
     )
-    assert job_definition.metadata.name == "bodywork-test-project"
+
+    assert f"bodywork-test-project-dev-{mock_datetime.now()}" in job_definition.metadata.name
     assert job_definition.metadata.namespace == "bodywork-dev"
     assert job_definition.spec.backoff_limit == 2
     assert (
@@ -82,7 +84,6 @@ def test_configure_workflow_job():
         == BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
     )
     assert job_definition.spec.template.spec.containers[0].args == [
-        "--namespace=bodywork-dev",
         "bodywork-ml/bodywork-test-project",
         "dev",
     ]
@@ -137,11 +138,13 @@ def workflow_cronjob_object() -> kubernetes.client.V1Job:
     return cronjob
 
 
-def test_configure_workflow_cronjob():
+@patch("bodywork.k8s.workflow_jobs.datetime")
+def test_configure_workflow_cronjob(mock_datetime: MagicMock):
+    mock_datetime.now.return_value = datetime.today().strftime("%d/%m/%Y")
+
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
         namespace="bodywork-dev",
-        project_name="bodywork-test-project",
         project_repo_url="bodywork-ml/bodywork-test-project",
         project_repo_branch="dev",
         retries=2,
@@ -150,14 +153,14 @@ def test_configure_workflow_cronjob():
         image="bodyworkml/bodywork-core:0.0.7",
     )
     assert cronjob_definition.metadata.namespace == "bodywork-dev"
-    assert cronjob_definition.metadata.name == "bodywork-test-project"
+    assert cronjob_definition.metadata.name == f"bodywork-test-project-dev-{mock_datetime.now()}"
     assert cronjob_definition.spec.schedule == "0,30 * * * *"
     assert cronjob_definition.spec.successful_jobs_history_limit == 2
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
     assert cronjob_definition.spec.job_template.spec.backoff_limit == 2
     assert cronjob_definition.spec.job_template.spec.template.spec.containers[
         0
-    ].args == ["--namespace=bodywork-dev", "bodywork-ml/bodywork-test-project", "dev"]
+    ].args == ["bodywork-ml/bodywork-test-project", "dev"]
     assert (
         cronjob_definition.spec.job_template.spec.template.spec.containers[0].image
         == "bodyworkml/bodywork-core:0.0.7"

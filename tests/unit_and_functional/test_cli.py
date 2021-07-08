@@ -70,7 +70,7 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
 
     func()
     captured_stdout = capsys.readouterr().out
-    assert "cannot load authenticaion credentials from kubeconfig" in captured_stdout
+    assert "cannot load authentication credentials from kubeconfig" in captured_stdout
 
 
 def test_stage_subcommand_exists():
@@ -206,11 +206,10 @@ def test_deployment_subcommand_exists():
 def test_deployment_test_locally_option_calls_run_workflow_handler(
     mock_sys_exit: MagicMock,
     mock_workflow_cli_handler: MagicMock,
-    capsys: CaptureFixture
+    capsys: CaptureFixture,
 ):
     args = Namespace(
         command="create",
-        namespace="foo1",
         name="foo2",
         retries=0,
         git_repo_url="foo3",
@@ -219,7 +218,6 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
     )
     deployment(args)
     expected_pass_through_args = Namespace(
-        namespace="foo1",
         git_repo_url="foo3",
         git_repo_branch="foo4",
         bodywork_docker_image="",
@@ -231,34 +229,25 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
 
 def test_cli_deployment_handler_error_handling():
     process_one = run(
-        ["bodywork", "deployment", "create", "--namespace=bodywork-dev"],
+        ["bodywork", "deployment", "logs"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the deployment" in process_one.stdout
+    assert "please specify --name for the job" in process_one.stdout
     assert process_one.returncode == 1
 
     process_two = run(
-        ["bodywork", "deployment", "logs", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the deployment" in process_two.stdout
-    assert process_two.returncode == 1
-
-    process_three = run(
         [
             "bodywork",
             "deployment",
             "create",
-            "--namespace=bodywork-dev",
             "--name=the-cronjob",
         ],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify Git repo URL" in process_three.stdout
-    assert process_three.returncode == 1
+    assert "please specify Git repo URL" in process_two.stdout
+    assert process_two.returncode == 1
 
 
 def test_cronjobs_subcommand_exists():
@@ -372,7 +361,9 @@ def test_debug_subcommand_sleeps():
 
 
 def test_configure_cluster_subcommand_exists():
-    process = run(["bodywork", "configure-cluster", "-h"], encoding="utf-8", capture_output=True)
+    process = run(
+        ["bodywork", "configure-cluster", "-h"], encoding="utf-8", capture_output=True
+    )
     expected_output = "bodywork configure-cluster [-h]"
     assert process.stdout.find(expected_output) != -1
 

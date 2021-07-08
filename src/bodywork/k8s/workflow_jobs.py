@@ -18,6 +18,7 @@
 High-level interface to the Kubernetes jobs and cronjobs APIs, as used
 to create and manage cronjobs that execute Bodywork project workflows.
 """
+import os
 from datetime import datetime
 from typing import Dict, Union
 
@@ -35,7 +36,6 @@ from .utils import make_valid_k8s_name
 
 def configure_workflow_job(
     namespace: str,
-    project_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
@@ -44,8 +44,6 @@ def configure_workflow_job(
     """Configure a Bodywork workflow execution job.
 
     :param namespace: The namespace to deploy the job to.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -72,7 +70,7 @@ def configure_workflow_job(
         image_pull_policy="Always",
         env=vcs_env_vars,
         command=["bodywork", "workflow"],
-        args=[f"--namespace={namespace}", project_repo_url, project_repo_branch],
+        args=[project_repo_url, project_repo_branch],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -88,13 +86,18 @@ def configure_workflow_job(
     )
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
-            name=make_valid_k8s_name(project_name),
+            name=make_valid_k8s_name(_create_project_name(project_repo_url, project_repo_branch)),
             namespace=namespace,
             labels={"app": "bodywork"},
         ),
         spec=job_spec,
     )
     return job
+
+
+def _create_project_name(project_repo_url: str, project_repo_branch: str) -> str:
+    repo_name = os.path.splitext(os.path.basename(project_repo_url))[0]
+    return f"{repo_name}-{project_repo_branch}-{datetime.now()}"
 
 
 def create_workflow_job(job: k8s.V1Job) -> None:
@@ -108,7 +111,6 @@ def create_workflow_job(job: k8s.V1Job) -> None:
 def configure_workflow_cronjob(
     cron_schedule: str,
     namespace: str,
-    project_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
@@ -124,8 +126,6 @@ def configure_workflow_cronjob(
 
     :param cron_schedule: A valid cron schedule definition.
     :param namespace: The namespace to deploy the cronjob to.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -142,7 +142,6 @@ def configure_workflow_cronjob(
     """
     job = configure_workflow_job(
         namespace=namespace,
-        project_name=project_name,
         project_repo_url=project_repo_url,
         project_repo_branch=project_repo_branch,
         retries=retries,
@@ -193,7 +192,7 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
         cronjob.metadata.name: {
             "schedule": cronjob.spec.schedule,
             "last_scheduled_time": cronjob.status.last_schedule_time,
-            "retries": (cronjob.spec.job_template.spec.backoff_limit),
+            "retries": cronjob.spec.job_template.spec.backoff_limit,
             "git_url": (
                 cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
             ),
