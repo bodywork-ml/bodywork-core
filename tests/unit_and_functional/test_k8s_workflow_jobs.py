@@ -138,9 +138,9 @@ def workflow_cronjob_object() -> kubernetes.client.V1Job:
     return cronjob
 
 
-@patch("bodywork.k8s.workflow_jobs.datetime")
-def test_configure_workflow_cronjob(mock_datetime: MagicMock):
-    mock_datetime.now.return_value = datetime.today().strftime("%d/%m/%Y")
+@patch("bodywork.k8s.workflow_jobs.random")
+def test_configure_workflow_cronjob(mock_random: MagicMock):
+    mock_random.randint.return_value = 100
 
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
@@ -153,7 +153,7 @@ def test_configure_workflow_cronjob(mock_datetime: MagicMock):
         image="bodyworkml/bodywork-core:0.0.7",
     )
     assert cronjob_definition.metadata.namespace == "bodywork-dev"
-    assert cronjob_definition.metadata.name == f"bodywork-test-project-dev-{mock_datetime.now()}"
+    assert cronjob_definition.metadata.name == f"bodywork-test-project-dev-{mock_random.randint()}"
     assert cronjob_definition.spec.schedule == "0,30 * * * *"
     assert cronjob_definition.spec.successful_jobs_history_limit == 2
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
