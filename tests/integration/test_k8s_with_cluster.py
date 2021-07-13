@@ -34,6 +34,7 @@ from bodywork.constants import (
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -49,14 +50,12 @@ def test_workflow_and_service_management_end_to_end_from_cli(
     random_test_namespace: str, docker_image: str, ingress_load_balancer_url: str
 ):
     try:
-        sleep(5)
-
         process_zero = run(
-            ["bodywork", "setup-namespace", random_test_namespace],
+            ["bodywork", "setup-namespace", "bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert f"creating namespace={random_test_namespace}" in process_zero.stdout
+        assert f"creating namespace=bodywork-test-project" in process_zero.stdout
         assert f"creating service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT}" in process_zero.stdout
         assert f"creating cluster-role-binding={BODYWORK_WORKFLOW_CLUSTER_ROLE}" in process_zero.stdout
         assert f"creating service-account={BODYWORK_STAGES_SERVICE_ACCOUNT}" in process_zero.stdout
@@ -67,7 +66,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "secret",
                 "create",
-                f"--namespace={random_test_namespace}",
+                f"--namespace=bodywork-test-project",
                 "--name=bodywork-test-project-credentials",
                 "--data",
                 "USERNAME=alex",
@@ -83,7 +82,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             [
                 "bodywork",
                 "workflow",
-                f"--namespace={random_test_namespace}",
                 "https://github.com/bodywork-ml/bodywork-test-project",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
@@ -94,14 +92,14 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         expected_output_1 = (
             "attempting to run workflow for "
             "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            f"branch=master in kubernetes namespace={random_test_namespace}"
+            f"branch=master"
         )
         expected_output_2 = "successfully ran stage=stage_1"
         expected_output_3 = "attempting to run stage=stage_4"
         expected_output_4 = (
             "successfully ran workflow for "
             "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            f"branch=master in kubernetes namespace={random_test_namespace}"
+            f"branch=master"
         )
         expected_output_5 = "successfully ran stage=stage_5"
         assert expected_output_1 in process_two.stdout
@@ -115,7 +113,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             [
                 "bodywork",
                 "workflow",
-                f"--namespace={random_test_namespace}",
                 "https://github.com/bodywork-ml/bodywork-test-project",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
@@ -126,31 +123,31 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_three.returncode == 0
 
         process_four = run(
-            ["bodywork", "service", "display", f"--namespace={random_test_namespace}"],
+            ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
         assert (
-            f"http://bodywork-test-project--stage-3.{random_test_namespace}.svc"
+            f"http://bodywork-test-project--stage-3.bodywork-test-project.svc"
             in process_four.stdout
         )
         assert (
-            f"http://bodywork-test-project--stage-4.{random_test_namespace}.svc"
+            f"http://bodywork-test-project--stage-4.bodywork-test-project.svc"
             in process_four.stdout
         )
         assert (
-            f"/{random_test_namespace}/bodywork-test-project--stage-3"
+            f"/bodywork-test-project/bodywork-test-project--stage-3"
             in process_four.stdout
         )
         assert (
-            f"/{random_test_namespace}/bodywork-test-project--stage-4"
+            f"/bodywork-test-project/bodywork-test-project--stage-4"
             not in process_four.stdout
         )
         assert "5000" in process_four.stdout
         assert process_four.returncode == 0
 
         stage_3_service_external_url = (
-            f"http://{ingress_load_balancer_url}/{random_test_namespace}/"
+            f"http://{ingress_load_balancer_url}/bodywork-test-project/"
             f"/bodywork-test-project--stage-3/v1/predict"
         )
 
@@ -159,7 +156,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert response_stage_3.json()["y"] == "hello_world"
 
         stage_4_service_external_url = (
-            f"http://{ingress_load_balancer_url}/{random_test_namespace}/"
+            f"http://{ingress_load_balancer_url}/bodywork-test-project/"
             f"/bodywork-test-project--stage-4/v2/predict"
         )
         response_stage_4 = requests.get(url=stage_4_service_external_url)
@@ -170,7 +167,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "service",
                 "delete",
-                f"--namespace={random_test_namespace}",
+                f"--namespace=bodywork-test-project",
                 "--name=bodywork-test-project--stage-3",
             ],
             encoding="utf-8",
@@ -180,11 +177,11 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             "deployment=bodywork-test-project--stage-3 deleted" in process_five.stdout
         )
         assert (
-            f"service at http://bodywork-test-project--stage-3.{random_test_namespace}.svc.cluster.local deleted"  # noqa
+            f"service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
             in process_five.stdout
         )  # noqa
         assert (
-            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-3 deleted"  # noqa
+            f"ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
             in process_five.stdout
         )
         assert process_five.returncode == 0
@@ -194,7 +191,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "service",
                 "delete",
-                f"--namespace={random_test_namespace}",
+                f"--namespace=bodywork-test-project",
                 "--name=bodywork-test-project--stage-4",
             ],
             encoding="utf-8",
@@ -202,17 +199,17 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         )
         assert "deployment=bodywork-test-project--stage-4 deleted" in process_six.stdout
         assert (
-            f"service at http://bodywork-test-project--stage-4.{random_test_namespace}.svc.cluster.local deleted"  # noqa
+            f"service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
             in process_six.stdout
         )  # noqa
         assert (
-            f"ingress route /{random_test_namespace}/bodywork-test-project--stage-4 deleted"  # noqa
+            f"ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
             not in process_six.stdout
         )  # noqa
         assert process_six.returncode == 0
 
         process_seven = run(
-            ["bodywork", "service", "display", f"--namespace={random_test_namespace}"],
+            ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -223,8 +220,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace(random_test_namespace)
-        workflow_sa_crb = workflow_cluster_role_binding_name(random_test_namespace)
+        delete_namespace("bodywork-test-project")
+        workflow_sa_crb = workflow_cluster_role_binding_name("bodywork-test-project")
         if cluster_role_binding_exists(workflow_sa_crb):
             delete_cluster_role_binding(workflow_sa_crb)
 
@@ -233,10 +230,8 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
     random_test_namespace: str, docker_image: str
 ):
     try:
-        sleep(5)
-
         process_zero = run(
-            ["bodywork", "setup-namespace", random_test_namespace],
+            ["bodywork", "setup-namespace", "bodywork-rollback-deployment-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -246,7 +241,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             [
                 "bodywork",
                 "workflow",
-                f"--namespace={random_test_namespace}",
                 "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
                 "master",
                 f"--bodywork-docker-image={docker_image}",
@@ -264,7 +258,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             [
                 "bodywork",
                 "workflow",
-                f"--namespace={random_test_namespace}",
                 "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
                 "master",
                 f"--bodywork-docker-image={docker_image}",
@@ -282,8 +275,8 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace(random_test_namespace)
-        workflow_sa_crb = workflow_cluster_role_binding_name(random_test_namespace)
+        delete_namespace("bodywork-rollback-deployment-test-project")
+        workflow_sa_crb = workflow_cluster_role_binding_name("bodywork-rollback-deployment-test-project")
         if cluster_role_binding_exists(workflow_sa_crb):
             delete_cluster_role_binding(workflow_sa_crb)
 
@@ -385,7 +378,7 @@ def test_workflow_with_ssh_github_connectivity(
         sleep(5)
 
         process_zero = run(
-            ["bodywork", "setup-namespace", random_test_namespace],
+            ["bodywork", "setup-namespace", "bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -396,7 +389,7 @@ def test_workflow_with_ssh_github_connectivity(
                 "bodywork",
                 "secret",
                 "create",
-                f"--namespace={random_test_namespace}",
+                f"--namespace=bodywork-test-project",
                 f"--name={SSH_SECRET_NAME}",
                 "--data",
                 f"{SSH_PRIVATE_KEY_ENV_VAR}={os.environ[SSH_PRIVATE_KEY_ENV_VAR]}",
@@ -412,7 +405,7 @@ def test_workflow_with_ssh_github_connectivity(
                 "bodywork",
                 "secret",
                 "create",
-                f"--namespace={random_test_namespace}",
+                f"--namespace=bodywork-test-project",
                 "--name=bodywork-test-project-credentials",
                 "--data",
                 "USERNAME=alex",
@@ -428,7 +421,6 @@ def test_workflow_with_ssh_github_connectivity(
             [
                 "bodywork",
                 "workflow",
-                f"--namespace={random_test_namespace}",
                 "git@github.com:bodywork-ml/bodywork-test-project.git",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
@@ -439,12 +431,12 @@ def test_workflow_with_ssh_github_connectivity(
         expected_output_1 = (
             "attempting to run workflow for "
             "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            f"branch=master in kubernetes namespace={random_test_namespace}"
+            f"branch=master"
         )
         expected_output_2 = (
             "successfully ran workflow for "
             "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            f"branch=master in kubernetes namespace={random_test_namespace}"
+            f"branch=master"
         )
         expected_output_3 = "successfully ran stage=stage_1"
         assert expected_output_1 in process_three.stdout
@@ -456,7 +448,7 @@ def test_workflow_with_ssh_github_connectivity(
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace(random_test_namespace)
+        delete_namespace("bodywork-test-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
@@ -522,42 +514,13 @@ def test_cli_secret_handler_crud(test_namespace: str):
     assert process_four.returncode == 0
 
 
-def test_deployment_will_not_be_created_if_namespace_is_not_setup_for_bodywork(
-    random_test_namespace: str,
-):
-    process_one = run(
-        [
-            "bodywork",
-            "deployment",
-            "create",
-            f"--namespace={random_test_namespace}",
-            "--name=bodywork-test-project",
-            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert f"{random_test_namespace} is not setup for use" in process_one.stdout
-    assert process_one.returncode == 1
-
-
 def test_deployment_of_remote_workflows(random_test_namespace: str):
     try:
-        sleep(5)
-
-        process_zero = run(
-            ["bodywork", "setup-namespace", random_test_namespace],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_zero.returncode == 0
-
         process_one = run(
             [
                 "bodywork",
                 "deployment",
                 "create",
-                f"--namespace={random_test_namespace}",
                 "--name=bodywork-test-project",
                 "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
             ],
@@ -573,7 +536,6 @@ def test_deployment_of_remote_workflows(random_test_namespace: str):
                 "bodywork",
                 "deployment",
                 "display",
-                f"--namespace={random_test_namespace}",
                 "--name=bodywork-test-project",
             ],
             encoding="utf-8",
@@ -587,7 +549,6 @@ def test_deployment_of_remote_workflows(random_test_namespace: str):
                 "bodywork",
                 "deployment",
                 "logs",
-                f"--namespace={random_test_namespace}",
                 "--name=bodywork-test-project",
             ],
             encoding="utf-8",
@@ -601,7 +562,6 @@ def test_deployment_of_remote_workflows(random_test_namespace: str):
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace(random_test_namespace)
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 

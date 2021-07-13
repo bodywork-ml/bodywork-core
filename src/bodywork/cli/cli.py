@@ -253,13 +253,6 @@ def cli() -> None:
         "git_repo_branch", type=str, help="Bodywork project Git repo branch."
     )
     workflow_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace within which to execute the workflow.",
-    )
-    workflow_cmd_parser.add_argument(
         "--bodywork-docker-image",
         type=str,
         default="",

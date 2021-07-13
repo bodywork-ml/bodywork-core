@@ -19,6 +19,7 @@ High-level interface to the Kubernetes jobs and cronjobs APIs, as used
 to create and manage cronjobs that execute Bodywork project workflows.
 """
 import os
+import random
 from datetime import datetime
 from typing import Dict, Union
 
@@ -99,7 +100,7 @@ def configure_workflow_job(
 
 def _create_project_name(project_repo_url: str, project_repo_branch: str) -> str:
     repo_name = os.path.splitext(os.path.basename(project_repo_url))[0]
-    return f"{repo_name}-{project_repo_branch}-{datetime.now()}"
+    return f"{repo_name}-{project_repo_branch}-{random.randint(0,999999)}"
 
 
 def create_workflow_job(job: k8s.V1Job) -> None:

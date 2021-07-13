@@ -452,7 +452,7 @@ def is_exposed_as_cluster_service(namespace: str, name: str) -> bool:
     """Is a deployment exposed as a cluster service.
 
     :param namespace: Namespace in which to look for services.
-    :param names: The name of the service.
+    :param name: The name of the service.
     """
     services = k8s.CoreV1Api().list_namespaced_service(namespace=namespace)
     service_names = [service.metadata.name for service in services.items]
@@ -463,7 +463,7 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
     """Delete a service associated with a deployment.
 
     :param namespace: Namespace in which exists the service to delete.
-    :param names: The name of the service.
+    :param name: The name of the service.
     """
     k8s.CoreV1Api().delete_namespaced_service(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -529,7 +529,7 @@ def delete_deployment_ingress(namespace: str, name: str) -> None:
     """Delete an ingress to a service backed by a deployment.
 
     :param namespace: Namespace in which exists the ingress to delete.
-    :param names: The name of the ingress.
+    :param name: The name of the ingress.
     """
     k8s.ExtensionsV1beta1Api().delete_namespaced_ingress(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -540,7 +540,7 @@ def has_ingress(namespace: str, name: str) -> bool:
     """Does a service backed by a deployment have an ingress?
 
     :param namespace: Namespace in which to look for ingress resources.
-    :param names: The name of the ingress.
+    :param name: The name of the ingress.
     """
     ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(
         namespace=namespace, label_selector="app=bodywork"
