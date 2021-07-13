@@ -65,9 +65,9 @@ def workflow_job_object() -> kubernetes.client.V1Job:
     return job
 
 
-@patch("bodywork.k8s.workflow_jobs.datetime")
-def test_configure_workflow_job(mock_datetime: MagicMock):
-    mock_datetime.now.return_value = datetime.today().strftime("%d/%m/%Y")
+@patch("bodywork.k8s.workflow_jobs.random")
+def test_configure_workflow_job(mock_random: MagicMock):
+    mock_random.randint.return_value = 100
     job_definition = configure_workflow_job(
         namespace="bodywork-dev",
         project_repo_url="bodywork-ml/bodywork-test-project",
@@ -76,7 +76,7 @@ def test_configure_workflow_job(mock_datetime: MagicMock):
         image="bodyworkml/bodywork-core:0.0.7",
     )
 
-    assert f"bodywork-test-project-dev-{mock_datetime.now()}" in job_definition.metadata.name
+    assert f"bodywork-test-project-dev-{mock_random.randint()}" in job_definition.metadata.name
     assert job_definition.metadata.namespace == "bodywork-dev"
     assert job_definition.spec.backoff_limit == 2
     assert (
