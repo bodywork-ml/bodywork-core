@@ -21,6 +21,7 @@ They are targeted for use via the CLI.
 import re
 
 from .. import k8s
+from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
 def create_workflow_job_in_namespace(
@@ -72,8 +73,7 @@ def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
     print(f"workflow job={job_name} deleted from namespace={namespace}")
 
 
-def create_workflow_cronjob_in_namespace(
-    namespace: str,
+def create_workflow_cronjob(
     schedule: str,
     project_name: str,
     project_repo_url: str,
@@ -83,7 +83,6 @@ def create_workflow_cronjob_in_namespace(
 ) -> None:
     """Create a new cronjob within a namespace.
 
-    :param namespace: The namespace to deploy the cronjob to.
     :param schedule: A valid cron schedule definition.
     :param project_name: The name of the Bodywork project attached to
         the cronjob.
@@ -97,18 +96,18 @@ def create_workflow_cronjob_in_namespace(
     :param workflow_job_history_limit: Minimum number of
         historical workflow jobs, so logs can be retrieved.
     """
-    if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+    if not k8s.namespace_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
+        print(f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} could not be found on k8s cluster.")
         return None
-    if _is_existing_workflow_cronjob(namespace, project_name):
-        print(f"cronjob={project_name} already exists in namespace={namespace}")
+    if _is_existing_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, project_name):
+        print(f"cronjob={project_name} already exists in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace.")
         return None
     if not _is_valid_cron_schedule(schedule):
         print(f"schedule={schedule} is not a valid cron schedule")
         return None
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
-        namespace,
+        project_name,
         project_repo_url,
         project_repo_branch,
         retries,
@@ -116,13 +115,13 @@ def create_workflow_cronjob_in_namespace(
         workflow_job_history_limit,
     )
     k8s.create_workflow_cronjob(configured_job)
-    print(f"workflow cronjob={project_name} created in namespace={namespace}")
+    print(f"workflow cronjob={project_name} created in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace.")
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> None:
     """Create a new cronjob within a k8s namespace.
 
-    :param namespace: The namespace to deploy the cronjob to.
+    :param namespace: The namespace where the cronjob resides.
     :param project_name: The name of the Bodywork project attached to
         the cronjob to be deleted.
     """

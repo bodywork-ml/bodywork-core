@@ -33,7 +33,7 @@ from pkg_resources import get_distribution
 from ..config import BodyworkConfig
 from .workflow_jobs import (
     create_workflow_job_in_namespace,
-    create_workflow_cronjob_in_namespace,
+    create_workflow_cronjob,
     display_cronjobs_in_namespace,
     display_workflow_job_history,
     display_workflow_job_logs,
@@ -138,13 +138,6 @@ def cli() -> None:
         type=str,
         choices=["create", "delete", "display", "history", "logs"],
         help="Cronjob action to perform.",
-    )
-    cronjob_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace to operate in.",
     )
     cronjob_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the cronjob."
@@ -387,7 +380,7 @@ def deployment(args: Namespace) -> None:
             ):
                 print(
                     f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
-                    f" use by Bodywork. Have you run 'bodywork configure cluster' first?"
+                    f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
                 )
                 sys.exit(1)
             create_workflow_job_in_namespace(
@@ -415,7 +408,6 @@ def cronjob(args: Namespace) -> None:
     :param args: Arguments passed to the run command from the CLI.
     """
     command = args.command
-    namespace = args.namespace
     name = args.name
     schedule = args.schedule
     retries = args.retries
@@ -438,11 +430,15 @@ def cronjob(args: Namespace) -> None:
         sys.exit(1)
     elif command == "create":
         load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(namespace):
-            print(f"namespace={namespace} is not setup for use by Bodywork")
+        if not is_namespace_available_for_bodywork(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+        ):
+            print(
+                f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
+                f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
+            )
             sys.exit(1)
-        create_workflow_cronjob_in_namespace(
-            namespace,
+        create_workflow_cronjob(
             schedule,
             name,
             git_repo_url,
@@ -452,16 +448,16 @@ def cronjob(args: Namespace) -> None:
         )
     elif command == "delete":
         load_kubernetes_config()
-        delete_workflow_cronjob_in_namespace(namespace, name)
+        delete_workflow_cronjob_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "history":
         load_kubernetes_config()
-        display_workflow_job_history(namespace, name)
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "logs":
         load_kubernetes_config()
-        display_workflow_job_logs(namespace, name)
+        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         load_kubernetes_config()
-        display_cronjobs_in_namespace(namespace)
+        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
     sys.exit(0)
 
 

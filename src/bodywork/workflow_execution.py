@@ -36,6 +36,7 @@ from .constants import (
     GIT_COMMIT_HASH_K8S_ENV_VAR,
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -96,6 +97,7 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
+        workflow_has_services = False
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -119,6 +121,7 @@ def run_workflow(
                     docker_image,
                 )
             if service_stages:
+                workflow_has_services = True
                 _run_service_stages(
                     service_stages,
                     config.project.name,
@@ -133,7 +136,7 @@ def run_workflow(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-        if not service_stages:
+        if not workflow_has_services:
             _log.info(f"Deleting namespace {namespace}")
             k8s.delete_namespace(namespace)
 
@@ -186,13 +189,16 @@ def _setup_namespace(config) -> str:
             namespace = config.project.namespace
         else:
             namespace = config.project.name
-        if k8s.namespace_exists(namespace) is False:
+        if not k8s.namespace_exists(namespace):
             _log.info(f"Creating namespace: {namespace}")
             k8s.create_namespace(namespace)
+        if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
+            _log.info(f"Creating service account: {BODYWORK_STAGES_SERVICE_ACCOUNT}")
+            k8s.setup_job_and_deployment_service_account(namespace)
         return namespace
     except ApiException as e:
         raise BodyworkNamespaceError(
-            f"Unable to setup namespace: {namespace}"
+            f"Unable to setup namespace: {namespace} - {e}"
         ) from e
 
 

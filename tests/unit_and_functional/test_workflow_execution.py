@@ -365,7 +365,7 @@ def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
 @patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.get_git_commit_hash")
 @patch("bodywork.workflow_execution.k8s")
-def test_namespace_is_deleted_if_there_are_no_service_stages(
+def test_namespace_is_not_deleted_if_there_are_service_stages(
     mock_k8s: MagicMock,
     mock_git_hash: MagicMock,
     mock_git_download: MagicMock,
@@ -381,7 +381,7 @@ def test_namespace_is_deleted_if_there_are_no_service_stages(
     except BodyworkWorkflowExecutionError:
         pass
 
-    mock_k8s.delete_namespace.assert_called()
+    mock_k8s.delete_namespace.assert_not_called()
 
 
 @patch("bodywork.workflow_execution.rmtree")
@@ -389,7 +389,7 @@ def test_namespace_is_deleted_if_there_are_no_service_stages(
 @patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.get_git_commit_hash")
 @patch("bodywork.workflow_execution.k8s")
-def test_namespace_is_not_deleted_if_there_are_service_stages(
+def test_namespace_is_deleted_if_only_batch_stages(
     mock_k8s: MagicMock,
     mock_git_hash: MagicMock,
     mock_git_download: MagicMock,
@@ -397,7 +397,7 @@ def test_namespace_is_not_deleted_if_there_are_service_stages(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
-    config_path = Path(f"{project_repo_location}/bodywork_service_stage.yaml")
+    config_path = Path(f"{project_repo_location}/bodywork_batch_stage.yaml")
     config = BodyworkConfig(config_path)
 
     try:
@@ -405,4 +405,4 @@ def test_namespace_is_not_deleted_if_there_are_service_stages(
     except BodyworkWorkflowExecutionError:
         pass
 
-    mock_k8s.delete_namespace.assert_not_called()
+    mock_k8s.delete_namespace.assert_called()

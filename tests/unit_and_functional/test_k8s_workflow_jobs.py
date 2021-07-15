@@ -110,7 +110,7 @@ def workflow_cronjob_object() -> kubernetes.client.V1Job:
         image="bodyworkml/bodywork-core:latest",
         image_pull_policy="Always",
         command=["bodywork", "workflow"],
-        args=["bodywork-dev", "project_repo_url", "project_repo_branch"],
+        args=["project_repo_url", "project_repo_branch"],
     )
     pod_spec = kubernetes.client.V1PodSpec(
         containers=[container], restart_policy="Never"
@@ -144,7 +144,6 @@ def test_configure_workflow_cronjob(mock_random: MagicMock):
 
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
-        namespace="bodywork-dev",
         project_repo_url="bodywork-ml/bodywork-test-project",
         project_repo_branch="dev",
         retries=2,

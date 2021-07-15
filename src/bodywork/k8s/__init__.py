@@ -27,8 +27,8 @@ from .auth import (
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
     service_account_exists,
-    setup_job_and_deployment_service_accounts,
-    setup_workflow_service_account,
+    setup_job_and_deployment_service_account,
+    setup_workflow_service_accounts,
 )
 from .workflow_jobs import (
     configure_workflow_job,
@@ -85,8 +85,8 @@ __all__ = [
     "workflow_cluster_role_binding_name",
     "load_kubernetes_config",
     "service_account_exists",
-    "setup_job_and_deployment_service_accounts",
-    "setup_workflow_service_account",
+    "setup_job_and_deployment_service_account",
+    "setup_workflow_service_accounts",
     "configure_workflow_cronjob",
     "create_workflow_job",
     "create_workflow_cronjob",

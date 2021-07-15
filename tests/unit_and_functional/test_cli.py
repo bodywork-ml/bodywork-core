@@ -259,7 +259,7 @@ def test_cronjobs_subcommand_exists():
 
 def test_cli_cronjob_handler_error_handling():
     process_one = run(
-        ["bodywork", "cronjob", "create", "--namespace=bodywork-dev"],
+        ["bodywork", "cronjob", "create"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -267,7 +267,7 @@ def test_cli_cronjob_handler_error_handling():
     assert process_one.returncode == 1
 
     process_two = run(
-        ["bodywork", "cronjob", "delete", "--namespace=bodywork-dev"],
+        ["bodywork", "cronjob", "delete"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -275,7 +275,7 @@ def test_cli_cronjob_handler_error_handling():
     assert process_two.returncode == 1
 
     process_three = run(
-        ["bodywork", "cronjob", "history", "--namespace=bodywork-dev"],
+        ["bodywork", "cronjob", "history"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -283,7 +283,7 @@ def test_cli_cronjob_handler_error_handling():
     assert process_three.returncode == 1
 
     process_three = run(
-        ["bodywork", "cronjob", "logs", "--namespace=bodywork-dev"],
+        ["bodywork", "cronjob", "logs"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -295,7 +295,6 @@ def test_cli_cronjob_handler_error_handling():
             "bodywork",
             "cronjob",
             "create",
-            "--namespace=bodywork-dev",
             "--name=the-cronjob",
         ],
         encoding="utf-8",
@@ -309,7 +308,6 @@ def test_cli_cronjob_handler_error_handling():
             "bodywork",
             "cronjob",
             "create",
-            "--namespace=bodywork-dev",
             "--name=the-cronjob",
             "--schedule=0 * * * *",
         ],

@@ -112,7 +112,7 @@ def delete_cluster_role_binding(name: str) -> None:
     k8s.RbacAuthorizationV1Api().delete_cluster_role_binding(name=name)
 
 
-def setup_workflow_service_account(namespace: str) -> None:
+def setup_workflow_service_accounts(namespace: str) -> None:
     """Setup a workflow controller service-account with required roles.
 
     :param namespace: Namespace in which the service-account will be
@@ -142,7 +142,8 @@ def setup_workflow_service_account(namespace: str) -> None:
             k8s.V1PolicyRule(
                 api_groups=[""],
                 resources=["namespaces"],
-                verbs=["get", "list", "create", "delete"]),
+                verbs=["get", "list", "create", "delete"],
+            ),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -209,25 +210,21 @@ def setup_workflow_service_account(namespace: str) -> None:
         )
 
 
-def setup_job_and_deployment_service_accounts(namespace: str) -> None:
-    """Setup a jobs-and-deployments service-account with required roles.
+def setup_job_and_deployment_service_account(namespace: str) -> None:
+    """Setup a service-account with required roles for jobs-and-deployments.
 
     :param namespace: Namespace in which the service-account will be
         placed.
     """
     service_account_object = k8s.V1ServiceAccount(
-        metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
-        )
+        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT)
     )
     k8s.CoreV1Api().create_namespaced_service_account(
         namespace=namespace, body=service_account_object
     )
 
     role_object = k8s.V1Role(
-        metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
-        ),
+        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT),
         rules=[
             k8s.V1PolicyRule(
                 api_groups=[""],
@@ -241,9 +238,7 @@ def setup_job_and_deployment_service_accounts(namespace: str) -> None:
     )
 
     role_binding_object = k8s.V1RoleBinding(
-        metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
-        ),
+        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT),
         role_ref=k8s.V1RoleRef(
             kind="Role",
             name=BODYWORK_STAGES_SERVICE_ACCOUNT,

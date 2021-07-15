@@ -31,6 +31,7 @@ from ..constants import (
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from .utils import make_valid_k8s_name
 
@@ -41,6 +42,7 @@ def configure_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
+    job_name: str = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
@@ -53,6 +55,7 @@ def configure_workflow_job(
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
+    :param job_name: Set the job name.
     :return: A configured k8s job object.
     """
     vcs_env_vars = [
@@ -85,10 +88,12 @@ def configure_workflow_job(
         backoff_limit=retries,
         ttl_seconds_after_finished=BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     )
+    if not job_name:
+        job_name = _create_project_name(project_repo_url, project_repo_branch)
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
             name=make_valid_k8s_name(
-                _create_project_name(project_repo_url, project_repo_branch)
+                job_name
             ),
             namespace=namespace,
             labels={"app": "bodywork"},
@@ -113,7 +118,7 @@ def create_workflow_job(job: k8s.V1Job) -> None:
 
 def configure_workflow_cronjob(
     cron_schedule: str,
-    namespace: str,
+    job_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
@@ -128,7 +133,7 @@ def configure_workflow_cronjob(
     function that will orchestrate the required jobs and deployments.
 
     :param cron_schedule: A valid cron schedule definition.
-    :param namespace: The namespace to deploy the cronjob to.
+    :param job_name: The name to give the cronjob.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -144,11 +149,12 @@ def configure_workflow_cronjob(
     :return: A configured k8s cronjob object.
     """
     job = configure_workflow_job(
-        namespace=namespace,
+        namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         project_repo_url=project_repo_url,
         project_repo_branch=project_repo_branch,
         retries=retries,
         image=image,
+        job_name=job_name,
     )
     job_template = k8s.V1beta1JobTemplateSpec(metadata=job.metadata, spec=job.spec)
     cronjob_spec = k8s.V1beta1CronJobSpec(
@@ -197,10 +203,10 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
             "last_scheduled_time": cronjob.status.last_schedule_time,
             "retries": cronjob.spec.job_template.spec.backoff_limit,
             "git_url": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[0]
             ),
             "git_branch": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[2]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
             ),
         }
         for cronjob in cronjobs.items
