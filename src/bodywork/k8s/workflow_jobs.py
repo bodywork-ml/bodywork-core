@@ -89,7 +89,7 @@ def configure_workflow_job(
         ttl_seconds_after_finished=BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     )
     if not job_name:
-        job_name = _create_project_name(project_repo_url, project_repo_branch)
+        job_name = _create_job_name(project_repo_url, project_repo_branch)
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
             name=make_valid_k8s_name(
@@ -103,7 +103,14 @@ def configure_workflow_job(
     return job
 
 
-def _create_project_name(project_repo_url: str, project_repo_branch: str) -> str:
+def _create_job_name(project_repo_url: str, project_repo_branch: str) -> str:
+    """Create unique job name.
+
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The Bodywork project Git repository
+        branch being used.
+    """
     repo_name = os.path.splitext(os.path.basename(project_repo_url))[0]
     return f"{repo_name}-{project_repo_branch}-{random.randint(0,999999)}"
 

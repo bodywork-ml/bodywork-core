@@ -103,13 +103,6 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     if k8s.service_account_exists(namespace, workflow_sa):
         print(f"service-account={workflow_sa} already exists in namespace={namespace}")
     else:
-        print(f"creating service-account={workflow_sa} in " f"namespace={namespace}")
+        print(f"creating service-account={workflow_sa} in namespace={namespace}")
         print(f"creating cluster-role-binding={workflow_crb}")
         k8s.setup_workflow_service_accounts(namespace)
-
-    jobs_deps_sa = BODYWORK_STAGES_SERVICE_ACCOUNT
-    if k8s.service_account_exists(namespace, jobs_deps_sa):
-        print(f"service-account={jobs_deps_sa} already exists in namespace={namespace}")
-    else:
-        print(f"creating service-account={jobs_deps_sa} in " f"namespace={namespace}")
-        k8s.setup_job_and_deployment_service_account(namespace)

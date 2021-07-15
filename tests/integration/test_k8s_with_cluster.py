@@ -33,8 +33,6 @@ from bodywork.constants import (
     SSH_SECRET_NAME,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
-    BODYWORK_STAGES_SERVICE_ACCOUNT,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -58,7 +56,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert f"creating namespace=bodywork-test-project" in process_zero.stdout
         assert f"creating service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT}" in process_zero.stdout
         assert f"creating cluster-role-binding={BODYWORK_WORKFLOW_CLUSTER_ROLE}" in process_zero.stdout
-        assert f"creating service-account={BODYWORK_STAGES_SERVICE_ACCOUNT}" in process_zero.stdout
         assert process_zero.returncode == 0
 
         process_one = run(
@@ -432,6 +429,13 @@ def test_workflow_with_ssh_github_connectivity(
 
 
 def test_cli_secret_handler_crud(test_namespace: str):
+    process_zero = run(
+        ["bodywork", "setup-namespace", test_namespace],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_zero.returncode == 0
+
     process_one = run(
         [
             "bodywork",

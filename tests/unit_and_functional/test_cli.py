@@ -242,7 +242,6 @@ def test_cli_deployment_handler_error_handling():
             "bodywork",
             "deployment",
             "create",
-            "--name=the-cronjob",
         ],
         encoding="utf-8",
         capture_output=True,
