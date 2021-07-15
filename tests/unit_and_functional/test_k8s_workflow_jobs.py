@@ -25,7 +25,7 @@ from unittest.mock import MagicMock, patch
 import kubernetes
 from pytest import fixture
 
-from bodywork.constants import BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from bodywork.constants import BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
 from bodywork.k8s.workflow_jobs import (
     configure_workflow_job,
     create_workflow_job,
@@ -138,10 +138,7 @@ def workflow_cronjob_object() -> kubernetes.client.V1Job:
     return cronjob
 
 
-@patch("bodywork.k8s.workflow_jobs.random")
-def test_configure_workflow_cronjob(mock_random: MagicMock):
-    mock_random.randint.return_value = 100
-
+def test_configure_workflow_cronjob():
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
         project_repo_url="bodywork-ml/bodywork-test-project",
@@ -150,9 +147,10 @@ def test_configure_workflow_cronjob(mock_random: MagicMock):
         successful_jobs_history_limit=2,
         failed_jobs_history_limit=2,
         image="bodyworkml/bodywork-core:0.0.7",
+        job_name="test-job"
     )
-    assert cronjob_definition.metadata.namespace == "bodywork-dev"
-    assert cronjob_definition.metadata.name == f"bodywork-test-project-dev-{mock_random.randint()}"
+    assert cronjob_definition.metadata.namespace == "bodywork-deployment-jobs"
+    assert cronjob_definition.metadata.name == f"test-job"
     assert cronjob_definition.spec.schedule == "0,30 * * * *"
     assert cronjob_definition.spec.successful_jobs_history_limit == 2
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
