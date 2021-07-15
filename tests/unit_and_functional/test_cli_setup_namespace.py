@@ -24,7 +24,6 @@ from _pytest.capture import CaptureFixture
 from bodywork.constants import (
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from bodywork.cli.setup_namespace import (
     is_namespace_available_for_bodywork,
@@ -38,7 +37,6 @@ def test_is_namespace_setup_for_bodywork(
 ):
     SA1 = BODYWORK_WORKFLOW_SERVICE_ACCOUNT
     CRB = BODYWORK_WORKFLOW_CLUSTER_ROLE
-    SA2 = BODYWORK_STAGES_SERVICE_ACCOUNT
 
     mock_k8s_module.namespace_exists.return_value = False
     namespace_setup = is_namespace_available_for_bodywork("bodywork-dev")
@@ -65,7 +63,6 @@ def test_is_namespace_setup_for_bodywork(
     assert namespace_setup is False
     assert f"service-account={SA1} is missing from namespace" in capture_three.out
     assert f"cluster-role-binding={CRB}--bodywork-dev is missing" in capture_three.out
-    assert f"service-account={SA2} is missing from namespace" in capture_three.out
 
 
 @patch("bodywork.cli.setup_namespace.k8s")
