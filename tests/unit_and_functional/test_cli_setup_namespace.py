@@ -73,7 +73,6 @@ def test_setup_namespace_on_k8s_cluster(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
     SA1 = BODYWORK_WORKFLOW_SERVICE_ACCOUNT
-    SA2 = BODYWORK_STAGES_SERVICE_ACCOUNT
 
     mock_k8s_module.namespace_exists.return_value = False
     mock_k8s_module.create_namespace.side_effect = None
@@ -83,7 +82,6 @@ def test_setup_namespace_on_k8s_cluster(
     captured_one = capsys.readouterr()
     assert "creating namespace=the-namespace" in captured_one.out
     assert f"creating service-account={SA1}" in captured_one.out
-    assert f"service-account={SA2} already exists in namespace" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.create_namespace.side_effect = None
@@ -93,7 +91,6 @@ def test_setup_namespace_on_k8s_cluster(
     captured_two = capsys.readouterr()
     assert "namespace=the-namespace already exists" in captured_two.out
     assert f"service-account={SA1} already exists in namespace" in captured_two.out
-    assert f"service-account={SA2} already exists in namespace" in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.create_namespace.side_effect = None
@@ -104,4 +101,3 @@ def test_setup_namespace_on_k8s_cluster(
     captured_three = capsys.readouterr()
     assert "namespace=the-namespace already exists" in captured_three.out
     assert f"creating service-account={SA1}" in captured_three.out
-    assert f"creating service-account={SA2}" in captured_three.out
