@@ -97,10 +97,14 @@ def create_workflow_cronjob(
         historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
-        print(f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} could not be found on k8s cluster.")
+        print(
+            f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} could not be found on k8s cluster."    # noqa
+        )
         return None
     if _is_existing_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, project_name):
-        print(f"cronjob={project_name} already exists in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace.")
+        print(
+            f"cronjob={project_name} already exists in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace." # noqa
+        )
         return None
     if not _is_valid_cron_schedule(schedule):
         print(f"schedule={schedule} is not a valid cron schedule")
@@ -115,7 +119,9 @@ def create_workflow_cronjob(
         workflow_job_history_limit,
     )
     k8s.create_workflow_cronjob(configured_job)
-    print(f"workflow cronjob={project_name} created in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace.")
+    print(
+        f"workflow cronjob={project_name} created in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace."   # noqa
+    )
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, project_name: str) -> None:

@@ -217,14 +217,18 @@ def setup_job_and_deployment_service_account(namespace: str) -> None:
         placed.
     """
     service_account_object = k8s.V1ServiceAccount(
-        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT)
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
+        )
     )
     k8s.CoreV1Api().create_namespaced_service_account(
         namespace=namespace, body=service_account_object
     )
 
     role_object = k8s.V1Role(
-        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT),
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
+        ),
         rules=[
             k8s.V1PolicyRule(
                 api_groups=[""],
@@ -238,7 +242,9 @@ def setup_job_and_deployment_service_account(namespace: str) -> None:
     )
 
     role_binding_object = k8s.V1RoleBinding(
-        metadata=k8s.V1ObjectMeta(namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT),
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace, name=BODYWORK_STAGES_SERVICE_ACCOUNT
+        ),
         role_ref=k8s.V1RoleRef(
             kind="Role",
             name=BODYWORK_STAGES_SERVICE_ACCOUNT,
