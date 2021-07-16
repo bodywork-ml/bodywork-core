@@ -31,7 +31,6 @@ from ..constants import (
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from .utils import make_valid_k8s_name
 
