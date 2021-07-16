@@ -181,7 +181,7 @@ def _setup_namespace(config) -> str:
     :param config: Bodywork config.
     :return: Name of namespace.
     """
-    namespace = (
+    namespace = str(
         config.project.namespace if config.project.namespace else config.project.name
     )
     try:
