@@ -80,11 +80,11 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
 
 
 def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
-    """Setup kubernetes namespace for use with Bodywork.
+    """Setup kubernetes namespace for Bodywork Workflow accounts.
 
     If the namespace does not already exist, then it will be created
-    first. Then, the service accounts and associated roles required by
-    Bodywork containers will be created.
+    first. Then the cluster/service accounts required by bodywork to
+    run workflows will be created.
 
     Note, that to use this function the Kubernetes user running the
     command must be authorised to create namespaces, service accounts,

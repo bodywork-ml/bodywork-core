@@ -97,7 +97,6 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
-        workflow_has_services = False
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -121,7 +120,6 @@ def run_workflow(
                     docker_image,
                 )
             if service_stages:
-                workflow_has_services = True
                 _run_service_stages(
                     service_stages,
                     config.project.name,
@@ -136,10 +134,9 @@ def run_workflow(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-        if not workflow_has_services:
+        if not config_deploys_services(config):
             _log.info(f"Deleting namespace {namespace}")
             k8s.delete_namespace(namespace)
-
         if config.project.usage_stats:
             _ping_usage_stats_server()
     except Exception as e:
@@ -157,7 +154,8 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
-                and config and config.project.run_on_failure
+                and config
+                and config.project.run_on_failure
             ):
                 if config.project.usage_stats:
                     _ping_usage_stats_server()
@@ -166,7 +164,7 @@ def run_workflow(
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"   # type: ignore  # noqa
+                f"Error executing failure stage: {config.project.run_on_failure}"  # type: ignore  # noqa
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
@@ -183,23 +181,34 @@ def _setup_namespace(config) -> str:
     :param config: Bodywork config.
     :return: Name of namespace.
     """
-    namespace = ""
+    namespace = (
+        config.project.namespace if config.project.namespace else config.project.name
+    )
     try:
-        if config.project.namespace:
-            namespace = config.project.namespace
-        else:
-            namespace = config.project.name
         if not k8s.namespace_exists(namespace):
             _log.info(f"Creating namespace: {namespace}")
             k8s.create_namespace(namespace)
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
             _log.info(f"Creating service account: {BODYWORK_STAGES_SERVICE_ACCOUNT}")
-            k8s.setup_job_and_deployment_service_account(namespace)
+            k8s.setup_stages_service_account(namespace)
         return namespace
     except ApiException as e:
         raise BodyworkNamespaceError(
             f"Unable to setup namespace: {namespace} - {e}"
         ) from e
+
+
+def config_deploys_services(config: BodyworkConfig) -> bool:
+    """Checks if any services are configured for deployment
+
+    :param config: Bodywork config.
+    :return: True if services are configured for deployment.
+    """
+    return any(
+        True
+        for stage_name, stage in config.stages.items()
+        if isinstance(stage, ServiceStageConfig) and stage_name in config.project.DAG
+    )
 
 
 def _run_batch_stages(

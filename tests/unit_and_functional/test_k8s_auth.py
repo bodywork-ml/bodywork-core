@@ -35,7 +35,7 @@ from bodywork.k8s.auth import (
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
     service_account_exists,
-    setup_job_and_deployment_service_account,
+    setup_stages_service_account,
     setup_workflow_service_accounts,
 )
 
@@ -187,7 +187,7 @@ def test_setup_workflow_service_account_creates_service_accounts_and_roles():
 def test_setup_job_and_deployment_service_account_creates_service_accounts_and_roles():
     with patch("kubernetes.client.CoreV1Api") as mock_k8s_core_api:
         with patch("kubernetes.client.RbacAuthorizationV1Api") as mock_k8s_rbac_api:
-            setup_job_and_deployment_service_account("bodywork-dev")
+            setup_stages_service_account("bodywork-dev")
             mock_k8s_core_api().create_namespaced_service_account.assert_called_once()
             mock_k8s_rbac_api().create_namespaced_role.assert_called_once()
             mock_k8s_rbac_api().create_namespaced_role_binding.assert_called_once()

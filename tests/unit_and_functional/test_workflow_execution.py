@@ -18,7 +18,7 @@
 Test Bodywork workflow execution.
 """
 from pathlib import Path
-from unittest.mock import MagicMock, patch, ANY, PropertyMock
+from unittest.mock import MagicMock, patch, ANY
 from typing import Iterable
 
 import requests
@@ -373,7 +373,7 @@ def test_namespace_is_not_deleted_if_there_are_service_stages(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
-    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
 
     try:

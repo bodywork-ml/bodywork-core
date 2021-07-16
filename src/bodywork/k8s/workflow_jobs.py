@@ -125,6 +125,7 @@ def create_workflow_job(job: k8s.V1Job) -> None:
 
 def configure_workflow_cronjob(
     cron_schedule: str,
+    namespace: str,
     job_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
@@ -141,6 +142,7 @@ def configure_workflow_cronjob(
 
     :param cron_schedule: A valid cron schedule definition.
     :param job_name: The name to give the cronjob.
+    :param namespace: Namespace to create the cronjob in.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -156,7 +158,7 @@ def configure_workflow_cronjob(
     :return: A configured k8s cronjob object.
     """
     job = configure_workflow_job(
-        namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        namespace=namespace,
         project_repo_url=project_repo_url,
         project_repo_branch=project_repo_branch,
         retries=retries,

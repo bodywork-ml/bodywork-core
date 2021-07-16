@@ -203,7 +203,7 @@ def test_deployment_subcommand_exists():
 
 @patch("bodywork.cli.cli.workflow")
 @patch("sys.exit")
-def test_deployment_test_locally_option_calls_run_workflow_handler(
+def test_deployment_run_locally_option_calls_run_workflow_handler(
     mock_sys_exit: MagicMock,
     mock_workflow_cli_handler: MagicMock,
     capsys: CaptureFixture,
@@ -218,7 +218,6 @@ def test_deployment_test_locally_option_calls_run_workflow_handler(
     )
     deployment(args)
     expected_pass_through_args = Namespace(
-        namespace="bodywork-deployment-jobs",
         git_repo_url="foo3",
         git_repo_branch="foo4",
         bodywork_docker_image="",
@@ -234,7 +233,7 @@ def test_cli_deployment_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the job" in process_one.stdout
+    assert "please specify --name for the deployment job" in process_one.stdout
     assert process_one.returncode == 1
 
     process_two = run(

@@ -210,7 +210,7 @@ def setup_workflow_service_accounts(namespace: str) -> None:
         )
 
 
-def setup_job_and_deployment_service_account(namespace: str) -> None:
+def setup_stages_service_account(namespace: str) -> None:
     """Setup a service-account with required roles for jobs-and-deployments.
 
     :param namespace: Namespace in which the service-account will be

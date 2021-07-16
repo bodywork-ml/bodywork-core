@@ -361,12 +361,11 @@ def deployment(args: Namespace) -> None:
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
     if command != "create" and name == "":
-        print("please specify --name for the job")
+        print("please specify --name for the deployment job")
         sys.exit(1)
     if command == "create":
         if run_workflow_controller_locally:
             pass_through_args = Namespace(
-                namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
