@@ -21,7 +21,6 @@ They are targeted for use via the CLI.
 import re
 
 from .. import k8s
-from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
 def create_workflow_job_in_namespace(
@@ -73,6 +72,7 @@ def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
 
 
 def create_workflow_cronjob(
+    namespace: str,
     schedule: str,
     job_name: str,
     project_repo_url: str,
@@ -82,6 +82,7 @@ def create_workflow_cronjob(
 ) -> None:
     """Create a new cronjob within a namespace.
 
+    :param namespace: The namespace to deploy the job to.
     :param schedule: A valid cron schedule definition.
     :param job_name: The name of the Bodywork the job to create.
     :param project_repo_url: The URL for the Bodywork project Git
@@ -94,14 +95,14 @@ def create_workflow_cronjob(
     :param workflow_job_history_limit: Minimum number of
         historical workflow jobs, so logs can be retrieved.
     """
-    if not k8s.namespace_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
+    if not k8s.namespace_exists(namespace):
         print(
-            f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} could not be found on k8s cluster."    # noqa
+            f"namespace={namespace} could not be found on k8s cluster."    # noqa
         )
         return None
-    if _is_existing_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, job_name):
+    if _is_existing_workflow_cronjob(namespace, job_name):
         print(
-            f"cronjob={job_name} already exists in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace." # noqa
+            f"cronjob={job_name} already exists in {namespace} namespace." # noqa
         )
         return None
     if not _is_valid_cron_schedule(schedule):
@@ -109,7 +110,7 @@ def create_workflow_cronjob(
         return None
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        namespace,
         job_name,
         project_repo_url,
         project_repo_branch,
@@ -119,7 +120,7 @@ def create_workflow_cronjob(
     )
     k8s.create_workflow_cronjob(configured_job)
     print(
-        f"workflow cronjob={job_name} created in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace."   # noqa
+        f"workflow cronjob={job_name} created in {namespace} namespace."   # noqa
     )
 
 

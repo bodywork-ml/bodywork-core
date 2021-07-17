@@ -134,7 +134,7 @@ def run_workflow(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
-        if not config_deploys_services(config):
+        if not workflow_deploys_services(config):
             _log.info(f"Deleting namespace {namespace}")
             k8s.delete_namespace(namespace)
         if config.project.usage_stats:
@@ -198,7 +198,7 @@ def _setup_namespace(config) -> str:
         ) from e
 
 
-def config_deploys_services(config: BodyworkConfig) -> bool:
+def workflow_deploys_services(config: BodyworkConfig) -> bool:
     """Checks if any services are configured for deployment
 
     :param config: Bodywork config.

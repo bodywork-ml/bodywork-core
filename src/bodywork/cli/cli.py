@@ -438,6 +438,7 @@ def cronjob(args: Namespace) -> None:
             )
             sys.exit(1)
         create_workflow_cronjob(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             schedule,
             name,
             git_repo_url,
