@@ -33,7 +33,7 @@ from pkg_resources import get_distribution
 from ..config import BodyworkConfig
 from .workflow_jobs import (
     create_workflow_job_in_namespace,
-    create_workflow_cronjob_in_namespace,
+    create_workflow_cronjob,
     display_cronjobs_in_namespace,
     display_workflow_job_history,
     display_workflow_job_logs,
@@ -101,13 +101,6 @@ def cli() -> None:
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace to operate in.",
-    )
-    deployment_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the workflow job."
     )
     deployment_cmd_parser.add_argument(
@@ -145,13 +138,6 @@ def cli() -> None:
         type=str,
         choices=["create", "delete", "display", "history", "logs"],
         help="Cronjob action to perform.",
-    )
-    cronjob_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace to operate in.",
     )
     cronjob_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the cronjob."
@@ -260,13 +246,6 @@ def cli() -> None:
         "git_repo_branch", type=str, help="Bodywork project Git repo branch."
     )
     workflow_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
-        type=str,
-        help="Kubernetes namespace within which to execute the workflow.",
-    )
-    workflow_cmd_parser.add_argument(
         "--bodywork-docker-image",
         type=str,
         default="",
@@ -343,7 +322,7 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
             )
         except kubernetes.config.ConfigException as e:
             print(
-                f"cannot load authenticaion credentials from kubeconfig file when "
+                f"cannot load authentication credentials from kubeconfig file when "
                 f"calling cli.{func.__name__}: {e}"
             )
 
@@ -371,25 +350,22 @@ def deployment(args: Namespace) -> None:
 
     :param args: Arguments passed to the deploy command from the CLI.
     """
-    command = args.command
-    namespace = args.namespace
     name = args.name
+    command = args.command
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
-    if (
-        command == "create" or command == "logs" or command == "delete_job"
-    ) and name == "":
-        print("please specify --name for the deployment")
-        sys.exit(1)
+
     if command == "create" and git_repo_url == "":
         print("please specify Git repo URL for the deployment you want to create")
+        sys.exit(1)
+    if command != "create" and name == "":
+        print("please specify --name for the deployment job")
         sys.exit(1)
     if command == "create":
         if run_workflow_controller_locally:
             pass_through_args = Namespace(
-                namespace=namespace,
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
@@ -398,25 +374,29 @@ def deployment(args: Namespace) -> None:
             workflow(pass_through_args)
         else:
             load_kubernetes_config()
-            if not is_namespace_available_for_bodywork(namespace):
-                print(f"namespace={namespace} is not setup for use by Bodywork")
+            if not is_namespace_available_for_bodywork(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+            ):
+                print(
+                    f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
+                    f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
+                )
                 sys.exit(1)
             create_workflow_job_in_namespace(
-                namespace,
-                name,
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 git_repo_url,
                 git_repo_branch,
                 retries,
             )
     elif command == "logs":
         load_kubernetes_config()
-        display_workflow_job_logs(namespace, name)
+        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "delete_job":
         load_kubernetes_config()
-        delete_workflow_job_in_namespace(namespace, name)
+        delete_workflow_job_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         load_kubernetes_config()
-        display_workflow_job_history(namespace, name)
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 
@@ -427,7 +407,6 @@ def cronjob(args: Namespace) -> None:
     :param args: Arguments passed to the run command from the CLI.
     """
     command = args.command
-    namespace = args.namespace
     name = args.name
     schedule = args.schedule
     retries = args.retries
@@ -450,11 +429,16 @@ def cronjob(args: Namespace) -> None:
         sys.exit(1)
     elif command == "create":
         load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(namespace):
-            print(f"namespace={namespace} is not setup for use by Bodywork")
+        if not is_namespace_available_for_bodywork(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+        ):
+            print(
+                f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
+                f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
+            )
             sys.exit(1)
-        create_workflow_cronjob_in_namespace(
-            namespace,
+        create_workflow_cronjob(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             schedule,
             name,
             git_repo_url,
@@ -464,16 +448,16 @@ def cronjob(args: Namespace) -> None:
         )
     elif command == "delete":
         load_kubernetes_config()
-        delete_workflow_cronjob_in_namespace(namespace, name)
+        delete_workflow_cronjob_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "history":
         load_kubernetes_config()
-        display_workflow_job_history(namespace, name)
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "logs":
         load_kubernetes_config()
-        display_workflow_job_logs(namespace, name)
+        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         load_kubernetes_config()
-        display_cronjobs_in_namespace(namespace)
+        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
     sys.exit(0)
 
 
@@ -556,20 +540,13 @@ def workflow(args: Namespace) -> None:
     :param args: Arguments passed to the workflow command from the CLI.
     """
     try:
-        namespace = args.namespace
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
-        docker_image = args.bodywork_docker_image
-        load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(namespace):
-            print(f"namespace={namespace} is not setup for use by Bodywork")
-            sys.exit(1)
-        run_workflow(
-            namespace,
-            repo_url,
-            repo_branch,
-            docker_image_override=(None if docker_image == "" else docker_image),
+        docker_image = (
+            None if args.bodywork_docker_image == "" else args.bodywork_docker_image
         )
+        load_kubernetes_config()
+        run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
         sys.exit(0)
     except BodyworkWorkflowExecutionError:
         sys.exit(1)

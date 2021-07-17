@@ -28,7 +28,7 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
 
     :param kv_string: The string containing the key-value data.
     :raises ValueError: if the string is malformed in any way.
-    :return: Seperated key and value.
+    :return: Separated key and value.
     """
     error_msg = "secret key-value pair not in KEY=VALUE format"
     equals_sign = kv_string.find("=")

@@ -112,7 +112,7 @@ def delete_cluster_role_binding(name: str) -> None:
     k8s.RbacAuthorizationV1Api().delete_cluster_role_binding(name=name)
 
 
-def setup_workflow_service_account(namespace: str) -> None:
+def setup_workflow_service_accounts(namespace: str) -> None:
     """Setup a workflow controller service-account with required roles.
 
     :param namespace: Namespace in which the service-account will be
@@ -142,7 +142,8 @@ def setup_workflow_service_account(namespace: str) -> None:
             k8s.V1PolicyRule(
                 api_groups=[""],
                 resources=["namespaces"],
-                verbs=["get", "list", "create", "delete"]),
+                verbs=["get", "list", "create", "delete"],
+            ),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -209,8 +210,8 @@ def setup_workflow_service_account(namespace: str) -> None:
         )
 
 
-def setup_job_and_deployment_service_accounts(namespace: str) -> None:
-    """Setup a jobs-and-deployments service-account with required roles.
+def setup_stages_service_account(namespace: str) -> None:
+    """Setup a service-account with required roles for jobs-and-deployments.
 
     :param namespace: Namespace in which the service-account will be
         placed.

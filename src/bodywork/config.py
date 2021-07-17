@@ -215,6 +215,7 @@ class ProjectConfig:
         "DAG": {"type": "string", "required": True},
         "usage_stats": {"type": "boolean", "required": False},
         "run_on_failure": {"type": "string", "required": False},
+        "namespace": {"type": "string", "required": False},
     }
 
     def __init__(self, config_section: Dict[str, str]):
@@ -243,6 +244,11 @@ class ProjectConfig:
             self.run_on_failure = (
                 config_section["run_on_failure"]
                 if "run_on_failure" in config_section
+                else ""
+            )
+            self.namespace = (
+                config_section["namespace"]
+                if "namespace" in config_section
                 else ""
             )
             try:

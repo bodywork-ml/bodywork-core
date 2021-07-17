@@ -80,11 +80,11 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
 
 
 def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
-    """Setup kubernetes namespace for use with Bodywork.
+    """Setup kubernetes namespace for Bodywork Workflow accounts.
 
     If the namespace does not already exist, then it will be created
-    first. Then, the service accounts and associated roles required by
-    Bodywork containers will be created.
+    first. Then the cluster/service accounts required by bodywork to
+    run workflows will be created.
 
     Note, that to use this function the Kubernetes user running the
     command must be authorised to create namespaces, service accounts,
@@ -103,13 +103,6 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     if k8s.service_account_exists(namespace, workflow_sa):
         print(f"service-account={workflow_sa} already exists in namespace={namespace}")
     else:
-        print(f"creating service-account={workflow_sa} in " f"namespace={namespace}")
+        print(f"creating service-account={workflow_sa} in namespace={namespace}")
         print(f"creating cluster-role-binding={workflow_crb}")
-        k8s.setup_workflow_service_account(namespace)
-
-    jobs_deps_sa = BODYWORK_STAGES_SERVICE_ACCOUNT
-    if k8s.service_account_exists(namespace, jobs_deps_sa):
-        print(f"service-account={jobs_deps_sa} already exists in namespace={namespace}")
-    else:
-        print(f"creating service-account={jobs_deps_sa} in " f"namespace={namespace}")
-        k8s.setup_job_and_deployment_service_accounts(namespace)
+        k8s.setup_workflow_service_accounts(namespace)

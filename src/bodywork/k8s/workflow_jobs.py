@@ -18,6 +18,8 @@
 High-level interface to the Kubernetes jobs and cronjobs APIs, as used
 to create and manage cronjobs that execute Bodywork project workflows.
 """
+import os
+import random
 from datetime import datetime
 from typing import Dict, Union
 
@@ -35,17 +37,15 @@ from .utils import make_valid_k8s_name
 
 def configure_workflow_job(
     namespace: str,
-    project_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
+    job_name: str = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
     :param namespace: The namespace to deploy the job to.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -54,6 +54,7 @@ def configure_workflow_job(
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
+    :param job_name: Set the job name.
     :return: A configured k8s job object.
     """
     vcs_env_vars = [
@@ -72,7 +73,7 @@ def configure_workflow_job(
         image_pull_policy="Always",
         env=vcs_env_vars,
         command=["bodywork", "workflow"],
-        args=[f"--namespace={namespace}", project_repo_url, project_repo_branch],
+        args=[project_repo_url, project_repo_branch],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -86,15 +87,31 @@ def configure_workflow_job(
         backoff_limit=retries,
         ttl_seconds_after_finished=BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     )
+    if not job_name:
+        job_name = _create_job_name(project_repo_url, project_repo_branch)
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
-            name=make_valid_k8s_name(project_name),
+            name=make_valid_k8s_name(
+                job_name
+            ),
             namespace=namespace,
             labels={"app": "bodywork"},
         ),
         spec=job_spec,
     )
     return job
+
+
+def _create_job_name(project_repo_url: str, project_repo_branch: str) -> str:
+    """Create unique job name.
+
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The Bodywork project Git repository
+        branch being used.
+    """
+    repo_name = os.path.splitext(os.path.basename(project_repo_url))[0]
+    return f"{repo_name}-{project_repo_branch}-{random.randint(0,999999)}"
 
 
 def create_workflow_job(job: k8s.V1Job) -> None:
@@ -108,7 +125,7 @@ def create_workflow_job(job: k8s.V1Job) -> None:
 def configure_workflow_cronjob(
     cron_schedule: str,
     namespace: str,
-    project_name: str,
+    job_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
@@ -123,9 +140,8 @@ def configure_workflow_cronjob(
     function that will orchestrate the required jobs and deployments.
 
     :param cron_schedule: A valid cron schedule definition.
-    :param namespace: The namespace to deploy the cronjob to.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
+    :param job_name: The name to give the cronjob.
+    :param namespace: Namespace to create the cronjob in.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -142,11 +158,11 @@ def configure_workflow_cronjob(
     """
     job = configure_workflow_job(
         namespace=namespace,
-        project_name=project_name,
         project_repo_url=project_repo_url,
         project_repo_branch=project_repo_branch,
         retries=retries,
         image=image,
+        job_name=job_name,
     )
     job_template = k8s.V1beta1JobTemplateSpec(metadata=job.metadata, spec=job.spec)
     cronjob_spec = k8s.V1beta1CronJobSpec(
@@ -193,12 +209,12 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
         cronjob.metadata.name: {
             "schedule": cronjob.spec.schedule,
             "last_scheduled_time": cronjob.status.last_schedule_time,
-            "retries": (cronjob.spec.job_template.spec.backoff_limit),
+            "retries": cronjob.spec.job_template.spec.backoff_limit,
             "git_url": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[0]
             ),
             "git_branch": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[2]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
             ),
         }
         for cronjob in cronjobs.items

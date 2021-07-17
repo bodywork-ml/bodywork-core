@@ -36,6 +36,7 @@ from .constants import (
     GIT_COMMIT_HASH_K8S_ENV_VAR,
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -51,23 +52,21 @@ _log = bodywork_log_factory()
 
 
 def run_workflow(
-    namespace: str,
     repo_url: str,
     repo_branch: str = "master",
     docker_image_override: Optional[str] = None,
-    config_override: Optional[BodyworkConfig] = None,
+    config: Optional[BodyworkConfig] = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the workflow.
 
-    :param namespace: Kubernetes namespace to execute the workflow in.
     :param repo_url: Git repository URL.
     :param repo_branch: The Git branch to download, defaults to 'master'.
     :param docker_image_override: Docker image to use for executing all
         stages, that will override the one specified in the
         project config file. Provided purely for testing purposes and
         defaults to None.
-    :param config_override: Configuration data for the Bodywork deployment.
+    :param config: Override config.
     :param cloned_repo_dir: The name of the directory into which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
@@ -76,25 +75,14 @@ def run_workflow(
     try:
         _log.info(
             f"attempting to run workflow for project={repo_url} on "
-            f"branch={repo_branch} in kubernetes namespace={namespace}"
+            f"branch={repo_branch}"
         )
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        config = (
-            config_override
-            if config_override is not None
-            else BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
-        )
-        _log.setLevel(config.logging.log_level)
-        try:
-            if k8s.namespace_exists(namespace) is False:
-                raise BodyworkNamespaceError(
-                    f"{namespace} is not a valid namespace on your cluster."
-                )
-        except ApiException as e:
-            raise BodyworkNamespaceError(
-                f"Unable to check namespace: {namespace} : {e}"
-            ) from e
+        if config is None:
+            config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
 
+        _log.setLevel(config.logging.log_level)
+        namespace = _setup_namespace(config)
         workflow_dag = config.project.workflow
         all_stages = config.stages
         docker_image = (
@@ -146,6 +134,9 @@ def run_workflow(
             f"successfully ran workflow for project={repo_url} on "
             f"branch={repo_branch} in kubernetes namespace={namespace}"
         )
+        if not workflow_deploys_services(config):
+            _log.info(f"Deleting namespace {namespace}")
+            k8s.delete_namespace(namespace)
         if config.project.usage_stats:
             _ping_usage_stats_server()
     except Exception as e:
@@ -163,6 +154,7 @@ def run_workflow(
                     BodyworkGitError,
                     BodyworkConfigError,
                 ]
+                and config
                 and config.project.run_on_failure
             ):
                 if config.project.usage_stats:
@@ -172,7 +164,7 @@ def run_workflow(
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"
+                f"Error executing failure stage: {config.project.run_on_failure}"  # type: ignore  # noqa
                 f" after failed workflow : {ex}"
             )
             _log.error(failure_msg)
@@ -181,6 +173,42 @@ def run_workflow(
     finally:
         if cloned_repo_dir.exists():
             rmtree(cloned_repo_dir, onerror=_remove_readonly)
+
+
+def _setup_namespace(config) -> str:
+    """Creates namespace to run workflow in.
+
+    :param config: Bodywork config.
+    :return: Name of namespace.
+    """
+    namespace = str(
+        config.project.namespace if config.project.namespace else config.project.name
+    )
+    try:
+        if not k8s.namespace_exists(namespace):
+            _log.info(f"Creating namespace: {namespace}")
+            k8s.create_namespace(namespace)
+        if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
+            _log.info(f"Creating service account: {BODYWORK_STAGES_SERVICE_ACCOUNT}")
+            k8s.setup_stages_service_account(namespace)
+        return namespace
+    except ApiException as e:
+        raise BodyworkNamespaceError(
+            f"Unable to setup namespace: {namespace} - {e}"
+        ) from e
+
+
+def workflow_deploys_services(config: BodyworkConfig) -> bool:
+    """Checks if any services are configured for deployment
+
+    :param config: Bodywork config.
+    :return: True if services are configured for deployment.
+    """
+    return any(
+        True
+        for stage_name, stage in config.stages.items()
+        if isinstance(stage, ServiceStageConfig) and stage_name in config.project.DAG
+    )
 
 
 def _run_batch_stages(
