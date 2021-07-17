@@ -22,6 +22,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
+from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 from bodywork.cli.workflow_jobs import (
     create_workflow_job_in_namespace,
@@ -186,17 +187,19 @@ def test_create_workflow_cronjob(
 ):
     mock_k8s_module.namespace_exists.return_value = False
     create_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
         "project_repo_branch",
     )
     captured_one = capsys.readouterr()
-    assert "namespace=bodywork-deployment-jobs could not be found" in captured_one.out
+    assert f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} could not be found" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_cronjobs.return_value = {"bodywork-test-project": {}}
     create_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
@@ -209,6 +212,7 @@ def test_create_workflow_cronjob(
     mock_k8s_module.list_workflow_cronjobs.return_value = {"foo": {}}
     mock_k8s_module.create_workflow_cronjob.side_effect = None
     create_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         "0 * * *",
         "bodywork-test-project",
         "project_repo_url",
@@ -221,13 +225,14 @@ def test_create_workflow_cronjob(
     mock_k8s_module.list_workflow_cronjobs.return_value = {"foo": {}}
     mock_k8s_module.create_workflow_cronjob.side_effect = None
     create_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
         "project_repo_branch",
     )
     captured_four = capsys.readouterr()
-    assert "cronjob=bodywork-test-project created in bodywork-deployment-jobs namespace" in captured_four.out
+    assert f"cronjob=bodywork-test-project created in {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} namespace" in captured_four.out
 
 
 @patch("bodywork.cli.workflow_jobs.k8s")
