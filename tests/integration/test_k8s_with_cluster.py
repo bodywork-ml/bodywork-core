@@ -18,7 +18,6 @@
 Test high-level k8s interaction with a k8s cluster to run stages and a
 demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 """
-import os
 import requests
 from shutil import rmtree
 from subprocess import CalledProcessError, run
@@ -29,10 +28,6 @@ from pytest import raises, mark
 from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME,
-    BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_WORKFLOW_CLUSTER_ROLE,
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -43,38 +38,12 @@ from bodywork.k8s import (
 )
 
 
+@mark.usefixtures("add_secrets")
 @mark.usefixtures("setup_cluster")
 def test_workflow_and_service_management_end_to_end_from_cli(
- docker_image: str, ingress_load_balancer_url: str
+    docker_image: str, ingress_load_balancer_url: str
 ):
     try:
-        process_zero = run(
-            ["bodywork", "setup-namespace", "bodywork-test-project"],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert f"creating namespace=bodywork-test-project" in process_zero.stdout
-        assert f"creating service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT}" in process_zero.stdout
-        assert f"creating cluster-role-binding={BODYWORK_WORKFLOW_CLUSTER_ROLE}" in process_zero.stdout
-        assert process_zero.returncode == 0
-
-        process_one = run(
-            [
-                "bodywork",
-                "secret",
-                "create",
-                f"--namespace=bodywork-test-project",
-                "--name=bodywork-test-project-credentials",
-                "--data",
-                "USERNAME=alex",
-                "PASSWORD=alex123",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_one.stdout is not None
-        assert process_one.returncode == 0
-
         process_two = run(
             [
                 "bodywork",
@@ -227,13 +196,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
     random_test_namespace: str, docker_image: str
 ):
     try:
-        process_zero = run(
-            ["bodywork", "setup-namespace", "bodywork-rollback-deployment-test-project"],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_zero.returncode == 0
-
         process_one = run(
             [
                 "bodywork",
@@ -273,7 +235,9 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-rollback-deployment-test-project")
-        workflow_sa_crb = workflow_cluster_role_binding_name("bodywork-rollback-deployment-test-project")
+        workflow_sa_crb = workflow_cluster_role_binding_name(
+            "bodywork-rollback-deployment-test-project"
+        )
         if cluster_role_binding_exists(workflow_sa_crb):
             delete_cluster_role_binding(workflow_sa_crb)
 
@@ -345,55 +309,13 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
     assert process_two.returncode == 1
 
 
+@mark.usefixtures("add_secrets")
 def test_workflow_with_ssh_github_connectivity(
-    random_test_namespace: str,
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
 ):
     try:
-        sleep(5)
-
-        process_zero = run(
-            ["bodywork", "setup-namespace", "bodywork-test-project"],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_zero.returncode == 0
-
         process_one = run(
-            [
-                "bodywork",
-                "secret",
-                "create",
-                f"--namespace=bodywork-test-project",
-                f"--name={SSH_SECRET_NAME}",
-                "--data",
-                f"{SSH_PRIVATE_KEY_ENV_VAR}={os.environ[SSH_PRIVATE_KEY_ENV_VAR]}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_one.stdout is not None
-        assert process_one.returncode == 0
-
-        process_two = run(
-            [
-                "bodywork",
-                "secret",
-                "create",
-                f"--namespace=bodywork-test-project",
-                "--name=bodywork-test-project-credentials",
-                "--data",
-                "USERNAME=alex",
-                "PASSWORD=alex123",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_two.stdout is not None
-        assert process_two.returncode == 0
-
-        process_three = run(
             [
                 "bodywork",
                 "workflow",
@@ -415,10 +337,10 @@ def test_workflow_with_ssh_github_connectivity(
             f"branch=master"
         )
         expected_output_3 = "successfully ran stage=stage_1"
-        assert expected_output_1 in process_three.stdout
-        assert expected_output_2 in process_three.stdout
-        assert expected_output_3 in process_three.stdout
-        assert process_three.returncode == 0
+        assert expected_output_1 in process_one.stdout
+        assert expected_output_2 in process_one.stdout
+        assert expected_output_3 in process_one.stdout
+        assert process_one.returncode == 0
 
     except Exception:
         assert False
@@ -428,76 +350,7 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_cli_secret_handler_crud(test_namespace: str):
-    process_zero = run(
-        ["bodywork", "setup-namespace", test_namespace],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_zero.returncode == 0
-
-    process_one = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            f"--namespace={test_namespace}",
-            "--name=pytest-credentials",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "secret=pytest-credentials created" in process_one.stdout
-    assert process_one.returncode == 0
-
-    process_two = run(
-        [
-            "bodywork",
-            "secret",
-            "display",
-            f"--namespace={test_namespace}",
-            "--name=pytest-credentials",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "USERNAME=alex" in process_two.stdout
-    assert "PASSWORD=alex123" in process_two.stdout
-    assert process_two.returncode == 0
-
-    process_three = run(
-        [
-            "bodywork",
-            "secret",
-            "delete",
-            f"--namespace={test_namespace}",
-            "--name=pytest-credentials",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "secret=pytest-credentials deleted" in process_three.stdout
-    assert process_three.returncode == 0
-
-    process_four = run(
-        [
-            "bodywork",
-            "secret",
-            "display",
-            f"--namespace={test_namespace}",
-            "--name=pytest-credentials",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "" in process_four.stdout
-    assert process_four.returncode == 0
-
-
-def test_deployment_of_remote_workflows(random_test_namespace: str):
+def test_deployment_of_remote_workflows():
     try:
         process_one = run(
             [

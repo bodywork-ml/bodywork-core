@@ -56,12 +56,13 @@ def parse_cli_secrets_strings(key_value_strings: Iterable[str]) -> Dict[str, str
     return var_names_and_values
 
 
-def create_secret_in_namespace(
-    namespace: str, secret_name: str, keys_and_values: Dict[str, str]
+def create_secret(
+    namespace: str, group: str, secret_name: str, keys_and_values: Dict[str, str]
 ) -> None:
     """Create a new secret within a k8s namespace.
 
     :param namespace: Namespace in which to create the secret.
+    :param group: The group to create the secret in.
     :param secret_name: The name to give the secret.
     :param keys_and_values: The secret keys (i.e. variable names) and
         the associated values to assign to them.
@@ -69,42 +70,47 @@ def create_secret_in_namespace(
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    k8s.create_secret(namespace, secret_name, keys_and_values)
-    print(f"secret={secret_name} created in namespace={namespace}")
+    k8s.create_secret(namespace, _create_complete_secret_name(group, secret_name), group, keys_and_values)
+    print(f"secret={secret_name} created in group={group}")
 
 
-def delete_secret_in_namespace(namespace: str, secret_name: str) -> None:
+def delete_secret(namespace: str, group: str, secret_name: str) -> None:
     """Delete a secret within a k8s namespace.
 
     :param namespace: Namespace in which to look for secrets.
+    :param group: The group the secret belongs to.
     :param secret_name: The name of the secret to delete.
     """
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    if not k8s.secret_exists(namespace, secret_name):
-        print(f"secret={secret_name} could not be found in namespace={namespace}")
+    if not k8s.secret_exists(namespace, _create_complete_secret_name(group, secret_name)):
+        print(f"secret={secret_name} could not be found in group={group}")
         return None
-    k8s.delete_secret(namespace, secret_name)
-    print(f"secret={secret_name} deleted from namespace={namespace}")
+    k8s.delete_secret(namespace, _create_complete_secret_name(group, secret_name))
+    print(f"secret={secret_name} in group={group} deleted from namespace={namespace}")
 
 
-def display_secrets_in_namespace(namespace: str, secret: Optional[str] = None) -> None:
+def display_secrets(namespace: str, group: Optional[str] = None, secret: Optional[str] = None) -> None:
     """Print secrets to stdout.
 
     :param namespace: Namespace in which to look for secrets.
+    :param group: Group the secrets to display belong to.
     :param secret: Display the available keys in just the secret with
         this name, defaults to None
     """
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
+    if secret and group is None:
+        print("please specify which secrets group the secret belongs to.")
+        return None
     else:
-        secrets = k8s.list_secrets_in_namespace(namespace)
+        secrets = k8s.list_secrets(namespace, group)
         if secret is not None:
             try:
                 print(f"\n-- {secret}:")
-                for secret_key, secret_value in secrets[secret].items():
+                for secret_key, secret_value in secrets[_create_complete_secret_name(group, secret)].items():
                     print(f"-> {secret_key}={secret_value}".replace("\n", ""))
             except KeyError:
                 print(f"cannot find secret={secret} in namespace={namespace}")
@@ -113,3 +119,7 @@ def display_secrets_in_namespace(namespace: str, secret: Optional[str] = None) -
                 print(f"\n-- {secret_name}:")
                 for secret_key, secret_value in secret_data.items():
                     print(f"-> {secret_key}={secret_value}".replace("\n", ""))
+
+
+def _create_complete_secret_name(group: str, name: str) -> str:
+    return f"{group}-{name}"

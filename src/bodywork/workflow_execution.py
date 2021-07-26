@@ -97,6 +97,11 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
+        if config.project.secrets_group:
+            _log.info(
+                f"Replicating {config.project.secrets_group} secrets in namespace={namespace}"
+            )
+            k8s.replicate_secrets_in_namespace(namespace, config.project.secrets_group)
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [

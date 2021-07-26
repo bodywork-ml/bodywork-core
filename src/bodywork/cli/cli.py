@@ -45,9 +45,9 @@ from .service_deployments import (
     display_service_deployments_in_namespace,
 )
 from .secrets import (
-    create_secret_in_namespace,
-    delete_secret_in_namespace,
-    display_secrets_in_namespace,
+    create_secret,
+    delete_secret,
+    display_secrets,
     parse_cli_secrets_strings,
 )
 from .setup_namespace import (
@@ -203,11 +203,11 @@ def cli() -> None:
         help="Secrets action to perform.",
     )
     secret_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=True,
+        "--group",
+        "--group",
+        required=False,
         type=str,
-        help="Kubernetes namespace to operate in.",
+        help="The secrets group this secret belong in.",
     )
     secret_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the Kubernetes secret."
@@ -489,11 +489,14 @@ def secret(args: Namespace) -> None:
     :param args: Arguments passed to the run command from the CLI.
     """
     command = args.command
-    namespace = args.namespace
+    group = args.group
     name = args.name
     key_value_strings = args.data
     if (command == "create" or command == "delete") and name == "":
         print("please specify a name for the secret you want to create")
+        sys.exit(1)
+    if (command == "create" or command == "delete") and group == "":
+        print("please specify the secret group the secret belongs to")
         sys.exit(1)
     elif command == "create" and key_value_strings == []:
         print("please specify keys and values for the secret you want to create")
@@ -508,13 +511,16 @@ def secret(args: Namespace) -> None:
             )
             sys.exit(1)
         load_kubernetes_config()
-        create_secret_in_namespace(namespace, name, var_names_and_values)
+        create_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values)
     elif command == "delete":
         load_kubernetes_config()
-        delete_secret_in_namespace(namespace, name)
+        delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
+    elif command == "display" and name and not group:
+        print("please specify which secrets group the secret belongs to.")
+        sys.exit(1)
     else:
         load_kubernetes_config()
-        display_secrets_in_namespace(namespace, name if name != "" else None)
+        display_secrets(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, secret=name if name != "" else None)
     sys.exit(0)
 
 
