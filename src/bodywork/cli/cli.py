@@ -429,9 +429,7 @@ def cronjob(args: Namespace) -> None:
         sys.exit(1)
     elif command == "create":
         load_kubernetes_config()
-        if not is_namespace_available_for_bodywork(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-        ):
+        if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
             print(
                 f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
                 f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
@@ -511,7 +509,9 @@ def secret(args: Namespace) -> None:
             )
             sys.exit(1)
         load_kubernetes_config()
-        create_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values)
+        create_secret(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+        )
     elif command == "delete":
         load_kubernetes_config()
         delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
@@ -520,7 +520,11 @@ def secret(args: Namespace) -> None:
         sys.exit(1)
     else:
         load_kubernetes_config()
-        display_secrets(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, secret=name if name != "" else None)
+        display_secrets(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            group,
+            secret=name if name != "" else None,
+        )
     sys.exit(0)
 
 

@@ -99,7 +99,8 @@ def run_workflow(
         )
         if config.project.secrets_group:
             _log.info(
-                f"Replicating {config.project.secrets_group} secrets in namespace={namespace}"
+                f"Replicating {config.project.secrets_group} secrets in "
+                f"namespace={namespace}"
             )
             k8s.replicate_secrets_in_namespace(namespace, config.project.secrets_group)
         for step in workflow_dag:
