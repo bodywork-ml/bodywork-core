@@ -44,7 +44,7 @@ def test_configure_environment_variables_raises_errors_if_secrets_cannot_be_foun
         ("aws-credentials", "AWS_ACCESS_KEY_ID"),
     ]
     with raises(RuntimeError, match="cannot find key="):
-        configure_env_vars_from_secrets("bodywork-dev", "dev", secrets)
+        configure_env_vars_from_secrets("bodywork-dev", secrets)
 
 
 @patch("bodywork.k8s.secrets.secret_exists")
@@ -55,13 +55,13 @@ def test_configure_env_vars_from_secrets(mock_bodywork_k8s_secret_exists: MagicM
         ("aws-credentials", "AWS_SECRET_ACCESS_KEY"),
         ("aws-credentials", "AWS_ACCESS_KEY_ID"),
     ]
-    env_vars = configure_env_vars_from_secrets("bodywork-dev", "dev", secrets)
+    env_vars = configure_env_vars_from_secrets("bodywork-dev", secrets)
     assert len(env_vars) == 2
     assert env_vars[0].name == "AWS_SECRET_ACCESS_KEY"
-    assert env_vars[0].value_from.secret_key_ref.name == "dev-aws-credentials"
+    assert env_vars[0].value_from.secret_key_ref.name == "aws-credentials"
     assert env_vars[0].value_from.secret_key_ref.key == "AWS_SECRET_ACCESS_KEY"
     assert env_vars[1].name == "AWS_ACCESS_KEY_ID"
-    assert env_vars[1].value_from.secret_key_ref.name == "dev-aws-credentials"
+    assert env_vars[1].value_from.secret_key_ref.name == "aws-credentials"
     assert env_vars[1].value_from.secret_key_ref.key == "AWS_ACCESS_KEY_ID"
 
 

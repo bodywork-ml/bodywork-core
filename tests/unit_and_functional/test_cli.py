@@ -138,7 +138,7 @@ def test_cli_secret_handler_error_handling():
             "bodywork",
             "secret",
             "create",
-            "--namespace=bodywork-dev",
+            "--group=bodywork-dev",
             "--data",
             "USERNAME=alex",
             "PASSWORD=alex123",
@@ -153,7 +153,7 @@ def test_cli_secret_handler_error_handling():
             "bodywork",
             "secret",
             "delete",
-            "--namespace=bodywork-dev",
+            "--group=bodywork-dev",
             "--data",
             "USERNAME=alex",
             "PASSWORD=alex123",
@@ -168,7 +168,7 @@ def test_cli_secret_handler_error_handling():
             "bodywork",
             "secret",
             "create",
-            "--namespace=bodywork-dev",
+            "--group=bodywork-dev",
             "--name=pytest-credentials",
         ],
         encoding="utf-8",
@@ -181,7 +181,7 @@ def test_cli_secret_handler_error_handling():
             "bodywork",
             "secret",
             "create",
-            "--namespace=bodywork-dev",
+            "--group=bodywork-dev",
             "--name=pytest-credentials",
             "--data",
             "FOO",
@@ -191,6 +191,21 @@ def test_cli_secret_handler_error_handling():
         capture_output=True,
     )
     assert "could not parse secret data" in process_four.stdout
+
+    process_five = run(
+        [
+            "bodywork",
+            "secret",
+            "create",
+            "--name=pytest-credentials",
+            "--data",
+            "USERNAME=alex",
+            "PASSWORD=alex123",
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert "please specify the secret group the secret belongs to" in process_five.stdout
 
 
 def test_deployment_subcommand_exists():

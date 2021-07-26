@@ -204,9 +204,9 @@ def cli() -> None:
     )
     secret_cmd_parser.add_argument(
         "--group",
-        "--group",
         required=False,
         type=str,
+        default="",
         help="The secrets group this secret belong in.",
     )
     secret_cmd_parser.add_argument(
