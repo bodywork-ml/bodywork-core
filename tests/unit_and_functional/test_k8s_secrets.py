@@ -27,9 +27,10 @@ from bodywork.k8s.secrets import (
     configure_env_vars_from_secrets,
     create_secret,
     delete_secret,
-    list_secrets_in_namespace,
+    list_secrets,
     secret_exists,
 )
+from bodywork.constants import SECRET_GROUP_LABEL
 
 
 @patch("bodywork.k8s.secrets.secret_exists")
@@ -43,7 +44,7 @@ def test_configure_environment_variables_raises_errors_if_secrets_cannot_be_foun
         ("aws-credentials", "AWS_ACCESS_KEY_ID"),
     ]
     with raises(RuntimeError, match="cannot find key="):
-        configure_env_vars_from_secrets("bodywork-dev", secrets)
+        configure_env_vars_from_secrets("bodywork-dev", "dev", secrets)
 
 
 @patch("bodywork.k8s.secrets.secret_exists")
@@ -54,13 +55,13 @@ def test_configure_env_vars_from_secrets(mock_bodywork_k8s_secret_exists: MagicM
         ("aws-credentials", "AWS_SECRET_ACCESS_KEY"),
         ("aws-credentials", "AWS_ACCESS_KEY_ID"),
     ]
-    env_vars = configure_env_vars_from_secrets("bodywork-dev", secrets)
+    env_vars = configure_env_vars_from_secrets("bodywork-dev", "dev", secrets)
     assert len(env_vars) == 2
     assert env_vars[0].name == "AWS_SECRET_ACCESS_KEY"
-    assert env_vars[0].value_from.secret_key_ref.name == "aws-credentials"
+    assert env_vars[0].value_from.secret_key_ref.name == "dev-aws-credentials"
     assert env_vars[0].value_from.secret_key_ref.key == "AWS_SECRET_ACCESS_KEY"
     assert env_vars[1].name == "AWS_ACCESS_KEY_ID"
-    assert env_vars[1].value_from.secret_key_ref.name == "aws-credentials"
+    assert env_vars[1].value_from.secret_key_ref.name == "dev-aws-credentials"
     assert env_vars[1].value_from.secret_key_ref.key == "AWS_ACCESS_KEY_ID"
 
 
@@ -70,27 +71,36 @@ def test_secret_exists_identifies_existing_namespaces(mock_k8s_core_api: MagicMo
         kubernetes.client.V1SecretList(
             items=[
                 kubernetes.client.V1Secret(
-                    metadata=kubernetes.client.V1ObjectMeta(name="aws-credentials"),
+                    metadata=kubernetes.client.V1ObjectMeta(name="xyz-aws-credentials"),
                     data={"FOO": "bar"},
                 )
             ]
         )
     )
-    assert secret_exists("bodywork-dev", "aws-credentials", "FOO") is True
-    assert secret_exists("bodywork-dev", "aws-credentials", "BAR") is False
-    assert secret_exists("bodywork-dev", "aws-access-kays", "FOO") is False
+    assert (
+        secret_exists("bodywork-dev", "xyz-aws-credentials", secret_key="FOO") is True
+    )
+    assert (
+        secret_exists("bodywork-dev", "xyz-aws-credentials", secret_key="BAR") is False
+    )
+    assert (
+        secret_exists("bodywork-dev", "xyz-aws-access-keys", secret_key="FOO") is False
+    )
 
 
 @patch("kubernetes.client.CoreV1Api")
 def test_create_secret_tries_to_create_secret_with_k8s_api(
     mock_k8s_core_api: MagicMock,
 ):
-    create_secret("bodywork-dev", "pytest-secret", {"KEY": "value"})
+    create_secret("bodywork-dev", "pytest-secret", "xyz", {"KEY": "value"})
+
     mock_k8s_core_api().create_namespaced_secret.assert_called_once_with(
         namespace="bodywork-dev",
         body=kubernetes.client.V1Secret(
             metadata=kubernetes.client.V1ObjectMeta(
-                namespace="bodywork-dev", name="pytest-secret"
+                namespace="bodywork-dev",
+                name="pytest-secret",
+                labels={SECRET_GROUP_LABEL: "xyz"},
             ),
             string_data={"KEY": "value"},
         ),
@@ -116,13 +126,16 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
             items=[
                 kubernetes.client.V1Secret(
                     metadata=kubernetes.client.V1ObjectMeta(
-                        namespace="bodywork-dev", name="pytest-secret"
+                        namespace="bodywork-dev", name="pytest-secret", labels="xyz"
                     ),
                     string_data={"ALEX": b"aW9hbm5pZGVz"},
                 )
             ]
         )
     )
-    secrets = list_secrets_in_namespace("bodywork-dev")
+    secrets = list_secrets("bodywork-dev", group="xyz")
+    mock_k8s_core_api().list_namespaced_secret.assert_called_once_with(
+        namespace="bodywork-dev", label_selector=f"{SECRET_GROUP_LABEL}=xyz"
+    )
     assert len(secrets) == 1
     assert secrets["pytest-secret"]["ALEX"] == "ioannides"

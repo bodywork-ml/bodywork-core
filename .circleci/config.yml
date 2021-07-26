@@ -57,6 +57,7 @@ jobs:
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
+          install-kubectl: true
       - checkout
       - run:
           name: Configure Git
