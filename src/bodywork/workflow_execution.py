@@ -515,7 +515,7 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
     """
     try:
         _log.info(
-            f"Replicating {secrets_group: str} secrets in " f"namespace={namespace}"
+            f"Replicating {secrets_group} secrets in namespace={namespace}"
         )
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
