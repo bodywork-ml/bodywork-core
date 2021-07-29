@@ -37,6 +37,7 @@ from .constants import (
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    SSH_PRIVATE_KEY_ENV_VAR,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -97,6 +98,12 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
+        if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
+            env_vars.append(
+                k8s.create_k8s_environment_variables(
+                    [(SSH_PRIVATE_KEY_ENV_VAR, os.environ[SSH_PRIVATE_KEY_ENV_VAR])]
+                )[0]
+            )
         if config.project.secrets_group:
             _copy_secrets_to_target_namespace(namespace, config.project.secrets_group)
         for step in workflow_dag:
@@ -514,9 +521,7 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
     param secrets_group: Group of secrets to copy.
     """
     try:
-        _log.info(
-            f"Replicating {secrets_group} secrets in namespace={namespace}"
-        )
+        _log.info(f"Replicating {secrets_group} secrets in namespace={namespace}")
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
         _log.error(
