@@ -176,7 +176,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "secret",
             f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
             "testsecrets-bodywork-test-project-credentials",
-            "group=test",
+            "group=testsecrets",
         ]
     )
 
