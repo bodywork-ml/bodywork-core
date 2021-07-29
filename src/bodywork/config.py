@@ -216,6 +216,7 @@ class ProjectConfig:
         "usage_stats": {"type": "boolean", "required": False},
         "run_on_failure": {"type": "string", "required": False},
         "namespace": {"type": "string", "required": False},
+        "secrets_group": {"type": "string", "required": False},
     }
 
     def __init__(self, config_section: Dict[str, str]):
@@ -249,6 +250,11 @@ class ProjectConfig:
             self.namespace = (
                 config_section["namespace"]
                 if "namespace" in config_section
+                else ""
+            )
+            self.secrets_group = (
+                config_section["secrets_group"]
+                if "secrets_group" in config_section
                 else ""
             )
             try:

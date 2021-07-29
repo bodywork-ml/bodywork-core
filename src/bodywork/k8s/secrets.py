@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Tuple
 from kubernetes import client as k8s
 
 from .utils import make_valid_k8s_name
+from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
 def configure_env_vars_from_secrets(
@@ -42,7 +43,7 @@ def configure_env_vars_from_secrets(
     This function can be used to configure the environment variables FOO
     and BAR for any batch job or service deployment.
 
-    :param namespece: Kubernetes namespace in which to look for secrets.
+    :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_varname_pairs: List of secret, variable-name pairs.
     :raises RuntimeError: if any of the secrets or their keys cannot be
         found.
@@ -62,7 +63,9 @@ def configure_env_vars_from_secrets(
             name=var_name,
             value_from=k8s.V1EnvVarSource(
                 secret_key_ref=k8s.V1SecretKeySelector(
-                    key=var_name, name=secret_name, optional=False
+                    key=var_name,
+                    name=secret_name,
+                    optional=False,
                 )
             ),
         )
@@ -71,16 +74,47 @@ def configure_env_vars_from_secrets(
     return env_vars
 
 
+def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None:
+    """Copy secrets in group to target namespace.
+
+    :param target_namespace: K8s namespace to copy the secrets to.
+    :param secrets_group: The group of secrets to copy.
+    """
+
+    secrets = k8s.CoreV1Api().list_namespaced_secret(
+        namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        label_selector=f"{SECRET_GROUP_LABEL}={secrets_group}",
+    )
+    for secret in secrets.items:
+        secret_name = secret.metadata.name.split("-", 1)[1]
+        copy = k8s.V1Secret(
+            metadata=k8s.V1ObjectMeta(
+                namespace=target_namespace,
+                name=secret_name,
+                labels={SECRET_GROUP_LABEL: secrets_group},
+            ),
+            data=secret.data,
+        )
+        if secret_exists(target_namespace, secret_name):
+            k8s.CoreV1Api().replace_namespaced_secret(
+                namespace=target_namespace, name=secret_name, body=copy
+            )
+        else:
+            k8s.CoreV1Api().create_namespaced_secret(
+                namespace=target_namespace, body=copy
+            )
+
+
 def secret_exists(
     namespace: str, secret_name: str, secret_key: Optional[str] = None
 ) -> bool:
     """Does a secret and a key within a secret, exist.
 
-    :param namespece: Kubernetes namespace in which to look for secrets.
+    :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_name: The name of the k8s secret to look for.
     :param secret_key: The variable key within the secret to look for.
     :return: True if the secret was found and the key within the secret
-        was also found, othewise False.
+        was also found, otherwise False.
     """
     existing_secrets = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
     secret_data = [
@@ -96,16 +130,23 @@ def secret_exists(
         return False
 
 
-def create_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) -> None:
+def create_secret(
+    namespace: str, name: str, group: str, keys_and_values: Dict[str, str]
+) -> None:
     """Create a new secret with multiple key-value pairs.
 
     :param namespace: Namespace to deploy the secret to.
     :param name: The name to give the secret - e.g. 'aws-credentials'.
+    :param group: The group to create the secret in.
     :param keys_and_values: Mapping of secret keys (or variable names)
         and their values.
     """
     secret = k8s.V1Secret(
-        metadata=k8s.V1ObjectMeta(namespace=namespace, name=make_valid_k8s_name(name)),
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace,
+            name=make_valid_k8s_name(name),
+            labels={SECRET_GROUP_LABEL: group},
+        ),
         string_data=keys_and_values,
     )
     k8s.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
@@ -121,13 +162,16 @@ def delete_secret(namespace: str, name: str) -> None:
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
 
-def list_secrets_in_namespace(namespace: str) -> Dict[str, Dict[str, str]]:
+def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.
+    :param group: Group of secrets to list.
+
     """
     secrets = k8s.CoreV1Api().list_namespaced_secret(
         namespace=namespace,
+        label_selector=f"{SECRET_GROUP_LABEL}={group}",
     )
     secret_data_base64 = {
         s.metadata.name: s.string_data if s.string_data else s.data

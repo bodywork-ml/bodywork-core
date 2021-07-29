@@ -179,7 +179,7 @@ def update_deployment(deployment: k8s.V1Deployment) -> None:
 def rollback_deployment(deployment: k8s.V1Deployment) -> None:
     """Rollback a deployment to its previous version.
 
-    The Kubernetes API has no dedicated enpoint for managing rollbacks.
+    The Kubernetes API has no dedicated endpoint for managing rollbacks.
     This function was implemented by reverse-engineering the API calls
     made by the equivalent kubectl command,`kubectl rollout undo ...`.
 
@@ -318,7 +318,7 @@ def monitor_deployments_to_completion(
 ) -> bool:
     """Monitor deployment status until completion or timeout.
 
-    :param deployents: The deployments to monitor.
+    :param deployments: The deployments to monitor.
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time (in seconds) between status

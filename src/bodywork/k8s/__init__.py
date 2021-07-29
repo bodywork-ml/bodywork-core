@@ -53,7 +53,8 @@ from .secrets import (
     secret_exists,
     create_secret,
     delete_secret,
-    list_secrets_in_namespace,
+    list_secrets,
+    replicate_secrets_in_namespace,
 )
 from .service_deployments import (
     DeploymentStatus,
@@ -108,7 +109,7 @@ __all__ = [
     "secret_exists",
     "create_secret",
     "delete_secret",
-    "list_secrets_in_namespace",
+    "list_secrets",
     "DeploymentStatus",
     "configure_service_stage_deployment",
     "create_deployment",
@@ -130,4 +131,5 @@ __all__ = [
     "api_exception_msg",
     "create_k8s_environment_variables",
     "EnvVars",
+    "replicate_secrets_in_namespace",
 ]
