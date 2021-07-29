@@ -163,7 +163,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "secret",
             "generic",
             f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
-            "test-bodywork-test-project-credentials",
+            "testsecrets-bodywork-test-project-credentials",
             "--from-literal=USERNAME=alex",
             "--from-literal=PASSWORD=alex123",
         ]
@@ -175,7 +175,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "label",
             "secret",
             f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
-            "test-bodywork-test-project-credentials",
+            "testsecrets-bodywork-test-project-credentials",
             "group=test",
         ]
     )
@@ -187,7 +187,7 @@ def add_secrets(request: FixtureRequest) -> None:
                 "delete",
                 "secret",
                 f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
-                "test-bodywork-test-project-credentials",
+                "testsecrets-bodywork-test-project-credentials",
             ]
         )
 

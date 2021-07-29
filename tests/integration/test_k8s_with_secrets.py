@@ -29,7 +29,7 @@ from bodywork.k8s import replicate_secrets_in_namespace, secret_exists
 def test_replicate_secrets_in_namespace():
     namespace = "bodywork-dev"
 
-    replicate_secrets_in_namespace(namespace, "test")
+    replicate_secrets_in_namespace(namespace, "testsecrets")
 
     assert secret_exists(namespace, "bodywork-test-project-credentials", "USERNAME")
 

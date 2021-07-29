@@ -98,11 +98,7 @@ def run_workflow(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
         )
         if config.project.secrets_group:
-            _log.info(
-                f"Replicating {config.project.secrets_group} secrets in "
-                f"namespace={namespace}"
-            )
-            k8s.replicate_secrets_in_namespace(namespace, config.project.secrets_group)
+            _copy_secrets_to_target_namespace(namespace, config.project.secrets_group)
         for step in workflow_dag:
             _log.info(f"attempting to execute DAG step={step}")
             batch_stages = [
@@ -261,6 +257,9 @@ def _run_batch_stages(
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
+    except TimeoutError as e:
+        _log.error("jobs failed to complete successfully")
+        raise e
     finally:
         for job_object in job_objects:
             job_name = job_object.metadata.name
@@ -506,3 +505,22 @@ def _ping_usage_stats_server() -> None:
             _log.info("Unable to contact usage stats server")
     except requests.exceptions.RequestException:
         _log.info("Unable to contact usage stats server")
+
+
+def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> None:
+    """Copies secrets from a specific group to the specified namespace.
+
+    param namespace: Namespace to copy secrets to.
+    param secrets_group: Group of secrets to copy.
+    """
+    try:
+        _log.info(
+            f"Replicating {secrets_group: str} secrets in " f"namespace={namespace}"
+        )
+        k8s.replicate_secrets_in_namespace(namespace, secrets_group)
+    except ApiException as e:
+        _log.error(
+            f"Unable to replicate secrets from group={secrets_group} to namespace="
+            f"{namespace} - {e}"
+        )
+        raise e

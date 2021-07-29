@@ -44,7 +44,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
 ):
     try:
-        process_two = run(
+        process_one = run(
             [
                 "bodywork",
                 "workflow",
@@ -68,14 +68,14 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             f"branch=master"
         )
         expected_output_5 = "successfully ran stage=stage_5"
-        assert expected_output_1 in process_two.stdout
-        assert expected_output_2 in process_two.stdout
-        assert expected_output_3 in process_two.stdout
-        assert expected_output_4 in process_two.stdout
-        assert expected_output_5 in process_two.stdout
-        assert process_two.returncode == 0
+        assert expected_output_1 in process_one.stdout
+        assert expected_output_2 in process_one.stdout
+        assert expected_output_3 in process_one.stdout
+        assert expected_output_4 in process_one.stdout
+        assert expected_output_5 in process_one.stdout
+        assert process_one.returncode == 0
 
-        process_three = run(
+        process_two = run(
             [
                 "bodywork",
                 "workflow",
@@ -86,31 +86,31 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_three.returncode == 0
+        assert process_two.returncode == 0
 
-        process_four = run(
+        process_three = run(
             ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
         assert (
             f"http://bodywork-test-project--stage-3.bodywork-test-project.svc"
-            in process_four.stdout
+            in process_three.stdout
         )
         assert (
             f"http://bodywork-test-project--stage-4.bodywork-test-project.svc"
-            in process_four.stdout
+            in process_three.stdout
         )
         assert (
             f"/bodywork-test-project/bodywork-test-project--stage-3"
-            in process_four.stdout
+            in process_three.stdout
         )
         assert (
             f"/bodywork-test-project/bodywork-test-project--stage-4"
-            not in process_four.stdout
+            not in process_three.stdout
         )
-        assert "5000" in process_four.stdout
-        assert process_four.returncode == 0
+        assert "5000" in process_three.stdout
+        assert process_three.returncode == 0
 
         stage_3_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
@@ -128,7 +128,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         response_stage_4 = requests.get(url=stage_4_service_external_url)
         assert response_stage_4.status_code == 404
 
-        process_five = run(
+        process_four = run(
             [
                 "bodywork",
                 "service",
@@ -140,19 +140,19 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True,
         )
         assert (
-            "deployment=bodywork-test-project--stage-3 deleted" in process_five.stdout
+            "deployment=bodywork-test-project--stage-3 deleted" in process_four.stdout
         )
         assert (
             f"service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_five.stdout
+            in process_four.stdout
         )  # noqa
         assert (
             f"ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
-            in process_five.stdout
+            in process_four.stdout
         )
-        assert process_five.returncode == 0
+        assert process_four.returncode == 0
 
-        process_six = run(
+        process_five = run(
             [
                 "bodywork",
                 "service",
@@ -163,24 +163,24 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "deployment=bodywork-test-project--stage-4 deleted" in process_six.stdout
+        assert "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
         assert (
             f"service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_six.stdout
+            in process_five.stdout
         )  # noqa
         assert (
             f"ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
-            not in process_six.stdout
+            not in process_five.stdout
         )  # noqa
-        assert process_six.returncode == 0
+        assert process_five.returncode == 0
 
-        process_seven = run(
+        process_six = run(
             ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_seven.stdout == ""
-        assert process_seven.returncode == 0
+        assert process_six.stdout == ""
+        assert process_six.returncode == 0
 
     except Exception as e:
         assert False

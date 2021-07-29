@@ -174,7 +174,7 @@ def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]
         label_selector=f"{SECRET_GROUP_LABEL}={group}",
     )
     secret_data_base64 = {
-        f"{s.metadata.name}": s.string_data if s.string_data else s.data
+        s.metadata.name: s.string_data if s.string_data else s.data
         for s in secrets.items
     }
     secret_data_decoded = {

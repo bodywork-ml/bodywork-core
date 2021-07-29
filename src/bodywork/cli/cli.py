@@ -207,7 +207,7 @@ def cli() -> None:
         required=False,
         type=str,
         default="",
-        help="The secrets group this secret belong in.",
+        help="The secrets group this secret belongs in.",
     )
     secret_cmd_parser.add_argument(
         "--name", type=str, default="", help="The name given to the Kubernetes secret."
