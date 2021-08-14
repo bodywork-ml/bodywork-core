@@ -18,15 +18,16 @@
 This module contains functions for managing service deployments that have
 been created as part of executed workflows.
 """
+from typing import Optional
 from .. import k8s
 
 
-def display_service_deployments_in_namespace(namespace: str) -> None:
+def display_service_deployments(namespace: Optional[str]) -> None:
     """Print active service deployments to stdout.
 
     :param namespace: Namespace in which to look for deployments.
     """
-    if not k8s.namespace_exists(namespace):
+    if namespace and not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
     service_deployments = k8s.list_service_stage_deployments(namespace)

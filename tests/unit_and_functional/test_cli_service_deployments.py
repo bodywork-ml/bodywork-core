@@ -24,7 +24,7 @@ from _pytest.capture import CaptureFixture
 
 from bodywork.cli.service_deployments import (
     delete_service_deployment_in_namespace,
-    display_service_deployments_in_namespace,
+    display_service_deployments,
 )
 
 
@@ -33,7 +33,7 @@ def test_display_service_deployments_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    display_service_deployments_in_namespace("bodywork-dev")
+    display_service_deployments("bodywork-dev")
     captured_one = capsys.readouterr()
     assert "namespace=bodywork-dev could not be found" in captured_one.out
 
@@ -52,7 +52,7 @@ def test_display_service_deployments_in_namespace(
             "ingress_route": "/bodywork-dev/bodywork-test-project",
         }
     }
-    display_service_deployments_in_namespace("bodywork-dev")
+    display_service_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
     assert re.findall(r"REPLICAS_AVAILABLE\s+1", captured_two.out)
     assert re.findall(r"REPLICAS_UNAVAILABLE\s+0", captured_two.out)

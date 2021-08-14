@@ -42,7 +42,7 @@ from .workflow_jobs import (
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
-    display_service_deployments_in_namespace,
+    display_service_deployments,
 )
 from .secrets import (
     create_secret,
@@ -185,7 +185,7 @@ def cli() -> None:
     service_cmd_parser.add_argument(
         "--namespace",
         "--ns",
-        required=True,
+        required=False,
         type=str,
         help="Kubernetes namespace to operate in.",
     )
@@ -474,9 +474,12 @@ def service(args: Namespace) -> None:
     elif command == "delete":
         load_kubernetes_config()
         delete_service_deployment_in_namespace(namespace, name)
+    elif name is not None:
+        load_kubernetes_config()
+        display_service_deployments(namespace)
     else:
         load_kubernetes_config()
-        display_service_deployments_in_namespace(namespace)
+        display_service_deployments()
     sys.exit(0)
 
 
