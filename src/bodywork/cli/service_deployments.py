@@ -22,7 +22,7 @@ from typing import Optional
 from .. import k8s
 
 
-def display_service_deployments(namespace: Optional[str]) -> None:
+def display_service_deployments(namespace: Optional[str] = None) -> None:
     """Print active service deployments to stdout.
 
     :param namespace: Namespace in which to look for deployments.
