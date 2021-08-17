@@ -491,10 +491,14 @@ def secret(args: Namespace) -> None:
     group = args.group
     name = args.name
     key_value_strings = args.data
-    if (command == "create" or command == "delete" or command == "update") and name == "":
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and name == "":
         print("please specify the name of the secret")
         sys.exit(1)
-    if (command == "create" or command == "delete" or command == "update") and group == "":
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and group == "":
         print("please specify the secret group the secret belongs to")
         sys.exit(1)
     elif (command == "create" or command == "update") and key_value_strings == []:
@@ -515,7 +519,9 @@ def secret(args: Namespace) -> None:
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
             )
         else:
-            update_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values)
+            update_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+            )
     elif command == "delete":
         load_kubernetes_config()
         delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
