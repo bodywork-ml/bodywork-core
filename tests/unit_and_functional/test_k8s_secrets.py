@@ -29,6 +29,7 @@ from bodywork.k8s.secrets import (
     delete_secret,
     list_secrets,
     secret_exists,
+    update_secret,
 )
 from bodywork.constants import SECRET_GROUP_LABEL
 
@@ -101,6 +102,25 @@ def test_create_secret_tries_to_create_secret_with_k8s_api(
                 namespace="bodywork-dev",
                 name="pytest-secret",
                 labels={SECRET_GROUP_LABEL: "xyz"},
+            ),
+            string_data={"KEY": "value"},
+        ),
+    )
+
+
+@patch("kubernetes.client.CoreV1Api")
+def test_update_secret_updates_secret_with_k8s_api(
+    mock_k8s_core_api: MagicMock,
+):
+    update_secret("bodywork-dev", "test-pytest-secret", {"KEY": "value"})
+
+    mock_k8s_core_api().patch_namespaced_secret.assert_called_once_with(
+        "test-pytest-secret",
+        "bodywork-dev",
+        kubernetes.client.V1Secret(
+            metadata=kubernetes.client.V1ObjectMeta(
+                namespace="bodywork-dev",
+                name="test-pytest-secret",
             ),
             string_data={"KEY": "value"},
         ),

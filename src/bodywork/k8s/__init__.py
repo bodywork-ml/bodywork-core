@@ -55,6 +55,7 @@ from .secrets import (
     delete_secret,
     list_secrets,
     replicate_secrets_in_namespace,
+    update_secret,
 )
 from .service_deployments import (
     DeploymentStatus,
@@ -132,4 +133,5 @@ __all__ = [
     "create_k8s_environment_variables",
     "EnvVars",
     "replicate_secrets_in_namespace",
+    "update_secret",
 ]

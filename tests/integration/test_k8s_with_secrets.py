@@ -34,6 +34,27 @@ def test_replicate_secrets_in_namespace():
     assert secret_exists(namespace, "bodywork-test-project-credentials", "USERNAME")
 
 
+@mark.usefixtures("add_secrets")
+@mark.usefixtures("setup_cluster")
+def test_update_secret():
+    process_one = run(
+        [
+            "bodywork",
+            "secret",
+            "update",
+            "--group=testsecrets",
+            "--name=bodywork-test-project-credentials",
+            "--data",
+            "PASSWORD=updated",
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+
+    assert process_one.returncode == 0
+    assert "secret=bodywork-test-project-credentials in group=testsecrets updated" in process_one.stdout
+
+
 @mark.usefixtures("setup_cluster")
 def test_cli_secret_handler_crud(test_namespace: str):
 

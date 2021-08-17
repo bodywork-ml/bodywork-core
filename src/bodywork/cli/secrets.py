@@ -79,6 +79,30 @@ def create_secret(
     print(f"secret={secret_name} created in group={group}")
 
 
+def update_secret(
+    namespace: str, group: str, secret_name: str, keys_and_values: Dict[str, str]
+) -> None:
+    """Update a secret within a k8s namespace.
+
+    :param namespace: Namespace in which to look for secrets.
+    :param group: The group the secret belongs to.
+    :param secret_name: The name of the secret to update.
+    :param keys_and_values:
+    """
+    if not k8s.namespace_exists(namespace):
+        print(f"namespace={namespace} could not be found on k8s cluster")
+        return None
+    if not k8s.secret_exists(
+        namespace, _create_complete_secret_name(group, secret_name)
+    ):
+        print(f"secret={secret_name} could not be found in group={group}")
+        return None
+    k8s.update_secret(
+        namespace, _create_complete_secret_name(group, secret_name), keys_and_values
+    )
+    print(f"secret={secret_name} in group={group} updated")
+
+
 def delete_secret(namespace: str, group: str, secret_name: str) -> None:
     """Delete a secret within a k8s namespace.
 

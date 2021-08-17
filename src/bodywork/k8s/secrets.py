@@ -152,6 +152,26 @@ def create_secret(
     k8s.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
 
 
+def update_secret(
+    namespace: str, name: str, keys_and_values: Dict[str, str]
+) -> None:
+    """Update an existing secret.
+
+    :param namespace: Namespace the secret is in.
+    :param name: The name of the secret'.
+    :param keys_and_values: Mapping of secret keys (or variable names)
+        and their values.
+    """
+    secret = k8s.V1Secret(
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace,
+            name=make_valid_k8s_name(name),
+        ),
+        string_data=keys_and_values,
+    )
+    k8s.CoreV1Api().patch_namespaced_secret(name, namespace, secret)
+
+
 def delete_secret(namespace: str, name: str) -> None:
     """Delete a secret from within a namespace.
 
@@ -169,10 +189,13 @@ def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]
     :param group: Group of secrets to list.
 
     """
-    secrets = k8s.CoreV1Api().list_namespaced_secret(
-        namespace=namespace,
-        label_selector=f"{SECRET_GROUP_LABEL}={group}",
-    )
+    if group is None:
+        secrets = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
+    else:
+        secrets = k8s.CoreV1Api().list_namespaced_secret(
+            namespace=namespace,
+            label_selector=f"{SECRET_GROUP_LABEL}={group}",
+        )
     secret_data_base64 = {
         s.metadata.name: s.string_data if s.string_data else s.data
         for s in secrets.items

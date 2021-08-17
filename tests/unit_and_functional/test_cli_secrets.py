@@ -27,6 +27,7 @@ from bodywork.cli.secrets import (
     delete_secret,
     display_secrets,
     parse_cli_secrets_strings,
+    update_secret,
 )
 
 
@@ -75,6 +76,26 @@ def test_create_secrets_in_namespace(
 
 
 @patch("bodywork.cli.secrets.k8s")
+def test_can_update_secret(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    update_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
+    captured_one = capsys.readouterr()
+
+    assert "secret=test-credentials in group=xyz updated" in captured_one.out
+
+
+@patch("bodywork.cli.secrets.k8s")
+def test_update_secret_prints_message_secret_does_not_exist(
+    mock_k8s_module: MagicMock, capsys: CaptureFixture
+):
+    mock_k8s_module.secret_exists.return_value = False
+
+    update_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
+
+    captured_one = capsys.readouterr()
+    assert "secret=test-credentials could not be found in group=xyz" in captured_one.out
+
+
+@patch("bodywork.cli.secrets.k8s")
 def test_delete_secrets_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
@@ -94,13 +115,14 @@ def test_delete_secrets_in_namespace(
     mock_k8s_module.delete_secret.side_effect = None
     delete_secret("the-namespace", "xyz", "test-credentials")
     captured_three = capsys.readouterr()
-    assert "test-credentials in group=xyz deleted from namespace=the-namespace" in captured_three.out
+    assert (
+        "test-credentials in group=xyz deleted from namespace=the-namespace"
+        in captured_three.out
+    )
 
 
 @patch("bodywork.cli.secrets.k8s")
-def test_display_secrets(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture
-):
+def test_display_secrets(mock_k8s_module: MagicMock, capsys: CaptureFixture):
     mock_k8s_module.list_secrets.return_value = {
         "PROD-test-credentials": {"USERNAME": "alex", "PASSWORD": "alex123"},
         "DEV-more-test-credentials": {"FOO": "bar"},
