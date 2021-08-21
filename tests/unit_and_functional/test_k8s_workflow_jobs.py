@@ -98,7 +98,7 @@ def test_configure_workflow_job(mock_random: MagicMock):
     )
 
 
-@patch("k8s.BatchV1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
 def test_create_workflow_job_tries_to_create_workflow_job_with_k8s_api(
     mock_k8s_batchv1_api: MagicMock, workflow_job_object: k8s.V1Job
 ):
@@ -235,7 +235,7 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     )
 
 
-@patch("k8s.BatchV1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
 def test_list_workflow_jobs_returns_jobs_summary_info(
     mock_k8s_batchv1_api: MagicMock,
 ):
