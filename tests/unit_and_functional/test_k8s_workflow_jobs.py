@@ -235,7 +235,7 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     )
 
 
-@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1Api")
 def test_list_workflow_jobs_returns_jobs_summary_info(
     mock_k8s_batchv1_api: MagicMock,
 ):

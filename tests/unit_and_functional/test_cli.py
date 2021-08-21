@@ -334,7 +334,7 @@ def test_cli_cronjob_handler_error_handling():
 
 
 def test_cronjob_update_error_handling():
-    process_seven = run(
+    process_one = run(
         [
             "bodywork",
             "cronjob",
@@ -347,9 +347,9 @@ def test_cronjob_update_error_handling():
     )
     assert (
         "Please specify both --git-repo-url and --git-repo-branch."
-        in process_seven.stdout
+        in process_one.stdout
     )
-    assert process_seven.returncode == 1
+    assert process_one.returncode == 1
 
 
 def test_services_subcommand_exists():
