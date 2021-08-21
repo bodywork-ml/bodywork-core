@@ -58,14 +58,14 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         expected_output_1 = (
             "attempting to run workflow for "
             "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            f"branch=master"
+            "branch=master"
         )
         expected_output_2 = "successfully ran stage=stage_1"
         expected_output_3 = "attempting to run stage=stage_4"
         expected_output_4 = (
             "successfully ran workflow for "
             "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            f"branch=master"
+            "branch=master"
         )
         expected_output_5 = "successfully ran stage=stage_5"
         assert expected_output_1 in process_one.stdout
@@ -89,24 +89,24 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_two.returncode == 0
 
         process_three = run(
-            ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
+            ["bodywork", "service", "display", "--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
         assert (
-            f"http://bodywork-test-project--stage-3.bodywork-test-project.svc"
+            "http://bodywork-test-project--stage-3.bodywork-test-project.svc"
             in process_three.stdout
         )
         assert (
-            f"http://bodywork-test-project--stage-4.bodywork-test-project.svc"
+            "http://bodywork-test-project--stage-4.bodywork-test-project.svc"
             in process_three.stdout
         )
         assert (
-            f"/bodywork-test-project/bodywork-test-project--stage-3"
+            "/bodywork-test-project/bodywork-test-project--stage-3"
             in process_three.stdout
         )
         assert (
-            f"/bodywork-test-project/bodywork-test-project--stage-4"
+            "/bodywork-test-project/bodywork-test-project--stage-4"
             not in process_three.stdout
         )
         assert "5000" in process_three.stdout
@@ -133,7 +133,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "service",
                 "delete",
-                f"--namespace=bodywork-test-project",
+                "--namespace=bodywork-test-project",
                 "--name=bodywork-test-project--stage-3",
             ],
             encoding="utf-8",
@@ -143,11 +143,11 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             "deployment=bodywork-test-project--stage-3 deleted" in process_four.stdout
         )
         assert (
-            f"service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
+            "service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
             in process_four.stdout
         )  # noqa
         assert (
-            f"ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
+            "ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
             in process_four.stdout
         )
         assert process_four.returncode == 0
@@ -157,7 +157,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "service",
                 "delete",
-                f"--namespace=bodywork-test-project",
+                "--namespace=bodywork-test-project",
                 "--name=bodywork-test-project--stage-4",
             ],
             encoding="utf-8",
@@ -165,17 +165,17 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         )
         assert "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
         assert (
-            f"service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
+            "service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
             in process_five.stdout
         )  # noqa
         assert (
-            f"ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
+            "ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
             not in process_five.stdout
         )  # noqa
         assert process_five.returncode == 0
 
         process_six = run(
-            ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
+            ["bodywork", "service", "display", "--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -329,12 +329,12 @@ def test_workflow_with_ssh_github_connectivity(
         expected_output_1 = (
             "attempting to run workflow for "
             "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            f"branch=master"
+            "branch=master"
         )
         expected_output_2 = (
             "successfully ran workflow for "
             "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            f"branch=master"
+            "branch=master"
         )
         expected_output_3 = "successfully ran stage=stage_1"
         assert expected_output_1 in process_one.stdout
@@ -402,7 +402,7 @@ def test_deployment_of_remote_workflows():
 
 
 @mark.usefixtures("setup_cluster")
-def test_cli_cronjob_handler_crud(test_namespace: str):
+def test_cli_cronjob_handler_crud():
     process_one = run(
         [
             "bodywork",
@@ -421,17 +421,33 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
     assert process_one.returncode == 0
 
     process_two = run(
+        [
+            "bodywork",
+            "cronjob",
+            "update",
+            "--name=bodywork-test-project",
+            "--schedule=0,0 1 * * *",
+            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+            "--git-repo-branch=main"
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert "cronjob=bodywork-test-project updated" in process_two.stdout
+    assert process_two.returncode == 0
+
+    process_three = run(
         ["bodywork", "cronjob", "display"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "bodywork-test-project" in process_two.stdout
-    assert "0,30 * * * *" in process_two.stdout
-    assert "https://github.com/bodywork-ml/bodywork-test-project" in process_two.stdout
-    assert "master" in process_two.stdout
-    assert process_two.returncode == 0
+    assert "bodywork-test-project" in process_three.stdout
+    assert "0,0 1 * * *" in process_three.stdout
+    assert "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    assert "main" in process_three.stdout
+    assert process_three.returncode == 0
 
-    process_three = run(
+    process_four = run(
         [
             "bodywork",
             "cronjob",
@@ -441,16 +457,16 @@ def test_cli_cronjob_handler_crud(test_namespace: str):
         encoding="utf-8",
         capture_output=True,
     )
-    assert "cronjob=bodywork-test-project deleted" in process_three.stdout
-    assert process_three.returncode == 0
+    assert "cronjob=bodywork-test-project deleted" in process_four.stdout
+    assert process_four.returncode == 0
 
-    process_four = run(
+    process_five = run(
         ["bodywork", "cronjob", "display"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "" in process_four.stdout
-    assert process_four.returncode == 0
+    assert "" in process_five.stdout
+    assert process_five.returncode == 0
 
 
 def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
