@@ -425,6 +425,11 @@ def cronjob(args: Namespace) -> None:
     elif command == "create" and not git_repo_url:
         print("please specify Git repo URL for the cronjob you want to create")
         sys.exit(1)
+    elif command == "update" and (git_repo_url and not git_repo_branch) or (
+            not git_repo_url and git_repo_branch
+    ):
+        print("Please specify both --git-repo-url and --git-repo-branch.")
+        sys.exit(1)
 
     load_kubernetes_config()
     if command == "create":
@@ -444,11 +449,6 @@ def cronjob(args: Namespace) -> None:
             history_limit,
         )
     elif command == "update":
-        if (git_repo_url and not git_repo_branch) or (
-            not git_repo_url and git_repo_branch
-        ):
-            print("Please specify both --git-repo-url and --git-repo-branch.")
-            sys.exit(1)
         update_workflow_cronjob_in_namespace(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             name,
