@@ -102,17 +102,17 @@ def cli() -> None:
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the workflow job."
+        "--name", type=str, help="The name given to the workflow job."
     )
     deployment_cmd_parser.add_argument(
         "--git-repo-url",
         type=str,
-        default="",
         help="Git repository URL containing the Bodywork project.",
     )
     deployment_cmd_parser.add_argument(
         "--git-repo-branch",
         type=str,
+        default="master",
         help="Git repository branch to run.",
     )
     deployment_cmd_parser.add_argument(
@@ -354,10 +354,10 @@ def deployment(args: Namespace) -> None:
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
 
-    if command == "create" and git_repo_url == "":
+    if command == "create" and not git_repo_url:
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
-    if command != "create" and name == "":
+    if command != "create" and not name:
         print("please specify --name for the deployment job")
         sys.exit(1)
     if command == "create":
