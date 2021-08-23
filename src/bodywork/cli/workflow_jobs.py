@@ -45,7 +45,7 @@ def create_workflow_job_in_namespace(
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    if _is_existing_workflow_job(namespace, job_name):
+    if job_name and _is_existing_workflow_job(namespace, job_name):
         print(f"workflow job={job_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
