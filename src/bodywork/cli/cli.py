@@ -381,9 +381,9 @@ def deployment(args: Namespace) -> None:
                 sys.exit(1)
             create_workflow_job_in_namespace(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+                name,
                 git_repo_url,
                 git_repo_branch,
-                name,
                 retries,
             )
     elif command == "logs":

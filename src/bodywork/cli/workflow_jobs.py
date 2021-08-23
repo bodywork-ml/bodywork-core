@@ -25,9 +25,9 @@ from .. import k8s
 
 def create_workflow_job_in_namespace(
     namespace: str,
+    job_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
-    job_name: str = None,
     retries: int = 2,
 ) -> None:
     """Create a new workflow job within a namespace.
