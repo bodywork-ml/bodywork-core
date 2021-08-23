@@ -383,6 +383,7 @@ def deployment(args: Namespace) -> None:
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 git_repo_url,
                 git_repo_branch,
+                name,
                 retries,
             )
     elif command == "logs":
