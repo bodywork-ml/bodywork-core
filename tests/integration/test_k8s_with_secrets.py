@@ -55,6 +55,23 @@ def test_update_secret():
     assert "secret=bodywork-test-project-credentials in group=testsecrets updated" in process_one.stdout
 
 
+@mark.usefixtures("add_secrets")
+@mark.usefixtures("setup_cluster")
+def test_display_all_secrets():
+    process_one = run(
+        [
+            "bodywork",
+            "secret",
+            "display",
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+
+    assert process_one.returncode == 0
+    assert "testsecrets-bodywork-test-project-credentials" in process_one.stdout
+
+
 @mark.usefixtures("setup_cluster")
 def test_cli_secret_handler_crud(test_namespace: str):
 

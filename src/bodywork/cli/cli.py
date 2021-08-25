@@ -207,11 +207,10 @@ def cli() -> None:
         "--group",
         required=False,
         type=str,
-        default="",
         help="The secrets group this secret belongs in.",
     )
     secret_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the Kubernetes secret."
+        "--name", type=str, help="The name given to the Kubernetes secret."
     )
     secret_cmd_parser.add_argument(
         "--data",
@@ -493,12 +492,12 @@ def secret(args: Namespace) -> None:
     key_value_strings = args.data
     if (
         command == "create" or command == "delete" or command == "update"
-    ) and name == "":
+    ) and not name:
         print("please specify the name of the secret")
         sys.exit(1)
     if (
         command == "create" or command == "delete" or command == "update"
-    ) and group == "":
+    ) and not group:
         print("please specify the secret group the secret belongs to")
         sys.exit(1)
     elif (command == "create" or command == "update") and key_value_strings == []:
@@ -533,7 +532,7 @@ def secret(args: Namespace) -> None:
         display_secrets(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             group,
-            secret=name if name != "" else None,
+            name,
         )
     sys.exit(0)
 
