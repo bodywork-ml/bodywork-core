@@ -204,7 +204,9 @@ def list_secrets(namespace: str, group: str = None) -> Dict[str, Secret]:
     secrets = {
         s.metadata.name: Secret(
             s.metadata.name,
-            s.metadata.labels[SECRET_GROUP_LABEL] if s.metadata.labels and SECRET_GROUP_LABEL in s.metadata.labels else None,
+            s.metadata.labels[SECRET_GROUP_LABEL]
+            if s.metadata.labels and SECRET_GROUP_LABEL in s.metadata.labels
+            else None,
             s.string_data if s.string_data else s.data,
         )
         for s in result.items
