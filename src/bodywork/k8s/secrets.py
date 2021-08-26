@@ -18,13 +18,20 @@
 High-level interface to the Kubernetes secrets API as used to create and
 manage secrets required by Bodywork stage containers.
 """
-from base64 import b64decode
 from typing import Dict, List, Optional, Tuple
+from base64 import b64decode
 
 from kubernetes import client as k8s
 
 from .utils import make_valid_k8s_name
 from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+
+
+class Secret:
+    def __init__(self, name: str, group: str, data: Dict[str, str]):
+        self.name = name
+        self.group = group
+        self.data = data
 
 
 def configure_env_vars_from_secrets(
@@ -152,9 +159,7 @@ def create_secret(
     k8s.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
 
 
-def update_secret(
-    namespace: str, name: str, keys_and_values: Dict[str, str]
-) -> None:
+def update_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) -> None:
     """Update an existing secret.
 
     :param namespace: Namespace the secret is in.
@@ -182,7 +187,7 @@ def delete_secret(namespace: str, name: str) -> None:
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
 
-def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]:
+def list_secrets(namespace: str, group: str = None) -> Dict[str, Secret]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.
@@ -190,20 +195,22 @@ def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]
 
     """
     if group is None:
-        secrets = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
+        result = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
     else:
-        secrets = k8s.CoreV1Api().list_namespaced_secret(
+        result = k8s.CoreV1Api().list_namespaced_secret(
             namespace=namespace,
             label_selector=f"{SECRET_GROUP_LABEL}={group}",
         )
-    secret_data_base64 = {
-        s.metadata.name: s.string_data if s.string_data else s.data
-        for s in secrets.items
+    secrets = {
+        s.metadata.name: Secret(
+            s.metadata.name,
+            s.metadata.labels[SECRET_GROUP_LABEL] if s.metadata.labels and SECRET_GROUP_LABEL in s.metadata.labels else None,
+            s.string_data if s.string_data else s.data,
+        )
+        for s in result.items
     }
-    secret_data_decoded = {
-        secret_name: {
-            key: b64decode(value).decode("utf-8") for key, value in secret_data.items()
-        }
-        for secret_name, secret_data in secret_data_base64.items()
-    }
-    return secret_data_decoded
+
+    for key, value in secrets.items():
+        for secret_key, secret_value in value.data.items():
+            value.data[secret_key] = b64decode(secret_value).decode("utf-8")
+    return secrets

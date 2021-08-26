@@ -22,6 +22,7 @@ from unittest.mock import MagicMock, patch
 from pytest import raises
 from _pytest.capture import CaptureFixture
 
+from bodywork.k8s.secrets import Secret
 from bodywork.cli.secrets import (
     create_secret,
     delete_secret,
@@ -124,23 +125,23 @@ def test_delete_secrets_in_namespace(
 @patch("bodywork.cli.secrets.k8s")
 def test_display_secrets(mock_k8s_module: MagicMock, capsys: CaptureFixture):
     mock_k8s_module.list_secrets.return_value = {
-        "PROD-test-credentials": {"USERNAME": "alex", "PASSWORD": "alex123"},
-        "DEV-more-test-credentials": {"FOO": "bar"},
+            "PROD-test-credentials": Secret("PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}),
+            "DEV-more-test-credentials": Secret("DEV-more-test-credentials", "DEV", {"FOO": "bar"}),
     }
 
     mock_k8s_module.namespace_exists.return_value = False
-    display_secrets("the-namespace", secret="test-credentials")
+    display_secrets("the-namespace", secret_name="test-credentials")
     captured_one = capsys.readouterr()
     assert "could not be found on k8s cluster" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    display_secrets("the-namespace", secret="test-credentials", group="PROD")
+    display_secrets("the-namespace", secret_name="test-credentials", group="PROD")
     captured_two = capsys.readouterr()
     assert "USERNAME=alex" in captured_two.out
     assert "PASSWORD=alex123" in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    display_secrets("the-namespace", secret="test-credentialz", group="DEV")
+    display_secrets("the-namespace", secret_name="test-credentialz", group="DEV")
     captured_three = capsys.readouterr()
     assert "cannot find secret=test-credentialz" in captured_three.out
 

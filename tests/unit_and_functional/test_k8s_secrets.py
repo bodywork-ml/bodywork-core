@@ -146,7 +146,7 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
             items=[
                 kubernetes.client.V1Secret(
                     metadata=kubernetes.client.V1ObjectMeta(
-                        namespace="bodywork-dev", name="pytest-secret", labels="xyz"
+                        namespace="bodywork-dev", name="xyz-pytest-secret", labels={f"{SECRET_GROUP_LABEL}": "xyz"}
                     ),
                     string_data={"ALEX": b"aW9hbm5pZGVz"},
                 )
@@ -157,5 +157,7 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
     mock_k8s_core_api().list_namespaced_secret.assert_called_once_with(
         namespace="bodywork-dev", label_selector=f"{SECRET_GROUP_LABEL}=xyz"
     )
+
     assert len(secrets) == 1
-    assert secrets["pytest-secret"]["ALEX"] == "ioannides"
+    assert secrets["xyz-pytest-secret"].name == "xyz-pytest-secret"
+    assert secrets["xyz-pytest-secret"].data["ALEX"] == "ioannides"

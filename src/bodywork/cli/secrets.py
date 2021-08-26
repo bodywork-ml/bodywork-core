@@ -123,36 +123,36 @@ def delete_secret(namespace: str, group: str, secret_name: str) -> None:
 
 
 def display_secrets(
-    namespace: str, group: Optional[str] = None, secret: Optional[str] = None
+    namespace: str, group: Optional[str] = None, secret_name: Optional[str] = None
 ) -> None:
     """Print secrets to stdout.
 
     :param namespace: Namespace in which to look for secrets.
     :param group: Group the secrets to display belong to.
-    :param secret: Display the available keys in just the secret with
+    :param secret_name: Display the available keys in just the secret with
         this name, defaults to None
     """
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    if secret and group is None:
+    if secret_name and group is None:
         print("please specify which secrets group the secret belongs to.")
         return None
     else:
         secrets = k8s.list_secrets(namespace, group)
-        if secret is not None:
+        if secret_name is not None:
             try:
-                print(f"\n-- {secret}:")
-                for secret_key, secret_value in secrets[
-                    _create_complete_secret_name(cast(str, group), secret)
-                ].items():
-                    print(f"-> {secret_key}={secret_value}".replace("\n", ""))
-            except KeyError:
-                print(f"cannot find secret={secret} in namespace={namespace}")
-        else:
-            for secret_name, secret_data in secrets.items():
                 print(f"\n-- {secret_name}:")
-                for secret_key, secret_value in secret_data.items():
+                for key, value in secrets[
+                    _create_complete_secret_name(cast(str, group), secret_name)
+                ].data.items():
+                    print(f"-> {key}={value}".replace("\n", ""))
+            except KeyError:
+                print(f"cannot find secret={secret_name} in namespace={namespace}")
+        else:
+            for key, value in secrets.items():
+                print(f"\n-- {key}:")
+                for secret_key, secret_value in value.data.items():
                     print(f"-> {secret_key}={secret_value}".replace("\n", ""))
 
 
