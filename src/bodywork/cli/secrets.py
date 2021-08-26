@@ -150,9 +150,9 @@ def display_secrets(
             except KeyError:
                 print(f"cannot find secret={secret_name} in namespace={namespace}")
         else:
-            for key, value in secrets.items():
+            for key, secret in secrets.items():
                 print(f"\n-- {key}:")
-                for secret_key, secret_value in value.data.items():
+                for secret_key, secret_value in secret.data.items():
                     print(f"-> {secret_key}={secret_value}".replace("\n", ""))
 
 
