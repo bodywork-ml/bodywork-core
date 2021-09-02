@@ -56,6 +56,7 @@ from .secrets import (
     list_secrets,
     replicate_secrets_in_namespace,
     update_secret,
+    Secret,
 )
 from .service_deployments import (
     DeploymentStatus,
@@ -134,4 +135,5 @@ __all__ = [
     "EnvVars",
     "replicate_secrets_in_namespace",
     "update_secret",
+    "Secret",
 ]
