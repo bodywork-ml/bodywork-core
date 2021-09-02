@@ -20,6 +20,7 @@ manage secrets required by Bodywork stage containers.
 """
 from typing import Dict, List, Optional, Tuple
 from base64 import b64decode
+from pydantic.dataclasses import dataclass
 
 from kubernetes import client as k8s
 
@@ -27,6 +28,7 @@ from .utils import make_valid_k8s_name
 from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
+@dataclass
 class Secret:
     def __init__(self, name: str, group: str, data: Dict[str, str]):
         self.name = name
