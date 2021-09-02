@@ -20,7 +20,7 @@ manage secrets required by Bodywork stage containers.
 """
 from typing import Dict, List, Optional, Tuple
 from base64 import b64decode
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 
 from kubernetes import client as k8s
 
