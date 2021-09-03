@@ -135,12 +135,12 @@ def display_secrets(
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    if secret_name and group is None:
+    if secret_name and not group:
         print("please specify which secrets group the secret belongs to.")
         return None
     else:
         secrets = k8s.list_secrets(namespace, group)
-        if secret_name is not None:
+        if secret_name:
             try:
                 print(f"\n-- {secret_name}:")
                 for key, value in secrets[
