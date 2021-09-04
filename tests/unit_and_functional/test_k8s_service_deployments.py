@@ -491,16 +491,16 @@ def test_list_service_stage_deployments_returns_service_stage_info(
 @patch("kubernetes.client.AppsV1Api")
 def test_list_service_stage_deployments_returns_all_services_on_cluster(
     mock_k8s_apps_api: MagicMock,
-    service_stage_deployment_object1: kubernetes.client.V1Deployment,
+    service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
-    service_namespace = service_stage_deployment_object1.metadata.namespace
-    service_name = service_stage_deployment_object1.metadata.name
+    service_namespace = service_stage_deployment_object.metadata.namespace
+    service_name = service_stage_deployment_object.metadata.name
 
-    service_stage_deployment_object1.status = kubernetes.client.V1DeploymentStatus(
+    service_stage_deployment_object.status = kubernetes.client.V1DeploymentStatus(
         available_replicas=1, unavailable_replicas=None
     )
 
-    service_stage_deployment_object2 = copy.deepcopy(service_stage_deployment_object1)
+    service_stage_deployment_object2 = copy.deepcopy(service_stage_deployment_object)
     service_stage_deployment_object2.metadata.name = "deployment-two"
     service_stage_deployment_object2.metadata.namespace = "abc"
 
@@ -531,7 +531,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
             mock_k8s_apps_api().list_deployment_for_all_namespaces.return_value = (
                 kubernetes.client.V1DeploymentList(
                     items=[
-                        service_stage_deployment_object1,
+                        service_stage_deployment_object,
                         service_stage_deployment_object2,
                     ]
                 )
