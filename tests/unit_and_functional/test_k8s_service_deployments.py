@@ -491,17 +491,17 @@ def test_list_service_stage_deployments_returns_service_stage_info(
 @patch("kubernetes.client.AppsV1Api")
 def test_list_service_stage_deployments_returns_all_services_on_cluster(
     mock_k8s_apps_api: MagicMock,
-    service_stage_deployment_object: kubernetes.client.V1Deployment,
+    service_stage_deployment_object1: kubernetes.client.V1Deployment,
 ):
-    service_namespace = service_stage_deployment_object.metadata.namespace
-    service_name = service_stage_deployment_object.metadata.name
+    service_namespace = service_stage_deployment_object1.metadata.namespace
+    service_name = service_stage_deployment_object1.metadata.name
 
-    service_stage_deployment_object.status = kubernetes.client.V1DeploymentStatus(
+    service_stage_deployment_object1.status = kubernetes.client.V1DeploymentStatus(
         available_replicas=1, unavailable_replicas=None
     )
 
-    service_stage_deployment_object2 = copy.deepcopy(service_stage_deployment_object)
-    service_stage_deployment_object2.metadata.name = "deployment two"
+    service_stage_deployment_object2 = copy.deepcopy(service_stage_deployment_object1)
+    service_stage_deployment_object2.metadata.name = "deployment-two"
     service_stage_deployment_object2.metadata.namespace = "abc"
 
     service_stage_service_object = kubernetes.client.V1Service(
@@ -511,9 +511,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
     )
 
     service_stage_service_object_2 = kubernetes.client.V1Service(
-        metadata=kubernetes.client.V1ObjectMeta(
-            namespace="abc", name="deployment two"
-        )
+        metadata=kubernetes.client.V1ObjectMeta(namespace="abc", name="deployment-two")
     )
 
     service_stage_ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
@@ -532,12 +530,15 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
         with patch("kubernetes.client.ExtensionsV1beta1Api") as mock_k8s_ext_api:
             mock_k8s_apps_api().list_deployment_for_all_namespaces.return_value = (
                 kubernetes.client.V1DeploymentList(
-                    items=[service_stage_deployment_object, service_stage_deployment_object2]
+                    items=[
+                        service_stage_deployment_object1,
+                        service_stage_deployment_object2,
+                    ]
                 )
             )
             mock_k8s_core_api().list_namespaced_service.side_effect = [
                 kubernetes.client.V1ServiceList(items=[service_stage_service_object]),
-                kubernetes.client.V1ServiceList(items=[service_stage_service_object_2])
+                kubernetes.client.V1ServiceList(items=[service_stage_service_object_2]),
             ]
             mock_k8s_ext_api().list_namespaced_ingress.return_value = (
                 kubernetes.client.ExtensionsV1beta1IngressList(
@@ -547,7 +548,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
             deployment_info = list_service_stage_deployments()
             mock_k8s_apps_api().list_deployment_for_all_namespaces.assert_called_once()
             assert service_name in deployment_info.keys()
-            assert "deployment two" in deployment_info.keys()
+            assert "deployment-two" in deployment_info.keys()
 
 
 def test_cluster_service_url(

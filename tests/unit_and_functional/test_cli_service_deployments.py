@@ -27,6 +27,20 @@ from bodywork.cli.service_deployments import (
     display_service_deployments,
 )
 
+Test_ServiceStageDeployment = {
+    "bodywork-test-project--serve": {
+        "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
+        "service_port": 5000,
+        "service_exposed": "true",
+        "available_replicas": 1,
+        "unavailable_replicas": 0,
+        "git_url": "project_repo_url",
+        "git_branch": "project_repo_branch",
+        "has_ingress": "true",
+        "ingress_route": "/bodywork-dev/bodywork-test-project",
+    }
+}
+
 
 @patch("bodywork.cli.service_deployments.k8s")
 def test_display_service_deployments_in_namespace(
@@ -38,20 +52,9 @@ def test_display_service_deployments_in_namespace(
     assert "namespace=bodywork-dev could not be found" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
-    service_url = "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local"
-    mock_k8s_module.list_service_stage_deployments.return_value = {
-        "bodywork-test-project--serve": {
-            "service_url": service_url,
-            "service_port": 5000,
-            "service_exposed": "true",
-            "available_replicas": 1,
-            "unavailable_replicas": 0,
-            "git_url": "project_repo_url",
-            "git_branch": "project_repo_branch",
-            "has_ingress": "true",
-            "ingress_route": "/bodywork-dev/bodywork-test-project",
-        }
-    }
+    mock_k8s_module.list_service_stage_deployments.return_value = (
+        Test_ServiceStageDeployment
+    )
     display_service_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
     assert re.findall(r"REPLICAS_AVAILABLE\s+1", captured_two.out)
@@ -66,6 +69,33 @@ def test_display_service_deployments_in_namespace(
     assert re.findall(
         r"INGRESS_ROUTE\s+/bodywork-dev/bodywork-test-project", captured_two.out
     )
+
+
+@patch("bodywork.cli.service_deployments.k8s")
+def test_display_all_service_deployments(
+    mock_k8s_module: MagicMock, capsys: CaptureFixture
+):
+    Test_ServiceStageDeployment["bodywork-test-project--second-service"] = {
+        "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
+        "service_port": 6000,
+        "service_exposed": "true",
+        "available_replicas": 1,
+        "unavailable_replicas": 0,
+        "git_url": "project_repo_url",
+        "git_branch": "project_repo_branch",
+        "has_ingress": "true",
+        "ingress_route": "/bodywork-dev/bodywork-test-project",
+    }
+
+    mock_k8s_module.list_service_stage_deployments.return_value = (
+        Test_ServiceStageDeployment
+    )
+    display_service_deployments()
+    captured_one = capsys.readouterr()
+    assert re.findall(r"bodywork-test-project--serve", captured_one.out)
+    assert re.findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
+    assert re.findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.service_deployments.k8s")
