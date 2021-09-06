@@ -474,10 +474,8 @@ def service(args: Namespace) -> None:
     load_kubernetes_config()
     if command == "delete":
         delete_service_deployment_in_namespace(namespace, name)
-    elif name:
-        display_service_deployments(namespace)
     else:
-        display_service_deployments()
+        display_service_deployments(namespace, name)
     sys.exit(0)
 
 

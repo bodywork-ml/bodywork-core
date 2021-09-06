@@ -327,7 +327,7 @@ def monitor_deployments_to_completion(
         monitor deployments - e.g. to allow deployments to be created.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
-    :return: True if all of the deployments are successfull.
+    :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
     start_time = time()
@@ -378,7 +378,8 @@ def list_service_stage_deployments(
             deployment.metadata.namespace, deployment.metadata.name
         )
         deployment_info[deployment.metadata.name] = {
-            "service_exposed": (exposed_as_cluster_service),
+            "namespace": deployment.metadata.namespace,
+            "service_exposed": exposed_as_cluster_service,
             "service_url": (
                 cluster_service_url(
                     deployment.metadata.namespace, deployment.metadata.name

@@ -157,13 +157,15 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "service",
                 "delete",
-                f"--namespace=bodywork-test-project",
+                "--namespace=bodywork-test-project",
                 "--name=bodywork-test-project--stage-4",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        assert "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
+        assert (
+            "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
+        )
         assert (
             f"service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
             in process_five.stdout
@@ -175,7 +177,12 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_five.returncode == 0
 
         process_six = run(
-            ["bodywork", "service", "display", f"--namespace=bodywork-test-project"],
+            [
+                "bodywork",
+                "service",
+                "display",
+                "--namespace=bodywork-test-project",
+            ],
             encoding="utf-8",
             capture_output=True,
         )
