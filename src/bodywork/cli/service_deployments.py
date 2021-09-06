@@ -44,7 +44,7 @@ def display_service_deployments(
             _print_service_deployment(data, name)
 
 
-def _print_service_deployment(data, name):
+def _print_service_deployment(data, name) -> None:
     print(
         f'\n{"-" * len(name)}-\n'
         f"{name}:\n"
