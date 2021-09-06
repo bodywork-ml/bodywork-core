@@ -21,14 +21,19 @@ import re
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
+from pytest import fixture
 
 from bodywork.cli.service_deployments import (
     delete_service_deployment_in_namespace,
     display_service_deployments,
 )
 
-Test_ServiceStageDeployment = {
+
+@fixture(scope="function")
+def test_service_stage_deployment():
+    return {
     "bodywork-test-project--serve": {
+        "namespace": "bodywork-dev",
         "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
         "service_port": 5000,
         "service_exposed": "true",
@@ -44,7 +49,8 @@ Test_ServiceStageDeployment = {
 
 @patch("bodywork.cli.service_deployments.k8s")
 def test_display_service_deployments_in_namespace(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture
+    mock_k8s_module: MagicMock, capsys: CaptureFixture,
+    test_service_stage_deployment
 ):
     mock_k8s_module.namespace_exists.return_value = False
     display_service_deployments("bodywork-dev")
@@ -53,7 +59,7 @@ def test_display_service_deployments_in_namespace(
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = (
-        Test_ServiceStageDeployment
+        test_service_stage_deployment
     )
     display_service_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
@@ -73,9 +79,11 @@ def test_display_service_deployments_in_namespace(
 
 @patch("bodywork.cli.service_deployments.k8s")
 def test_display_all_service_deployments(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture
+    mock_k8s_module: MagicMock, capsys: CaptureFixture,
+    test_service_stage_deployment
 ):
-    Test_ServiceStageDeployment["bodywork-test-project--second-service"] = {
+    test_service_stage_deployment["bodywork-test-project--second-service"] = {
+        "namespace": "bodywork-dev",
         "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
         "service_port": 6000,
         "service_exposed": "true",
@@ -88,7 +96,7 @@ def test_display_all_service_deployments(
     }
 
     mock_k8s_module.list_service_stage_deployments.return_value = (
-        Test_ServiceStageDeployment
+        test_service_stage_deployment
     )
     display_service_deployments()
     captured_one = capsys.readouterr()
@@ -100,9 +108,10 @@ def test_display_all_service_deployments(
 
 @patch("bodywork.cli.service_deployments.k8s")
 def test_display_service_deployment(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture
+    mock_k8s_module: MagicMock, capsys: CaptureFixture,
+        test_service_stage_deployment
 ):
-    Test_ServiceStageDeployment["bodywork-test-project--second-service"] = {
+    test_service_stage_deployment["bodywork-test-project--second-service"] = {
         "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
         "service_port": 6000,
         "service_exposed": "true",
@@ -114,7 +123,7 @@ def test_display_service_deployment(
         "ingress_route": "/bodywork-dev/bodywork-test-project",
     }
     mock_k8s_module.list_service_stage_deployments.return_value = (
-        Test_ServiceStageDeployment
+        test_service_stage_deployment
     )
 
     display_service_deployments(service_name="Missing-Service")
