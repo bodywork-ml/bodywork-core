@@ -202,18 +202,17 @@ def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secre
             namespace=namespace,
             label_selector=f"{SECRET_GROUP_LABEL}={group}",
         )
-    secrets = {
+    return {
         s.metadata.name: Secret(
             s.metadata.name,
             s.metadata.labels[SECRET_GROUP_LABEL]
             if s.metadata.labels and SECRET_GROUP_LABEL in s.metadata.labels
             else None,
-            s.string_data if s.string_data else s.data,
+            s.string_data
+            if s.string_data
+            else {
+                key: b64decode(value).decode("utf-8") for (key, value) in s.data.items()
+            },
         )
         for s in result.items
     }
-
-    for key, value in secrets.items():
-        for secret_key, secret_value in value.data.items():
-            value.data[secret_key] = b64decode(secret_value).decode("utf-8")
-    return secrets

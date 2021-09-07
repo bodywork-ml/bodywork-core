@@ -150,7 +150,7 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
                         name="xyz-pytest-secret",
                         labels={f"{SECRET_GROUP_LABEL}": "xyz"},
                     ),
-                    string_data={"ALEX": b"aW9hbm5pZGVz"},
+                    data={"ALEX": b"aW9hbm5pZGVz"},
                 )
             ]
         )
