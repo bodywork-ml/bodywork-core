@@ -19,6 +19,7 @@ This module contains functions for managing Kubernetes workflow jobs.
 They are targeted for use via the CLI.
 """
 import re
+from typing import Optional
 
 from .. import k8s
 
@@ -45,7 +46,7 @@ def create_workflow_job_in_namespace(
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    if job_name and _is_existing_workflow_job(namespace, job_name):
+    if _is_existing_workflow_job(namespace, job_name):
         print(f"workflow job={job_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
@@ -121,11 +122,11 @@ def create_workflow_cronjob(
 def update_workflow_cronjob_in_namespace(
     namespace: str,
     job_name: str,
-    schedule: str = None,
-    project_repo_url: str = None,
-    project_repo_branch: str = None,
-    retries: int = None,
-    workflow_job_history_limit: int = None,
+    schedule: Optional[str] = None,
+    project_repo_url: Optional[str] = None,
+    project_repo_branch: Optional[str] = None,
+    retries: Optional[int] = None,
+    workflow_job_history_limit: Optional[int] = None,
 ) -> None:
     """Update a new cronjob within a namespace.
 

@@ -21,7 +21,7 @@ to create and manage cronjobs that execute Bodywork project workflows.
 import os
 import random
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 
 from kubernetes import client as k8s
 
@@ -186,12 +186,12 @@ def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
 def update_workflow_cronjob(
     namespace: str,
     name: str,
-    schedule: str = None,
-    project_repo_url: str = None,
-    project_repo_branch: str = None,
-    retries: int = None,
-    successful_jobs_history_limit: int = None,
-    failed_jobs_history_limit: int = None,
+    schedule: Optional[str] = None,
+    project_repo_url: Optional[str] = None,
+    project_repo_branch: Optional[str] = None,
+    retries: Optional[int] = None,
+    successful_jobs_history_limit: Optional[int] = None,
+    failed_jobs_history_limit: Optional[int] = None,
 ) -> None:
     """Update a Bodywork workflow cronjob.
 
