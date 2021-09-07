@@ -30,10 +30,9 @@ from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 @dataclass
 class Secret:
-    def __init__(self, name: str, group: str, data: Dict[str, str]):
-        self.name = name
-        self.group = group
-        self.data = data
+    name: str
+    group: str
+    data: Dict[str, str]
 
 
 def configure_env_vars_from_secrets(
@@ -189,7 +188,7 @@ def delete_secret(namespace: str, name: str) -> None:
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
 
-def list_secrets(namespace: str, group: str = None) -> Dict[str, Secret]:
+def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secret]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.

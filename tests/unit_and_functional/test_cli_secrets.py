@@ -125,8 +125,12 @@ def test_delete_secrets_in_namespace(
 @patch("bodywork.cli.secrets.k8s")
 def test_display_secrets(mock_k8s_module: MagicMock, capsys: CaptureFixture):
     mock_k8s_module.list_secrets.return_value = {
-            "PROD-test-credentials": Secret("PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}),
-            "DEV-more-test-credentials": Secret("DEV-more-test-credentials", "DEV", {"FOO": "bar"}),
+        "PROD-test-credentials": Secret(
+            "PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}
+        ),
+        "DEV-more-test-credentials": Secret(
+            "DEV-more-test-credentials", "DEV", {"FOO": "bar"}
+        ),
     }
 
     mock_k8s_module.namespace_exists.return_value = False
