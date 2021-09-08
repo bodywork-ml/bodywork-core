@@ -22,7 +22,7 @@ project workflows.
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import kubernetes
+import kubernetes.client as k8s_client
 from pytest import fixture
 
 from bodywork.constants import (
@@ -37,30 +37,29 @@ from bodywork.k8s.workflow_jobs import (
     delete_workflow_cronjob,
     list_workflow_cronjobs,
     list_workflow_jobs,
+    update_workflow_cronjob,
 )
 
 
 @fixture(scope="session")
-def workflow_job_object() -> kubernetes.client.V1Job:
-    container = kubernetes.client.V1Container(
+def workflow_job_object() -> k8s_client.V1Job:
+    container = k8s_client.V1Container(
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
         image_pull_policy="Always",
         command=["bodywork", "workflow"],
         args=["bodywork-dev", "project_repo_url", "project_repo_branch"],
     )
-    pod_spec = kubernetes.client.V1PodSpec(
-        containers=[container], restart_policy="Never"
-    )
-    pod_template_spec = kubernetes.client.V1PodTemplateSpec(spec=pod_spec)
-    job_spec = kubernetes.client.V1JobSpec(
+    pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
+    pod_template_spec = k8s_client.V1PodTemplateSpec(spec=pod_spec)
+    job_spec = k8s_client.V1JobSpec(
         template=pod_template_spec,
         completions=1,
         backoff_limit=2,
         ttl_seconds_after_finished=BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
     )
-    job = kubernetes.client.V1Job(
-        metadata=kubernetes.client.V1ObjectMeta(
+    job = k8s_client.V1Job(
+        metadata=k8s_client.V1ObjectMeta(
             name="bodywork-test-project", namespace="bodywork-dev"
         ),
         spec=job_spec,
@@ -99,9 +98,9 @@ def test_configure_workflow_job(mock_random: MagicMock):
     )
 
 
-@patch("kubernetes.client.BatchV1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1Api")
 def test_create_workflow_job_tries_to_create_workflow_job_with_k8s_api(
-    mock_k8s_batchv1_api: MagicMock, workflow_job_object: kubernetes.client.V1Job
+    mock_k8s_batchv1_api: MagicMock, workflow_job_object: k8s_client.V1Job
 ):
     create_workflow_job(workflow_job_object)
     mock_k8s_batchv1_api().create_namespaced_job.assert_called_once_with(
@@ -110,36 +109,30 @@ def test_create_workflow_job_tries_to_create_workflow_job_with_k8s_api(
 
 
 @fixture(scope="session")
-def workflow_cronjob_object() -> kubernetes.client.V1Job:
-    container = kubernetes.client.V1Container(
+def workflow_cronjob_object() -> k8s_client.V1Job:
+    container = k8s_client.V1Container(
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
         image_pull_policy="Always",
         command=["bodywork", "workflow"],
         args=["project_repo_url", "project_repo_branch"],
     )
-    pod_spec = kubernetes.client.V1PodSpec(
-        containers=[container], restart_policy="Never"
-    )
-    pod_template_spec = kubernetes.client.V1PodTemplateSpec(spec=pod_spec)
-    job_spec = kubernetes.client.V1JobSpec(
-        template=pod_template_spec, completions=1, backoff_limit=2
-    )
-    job_template = kubernetes.client.V1beta1JobTemplateSpec(spec=job_spec)
-    cronjob_spec = kubernetes.client.V1beta1CronJobSpec(
+    pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
+    pod_template_spec = k8s_client.V1PodTemplateSpec(spec=pod_spec)
+    job_spec = k8s_client.V1JobSpec(template=pod_template_spec, completions=1, backoff_limit=2)
+    job_template = k8s_client.V1beta1JobTemplateSpec(spec=job_spec)
+    cronjob_spec = k8s_client.V1beta1CronJobSpec(
         schedule="0,30 * * * *",
         successful_jobs_history_limit=2,
         failed_jobs_history_limit=2,
         job_template=job_template,
     )
-    cronjob = kubernetes.client.V1beta1CronJob(
-        metadata=kubernetes.client.V1ObjectMeta(
+    cronjob = k8s_client.V1beta1CronJob(
+        metadata=k8s_client.V1ObjectMeta(
             name="bodywork-test-project", namespace="bodywork-dev"
         ),
         spec=cronjob_spec,
-        status=kubernetes.client.V1beta1CronJobStatus(
-            last_schedule_time=datetime(2020, 9, 15)
-        ),
+        status=k8s_client.V1beta1CronJobStatus(last_schedule_time=datetime(2020, 9, 15)),
     )
     return cronjob
 
@@ -157,7 +150,7 @@ def test_configure_workflow_cronjob():
         job_name="test-job",
     )
     assert cronjob_definition.metadata.namespace == "bodywork-deployment-jobs"
-    assert cronjob_definition.metadata.name == f"test-job"
+    assert cronjob_definition.metadata.name == "test-job"
     assert cronjob_definition.spec.schedule == "0,30 * * * *"
     assert cronjob_definition.spec.successful_jobs_history_limit == 2
     assert cronjob_definition.spec.failed_jobs_history_limit == 2
@@ -171,10 +164,10 @@ def test_configure_workflow_cronjob():
     )
 
 
-@patch("kubernetes.client.BatchV1beta1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
 def test_create_workflow_cronjob_tries_to_create_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
-    workflow_cronjob_object: kubernetes.client.V1beta1CronJob,
+    workflow_cronjob_object: k8s_client.V1beta1CronJob,
 ):
     create_workflow_cronjob(workflow_cronjob_object)
     mock_k8s_batchv1beta1_api().create_namespaced_cron_job.assert_called_once_with(
@@ -182,26 +175,55 @@ def test_create_workflow_cronjob_tries_to_create_job_with_k8s_api(
     )
 
 
-@patch("kubernetes.client.BatchV1beta1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
+def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
+    mock_k8s_batchv1beta1_api: MagicMock,
+):
+    pod_spec = k8s_client.V1PodSpec(
+        containers=[k8s_client.V1Container(name="bodywork", args=["fg", "test-branch"])],
+    )
+    job_spec = k8s_client.V1JobSpec(
+        template=k8s_client.V1PodTemplateSpec(spec=pod_spec),
+        backoff_limit=3,
+    )
+    job_template = k8s_client.V1beta1JobTemplateSpec(spec=k8s_client.V1Job(spec=job_spec).spec)
+    expected_result = k8s_client.V1beta1CronJob(
+        spec=k8s_client.V1beta1CronJobSpec(
+            job_template=job_template,
+            schedule="0 0 * * *",
+            successful_jobs_history_limit=1,
+            failed_jobs_history_limit=2,
+        )
+    )
+
+    update_workflow_cronjob(
+        "bodywork-ml", "test", "0 0 * * *", "fg", "test-branch", 3, 1, 2
+    )
+
+    mock_k8s_batchv1beta1_api().patch_namespaced_cron_job.assert_called_once_with(
+        "test", "bodywork-ml", expected_result
+    )
+
+
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
 def test_delete_workflow_cronjob_tries_to_delete_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
-    workflow_cronjob_object: kubernetes.client.V1beta1CronJob,
 ):
     delete_workflow_cronjob("bodywork-dev", "bodywork-test-project")
     mock_k8s_batchv1beta1_api().delete_namespaced_cron_job.assert_called_once_with(
         name="bodywork-test-project",
         namespace="bodywork-dev",
-        body=kubernetes.client.V1DeleteOptions(propagation_policy="Background"),
+        body=k8s_client.V1DeleteOptions(propagation_policy="Background"),
     )
 
 
-@patch("kubernetes.client.BatchV1beta1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1beta1Api")
 def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     mock_k8s_batchv1beta1_api: MagicMock,
-    workflow_cronjob_object: kubernetes.client.V1beta1CronJob,
+    workflow_cronjob_object: k8s_client.V1beta1CronJob,
 ):
     mock_k8s_batchv1beta1_api().list_namespaced_cron_job.return_value = (
-        kubernetes.client.V1beta1CronJobList(items=[workflow_cronjob_object])
+        k8s_client.V1beta1CronJobList(items=[workflow_cronjob_object])
     )
     cronjobs = list_workflow_cronjobs("bodywork-dev")
     assert cronjobs["bodywork-test-project"]["schedule"] == "0,30 * * * *"
@@ -213,45 +235,43 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     )
 
 
-@patch("kubernetes.client.BatchV1Api")
+@patch("bodywork.k8s.workflow_jobs.k8s.BatchV1Api")
 def test_list_workflow_jobs_returns_jobs_summary_info(
     mock_k8s_batchv1_api: MagicMock,
 ):
-    mock_k8s_batchv1_api().list_namespaced_job.return_value = (
-        kubernetes.client.V1JobList(
-            items=[
-                kubernetes.client.V1Job(
-                    metadata=kubernetes.client.V1ObjectMeta(name="workflow-job-12345"),
-                    status=kubernetes.client.V1JobStatus(
-                        start_time=datetime(2020, 10, 19, 12, 15),
-                        completion_time=None,
-                        active=1,
-                        succeeded=0,
-                        failed=0,
-                    ),
+    mock_k8s_batchv1_api().list_namespaced_job.return_value = k8s_client.V1JobList(
+        items=[
+            k8s_client.V1Job(
+                metadata=k8s_client.V1ObjectMeta(name="workflow-job-12345"),
+                status=k8s_client.V1JobStatus(
+                    start_time=datetime(2020, 10, 19, 12, 15),
+                    completion_time=None,
+                    active=1,
+                    succeeded=0,
+                    failed=0,
                 ),
-                kubernetes.client.V1Job(
-                    metadata=kubernetes.client.V1ObjectMeta(name="workflow-job-6789"),
-                    status=kubernetes.client.V1JobStatus(
-                        start_time=datetime(2020, 10, 19, 13, 15),
-                        completion_time=datetime(2020, 10, 19, 13, 30),
-                        active=0,
-                        succeeded=1,
-                        failed=0,
-                    ),
+            ),
+            k8s_client.V1Job(
+                metadata=k8s_client.V1ObjectMeta(name="workflow-job-6789"),
+                status=k8s_client.V1JobStatus(
+                    start_time=datetime(2020, 10, 19, 13, 15),
+                    completion_time=datetime(2020, 10, 19, 13, 30),
+                    active=0,
+                    succeeded=1,
+                    failed=0,
                 ),
-                kubernetes.client.V1Job(
-                    metadata=kubernetes.client.V1ObjectMeta(name="batch-job-12345"),
-                    status=kubernetes.client.V1JobStatus(
-                        start_time=datetime(2020, 10, 19, 12, 16),
-                        completion_time=datetime(2020, 10, 19, 12, 17),
-                        active=0,
-                        succeeded=1,
-                        failed=0,
-                    ),
+            ),
+            k8s_client.V1Job(
+                metadata=k8s_client.V1ObjectMeta(name="batch-job-12345"),
+                status=k8s_client.V1JobStatus(
+                    start_time=datetime(2020, 10, 19, 12, 16),
+                    completion_time=datetime(2020, 10, 19, 12, 17),
+                    active=0,
+                    succeeded=1,
+                    failed=0,
                 ),
-            ]
-        )
+            ),
+        ]
     )
     workflow_jobs = list_workflow_jobs("namespace", "workflow-job")
     assert len(workflow_jobs) == 2

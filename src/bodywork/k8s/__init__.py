@@ -38,6 +38,7 @@ from .workflow_jobs import (
     delete_workflow_cronjob,
     list_workflow_cronjobs,
     list_workflow_jobs,
+    update_workflow_cronjob,
 )
 from .batch_jobs import (
     JobStatus,
@@ -136,4 +137,4 @@ __all__ = [
     "replicate_secrets_in_namespace",
     "update_secret",
     "Secret",
-]
+    "update_workflow_cronjob",
