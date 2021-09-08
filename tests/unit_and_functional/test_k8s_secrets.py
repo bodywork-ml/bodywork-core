@@ -29,6 +29,7 @@ from bodywork.k8s.secrets import (
     delete_secret,
     list_secrets,
     secret_exists,
+    update_secret,
 )
 from bodywork.constants import SECRET_GROUP_LABEL
 
@@ -108,6 +109,25 @@ def test_create_secret_tries_to_create_secret_with_k8s_api(
 
 
 @patch("kubernetes.client.CoreV1Api")
+def test_update_secret_updates_secret_with_k8s_api(
+    mock_k8s_core_api: MagicMock,
+):
+    update_secret("bodywork-dev", "test-pytest-secret", {"KEY": "value"})
+
+    mock_k8s_core_api().patch_namespaced_secret.assert_called_once_with(
+        "test-pytest-secret",
+        "bodywork-dev",
+        kubernetes.client.V1Secret(
+            metadata=kubernetes.client.V1ObjectMeta(
+                namespace="bodywork-dev",
+                name="test-pytest-secret",
+            ),
+            string_data={"KEY": "value"},
+        ),
+    )
+
+
+@patch("kubernetes.client.CoreV1Api")
 def test_delete_secret_tries_to_delete_secret_with_k8s_api(
     mock_k8s_core_api: MagicMock,
 ):
@@ -126,9 +146,11 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
             items=[
                 kubernetes.client.V1Secret(
                     metadata=kubernetes.client.V1ObjectMeta(
-                        namespace="bodywork-dev", name="pytest-secret", labels="xyz"
+                        namespace="bodywork-dev",
+                        name="xyz-pytest-secret",
+                        labels={f"{SECRET_GROUP_LABEL}": "xyz"},
                     ),
-                    string_data={"ALEX": b"aW9hbm5pZGVz"},
+                    data={"ALEX": b"aW9hbm5pZGVz"},
                 )
             ]
         )
@@ -137,5 +159,7 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
     mock_k8s_core_api().list_namespaced_secret.assert_called_once_with(
         namespace="bodywork-dev", label_selector=f"{SECRET_GROUP_LABEL}=xyz"
     )
+
     assert len(secrets) == 1
-    assert secrets["pytest-secret"]["ALEX"] == "ioannides"
+    assert secrets["xyz-pytest-secret"].name == "xyz-pytest-secret"
+    assert secrets["xyz-pytest-secret"].data["ALEX"] == "ioannides"

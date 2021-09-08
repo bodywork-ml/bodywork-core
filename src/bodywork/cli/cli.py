@@ -50,6 +50,7 @@ from .secrets import (
     delete_secret,
     display_secrets,
     parse_cli_secrets_strings,
+    update_secret,
 )
 from .setup_namespace import (
     is_namespace_available_for_bodywork,
@@ -196,18 +197,17 @@ def cli() -> None:
     secret_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "delete", "display"],
+        choices=["create", "delete", "update", "display"],
         help="Secrets action to perform.",
     )
     secret_cmd_parser.add_argument(
         "--group",
         required=False,
         type=str,
-        default="",
         help="The secrets group this secret belongs in.",
     )
     secret_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the Kubernetes secret."
+        "--name", type=str, help="The name given to the Kubernetes secret."
     )
     secret_cmd_parser.add_argument(
         "--data",
@@ -501,16 +501,20 @@ def secret(args: Namespace) -> None:
     group = args.group
     name = args.name
     key_value_strings = args.data
-    if (command == "create" or command == "delete") and name == "":
-        print("please specify a name for the secret you want to create")
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and not name:
+        print("please specify the name of the secret")
         sys.exit(1)
-    if (command == "create" or command == "delete") and group == "":
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and not group:
         print("please specify the secret group the secret belongs to")
         sys.exit(1)
-    elif command == "create" and key_value_strings == []:
-        print("please specify keys and values for the secret you want to create")
+    elif (command == "create" or command == "update") and key_value_strings == []:
+        print("please specify keys and values for the secret you want to create/update")
         sys.exit(1)
-    elif command == "create":
+    elif command == "create" or command == "update":
         try:
             var_names_and_values = parse_cli_secrets_strings(key_value_strings)
         except ValueError:
@@ -520,9 +524,14 @@ def secret(args: Namespace) -> None:
             )
             sys.exit(1)
         load_kubernetes_config()
-        create_secret(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
-        )
+        if command == "create":
+            create_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+            )
+        else:
+            update_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+            )
     elif command == "delete":
         load_kubernetes_config()
         delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
@@ -534,7 +543,7 @@ def secret(args: Namespace) -> None:
         display_secrets(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             group,
-            secret=name if name != "" else None,
+            name,
         )
     sys.exit(0)
 

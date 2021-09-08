@@ -146,7 +146,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify a name for the secret" in process_one.stdout
+    assert "please specify the name of the secret" in process_one.stdout
 
     process_two = run(
         [
@@ -161,7 +161,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify a name for the secret" in process_two.stdout
+    assert "please specify the name of the secret" in process_two.stdout
 
     process_three = run(
         [
