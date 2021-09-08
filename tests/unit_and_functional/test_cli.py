@@ -205,7 +205,9 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify the secret group the secret belongs to" in process_five.stdout
+    assert (
+        "please specify the secret group the secret belongs to" in process_five.stdout
+    )
 
 
 def test_deployment_subcommand_exists():
@@ -329,6 +331,25 @@ def test_cli_cronjob_handler_error_handling():
     )
     assert "please specify Git repo URL" in process_six.stdout
     assert process_six.returncode == 1
+
+
+def test_cronjob_update_error_handling():
+    process_one = run(
+        [
+            "bodywork",
+            "cronjob",
+            "update",
+            "--name=the-cronjob",
+            "--git-repo-url=https://test",
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert (
+        "Please specify both --git-repo-url and --git-repo-branch."
+        in process_one.stdout
+    )
+    assert process_one.returncode == 1
 
 
 def test_services_subcommand_exists():

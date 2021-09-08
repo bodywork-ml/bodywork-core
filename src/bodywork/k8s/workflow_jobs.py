@@ -21,7 +21,7 @@ to create and manage cronjobs that execute Bodywork project workflows.
 import os
 import random
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 
 from kubernetes import client as k8s
 
@@ -91,9 +91,7 @@ def configure_workflow_job(
         job_name = _create_job_name(project_repo_url, project_repo_branch)
     job = k8s.V1Job(
         metadata=k8s.V1ObjectMeta(
-            name=make_valid_k8s_name(
-                job_name
-            ),
+            name=make_valid_k8s_name(job_name),
             namespace=namespace,
             labels={"app": "bodywork"},
         ),
@@ -183,6 +181,70 @@ def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
     k8s.BatchV1beta1Api().create_namespaced_cron_job(
         body=cron_job, namespace=cron_job.metadata.namespace
     )
+
+
+def update_workflow_cronjob(
+    namespace: str,
+    name: str,
+    schedule: Optional[str] = None,
+    project_repo_url: Optional[str] = None,
+    project_repo_branch: Optional[str] = None,
+    retries: Optional[int] = None,
+    successful_jobs_history_limit: Optional[int] = None,
+    failed_jobs_history_limit: Optional[int] = None,
+) -> None:
+    """Update a Bodywork workflow cronjob.
+
+    :param name: The name  of the cronjob.
+    :param namespace: Namespace the cronjob resides in.
+    :param schedule: A valid cron schedule definition.
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The Bodywork project Git repository
+        branch to use, defaults to 'master'.
+    :param retries: Number of times to retry running the stage to
+        completion (if necessary), defaults to 2.
+    :param successful_jobs_history_limit: The number of successful job
+        runs (pods) to keep, defaults to 1.
+    :param failed_jobs_history_limit: The number of unsuccessful job
+        runs (pods) to keep, defaults to 1.
+    """
+
+    if not schedule:
+        schedule = (
+            k8s.BatchV1beta1Api()
+            .read_namespaced_cron_job(name, namespace)
+            .spec.schedule
+        )
+
+    if project_repo_url and project_repo_branch:
+        pod_spec = k8s.V1PodSpec(
+            containers=[
+                k8s.V1Container(
+                    name="bodywork", args=[project_repo_url, project_repo_branch]
+                )
+            ],
+        )
+        job = k8s.V1Job(
+            spec=k8s.V1JobSpec(
+                template=k8s.V1PodTemplateSpec(spec=pod_spec),
+                backoff_limit=retries,
+            )
+        )
+        job_template = k8s.V1beta1JobTemplateSpec(spec=job.spec)
+    else:
+        job_template = k8s.V1beta1JobTemplateSpec()
+
+    cronjob = k8s.V1beta1CronJob(
+        spec=k8s.V1beta1CronJobSpec(
+            job_template=job_template,
+            schedule=schedule,
+            successful_jobs_history_limit=successful_jobs_history_limit,
+            failed_jobs_history_limit=failed_jobs_history_limit,
+        )
+    )
+
+    k8s.BatchV1beta1Api().patch_namespaced_cron_job(name, namespace, cronjob)
 
 
 def delete_workflow_cronjob(namespace: str, name: str) -> None:

@@ -19,6 +19,7 @@ This module contains functions for managing Kubernetes workflow jobs.
 They are targeted for use via the CLI.
 """
 import re
+from typing import Optional
 
 from .. import k8s
 
@@ -49,7 +50,7 @@ def create_workflow_job_in_namespace(
         print(f"workflow job={job_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
-        namespace, project_repo_url, project_repo_branch, retries
+        namespace, project_repo_url, project_repo_branch, retries, job_name=job_name
     )
     k8s.create_workflow_job(configured_job)
     print(f"workflow job={job_name} created in namespace={namespace}")
@@ -96,14 +97,10 @@ def create_workflow_cronjob(
         historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
-        print(
-            f"namespace={namespace} could not be found on k8s cluster."    # noqa
-        )
+        print(f"namespace={namespace} could not be found on k8s cluster.")  # noqa
         return None
     if _is_existing_workflow_cronjob(namespace, job_name):
-        print(
-            f"cronjob={job_name} already exists in {namespace} namespace." # noqa
-        )
+        print(f"cronjob={job_name} already exists in {namespace} namespace.")  # noqa
         return None
     if not _is_valid_cron_schedule(schedule):
         print(f"schedule={schedule} is not a valid cron schedule")
@@ -119,9 +116,53 @@ def create_workflow_cronjob(
         workflow_job_history_limit,
     )
     k8s.create_workflow_cronjob(configured_job)
-    print(
-        f"workflow cronjob={job_name} created in {namespace} namespace."   # noqa
+    print(f"workflow cronjob={job_name} created in {namespace} namespace.")  # noqa
+
+
+def update_workflow_cronjob_in_namespace(
+    namespace: str,
+    job_name: str,
+    schedule: Optional[str] = None,
+    project_repo_url: Optional[str] = None,
+    project_repo_branch: Optional[str] = None,
+    retries: Optional[int] = None,
+    workflow_job_history_limit: Optional[int] = None,
+) -> None:
+    """Update a new cronjob within a namespace.
+
+    :param namespace: The namespace the job resides in.
+    :param job_name: The name of the cronjob.
+    :param schedule: A valid cron schedule definition.
+    :param project_repo_url: The URL for the Bodywork project Git
+        repository.
+    :param project_repo_branch: The branch of the Bodywork project Git
+        repository that will be used as the executable codebase,
+        defaults to 'master'.
+    :param retries: Number of times to retry running the stage to
+        completion (if necessary), defaults to 2.
+    :param workflow_job_history_limit: Minimum number of
+        historical workflow jobs, so logs can be retrieved.
+    """
+    if not k8s.namespace_exists(namespace):
+        print(f"namespace={namespace} could not be found on k8s cluster.")  # noqa
+        return None
+    if not _is_existing_workflow_cronjob(namespace, job_name):
+        print(f"cronjob={job_name} not found in namespace={namespace}")
+        return None
+    if schedule and not _is_valid_cron_schedule(schedule):
+        print(f"schedule={schedule} is not a valid cron schedule")
+        return None
+    k8s.update_workflow_cronjob(
+        namespace,
+        job_name,
+        schedule,
+        project_repo_url,
+        project_repo_branch,
+        retries,
+        workflow_job_history_limit,
+        workflow_job_history_limit,
     )
+    print(f"workflow cronjob={job_name} updated in {namespace} namespace.")
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
