@@ -138,3 +138,4 @@ __all__ = [
     "update_secret",
     "Secret",
     "update_workflow_cronjob",
+]
