@@ -21,7 +21,7 @@ Bodywork service deployment stages.
 from datetime import datetime
 from enum import Enum
 from time import sleep, time
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Any
 
 from kubernetes import client as k8s
 
@@ -358,7 +358,7 @@ def monitor_deployments_to_completion(
 
 def list_service_stage_deployments(
     namespace: Optional[str] = None,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Any]]:
     """Get all service deployments and their high-level info.
 
     :param namespace: Namespace in which to list services.
