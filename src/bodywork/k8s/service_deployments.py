@@ -21,7 +21,7 @@ Bodywork service deployment stages.
 from datetime import datetime
 from enum import Enum
 from time import sleep, time
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Any
 
 from kubernetes import client as k8s
 
@@ -327,7 +327,7 @@ def monitor_deployments_to_completion(
         monitor deployments - e.g. to allow deployments to be created.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
-    :return: True if all of the deployments are successfull.
+    :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
     start_time = time()
@@ -356,37 +356,40 @@ def monitor_deployments_to_completion(
     return True
 
 
-def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
+def list_service_stage_deployments(
+    namespace: Optional[str] = None,
+) -> Dict[str, Dict[str, Any]]:
     """Get all service deployments and their high-level info.
 
-    :param namespace: Namespace in which to list cronjobs.
+    :param namespace: Namespace in which to list services.
     """
-    k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
-        namespace=namespace, label_selector="app=bodywork"
-    )
-    deployment_info = {
-        deployment.metadata.name: {
-            "service_exposed": (
-                "true"
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
-                else "false"
-            ),
+    if namespace:
+        k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
+            namespace=namespace, label_selector="app=bodywork"
+        )
+    else:
+        k8s_deployment_query = k8s.AppsV1Api().list_deployment_for_all_namespaces(
+            label_selector="app=bodywork"
+        )
+
+    deployment_info = {}
+    for deployment in k8s_deployment_query.items:
+        exposed_as_cluster_service = is_exposed_as_cluster_service(
+            deployment.metadata.namespace, deployment.metadata.name
+        )
+        deployment_info[deployment.metadata.name] = {
+            "namespace": deployment.metadata.namespace,
+            "service_exposed": exposed_as_cluster_service,
             "service_url": (
                 cluster_service_url(
                     deployment.metadata.namespace, deployment.metadata.name
                 )
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
+                if exposed_as_cluster_service
                 else "none"
             ),
             "service_port": (
                 deployment.metadata.annotations["port"]
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
+                if exposed_as_cluster_service
                 else "none"
             ),
             "available_replicas": (
@@ -402,16 +405,15 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.spec.template.spec.containers[0].args[1],
             "has_ingress": (
-                "true" if has_ingress(namespace, deployment.metadata.name) else "false"
+                has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),
             "ingress_route": (
                 ingress_route(deployment.metadata.namespace, deployment.metadata.name)
-                if has_ingress(namespace, deployment.metadata.name)
+                if has_ingress(deployment.metadata.namespace, deployment.metadata.name)
                 else "none"
             ),
         }
-        for deployment in k8s_deployment_query.items
-    }
+
     return deployment_info
 
 
