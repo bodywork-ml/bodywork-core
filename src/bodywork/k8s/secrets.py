@@ -18,13 +18,21 @@
 High-level interface to the Kubernetes secrets API as used to create and
 manage secrets required by Bodywork stage containers.
 """
-from base64 import b64decode
 from typing import Dict, List, Optional, Tuple
+from base64 import b64decode
+from dataclasses import dataclass
 
 from kubernetes import client as k8s
 
 from .utils import make_valid_k8s_name
 from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+
+
+@dataclass
+class Secret:
+    name: str
+    group: str
+    data: Dict[str, str]
 
 
 def configure_env_vars_from_secrets(
@@ -152,6 +160,24 @@ def create_secret(
     k8s.CoreV1Api().create_namespaced_secret(namespace=namespace, body=secret)
 
 
+def update_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) -> None:
+    """Update an existing secret.
+
+    :param namespace: Namespace the secret is in.
+    :param name: The name of the secret'.
+    :param keys_and_values: Mapping of secret keys (or variable names)
+        and their values.
+    """
+    secret = k8s.V1Secret(
+        metadata=k8s.V1ObjectMeta(
+            namespace=namespace,
+            name=make_valid_k8s_name(name),
+        ),
+        string_data=keys_and_values,
+    )
+    k8s.CoreV1Api().patch_namespaced_secret(name, namespace, secret)
+
+
 def delete_secret(namespace: str, name: str) -> None:
     """Delete a secret from within a namespace.
 
@@ -162,25 +188,31 @@ def delete_secret(namespace: str, name: str) -> None:
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
 
-def list_secrets(namespace: str, group: str = None) -> Dict[str, Dict[str, str]]:
+def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secret]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.
     :param group: Group of secrets to list.
 
     """
-    secrets = k8s.CoreV1Api().list_namespaced_secret(
-        namespace=namespace,
-        label_selector=f"{SECRET_GROUP_LABEL}={group}",
-    )
-    secret_data_base64 = {
-        s.metadata.name: s.string_data if s.string_data else s.data
-        for s in secrets.items
+    if group is None:
+        result = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
+    else:
+        result = k8s.CoreV1Api().list_namespaced_secret(
+            namespace=namespace,
+            label_selector=f"{SECRET_GROUP_LABEL}={group}",
+        )
+    return {
+        s.metadata.name: Secret(
+            s.metadata.name,
+            s.metadata.labels[SECRET_GROUP_LABEL]
+            if s.metadata.labels and SECRET_GROUP_LABEL in s.metadata.labels
+            else None,
+            s.string_data
+            if s.string_data
+            else {
+                key: b64decode(value).decode("utf-8") for (key, value) in s.data.items()
+            },
+        )
+        for s in result.items
     }
-    secret_data_decoded = {
-        secret_name: {
-            key: b64decode(value).decode("utf-8") for key, value in secret_data.items()
-        }
-        for secret_name, secret_data in secret_data_base64.items()
-    }
-    return secret_data_decoded

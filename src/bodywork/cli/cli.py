@@ -39,6 +39,7 @@ from .workflow_jobs import (
     display_workflow_job_logs,
     delete_workflow_cronjob_in_namespace,
     delete_workflow_job_in_namespace,
+    update_workflow_cronjob_in_namespace,
 )
 from .service_deployments import (
     delete_service_deployment_in_namespace,
@@ -49,6 +50,7 @@ from .secrets import (
     delete_secret,
     display_secrets,
     parse_cli_secrets_strings,
+    update_secret,
 )
 from .setup_namespace import (
     is_namespace_available_for_bodywork,
@@ -101,12 +103,11 @@ def cli() -> None:
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the workflow job."
+        "--name", type=str, help="The name given to the workflow job."
     )
     deployment_cmd_parser.add_argument(
         "--git-repo-url",
         type=str,
-        default="",
         help="Git repository URL containing the Bodywork project.",
     )
     deployment_cmd_parser.add_argument(
@@ -136,28 +137,25 @@ def cli() -> None:
     cronjob_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "delete", "display", "history", "logs"],
+        choices=["create", "update", "delete", "display", "history", "logs"],
         help="Cronjob action to perform.",
     )
     cronjob_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the cronjob."
+        "--name", type=str, help="The name given to the cronjob."
     )
     cronjob_cmd_parser.add_argument(
         "--schedule",
         type=str,
-        default="",
-        help='Workflow cronjob expressed as a cron schedule - e.g. "0,30 * * * *".',
+        help='Workflow cronjob expressed as a cron schedule - e.g. "0 30 * * *".',
     )
     cronjob_cmd_parser.add_argument(
         "--git-repo-url",
         type=str,
-        default="",
         help="Git repository URL containing the Bodywork project codebase.",
     )
     cronjob_cmd_parser.add_argument(
         "--git-repo-branch",
         type=str,
-        default="master",
         help="Git repository branch to run.",
     )
     cronjob_cmd_parser.add_argument(
@@ -199,18 +197,17 @@ def cli() -> None:
     secret_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "delete", "display"],
+        choices=["create", "delete", "update", "display"],
         help="Secrets action to perform.",
     )
     secret_cmd_parser.add_argument(
         "--group",
         required=False,
         type=str,
-        default="",
         help="The secrets group this secret belongs in.",
     )
     secret_cmd_parser.add_argument(
-        "--name", type=str, default="", help="The name given to the Kubernetes secret."
+        "--name", type=str, help="The name given to the Kubernetes secret."
     )
     secret_cmd_parser.add_argument(
         "--data",
@@ -357,10 +354,10 @@ def deployment(args: Namespace) -> None:
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
 
-    if command == "create" and git_repo_url == "":
+    if command == "create" and not git_repo_url:
         print("please specify Git repo URL for the deployment you want to create")
         sys.exit(1)
-    if command != "create" and name == "":
+    if command != "create" and not name:
         print("please specify --name for the deployment job")
         sys.exit(1)
     if command == "create":
@@ -384,6 +381,7 @@ def deployment(args: Namespace) -> None:
                 sys.exit(1)
             create_workflow_job_in_namespace(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+                name,
                 git_repo_url,
                 git_repo_branch,
                 retries,
@@ -418,17 +416,24 @@ def cronjob(args: Namespace) -> None:
         or command == "delete"
         or command == "history"
         or command == "logs"
-    ) and name == "":
+        or command == "update"
+    ) and not name:
         print("please specify --name for the cronjob")
         sys.exit(1)
-    elif command == "create" and schedule == "":
+    elif command == "create" and not schedule:
         print("please specify schedule for the cronjob you want to create")
         sys.exit(1)
-    elif command == "create" and git_repo_url == "":
+    elif command == "create" and not git_repo_url:
         print("please specify Git repo URL for the cronjob you want to create")
         sys.exit(1)
-    elif command == "create":
-        load_kubernetes_config()
+    elif command == "update" and (git_repo_url and not git_repo_branch) or (
+            not git_repo_url and git_repo_branch
+    ):
+        print("Please specify both --git-repo-url and --git-repo-branch.")
+        sys.exit(1)
+
+    load_kubernetes_config()
+    if command == "create":
         if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
             print(
                 f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
@@ -440,21 +445,27 @@ def cronjob(args: Namespace) -> None:
             schedule,
             name,
             git_repo_url,
+            git_repo_branch if git_repo_branch else "master",
+            retries,
+            history_limit,
+        )
+    elif command == "update":
+        update_workflow_cronjob_in_namespace(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            name,
+            schedule,
+            git_repo_url,
             git_repo_branch,
             retries,
             history_limit,
         )
     elif command == "delete":
-        load_kubernetes_config()
         delete_workflow_cronjob_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "history":
-        load_kubernetes_config()
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "logs":
-        load_kubernetes_config()
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
-        load_kubernetes_config()
         display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
     sys.exit(0)
 
@@ -489,16 +500,20 @@ def secret(args: Namespace) -> None:
     group = args.group
     name = args.name
     key_value_strings = args.data
-    if (command == "create" or command == "delete") and name == "":
-        print("please specify a name for the secret you want to create")
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and not name:
+        print("please specify the name of the secret")
         sys.exit(1)
-    if (command == "create" or command == "delete") and group == "":
+    if (
+        command == "create" or command == "delete" or command == "update"
+    ) and not group:
         print("please specify the secret group the secret belongs to")
         sys.exit(1)
-    elif command == "create" and key_value_strings == []:
-        print("please specify keys and values for the secret you want to create")
+    elif (command == "create" or command == "update") and key_value_strings == []:
+        print("please specify keys and values for the secret you want to create/update")
         sys.exit(1)
-    elif command == "create":
+    elif command == "create" or command == "update":
         try:
             var_names_and_values = parse_cli_secrets_strings(key_value_strings)
         except ValueError:
@@ -508,9 +523,14 @@ def secret(args: Namespace) -> None:
             )
             sys.exit(1)
         load_kubernetes_config()
-        create_secret(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
-        )
+        if command == "create":
+            create_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+            )
+        else:
+            update_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+            )
     elif command == "delete":
         load_kubernetes_config()
         delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
@@ -522,7 +542,7 @@ def secret(args: Namespace) -> None:
         display_secrets(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             group,
-            secret=name if name != "" else None,
+            name,
         )
     sys.exit(0)
 
