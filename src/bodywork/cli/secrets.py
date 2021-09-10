@@ -18,8 +18,9 @@
 This module contains functions for managing Kubernetes secrets. They are
 targeted for use via the CLI.
 """
-from typing import Dict, Iterable, Optional, Tuple, cast
+from typing import Dict, Iterable, Optional, Tuple
 
+from .terminal import print_dict, print_info, print_warn
 from .. import k8s
 
 
@@ -68,7 +69,7 @@ def create_secret(
         the associated values to assign to them.
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"namespace={namespace} could not be found on k8s cluster")
         return None
     k8s.create_secret(
         namespace,
@@ -76,7 +77,7 @@ def create_secret(
         group,
         keys_and_values,
     )
-    print(f"secret={secret_name} created in group={group}")
+    print_info(f"secret={secret_name} created in group={group}")
 
 
 def update_secret(
@@ -90,17 +91,17 @@ def update_secret(
     :param keys_and_values:
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"namespace={namespace} could not be found on k8s cluster")
         return None
     if not k8s.secret_exists(
         namespace, _create_complete_secret_name(group, secret_name)
     ):
-        print(f"secret={secret_name} could not be found in group={group}")
+        print_warn(f"secret={secret_name} could not be found in group={group}")
         return None
     k8s.update_secret(
         namespace, _create_complete_secret_name(group, secret_name), keys_and_values
     )
-    print(f"secret={secret_name} in group={group} updated")
+    print_info(f"secret={secret_name} in group={group} updated")
 
 
 def delete_secret(namespace: str, group: str, secret_name: str) -> None:
@@ -111,15 +112,17 @@ def delete_secret(namespace: str, group: str, secret_name: str) -> None:
     :param secret_name: The name of the secret to delete.
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"namespace={namespace} could not be found on k8s cluster")
         return None
     if not k8s.secret_exists(
         namespace, _create_complete_secret_name(group, secret_name)
     ):
-        print(f"secret={secret_name} could not be found in group={group}")
+        print_warn(f"secret={secret_name} could not be found in group={group}")
         return None
     k8s.delete_secret(namespace, _create_complete_secret_name(group, secret_name))
-    print(f"secret={secret_name} in group={group} deleted from namespace={namespace}")
+    print_info(
+        f"secret={secret_name} in group={group} deleted from namespace={namespace}"
+    )
 
 
 def display_secrets(
@@ -133,27 +136,21 @@ def display_secrets(
         this name, defaults to None
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"namespace={namespace} could not be found on k8s cluster")
         return None
+    secrets = k8s.list_secrets(namespace, group)
     if secret_name and not group:
-        print("please specify which secrets group the secret belongs to.")
+        print_warn("please specify which secrets group the secret belongs to.")
         return None
+    elif secret_name and group:
+        try:
+            complete_secret_name = _create_complete_secret_name(group, secret_name)
+            print_dict(secrets[complete_secret_name].data, complete_secret_name)
+        except KeyError:
+            print_warn(f"cannot find secret={secret_name} in namespace={namespace}")
     else:
-        secrets = k8s.list_secrets(namespace, group)
-        if secret_name:
-            try:
-                print(f"\n-- {secret_name}:")
-                for key, value in secrets[
-                    _create_complete_secret_name(cast(str, group), secret_name)
-                ].data.items():
-                    print(f"-> {key}={value}".replace("\n", ""))
-            except KeyError:
-                print(f"cannot find secret={secret_name} in namespace={namespace}")
-        else:
-            for key, secret in secrets.items():
-                print(f"\n-- {key}:")
-                for secret_key, secret_value in secret.data.items():
-                    print(f"-> {secret_key}={secret_value}".replace("\n", ""))
+        for key, secret in secrets.items():
+            print_dict(secret.data, key)
 
 
 def _create_complete_secret_name(group: str, name: str) -> str:

@@ -273,7 +273,7 @@ def cli() -> None:
         help="Cross-check config with files and directories",
     )
 
-    # Configure Deployment Interface
+    # configure deployment interface
     configure_cmd_parser = cli_arg_subparser.add_parser("configure-cluster")
     configure_cmd_parser.set_defaults(func=configure_cluster)
 
