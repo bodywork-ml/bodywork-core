@@ -18,16 +18,13 @@
 Custom logger for use accross all Bodywork modules.
 """
 import os
-import sys
 from logging import (
     CRITICAL,
     DEBUG,
     ERROR,
-    Formatter,
     getLogger,
     INFO,
     Logger,
-    StreamHandler,
     WARNING,
 )
 from pathlib import Path
