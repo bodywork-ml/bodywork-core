@@ -36,6 +36,6 @@ def print_pod_logs(logs: str, name: str) -> None:
     :logs: The logs!
     :name: The name of the pod associated with the logs.
     """
-    console.rule(name, style="bold yellow")
-    console.print(logs, style="grey62")
+    console.rule(f"[yellow]logs {name} stage[/yellow]", style="yellow")
+    console.print(logs, style="grey58")
     console.rule(style="yellow")
