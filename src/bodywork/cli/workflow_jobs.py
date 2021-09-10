@@ -45,16 +45,16 @@ def create_workflow_job_in_namespace(
         completion (if necessary), defaults to 2.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if _is_existing_workflow_job(namespace, job_name):
-        print_warn(f"workflow job={job_name} already exists in namespace={namespace}")
+        print_warn(f"Workflow job={job_name} already exists.")
         return None
     configured_job = k8s.configure_workflow_job(
         namespace, project_repo_url, project_repo_branch, retries, job_name=job_name
     )
     k8s.create_workflow_job(configured_job)
-    print_info(f"workflow job={job_name} created in namespace={namespace}")
+    print_info(f"Created workflow job={job_name}.")
 
 
 def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
@@ -64,13 +64,13 @@ def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
     :param job_name: Name of the job to delete.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not _is_existing_workflow_job(namespace, job_name):
-        print_warn(f"job={job_name} not found in namespace={namespace}")
+        print_warn(f"Could not find job={job_name}.")
         return None
     k8s.delete_job(namespace, job_name)
-    print_info(f"workflow job={job_name} deleted from namespace={namespace}")
+    print_info(f"Deleted workflow job={job_name}.")
 
 
 def create_workflow_cronjob(
@@ -98,13 +98,13 @@ def create_workflow_cronjob(
         historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster.")  # noqa
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if _is_existing_workflow_cronjob(namespace, job_name):
-        print_warn(f"cronjob={job_name} already exists in {namespace} namespace.")  # noqa
+        print_warn(f"cronjob={job_name} already exists.")
         return None
     if not _is_valid_cron_schedule(schedule):
-        print_warn(f"schedule={schedule} is not a valid cron schedule")
+        print_warn(f"Invalid cron schedule: {schedule}.")
         return None
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
@@ -117,7 +117,7 @@ def create_workflow_cronjob(
         workflow_job_history_limit,
     )
     k8s.create_workflow_cronjob(configured_job)
-    print_info(f"workflow cronjob={job_name} created in {namespace} namespace.")  # noqa
+    print_info(f"Created workflow cronjob={job_name}.")
 
 
 def update_workflow_cronjob_in_namespace(
@@ -145,13 +145,13 @@ def update_workflow_cronjob_in_namespace(
         historical workflow jobs, so logs can be retrieved.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster.")  # noqa
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not _is_existing_workflow_cronjob(namespace, job_name):
-        print_warn(f"cronjob={job_name} not found in namespace={namespace}")
+        print_warn(f"Could not find cronjob={job_name}.")
         return None
     if schedule and not _is_valid_cron_schedule(schedule):
-        print_warn(f"schedule={schedule} is not a valid cron schedule")
+        print_warn(f"Invalid cron schedule: {schedule}.")
         return None
     k8s.update_workflow_cronjob(
         namespace,
@@ -163,7 +163,7 @@ def update_workflow_cronjob_in_namespace(
         workflow_job_history_limit,
         workflow_job_history_limit,
     )
-    print_info(f"workflow cronjob={job_name} updated in {namespace} namespace.")
+    print_info(f"Updated cronjob={job_name}.")
 
 
 def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
@@ -173,13 +173,13 @@ def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
     :param job_name: The name of the cronjob to be deleted.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not _is_existing_workflow_cronjob(namespace, job_name):
-        print_warn(f"cronjob={job_name} not found in namespace={namespace}")
+        print_warn(f"Could not find cronjob={job_name}.")
         return None
     k8s.delete_workflow_cronjob(namespace, job_name)
-    print_info(f"workflow cronjob={job_name} deleted from namespace={namespace}")
+    print_info(f"Deleted workflow cronjob={job_name}.")
 
 
 def display_cronjobs_in_namespace(namespace: str) -> None:
@@ -188,7 +188,7 @@ def display_cronjobs_in_namespace(namespace: str) -> None:
     :param namespace: Namespace in which to look for cronjobs.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     cronjobs_info = k8s.list_workflow_cronjobs(namespace)
     for name, data in cronjobs_info.items():
@@ -202,11 +202,11 @@ def display_workflow_job_history(namespace: str, job_name: str) -> None:
     :param job_name: Name of the cronjob.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     workflow_jobs_info = k8s.list_workflow_jobs(namespace, job_name)
     for name, data in workflow_jobs_info.items():
-        print_dict(data, f"cronjob run {name}")
+        print_dict(data, f"cronjob execution = {name}")
 
 
 def display_workflow_job_logs(namespace: str, job_name: str) -> None:
@@ -217,14 +217,14 @@ def display_workflow_job_logs(namespace: str, job_name: str) -> None:
         executed - e.g. NAME_OF_PROJECT-12345.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     workflow_job_pod_name = k8s.get_latest_pod_name(namespace, job_name)
     if workflow_job_pod_name is None:
-        print_warn(f"cannot find pod for workflow job={job_name}")
+        print_warn(f"Cannot find pod for workflow job={job_name}.")
         return None
     workflow_job_logs = k8s.get_pod_logs(namespace, workflow_job_pod_name)
-    print_pod_logs(workflow_job_logs, f"logs for cronjob run {job_name}")
+    print_pod_logs(workflow_job_logs, f"logs for cronjob execution {job_name}")
 
 
 def _is_existing_workflow_job(namespace: str, job_name: str) -> bool:

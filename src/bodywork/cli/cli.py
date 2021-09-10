@@ -356,10 +356,10 @@ def deployment(args: Namespace) -> None:
     run_workflow_controller_locally = args.local_workflow_controller
 
     if command == "create" and not git_repo_url:
-        print_warn("Please specify Git repo URL for the deployment you want to create")
+        print_warn("Please specify Git repo URL for the deployment you want to create.")
         sys.exit(1)
     if command != "create" and not name:
-        print_warn("Please specify --name for the deployment job")
+        print_warn("Please specify --name for the deployment job.")
         sys.exit(1)
     if command == "create":
         if run_workflow_controller_locally:
@@ -368,7 +368,7 @@ def deployment(args: Namespace) -> None:
                 git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
             )
-            print_info("Using local workflow controller - retries inactive")
+            print_info("Using local workflow controller - retries inactive.")
             workflow(pass_through_args)
         else:
             load_kubernetes_config()
@@ -419,13 +419,13 @@ def cronjob(args: Namespace) -> None:
         or command == "logs"
         or command == "update"
     ) and not name:
-        print_warn("Please specify --name for the cronjob")
+        print_warn("Please specify --name for the cronjob.")
         sys.exit(1)
     elif command == "create" and not schedule:
-        print_warn("Please specify schedule for the cronjob you want to create")
+        print_warn("Please specify schedule for the cronjob you want to create.")
         sys.exit(1)
     elif command == "create" and not git_repo_url:
-        print_warn("Please specify Git repo URL for the cronjob you want to create")
+        print_warn("Please specify Git repo URL for the cronjob you want to create.")
         sys.exit(1)
     elif command == "update" and (git_repo_url and not git_repo_branch) or (
             not git_repo_url and git_repo_branch
@@ -481,7 +481,7 @@ def service(args: Namespace) -> None:
     namespace = args.namespace
     name = args.name
     if command == "delete" and not name:
-        print_warn("Please specify --name for the service")
+        print_warn("Please specify --name for the service.")
         sys.exit(1)
     load_kubernetes_config()
     if command == "delete":
@@ -504,15 +504,15 @@ def secret(args: Namespace) -> None:
     if (
         command == "create" or command == "delete" or command == "update"
     ) and not name:
-        print_warn("Please specify the name of the secret")
+        print_warn("Please specify the name of the secret.")
         sys.exit(1)
     if (
         command == "create" or command == "delete" or command == "update"
     ) and not group:
-        print_warn("Please specify the secret group the secret belongs to")
+        print_warn("Please specify the secret group the secret belongs to.")
         sys.exit(1)
     elif (command == "create" or command == "update") and key_value_strings == []:
-        print_warn("Please specify keys and values for the secret you want to create/update")
+        print_warn("Please specify keys and values for the secret you want to create/update.")  # noqa
         sys.exit(1)
     elif command == "create" or command == "update":
         try:
