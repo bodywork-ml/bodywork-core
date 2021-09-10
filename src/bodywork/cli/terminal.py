@@ -1,11 +1,7 @@
-from typing import Any, Dict, Optional, Sequence
-from time import sleep
-from rich import style
+from typing import Any, Dict, Optional
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
-from rich.tree import Tree
 
 console = Console(highlight=False, soft_wrap=False)
 
