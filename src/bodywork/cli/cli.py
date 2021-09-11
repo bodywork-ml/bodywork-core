@@ -467,7 +467,7 @@ def cronjob(args: Namespace) -> None:
     elif command == "logs":
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
-        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 

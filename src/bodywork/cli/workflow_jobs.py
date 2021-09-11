@@ -182,17 +182,23 @@ def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
     print_info(f"Deleted workflow cronjob={job_name}.")
 
 
-def display_cronjobs_in_namespace(namespace: str) -> None:
+def display_cronjobs_in_namespace(
+    namespace: str, job_name: Optional[str] = None
+) -> None:
     """Print cronjobs to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
+    :param name: Name of cronjob resource, defaults to None.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     cronjobs_info = k8s.list_workflow_cronjobs(namespace)
-    for name, data in cronjobs_info.items():
-        print_dict(data, name)
+    if job_name:
+        print_dict(cronjobs_info[job_name], job_name)
+    else:
+        table_data = {name: data["git_url"] for name, data in cronjobs_info.items()}
+        print_dict(table_data, "cronjobs", "Name", "Git Repository URL")
 
 
 def display_workflow_job_history(namespace: str, job_name: str) -> None:

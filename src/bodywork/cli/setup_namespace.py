@@ -59,7 +59,6 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
         else False
     )
     if is_namespace_setup:
-        print_info(f"namespace={namespace} is setup for use by Bodywork.")
         return True
     else:
         if not workflow_controller_sa_exists:

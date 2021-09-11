@@ -149,8 +149,11 @@ def display_secrets(
         except KeyError:
             print_warn(f"Cannot find secret={secret_name}.")
     else:
-        for key, secret in secrets.items():
-            print_dict(secret.data, key)
+        table_data = {
+            secret.name.split(f"{secret.group}-")[1]: secret.group
+            for _, secret in secrets.items() if secret.group is not None
+        }
+        print_dict(table_data, "all secrets", "Secret Name", "Bodywork Secret Group")
 
 
 def _create_complete_secret_name(group: str, name: str) -> str:
