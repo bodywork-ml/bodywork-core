@@ -54,7 +54,9 @@ setup(
     install_requires=requirements_pkg,
     extras_require={"dev": requirements_dev},
     zip_safe=True,
-    entry_points={"console_scripts": ["bodywork=bodywork.cli.cli:cli"]},
+    entry_points={
+        "console_scripts": ["bodywork=bodywork.cli.cli:cli", "bw=bodywork.cli.cli:cli"]
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: GNU Affero General Public License v3",
