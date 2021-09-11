@@ -32,19 +32,19 @@ from bodywork.cli.service_deployments import (
 @fixture(scope="function")
 def test_service_stage_deployment():
     return {
-    "bodywork-test-project--serve": {
-        "namespace": "bodywork-dev",
-        "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
-        "service_port": 5000,
-        "service_exposed": "true",
-        "available_replicas": 1,
-        "unavailable_replicas": 0,
-        "git_url": "project_repo_url",
-        "git_branch": "project_repo_branch",
-        "has_ingress": "true",
-        "ingress_route": "/bodywork-dev/bodywork-test-project",
+        "bodywork-test-project--serve": {
+            "namespace": "bodywork-dev",
+            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
+            "service_port": 5000,
+            "service_exposed": "true",
+            "available_replicas": 1,
+            "unavailable_replicas": 0,
+            "git_url": "project_repo_url",
+            "git_branch": "project_repo_branch",
+            "has_ingress": "true",
+            "ingress_route": "/bodywork-dev/bodywork-test-project",
+        }
     }
-}
 
 
 @patch("bodywork.cli.service_deployments.k8s")
