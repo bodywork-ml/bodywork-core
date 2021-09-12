@@ -48,7 +48,7 @@ def create_workflow_job_in_namespace(
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if _is_existing_workflow_job(namespace, job_name):
-        print_warn(f"workflow-job={job_name} already exists.")
+        print_warn(f"Cannot create workflow-job={job_name} as it already exists.")
         return None
     configured_job = k8s.configure_workflow_job(
         namespace, project_repo_url, project_repo_branch, retries, job_name=job_name
@@ -101,7 +101,7 @@ def create_workflow_cronjob(
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if _is_existing_workflow_cronjob(namespace, job_name):
-        print_warn(f"cronjob={job_name} already exists.")
+        print_warn(f"Cannot create cronjob={job_name} as it already exists.")
         return None
     if not _is_valid_cron_schedule(schedule):
         print_warn(f"Invalid cronjob schedule: {schedule}.")

@@ -38,7 +38,7 @@ def display_service_deployments(
     service_deployments = k8s.list_service_stage_deployments(namespace)
     if service_name:
         if service_name not in service_deployments:
-            print_warn(f"service: {service_name} could not be found on k8s cluster")
+            print_warn(f"A service named {service_name} could not be found")
             return None
         print_dict(service_deployments[service_name], service_name)
     else:

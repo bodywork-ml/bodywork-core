@@ -100,7 +100,7 @@ def test_display_service_deployments(
 
     display_service_deployments("bodywork-dev", "foo")
     captured_four = capsys.readouterr()
-    assert "service: foo could not be found on k8s cluster" in captured_four.out
+    assert "A service named foo could not be found" in captured_four.out
 
 
 @patch("bodywork.cli.service_deployments.k8s")

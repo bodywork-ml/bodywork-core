@@ -69,7 +69,10 @@ def test_create_workflow_job_in_namespace(
         "project_repo_branch",
     )
     captured_two = capsys.readouterr()
-    assert "workflow-job=bodywork-test-project already exists" in captured_two.out
+    assert (
+        "Cannot create workflow-job=bodywork-test-project as it already exists"
+        in captured_two.out
+    )
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_jobs.return_value = {"foo": {}}
@@ -208,7 +211,10 @@ def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixt
         "project_repo_branch",
     )
     captured_two = capsys.readouterr()
-    assert "cronjob=bodywork-test-project already exists" in captured_two.out
+    assert (
+        "Cannot create cronjob=bodywork-test-project as it already exists"
+        in captured_two.out
+    )
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_cronjobs.return_value = {"foo": {}}
