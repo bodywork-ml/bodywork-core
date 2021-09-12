@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from rich.console import Console
 from rich.table import Table
 
-console = Console(highlight=False, soft_wrap=False)
+console = Console(highlight=False, soft_wrap=False, force_terminal=True)
 
 
 def print_info(msg: str) -> None:
@@ -46,3 +46,8 @@ def print_pod_logs(logs: str, name: str) -> None:
     console.rule(f"[yellow]logs {name} stage[/yellow]", style="yellow")
     console.print(logs, style="grey58")
     console.rule(style="yellow")
+
+
+if __name__ == "__main__":
+    s = "alex ioannides is the bomb " * 10
+    console.print(s)

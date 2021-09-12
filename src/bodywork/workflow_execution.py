@@ -28,7 +28,7 @@ import os
 import stat
 
 from . import k8s
-from .cli.terminal import console, print_pod_logs, print_warn
+from .cli.terminal import console, print_pod_logs
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
@@ -152,7 +152,8 @@ def run_workflow(
             if config.project.usage_stats:
                 _ping_usage_stats_server()
         except Exception as e:
-            _log.error(f"Deployment failed -> {e}")
+            msg = f"Deployment failed -> {e}"
+            _log.error(msg)
             try:
                 if (
                     type(e)
@@ -467,9 +468,9 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
             stage_name = job_or_deployment_name.split("--")[1]
             print_pod_logs(pod_logs, stage_name)
         else:
-            print_warn(f"Cannot get logs for {job_or_deployment_name}")
+            _log.warning(f"Cannot get logs for {job_or_deployment_name}")
     except Exception:
-        _log.error(f"Cannot get logs for {job_or_deployment_name}")
+        _log.warning(f"Cannot get logs for {job_or_deployment_name}")
 
 
 def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:

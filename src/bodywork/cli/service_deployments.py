@@ -56,22 +56,20 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
     :param name: The name of the service deployment to delete.
     """
     if not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if name not in k8s.list_service_stage_deployments(namespace).keys():
-        print_warn(f"deployment={name} not found in namespace={namespace}")
+        print_warn(f"Could not find service={name}.")
         return None
     k8s.delete_deployment(namespace, name)
-    print_info(f"deployment={name} deleted from namespace={namespace}")
+    print_info(f"Deleted service={name}.")
     if k8s.is_exposed_as_cluster_service(namespace, name):
         k8s.stop_exposing_cluster_service(namespace, name)
         print_info(
-            f"service at {k8s.cluster_service_url(namespace, name)} "
-            f"deleted from namespace={namespace}"
+            f"Stopped exposing service at {k8s.cluster_service_url(namespace, name)}"
         )
     if k8s.has_ingress(namespace, name):
         k8s.delete_deployment_ingress(namespace, name)
         print_info(
-            f"ingress route {k8s.ingress_route(namespace, name)} "
-            f"deleted from namespace={namespace}"
+            f"Deleted ingress to service at {k8s.ingress_route(namespace, name)}"
         )
