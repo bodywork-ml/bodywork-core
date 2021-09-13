@@ -84,6 +84,7 @@ def bodywork_log_factory(
     if not log.hasHandlers():
         log_handler = RichHandler(
             console=console,
+            show_path=False,
             highlighter=NullHighlighter(),
             omit_repeated_times=False,
             rich_tracebacks=True

@@ -212,7 +212,7 @@ def monitor_jobs_to_completion(
                 if status != JobStatus.SUCCEEDED
             ]
             msg = (
-                f'{"; ".join(unsuccessful_jobs_msg)} have yet to reach '
+                f'{"; ".join(unsuccessful_jobs_msg)} yet to reach '
                 f"status=succeeded after {timeout_seconds}s"
             )
             raise TimeoutError(msg)

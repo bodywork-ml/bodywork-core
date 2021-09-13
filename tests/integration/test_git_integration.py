@@ -20,11 +20,14 @@ Integration tests for interactions with hosted Git repositories.
 import os
 import shutil
 import stat
-
 from pathlib import Path
 from typing import Iterable
 
-from bodywork.git import download_project_code_from_repo, setup_ssh_for_git_host, get_git_commit_hash
+from bodywork.git import (
+    download_project_code_from_repo,
+    setup_ssh_for_git_host,
+    get_git_commit_hash
+)
 from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR, GIT_SSH_COMMAND
 
 

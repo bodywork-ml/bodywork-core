@@ -152,7 +152,7 @@ def run_workflow(
             if config.project.usage_stats:
                 _ping_usage_stats_server()
         except Exception as e:
-            msg = f"Deployment failed -> {e}"
+            msg = f"Deployment failed --> {e}"
             _log.error(msg)
             try:
                 if (
@@ -196,12 +196,12 @@ def _setup_namespace(config) -> str:
     )
     try:
         if not k8s.namespace_exists(namespace):
-            _log.info(f"Creating namespace = {namespace}")
+            _log.info(f"Creating k8s namespace = {namespace}")
             k8s.create_namespace(namespace)
         else:
             _log.info(f"Using namespace = {namespace}")
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
-            _log.info(f"Creating service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}")
+            _log.info(f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}")
             k8s.setup_stages_service_account(namespace)
         return namespace
     except ApiException as e:
@@ -263,7 +263,7 @@ def _run_batch_stages(
     for job_object in job_objects:
         job_name = job_object.metadata.name
         stage_name = job_name.split("--")[1]
-        _log.info(f"Creating job for stage = {stage_name}")
+        _log.info(f"Creating k8s job for stage = {stage_name}")
         k8s.create_job(job_object)
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
@@ -275,11 +275,11 @@ def _run_batch_stages(
         for job_object in job_objects:
             job_name = job_object.metadata.name
             stage_name = job_name.split("--")[1]
-            _log.info(f"Completed job for stage = {stage_name}")
+            _log.info(f"Completed k8s job for stage = {stage_name}")
             _print_logs_to_stdout(namespace, job_name)
-            _log.info(f"Deleting job for stage = {stage_name}")
+            _log.info(f"Deleting k8s job for stage = {stage_name}")
             k8s.delete_job(namespace, job_name)
-            _log.info(f"Deleted job for stage = {stage_name}")
+            _log.info(f"Deleted k8s job for stage = {stage_name}")
 
 
 def _run_service_stages(
@@ -341,9 +341,9 @@ def _run_service_stages(
             deployment_name = deployment_object.metadata.name
             stage_name = deployment_name.split("--")[1]
             _print_logs_to_stdout(namespace, stage_name)
-            _log.info(f"Rolling back k8s deployment for stage = {stage_name}")
+            _log.info(f"Rolling-back k8s deployment for stage = {stage_name}")
             k8s.rollback_deployment(deployment_object)
-            _log.info(f"Rolled back k8s deployment for stage = {stage_name}")
+            _log.info(f"Rolled-back k8s deployment for stage = {stage_name}")
         raise e
 
     for deployment_object, stage in zip(deployment_objects, service_stages):
@@ -438,7 +438,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     :return: Image name and image tag tuple.
     """
     err_msg = (
-        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME} file - "
+        f"Invalid Docker image specified in {PROJECT_CONFIG_FILENAME} file - "
         f"cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG"
     )
     if len(image_string.split("/")) != 2:
@@ -511,11 +511,14 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
     param secrets_group: Group of secrets to copy.
     """
     try:
-        _log.info(f"Replicating {secrets_group} secrets in namespace={namespace}")
+        _log.info(
+            f"Replicating k8s secrets from group = {secrets_group} into "
+            f"namespace = {namespace}"
+        )
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
-        _log.error(
-            f"Unable to replicate secrets from group={secrets_group} to namespace="
-            f"{namespace} - {e}"
+        _log.info(
+            f"Unable to replicate k8s secrets from group = {secrets_group} into "
+            f"namespace = {namespace}"
         )
         raise e
