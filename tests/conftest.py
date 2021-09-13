@@ -72,6 +72,7 @@ def setup_bodywork_test_project(
             check=True,
             capture_output=True,
             encoding="utf-8",
+            shell=True,
         )
         os.mkdir(bodywork_output_dir)
         yield True
