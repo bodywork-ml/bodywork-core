@@ -427,8 +427,10 @@ def cronjob(args: Namespace) -> None:
     elif command == "create" and not git_repo_url:
         print_warn("Please specify Git repo URL for the cronjob you want to create.")
         sys.exit(1)
-    elif command == "update" and (git_repo_url and not git_repo_branch) or (
-            not git_repo_url and git_repo_branch
+    elif (
+        command == "update"
+        and (git_repo_url and not git_repo_branch)
+        or (not git_repo_url and git_repo_branch)
     ):
         print("Please specify both --git-repo-url and --git-repo-branch.")
         sys.exit(1)
@@ -501,9 +503,7 @@ def secret(args: Namespace) -> None:
     group = args.group
     name = args.name
     key_value_strings = args.data
-    if (
-        command == "create" or command == "delete" or command == "update"
-    ) and not name:
+    if (command == "create" or command == "delete" or command == "update") and not name:
         print_warn("Please specify the name of the secret.")
         sys.exit(1)
     if (
@@ -512,7 +512,9 @@ def secret(args: Namespace) -> None:
         print_warn("Please specify the secret group the secret belongs to.")
         sys.exit(1)
     elif (command == "create" or command == "update") and key_value_strings == []:
-        print_warn("Please specify keys and values for the secret you want to create/update.")  # noqa
+        print_warn(
+            "Please specify keys and values for the secret you want to create/update."
+        )  # noqa
         sys.exit(1)
     elif command == "create" or command == "update":
         try:

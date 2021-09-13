@@ -87,7 +87,7 @@ def bodywork_log_factory(
             show_path=False,
             highlighter=NullHighlighter(),
             omit_repeated_times=False,
-            rich_tracebacks=True
+            rich_tracebacks=True,
         )
         log.addHandler(log_handler)
     return log

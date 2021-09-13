@@ -78,7 +78,7 @@ def run_workflow(
         f"[green]deploying[/green] [bold purple]{repo_branch}[/bold purple] "
         f"[green]branch from[/green] [bold purple]{repo_url}[/bold purple]",
         characters="=",
-        style="green"
+        style="green",
     )
     with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
         try:
@@ -201,7 +201,9 @@ def _setup_namespace(config) -> str:
         else:
             _log.info(f"Using namespace = {namespace}")
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
-            _log.info(f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}")
+            _log.info(
+                f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"
+            )
             k8s.setup_stages_service_account(namespace)
         return namespace
     except ApiException as e:

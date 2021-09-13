@@ -118,7 +118,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "service",
                 "delete",
                 "--namespace=bodywork-test-project",
-                "--name=bodywork-test-project--stage-3"
+                "--name=bodywork-test-project--stage-3",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -142,11 +142,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_five.returncode == 0
 
         process_six = run(
-            [
-                "bodywork",
-                "service",
-                "display"
-            ],
+            ["bodywork", "service", "display"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -388,7 +384,7 @@ def test_cli_cronjob_handler_crud():
             "--name=bodywork-test-project",
             "--schedule=0,0 1 * * *",
             "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--git-repo-branch=main"
+            "--git-repo-branch=main",
         ],
         encoding="utf-8",
         capture_output=True,
@@ -403,7 +399,9 @@ def test_cli_cronjob_handler_crud():
     )
     assert "bodywork-test-project" in process_three.stdout
     assert "0,0 1 * * *" in process_three.stdout
-    assert "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout  # noqa
+    assert (
+        "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    )  # noqa
     assert "main" in process_three.stdout
     assert process_three.returncode == 0
 

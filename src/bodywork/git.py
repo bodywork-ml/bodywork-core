@@ -68,9 +68,7 @@ def download_project_code_from_repo(
         elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             log.warning("Not configured for use with private Git repos")
     except Exception as e:
-        msg = (
-            f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
-        )
+        msg = f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
         raise BodyworkGitError(msg)
     try:
         run(

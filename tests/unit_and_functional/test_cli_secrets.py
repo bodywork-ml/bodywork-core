@@ -66,9 +66,7 @@ def test_create_secrets_in_namespace(
     mock_k8s_module.namespace_exists.return_value = False
     create_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
     captured_one = capsys.readouterr()
-    assert (
-        "Could not find namespace=bodywork-dev on k8s cluster" in captured_one.out
-    )
+    assert "Could not find namespace=bodywork-dev on k8s cluster" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.create_secret.side_effect = None

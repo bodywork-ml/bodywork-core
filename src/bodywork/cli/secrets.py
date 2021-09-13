@@ -38,7 +38,7 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
     key = kv_string[:equals_sign]
     if len(key) == 0:
         raise ValueError(error_msg)
-    value = kv_string[equals_sign + 1:]
+    value = kv_string[equals_sign + 1 :]
     if len(value) == 0:
         raise ValueError(error_msg)
     return key, value
@@ -120,9 +120,7 @@ def delete_secret(namespace: str, group: str, secret_name: str) -> None:
         print_warn(f"Could not find secret={secret_name} in group={group}.")
         return None
     k8s.delete_secret(namespace, _create_complete_secret_name(group, secret_name))
-    print_info(
-        f"Deleted secret={secret_name} from group={group}."
-    )
+    print_info(f"Deleted secret={secret_name} from group={group}.")
 
 
 def display_secrets(
@@ -151,7 +149,8 @@ def display_secrets(
     else:
         table_data = {
             secret.name.split(f"{secret.group}-")[1]: secret.group
-            for _, secret in secrets.items() if secret.group is not None
+            for _, secret in secrets.items()
+            if secret.group is not None
         }
         print_dict(table_data, "all secrets", "Secret Name", "Bodywork Secret Group")
 

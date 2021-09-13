@@ -248,9 +248,7 @@ class ProjectConfig:
                 else ""
             )
             self.namespace = (
-                config_section["namespace"]
-                if "namespace" in config_section
-                else ""
+                config_section["namespace"] if "namespace" in config_section else ""
             )
             self.secrets_group = (
                 config_section["secrets_group"]

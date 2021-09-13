@@ -250,9 +250,7 @@ def test_update_cronjob_validation(mock_k8s_module: MagicMock, capsys: CaptureFi
         "bodywork-dev", "test", "0 0 * * *", "fg", "test-branch", 3, 1
     )
     captured_one = capsys.readouterr()
-    assert (
-        "Could not find namespace=bodywork-dev on k8s cluster." in captured_one.out
-    )
+    assert "Could not find namespace=bodywork-dev on k8s cluster." in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_jobs.return_value = {"bodywork-test-project": {}}

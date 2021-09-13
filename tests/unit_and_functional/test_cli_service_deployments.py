@@ -46,7 +46,7 @@ def test_service_stage_deployment():
         },
         "bodywork-test-project--serve-v2": {
             "namespace": "bodywork-dev",
-            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
+            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
             "service_port": 6000,
             "service_exposed": "true",
             "available_replicas": 1,
@@ -55,14 +55,13 @@ def test_service_stage_deployment():
             "git_branch": "project_repo_branch",
             "has_ingress": "true",
             "ingress_route": "/bodywork-dev/bodywork-test-project",
-        }
+        },
     }
 
 
 @patch("bodywork.cli.service_deployments.k8s")
 def test_display_service_deployments(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture,
-    test_service_stage_deployment
+    mock_k8s_module: MagicMock, capsys: CaptureFixture, test_service_stage_deployment
 ):
     mock_k8s_module.namespace_exists.return_value = False
     display_service_deployments("bodywork-dev")
@@ -158,7 +157,7 @@ def test_delete_deployment_in_namespace(
     assert findall(
         r"Stopped exposing service at(.|\n)*"
         r"http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",
-        captured_four.out
+        captured_four.out,
     )
 
     mock_k8s_module.namespace_exists.return_value = True

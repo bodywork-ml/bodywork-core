@@ -5,9 +5,9 @@ stage, for use with testing. It deliberates raises an exception.
 
 
 def main() -> None:
-    print('foo')
-    raise RuntimeError('this stage has failed')
+    print("foo")
+    raise RuntimeError("this stage has failed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

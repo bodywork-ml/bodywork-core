@@ -20,7 +20,7 @@ def print_dict(
     the_dict: Dict[str, Any],
     table_name: Optional[str] = None,
     key_col_name: str = "Field",
-    val_col_name: str = "Value"
+    val_col_name: str = "Value",
 ) -> None:
     """Render dict as a table in terminal.
 
