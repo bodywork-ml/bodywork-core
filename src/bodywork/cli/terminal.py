@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from rich.console import Console
 from rich.table import Table
 
-console = Console(highlight=False, soft_wrap=False, force_terminal=True)
+console = Console(highlight=False, soft_wrap=False, width=175)
 
 
 def print_info(msg: str) -> None:
