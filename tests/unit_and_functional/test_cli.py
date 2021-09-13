@@ -325,7 +325,7 @@ def test_cli_deployment_logs(mock_workflow_job: MagicMock, mock_sys: MagicMock):
 
 
 @patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.delete_workflow_job_in_namespace")
+@patch("bodywork.cli.cli.delete_workflow_job")
 def test_cli_deployment_delete_job(mock_workflow_job: MagicMock, mock_sys: MagicMock):
     args = Namespace(
         command="delete_job",
@@ -375,7 +375,7 @@ def test_cli_deployment_display(mock_workflow_job: MagicMock, mock_sys: MagicMoc
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(args.name)
+    mock_workflow_job.assert_called_with(args.namespace, args.name)
 
 
 def test_cronjobs_subcommand_exists():
