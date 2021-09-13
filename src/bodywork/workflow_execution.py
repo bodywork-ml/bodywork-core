@@ -199,7 +199,7 @@ def _setup_namespace(config) -> str:
             _log.info(f"Creating k8s namespace = {namespace}")
             k8s.create_namespace(namespace)
         else:
-            _log.info(f"Using namespace = {namespace}")
+            _log.info(f"Using k8s namespace = {namespace}")
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
             _log.info(
                 f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"
@@ -271,7 +271,7 @@ def _run_batch_stages(
         timeout = max(stage.max_completion_time for stage in batch_stages)
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
     except TimeoutError as e:
-        _log.error("Jobs failed to complete successfully")
+        _log.error("Some (or all) k8s jobs failed to complete successfully")
         raise e
     finally:
         for job_object in job_objects:

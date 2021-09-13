@@ -66,7 +66,7 @@ def test_display_service_deployments(
     mock_k8s_module.namespace_exists.return_value = False
     display_service_deployments("bodywork-dev")
     captured_one = capsys.readouterr()
-    assert "namespace=bodywork-dev could not be found" in captured_one.out
+    assert "Could not find namespace=bodywork-dev on k8s cluster" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = (
@@ -76,30 +76,30 @@ def test_display_service_deployments(
     display_service_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
     assert findall(
-        r".*bodywork-test-project--serve-v1.+project_repo_url", captured_two.out
+        r"bodywork-test-project--serve-v1.+project_repo_url", captured_two.out
     )
     assert findall(
-        r".*bodywork-test-project--serve-v2.+project_repo_url", captured_two.out
+        r"bodywork-test-project--serve-v2.+project_repo_url", captured_two.out
     )
 
     display_service_deployments("bodywork-dev", "bodywork-test-project--serve-v1")
     captured_three = capsys.readouterr()
-    assert findall(r".*available_replicas.+1", captured_three.out)
-    assert findall(r".*unavailable_replicas.+0", captured_three.out)
-    assert findall(r".*git_url.+project_repo_url", captured_three.out)
-    assert findall(r".*git_branch.+project_repo_branch", captured_three.out)
-    assert findall(r".*service_port.+5000", captured_three.out)
+    assert findall(r"available_replicas.+1", captured_three.out)
+    assert findall(r"unavailable_replicas.+0", captured_three.out)
+    assert findall(r"git_url.+project_repo_url", captured_three.out)
+    assert findall(r"git_branch.+project_repo_branch", captured_three.out)
+    assert findall(r"service_port.+5000", captured_three.out)
     assert findall(
-        r".*service_url.+http://bodywork-test-project--serve.bodywork-dev.svc",
+        r"service_url.+http://bodywork-test-project--serve.bodywork-dev.svc",
         captured_three.out,
     )
     assert findall(
-        r".*ingress_route.+/bodywork-dev/bodywork-test-project", captured_three.out
+        r"ingress_route.+/bodywork-dev/bodywork-test-project", captured_three.out
     )
 
     display_service_deployments("bodywork-dev", "foo")
     captured_four = capsys.readouterr()
-    assert "A service named foo could not be found" in captured_four.out
+    assert "Could not find service=foo" in captured_four.out
 
 
 @patch("bodywork.cli.service_deployments.k8s")
