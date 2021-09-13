@@ -22,10 +22,10 @@ from typing import Optional
 from .. import k8s
 
 
-def display_service_deployments(
+def display_deployments(
     namespace: Optional[str] = None, service_name: str = None
 ) -> None:
-    """Print active service deployments to stdout.
+    """Print active deployments to stdout.
 
     :param namespace: Namespace in which to look for deployments.
     :param service_name: Name of the service to display.
@@ -33,18 +33,18 @@ def display_service_deployments(
     if namespace and not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
         return None
-    service_deployments = k8s.list_service_stage_deployments(namespace)
+    deployments = k8s.list_service_stage_deployments(namespace)
     if service_name:
-        if service_name not in service_deployments:
+        if service_name not in deployments:
             print(f"service: {service_name} could not be found on k8s cluster")
             return None
-        _print_service_deployment(service_deployments[service_name], service_name)
+        _print_deployment(deployments[service_name], service_name)
     else:
-        for name, data in service_deployments.items():
-            _print_service_deployment(data, name)
+        for name, data in deployments.items():
+            _print_deployment(data, name)
 
 
-def _print_service_deployment(data, name) -> None:
+def _print_deployment(data, name) -> None:
     print(
         f'\n{"-" * len(name)}-\n'
         f"{name}:\n"
@@ -89,3 +89,14 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
             f"ingress route {k8s.ingress_route(namespace, name)} "
             f"deleted from namespace={namespace}"
         )
+
+
+def delete_deployment(deployment_name) -> None:
+    """Delete a deployment by deleting the namespace it's in.
+
+    :param deployment_name: The name of the deployment.
+    """
+    if not k8s.namespace_exists(deployment_name):
+        print(f"deployment={deployment_name} could not be found on k8s cluster")
+        return None
+    k8s.delete_namespace(deployment_name)

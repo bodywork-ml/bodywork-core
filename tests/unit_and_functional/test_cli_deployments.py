@@ -23,9 +23,10 @@ from unittest.mock import MagicMock, patch
 from _pytest.capture import CaptureFixture
 from pytest import fixture
 
-from bodywork.cli.service_deployments import (
+from bodywork.cli.deployments import (
     delete_service_deployment_in_namespace,
-    display_service_deployments,
+    display_deployments,
+    delete_deployment,
 )
 
 
@@ -47,13 +48,13 @@ def test_service_stage_deployment():
 }
 
 
-@patch("bodywork.cli.service_deployments.k8s")
+@patch("bodywork.cli.deployments.k8s")
 def test_display_service_deployments_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture,
     test_service_stage_deployment
 ):
     mock_k8s_module.namespace_exists.return_value = False
-    display_service_deployments("bodywork-dev")
+    display_deployments("bodywork-dev")
     captured_one = capsys.readouterr()
     assert "namespace=bodywork-dev could not be found" in captured_one.out
 
@@ -61,7 +62,7 @@ def test_display_service_deployments_in_namespace(
     mock_k8s_module.list_service_stage_deployments.return_value = (
         test_service_stage_deployment
     )
-    display_service_deployments("bodywork-dev")
+    display_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
     assert re.findall(r"REPLICAS_AVAILABLE\s+1", captured_two.out)
     assert re.findall(r"REPLICAS_UNAVAILABLE\s+0", captured_two.out)
@@ -77,7 +78,7 @@ def test_display_service_deployments_in_namespace(
     )
 
 
-@patch("bodywork.cli.service_deployments.k8s")
+@patch("bodywork.cli.deployments.k8s")
 def test_display_all_service_deployments(
     mock_k8s_module: MagicMock, capsys: CaptureFixture,
     test_service_stage_deployment
@@ -98,7 +99,7 @@ def test_display_all_service_deployments(
     mock_k8s_module.list_service_stage_deployments.return_value = (
         test_service_stage_deployment
     )
-    display_service_deployments()
+    display_deployments()
     captured_one = capsys.readouterr()
     assert re.findall(r"bodywork-test-project--serve", captured_one.out)
     assert re.findall(r"bodywork-test-project--second-service", captured_one.out)
@@ -106,7 +107,7 @@ def test_display_all_service_deployments(
     assert re.findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
-@patch("bodywork.cli.service_deployments.k8s")
+@patch("bodywork.cli.deployments.k8s")
 def test_display_service_deployment(
     mock_k8s_module: MagicMock, capsys: CaptureFixture,
         test_service_stage_deployment
@@ -126,19 +127,19 @@ def test_display_service_deployment(
         test_service_stage_deployment
     )
 
-    display_service_deployments(service_name="Missing-Service")
+    display_deployments(service_name="Missing-Service")
 
     captured_one = capsys.readouterr()
     assert re.findall(r"service: Missing-Service could not be found on k8s cluster", captured_one.out)  # noqa
 
-    display_service_deployments(service_name="bodywork-test-project--serve")
+    display_deployments(service_name="bodywork-test-project--serve")
     captured_two = capsys.readouterr()
     assert re.findall(r"bodywork-test-project--serve", captured_two.out)
     assert not re.findall(r"bodywork-test-project--second-service", captured_two.out)
     assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_two.out)
 
 
-@patch("bodywork.cli.service_deployments.k8s")
+@patch("bodywork.cli.deployments.k8s")
 def test_delete_deployment_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
@@ -158,7 +159,6 @@ def test_delete_deployment_in_namespace(
     captured_two = capsys.readouterr()
     assert "deployment=bodywork-test-project--serve not found" in captured_two.out
 
-    mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = {
         "bodywork-test-project--serve": {}
@@ -228,3 +228,21 @@ def test_delete_deployment_in_namespace(
     assert (
         "ingress route /bodywork-dev/bodywork-test-project--serve" in captured_six.out
     )
+
+
+@patch("bodywork.cli.deployments.k8s")
+def test_delete_deployment(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    mock_k8s_module.namespace_exists.return_value = False
+    mock_k8s_module.list_service_stage_deployments.return_value = {"foo": {}}
+    deployment_name = "bodywork-test-project--serve"
+
+    delete_deployment(deployment_name)
+
+    captured_one = capsys.readouterr()
+    assert f"deployment={deployment_name} could not be found on k8s cluster" in captured_one.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+
+    delete_deployment("bodywork-test-project--serve")
+
+    mock_k8s_module.delete_namespace.assert_called_with(deployment_name)

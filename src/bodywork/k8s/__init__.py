@@ -59,7 +59,7 @@ from .secrets import (
     update_secret,
     Secret,
 )
-from .service_deployments import (
+from .deployments import (
     DeploymentStatus,
     configure_service_stage_deployment,
     create_deployment,

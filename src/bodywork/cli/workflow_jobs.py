@@ -24,7 +24,7 @@ from typing import Optional
 from .. import k8s
 
 
-def create_workflow_job_in_namespace(
+def create_workflow_job(
     namespace: str,
     job_name: str,
     project_repo_url: str,
@@ -34,7 +34,7 @@ def create_workflow_job_in_namespace(
     """Create a new workflow job within a namespace.
 
     :param namespace: The namespace to deploy the job to.
-    :param job_name: The name of the Bodywork the job.
+    :param job_name: The name of the Bodywork job.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The branch of the Bodywork project Git
@@ -56,7 +56,7 @@ def create_workflow_job_in_namespace(
     print(f"workflow job={job_name} created in namespace={namespace}")
 
 
-def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
+def delete_workflow_job(namespace: str, job_name: str) -> None:
     """Delete workflow job from a specific namespace.
 
     :param namespace: Namespace where the job resides.
@@ -119,7 +119,7 @@ def create_workflow_cronjob(
     print(f"workflow cronjob={job_name} created in {namespace} namespace.")  # noqa
 
 
-def update_workflow_cronjob_in_namespace(
+def update_workflow_cronjob(
     namespace: str,
     job_name: str,
     schedule: Optional[str] = None,
@@ -165,7 +165,7 @@ def update_workflow_cronjob_in_namespace(
     print(f"workflow cronjob={job_name} updated in {namespace} namespace.")
 
 
-def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
+def delete_workflow_cronjob(namespace: str, job_name: str) -> None:
     """Create a new cronjob within a k8s namespace.
 
     :param namespace: The namespace where the cronjob resides.
@@ -181,7 +181,7 @@ def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
     print(f"workflow cronjob={job_name} deleted from namespace={namespace}")
 
 
-def display_cronjobs_in_namespace(namespace: str) -> None:
+def display_cronjobs(namespace: str) -> None:
     """Print cronjobs to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
