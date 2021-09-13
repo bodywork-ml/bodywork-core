@@ -233,6 +233,7 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         git_repo_url="foo3",
         git_repo_branch="foo4",
         local_workflow_controller=True,
+        namespace=None,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
@@ -277,6 +278,7 @@ def test_cli_deployment_create(mock_run_workflow: MagicMock, mock_sys: MagicMock
         git_repo_url="http://Test",
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
@@ -296,6 +298,7 @@ def test_cli_deployment_delete(mock_deployments: MagicMock, mock_sys: MagicMock)
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
@@ -313,6 +316,7 @@ def test_cli_deployment_logs(mock_workflow_job: MagicMock, mock_sys: MagicMock):
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
@@ -330,6 +334,7 @@ def test_cli_deployment_delete_job(mock_workflow_job: MagicMock, mock_sys: Magic
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
@@ -347,6 +352,7 @@ def test_cli_deployment_job_history(mock_workflow_job: MagicMock, mock_sys: Magi
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
@@ -364,6 +370,7 @@ def test_cli_deployment_display(mock_workflow_job: MagicMock, mock_sys: MagicMoc
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
+        namespace=None,
     )
 
     deployment(args)
