@@ -37,17 +37,12 @@ def print_dict(
     console.print(table)
 
 
-def print_pod_logs(logs: str, name: str) -> None:
+def print_pod_logs(logs: str, stage_name: str) -> None:
     """Render pod lods.
 
     :param logs: The logs!
-    :param name: The name of the pod associated with the logs.
+    :param stage_name: The name of the stage associated with the logs.
     """
-    console.rule(f"[yellow]logs {name} stage[/yellow]", style="yellow")
+    console.rule(f"[yellow]logs for stage = {stage_name}[/yellow]", style="yellow")
     console.print(logs, style="grey58")
     console.rule(style="yellow")
-
-
-if __name__ == "__main__":
-    s = "alex ioannides is the bomb " * 10
-    console.print(s)
