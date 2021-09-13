@@ -33,12 +33,12 @@ def display_service_deployments(
     :param service_name: Name of the service to display.
     """
     if namespace and not k8s.namespace_exists(namespace):
-        print_warn(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster")
         return None
     service_deployments = k8s.list_service_stage_deployments(namespace)
     if service_name:
         if service_name not in service_deployments:
-            print_warn(f"A service named {service_name} could not be found")
+            print_warn(f"Could not find service={service_name}.")
             return None
         print_dict(service_deployments[service_name], service_name)
     else:
