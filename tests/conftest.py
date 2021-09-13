@@ -69,10 +69,8 @@ def setup_bodywork_test_project(
         run(
             ["git", "commit", "-m", '"test"'],
             cwd=project_repo_location,
-            check=True,
             capture_output=True,
             encoding="utf-8",
-            shell=True,
         )
         os.mkdir(bodywork_output_dir)
         yield True
