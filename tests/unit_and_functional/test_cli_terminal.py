@@ -39,5 +39,3 @@ def test_print_info_and_warn_print_to_stdout_with_different_styles(
     print_warn("foo")
     captured_stdout_two = capsys.readouterr().out
     assert "foo" in captured_stdout_two
-
-    assert captured_stdout_one != captured_stdout_two
