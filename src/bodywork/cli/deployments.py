@@ -100,3 +100,4 @@ def delete_deployment(deployment_name) -> None:
         print(f"deployment={deployment_name} could not be found on k8s cluster")
         return None
     k8s.delete_namespace(deployment_name)
+    print(f"deployment={deployment_name} deleted.")

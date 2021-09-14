@@ -89,7 +89,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_two.returncode == 0
 
         process_three = run(
-            ["bodywork", "service", "display", "--namespace=bodywork-test-project"],
+            ["bodywork", "deployment", "display", "--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -131,63 +131,31 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_four = run(
             [
                 "bodywork",
-                "service",
+                "deployment",
                 "delete",
-                "--namespace=bodywork-test-project",
-                "--name=bodywork-test-project--stage-3",
+                "--name=bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
         )
         assert (
-            "deployment=bodywork-test-project--stage-3 deleted" in process_four.stdout
+            "deployment=bodywork-test-project deleted." in process_four.stdout
         )
-        assert (
-            "service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_four.stdout
-        )  # noqa
-        assert (
-            "ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
-            in process_four.stdout
-        )
+
         assert process_four.returncode == 0
 
         process_five = run(
             [
                 "bodywork",
-                "service",
-                "delete",
-                "--namespace=bodywork-test-project",
-                "--name=bodywork-test-project--stage-4",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert (
-            "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
-        )
-        assert (
-            "service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_five.stdout
-        )  # noqa
-        assert (
-            "ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
-            not in process_five.stdout
-        )  # noqa
-        assert process_five.returncode == 0
-
-        process_six = run(
-            [
-                "bodywork",
-                "service",
+                "deployment",
                 "display",
                 "--namespace=bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_six.stdout == ""
-        assert process_six.returncode == 0
+        assert process_five.stdout == "namespace=bodywork-test-project could not be found on k8s cluster"
+        assert process_five.returncode == 1
 
     except Exception as e:
         assert False
