@@ -31,6 +31,7 @@ import kubernetes
 from pkg_resources import get_distribution
 
 from ..config import BodyworkConfig
+from .terminal import print_info, print_warn
 from .workflow_jobs import (
     create_workflow_job_in_namespace,
     create_workflow_cronjob,
@@ -273,7 +274,7 @@ def cli() -> None:
         help="Cross-check config with files and directories",
     )
 
-    # Configure Deployment Interface
+    # configure deployment interface
     configure_cmd_parser = cli_arg_subparser.add_parser("configure-cluster")
     configure_cmd_parser.set_defaults(func=configure_cluster)
 
@@ -306,20 +307,20 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
         except kubernetes.client.rest.ApiException:
             e_type, e_value, e_tb = sys.exc_info()
             exception_origin = traceback.extract_tb(e_tb)[2].name
-            print(
+            print_warn(
                 f"Kubernetes API error returned when called from {exception_origin} "
                 f"within cli.{func.__name__}: {api_exception_msg(e_value)}"
             )
         except urllib3.exceptions.MaxRetryError:
             e_type, e_value, e_tb = sys.exc_info()
             exception_origin = traceback.extract_tb(e_tb)[2].name
-            print(
-                f"failed to connect to the Kubernetes API when called from "
+            print_warn(
+                f"Failed to connect to the Kubernetes API when called from "
                 f"{exception_origin} within cli.{func.__name__}: {e_value}"
             )
         except kubernetes.config.ConfigException as e:
-            print(
-                f"cannot load authentication credentials from kubeconfig file when "
+            print_warn(
+                f"Cannot load authentication credentials from kubeconfig file when "
                 f"calling cli.{func.__name__}: {e}"
             )
 
@@ -355,10 +356,10 @@ def deployment(args: Namespace) -> None:
     run_workflow_controller_locally = args.local_workflow_controller
 
     if command == "create" and not git_repo_url:
-        print("please specify Git repo URL for the deployment you want to create")
+        print_warn("Please specify Git repo URL for the deployment you want to create.")
         sys.exit(1)
     if command != "create" and not name:
-        print("please specify --name for the deployment job")
+        print_warn("Please specify --name for the deployment job.")
         sys.exit(1)
     if command == "create":
         if run_workflow_controller_locally:
@@ -367,16 +368,16 @@ def deployment(args: Namespace) -> None:
                 git_repo_branch=git_repo_branch,
                 bodywork_docker_image="",
             )
-            print("testing with local workflow-controller - retries are inactive")
+            print_info("Using local workflow controller - retries inactive.")
             workflow(pass_through_args)
         else:
             load_kubernetes_config()
             if not is_namespace_available_for_bodywork(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
             ):
-                print(
-                    f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
-                    f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
+                print_warn(
+                    f"Namespace = {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} not setup for "
+                    f"use by Bodywork - run 'bodywork configure-cluster'"
                 )
                 sys.exit(1)
             create_workflow_job_in_namespace(
@@ -418,16 +419,18 @@ def cronjob(args: Namespace) -> None:
         or command == "logs"
         or command == "update"
     ) and not name:
-        print("please specify --name for the cronjob")
+        print_warn("Please specify --name for the cronjob.")
         sys.exit(1)
     elif command == "create" and not schedule:
-        print("please specify schedule for the cronjob you want to create")
+        print_warn("Please specify schedule for the cronjob you want to create.")
         sys.exit(1)
     elif command == "create" and not git_repo_url:
-        print("please specify Git repo URL for the cronjob you want to create")
+        print_warn("Please specify Git repo URL for the cronjob you want to create.")
         sys.exit(1)
-    elif command == "update" and (git_repo_url and not git_repo_branch) or (
-            not git_repo_url and git_repo_branch
+    elif (
+        command == "update"
+        and (git_repo_url and not git_repo_branch)
+        or (not git_repo_url and git_repo_branch)
     ):
         print("Please specify both --git-repo-url and --git-repo-branch.")
         sys.exit(1)
@@ -435,9 +438,9 @@ def cronjob(args: Namespace) -> None:
     load_kubernetes_config()
     if command == "create":
         if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
-            print(
-                f"namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} is not setup for"
-                f" use by Bodywork. Have you run 'bodywork configure-cluster' first?"
+            print_warn(
+                f"Namespace = {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} not setup for "
+                f"use by Bodywork - run 'bodywork configure-cluster'"
             )
             sys.exit(1)
         create_workflow_cronjob(
@@ -466,7 +469,7 @@ def cronjob(args: Namespace) -> None:
     elif command == "logs":
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
-        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 
@@ -480,7 +483,7 @@ def service(args: Namespace) -> None:
     namespace = args.namespace
     name = args.name
     if command == "delete" and not name:
-        print("please specify --name for the service")
+        print_warn("Please specify --name for the service.")
         sys.exit(1)
     load_kubernetes_config()
     if command == "delete":
@@ -500,26 +503,26 @@ def secret(args: Namespace) -> None:
     group = args.group
     name = args.name
     key_value_strings = args.data
-    if (
-        command == "create" or command == "delete" or command == "update"
-    ) and not name:
-        print("please specify the name of the secret")
+    if (command == "create" or command == "delete" or command == "update") and not name:
+        print_warn("Please specify the name of the secret.")
         sys.exit(1)
     if (
         command == "create" or command == "delete" or command == "update"
     ) and not group:
-        print("please specify the secret group the secret belongs to")
+        print_warn("Please specify the secret group the secret belongs to.")
         sys.exit(1)
     elif (command == "create" or command == "update") and key_value_strings == []:
-        print("please specify keys and values for the secret you want to create/update")
+        print_warn(
+            "Please specify keys and values for the secret you want to create/update."
+        )  # noqa
         sys.exit(1)
     elif command == "create" or command == "update":
         try:
             var_names_and_values = parse_cli_secrets_strings(key_value_strings)
         except ValueError:
-            print(
-                "could not parse secret data - example format: "
-                "--data USERNAME=alex PASSWORD=alex123"
+            print_warn(
+                "Could not parse secret data - example format: --data USERNAME=alex "
+                "PASSWORD=alex123"
             )
             sys.exit(1)
         load_kubernetes_config()
@@ -535,7 +538,7 @@ def secret(args: Namespace) -> None:
         load_kubernetes_config()
         delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
     elif command == "display" and name and not group:
-        print("please specify which secrets group the secret belongs to.")
+        print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
     else:
         load_kubernetes_config()
@@ -602,19 +605,19 @@ def validate_config(args: Namespace) -> None:
     check_py_files = args.check_files
     try:
         BodyworkConfig(file_path, check_py_files)
-        print(f"--> {file_path} is a valid Bodywork config file.")
+        print_info(f"--> {file_path} is a valid Bodywork config file.")
         sys.exit(0)
     except (
         FileExistsError,
         BodyworkConfigParsingError,
         BodyworkConfigMissingSectionError,
     ) as e:
-        print(f"--> {e}")
+        print_warn(f"--> {e}")
         sys.exit(1)
     except BodyworkConfigValidationError as e:
-        print(f"- missing or invalid parameters found in {file_path}:")
+        print_warn(f"Missing or invalid parameters found in {file_path}:")
         missing_or_invalid_param_list = "\n* ".join(e.missing_params)
-        print(f"* {missing_or_invalid_param_list}")
+        print_warn(f"* {missing_or_invalid_param_list}")
         sys.exit(1)
 
 

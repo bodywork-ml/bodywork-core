@@ -17,6 +17,7 @@
 """
 Integration testing secrets functionality with k8s.
 """
+from re import findall
 
 from pytest import mark
 from subprocess import CalledProcessError, run
@@ -52,7 +53,10 @@ def test_update_secret():
     )
 
     assert process_one.returncode == 0
-    assert "secret=bodywork-test-project-credentials in group=testsecrets updated" in process_one.stdout
+    assert (
+        "Updated secret=bodywork-test-project-credentials in group=testsecrets"
+        in process_one.stdout
+    )
 
 
 @mark.usefixtures("add_secrets")
@@ -69,7 +73,7 @@ def test_display_all_secrets():
     )
 
     assert process_one.returncode == 0
-    assert "testsecrets-bodywork-test-project-credentials" in process_one.stdout
+    assert findall(r"bodywork-test-project-credentials.+testsecret", process_one.stdout)
 
 
 @mark.usefixtures("setup_cluster")
@@ -89,7 +93,7 @@ def test_cli_secret_handler_crud(test_namespace: str):
         encoding="utf-8",
         capture_output=True,
     )
-    assert "secret=pytest-credentials created in group=test" in process_one.stdout
+    assert "Created secret=pytest-credentials in group=test" in process_one.stdout
     assert process_one.returncode == 0
 
     process_two = run(
@@ -103,8 +107,8 @@ def test_cli_secret_handler_crud(test_namespace: str):
         encoding="utf-8",
         capture_output=True,
     )
-    assert "USERNAME=alex" in process_two.stdout
-    assert "PASSWORD=alex123" in process_two.stdout
+    assert findall(r"USERNAME.+alex", process_two.stdout)
+    assert findall(r"PASSWORD.+alex123", process_two.stdout)
     assert process_two.returncode == 0
 
     process_three = run(
@@ -118,7 +122,7 @@ def test_cli_secret_handler_crud(test_namespace: str):
         encoding="utf-8",
         capture_output=True,
     )
-    assert "secret=pytest-credentials in group=test deleted" in process_three.stdout
+    assert "Deleted secret=pytest-credentials from group=test" in process_three.stdout
     assert process_three.returncode == 0
 
     process_four = run(

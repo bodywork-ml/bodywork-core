@@ -19,6 +19,7 @@ Test high-level k8s interaction with a k8s cluster to run stages and a
 demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 """
 import requests
+from re import findall
 from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
@@ -55,24 +56,22 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = (
-            "attempting to run workflow for "
-            "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            "branch=master"
-        )
-        expected_output_2 = "successfully ran stage=stage_1"
-        expected_output_3 = "attempting to run stage=stage_4"
-        expected_output_4 = (
-            "successfully ran workflow for "
-            "project=https://github.com/bodywork-ml/bodywork-test-project on "
-            "branch=master"
-        )
-        expected_output_5 = "successfully ran stage=stage_5"
-        assert expected_output_1 in process_one.stdout
-        assert expected_output_2 in process_one.stdout
-        assert expected_output_3 in process_one.stdout
-        assert expected_output_4 in process_one.stdout
-        assert expected_output_5 in process_one.stdout
+
+        expected_output_1 = "deploying master branch from https://github.com/bodywork-ml/bodywork-test-project"  # noqa
+        expected_output_2 = "Creating k8s namespace = bodywork-test-project"
+        expected_output_3 = "Creating k8s service account = bodywork-stage"
+        expected_output_4 = "Replicating k8s secrets from group = testsecrets"
+        expected_output_5 = "Creating k8s job for stage = stage-1"
+        expected_output_6 = "Creating k8s deployment and service for stage = stage-4"
+        expected_output_7 = "Deployment successful"
+
+        assert findall(expected_output_1, process_one.stdout)
+        assert findall(expected_output_2, process_one.stdout)
+        assert findall(expected_output_3, process_one.stdout)
+        assert findall(expected_output_4, process_one.stdout)
+        assert findall(expected_output_5, process_one.stdout)
+        assert findall(expected_output_6, process_one.stdout)
+        assert findall(expected_output_7, process_one.stdout)
         assert process_one.returncode == 0
 
         process_two = run(
@@ -89,27 +88,12 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_two.returncode == 0
 
         process_three = run(
-            ["bodywork", "service", "display", "--namespace=bodywork-test-project"],
+            ["bodywork", "service", "display"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert (
-            "http://bodywork-test-project--stage-3.bodywork-test-project.svc"
-            in process_three.stdout
-        )
-        assert (
-            "http://bodywork-test-project--stage-4.bodywork-test-project.svc"
-            in process_three.stdout
-        )
-        assert (
-            "/bodywork-test-project/bodywork-test-project--stage-3"
-            in process_three.stdout
-        )
-        assert (
-            "/bodywork-test-project/bodywork-test-project--stage-4"
-            not in process_three.stdout
-        )
-        assert "5000" in process_three.stdout
+        assert "bodywork-test-project--stage-3" in process_three.stdout
+        assert "bodywork-test-project--stage-4" in process_three.stdout
         assert process_three.returncode == 0
 
         stage_3_service_external_url = (
@@ -139,17 +123,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert (
-            "deployment=bodywork-test-project--stage-3 deleted" in process_four.stdout
-        )
-        assert (
-            "service at http://bodywork-test-project--stage-3.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_four.stdout
-        )  # noqa
-        assert (
-            "ingress route /bodywork-test-project/bodywork-test-project--stage-3 deleted"  # noqa
-            in process_four.stdout
-        )
+        assert "Deleted service=bodywork-test-project--stage-3" in process_four.stdout
+        assert "Stopped exposing service" in process_four.stdout
+        assert "Deleted ingress to service at" in process_four.stdout
         assert process_four.returncode == 0
 
         process_five = run(
@@ -163,33 +139,18 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert (
-            "deployment=bodywork-test-project--stage-4 deleted" in process_five.stdout
-        )
-        assert (
-            "service at http://bodywork-test-project--stage-4.bodywork-test-project.svc.cluster.local deleted"  # noqa
-            in process_five.stdout
-        )  # noqa
-        assert (
-            "ingress route /bodywork-test-project/bodywork-test-project--stage-4 deleted"  # noqa
-            not in process_five.stdout
-        )  # noqa
         assert process_five.returncode == 0
 
         process_six = run(
-            [
-                "bodywork",
-                "service",
-                "display",
-                "--namespace=bodywork-test-project",
-            ],
+            ["bodywork", "service", "display"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_six.stdout == ""
+        assert "bodywork-test-project--stage-3" not in process_six.stdout
+        assert "bodywork-test-project--stage-4" not in process_six.stdout
         assert process_six.returncode == 0
 
-    except Exception as e:
+    except Exception:
         assert False
     finally:
         load_kubernetes_config()
@@ -214,9 +175,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_0 = (
-            "deleted job=bodywork-rollback-deployment-test-project--stage-1"  # noqa
-        )
+        expected_output_0 = "Deleted k8s job for stage = stage-1"  # noqa
         assert expected_output_0 in process_one.stdout
         assert process_one.returncode == 0
 
@@ -231,8 +190,8 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = "deployments failed to roll-out successfully"
-        expected_output_2 = "rolled back deployment=bodywork-rollback-deployment-test-project--stage-2"  # noqa
+        expected_output_1 = "Deployments failed to roll-out successfully"
+        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"  # noqa
         assert expected_output_1 in process_two.stdout
         assert expected_output_2 in process_two.stdout
         assert process_two.returncode == 1
@@ -266,8 +225,8 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(
             capture_output=True,
         )
 
-        expected_output_0 = "ERROR - workflow_execution.run_workflow - failed to execute workflow for master branch"  # noqa
-        expected_output_1 = "successfully ran stage=on_fail_stage"
+        expected_output_0 = "Deployment failed --> "
+        expected_output_1 = "Completed k8s job for stage = on-fail-stage"
         expected_output_2 = "I have successfully been executed"
         assert expected_output_0 in process_one.stdout
         assert expected_output_1 in process_one.stdout
@@ -293,7 +252,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
         capture_output=True,
     )
     assert (
-        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}"
+        f"Invalid Docker image specified in {PROJECT_CONFIG_FILENAME}"
         in process_one.stdout
     )
     assert process_one.returncode == 1
@@ -310,7 +269,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
         capture_output=True,
     )
     assert (
-        "cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
+        "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
         in process_two.stdout
     )
     assert process_two.returncode == 1
@@ -333,20 +292,10 @@ def test_workflow_with_ssh_github_connectivity(
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = (
-            "attempting to run workflow for "
-            "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            "branch=master"
-        )
-        expected_output_2 = (
-            "successfully ran workflow for "
-            "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
-            "branch=master"
-        )
-        expected_output_3 = "successfully ran stage=stage_1"
+        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/bodywork-test-project.git"  # noqa
+        expected_output_2 = "Deployment successful"
         assert expected_output_1 in process_one.stdout
         assert expected_output_2 in process_one.stdout
-        assert expected_output_3 in process_one.stdout
         assert process_one.returncode == 0
 
     except Exception:
@@ -424,7 +373,7 @@ def test_cli_cronjob_handler_crud():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "cronjob=bodywork-test-project created" in process_one.stdout
+    assert "Created cronjob=bodywork-test-project" in process_one.stdout
     assert process_one.returncode == 0
 
     process_two = run(
@@ -435,22 +384,24 @@ def test_cli_cronjob_handler_crud():
             "--name=bodywork-test-project",
             "--schedule=0,0 1 * * *",
             "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--git-repo-branch=main"
+            "--git-repo-branch=main",
         ],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "cronjob=bodywork-test-project updated" in process_two.stdout
+    assert "Updated cronjob=bodywork-test-project" in process_two.stdout
     assert process_two.returncode == 0
 
     process_three = run(
-        ["bodywork", "cronjob", "display"],
+        ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
         encoding="utf-8",
         capture_output=True,
     )
     assert "bodywork-test-project" in process_three.stdout
     assert "0,0 1 * * *" in process_three.stdout
-    assert "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    assert (
+        "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    )  # noqa
     assert "main" in process_three.stdout
     assert process_three.returncode == 0
 
@@ -464,7 +415,7 @@ def test_cli_cronjob_handler_crud():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "cronjob=bodywork-test-project deleted" in process_four.stdout
+    assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
     assert process_four.returncode == 0
 
     process_five = run(

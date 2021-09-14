@@ -19,6 +19,8 @@ This module contains functions for managing service deployments that have
 been created as part of executed workflows.
 """
 from typing import Optional
+
+from .terminal import print_dict, print_info, print_warn
 from .. import k8s
 
 
@@ -31,35 +33,19 @@ def display_service_deployments(
     :param service_name: Name of the service to display.
     """
     if namespace and not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster")
         return None
     service_deployments = k8s.list_service_stage_deployments(namespace)
     if service_name:
         if service_name not in service_deployments:
-            print(f"service: {service_name} could not be found on k8s cluster")
+            print_warn(f"Could not find service={service_name}.")
             return None
-        _print_service_deployment(service_deployments[service_name], service_name)
+        print_dict(service_deployments[service_name], service_name)
     else:
-        for name, data in service_deployments.items():
-            _print_service_deployment(data, name)
-
-
-def _print_service_deployment(data, name) -> None:
-    print(
-        f'\n{"-" * len(name)}-\n'
-        f"{name}:\n"
-        f'{"-" * len(name)}-\n'
-        f'|- {"NAMESPACE":<22}{data["namespace"]}\n'
-        f'|- {"GIT_URL":<22}{data["git_url"]}\n'
-        f'|- {"GIT_BRANCH":<22}{data["git_branch"]}\n'
-        f'|- {"REPLICAS_AVAILABLE":<22}{str(data["available_replicas"])}\n'
-        f'|- {"REPLICAS_UNAVAILABLE":<22}{str(data["unavailable_replicas"])}\n'
-        f'|- {"EXPOSED_AS_SERVICE":<22}{data["service_exposed"]}\n'
-        f'|- {"CLUSTER_SERVICE_URL":<22}{data["service_url"]}\n'
-        f'|- {"CLUSTER_SERVICE_PORT":<22}{data["service_port"]}\n'
-        f'|- {"INGRESS_CREATED":<22}{data["has_ingress"]}\n'
-        f'|- {"INGRESS_ROUTE":<22}{data["ingress_route"]}\n'
-    )
+        table_data = {
+            name: data["git_url"] for name, data in service_deployments.items()
+        }
+        print_dict(table_data, "services", "Name", "Git Repository URL")
 
 
 def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
@@ -70,22 +56,20 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
     :param name: The name of the service deployment to delete.
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} could not be found on k8s cluster")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if name not in k8s.list_service_stage_deployments(namespace).keys():
-        print(f"deployment={name} not found in namespace={namespace}")
+        print_warn(f"Could not find service={name}.")
         return None
     k8s.delete_deployment(namespace, name)
-    print(f"deployment={name} deleted from namespace={namespace}")
+    print_info(f"Deleted service={name}.")
     if k8s.is_exposed_as_cluster_service(namespace, name):
         k8s.stop_exposing_cluster_service(namespace, name)
-        print(
-            f"service at {k8s.cluster_service_url(namespace, name)} "
-            f"deleted from namespace={namespace}"
+        print_info(
+            f"Stopped exposing service at {k8s.cluster_service_url(namespace, name)}"
         )
     if k8s.has_ingress(namespace, name):
         k8s.delete_deployment_ingress(namespace, name)
-        print(
-            f"ingress route {k8s.ingress_route(namespace, name)} "
-            f"deleted from namespace={namespace}"
+        print_info(
+            f"Deleted ingress to service at {k8s.ingress_route(namespace, name)}"
         )

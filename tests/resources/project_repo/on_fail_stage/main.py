@@ -5,7 +5,7 @@ stage, for use with testing.
 
 
 def main() -> None:
-    print('foo')
+    print("foo")
     with open("../../bodywork_project_output/on_fail_stage_test_file.txt", "w") as f:
         f.write("Hello from on fail stage\n")
 

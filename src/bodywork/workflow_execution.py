@@ -28,6 +28,7 @@ import os
 import stat
 
 from . import k8s
+from .cli.terminal import console, print_pod_logs
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
@@ -73,115 +74,115 @@ def run_workflow(
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
         run for any reason.
     """
-    try:
-        _log.info(
-            f"attempting to run workflow for project={repo_url} on "
-            f"branch={repo_branch}"
-        )
-        download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-        if config is None:
-            config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
-
-        _log.setLevel(config.logging.log_level)
-        namespace = _setup_namespace(config)
-        workflow_dag = config.project.workflow
-        all_stages = config.stages
-        docker_image = (
-            config.project.docker_image
-            if docker_image_override is None
-            else docker_image_override
-        )
-        image_name, image_tag = parse_dockerhub_image_string(docker_image)
-        if not image_exists_on_dockerhub(image_name, image_tag):
-            msg = f"cannot locate {image_name}:{image_tag} on DockerHub"
-            raise BodyworkDockerImageError(msg)
-        env_vars = k8s.create_k8s_environment_variables(
-            [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
-        )
-        if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
-            env_vars.append(
-                k8s.create_k8s_environment_variables(
-                    [(SSH_PRIVATE_KEY_ENV_VAR, os.environ[SSH_PRIVATE_KEY_ENV_VAR])]
-                )[0]
-            )
-        if config.project.secrets_group:
-            _copy_secrets_to_target_namespace(namespace, config.project.secrets_group)
-        for step in workflow_dag:
-            _log.info(f"attempting to execute DAG step={step}")
-            batch_stages = [
-                cast(BatchStageConfig, all_stages[stage_name])
-                for stage_name in step
-                if type(all_stages[stage_name]) is BatchStageConfig
-            ]
-            service_stages = [
-                cast(ServiceStageConfig, all_stages[stage_name])
-                for stage_name in step
-                if type(all_stages[stage_name]) is ServiceStageConfig
-            ]
-            if batch_stages:
-                _run_batch_stages(
-                    batch_stages,
-                    config.project.name,
-                    env_vars,
-                    namespace,
-                    repo_branch,
-                    repo_url,
-                    docker_image,
-                )
-            if service_stages:
-                _run_service_stages(
-                    service_stages,
-                    config.project.name,
-                    env_vars,
-                    namespace,
-                    repo_branch,
-                    repo_url,
-                    docker_image,
-                )
-            _log.info(f"successfully executed DAG step={step}")
-        _log.info(
-            f"successfully ran workflow for project={repo_url} on "
-            f"branch={repo_branch} in kubernetes namespace={namespace}"
-        )
-        if not workflow_deploys_services(config):
-            _log.info(f"Deleting namespace {namespace}")
-            k8s.delete_namespace(namespace)
-        if config.project.usage_stats:
-            _ping_usage_stats_server()
-    except Exception as e:
-        msg = (
-            f"failed to execute workflow for {repo_branch} branch of project "
-            f"repository at {repo_url}: {e}"
-        )
-        _log.error(msg)
+    console.rule(
+        f"[green]deploying[/green] [bold purple]{repo_branch}[/bold purple] "
+        f"[green]branch from[/green] [bold purple]{repo_url}[/bold purple]",
+        characters="=",
+        style="green",
+    )
+    with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
         try:
-            if (
-                type(e)
-                not in [
-                    BodyworkNamespaceError,
-                    BodyworkDockerImageError,
-                    BodyworkGitError,
-                    BodyworkConfigError,
-                ]
-                and config
-                and config.project.run_on_failure
-            ):
-                if config.project.usage_stats:
-                    _ping_usage_stats_server()
-                _run_failure_stage(
-                    config, e, namespace, repo_url, repo_branch, docker_image
-                )
-        except Exception as ex:
-            failure_msg = (
-                f"Error executing failure stage: {config.project.run_on_failure}"  # type: ignore  # noqa
-                f" after failed workflow : {ex}"
+            download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+            if config is None:
+                config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
+
+            _log.setLevel(config.logging.log_level)
+            namespace = _setup_namespace(config)
+            workflow_dag = config.project.workflow
+            all_stages = config.stages
+            docker_image = (
+                config.project.docker_image
+                if docker_image_override is None
+                else docker_image_override
             )
-            _log.error(failure_msg)
-            msg = f"{msg}\n{failure_msg}"
-        raise BodyworkWorkflowExecutionError(msg) from e
-    finally:
-        if cloned_repo_dir.exists():
-            rmtree(cloned_repo_dir, onerror=_remove_readonly)
+            image_name, image_tag = parse_dockerhub_image_string(docker_image)
+            if not image_exists_on_dockerhub(image_name, image_tag):
+                msg = f"Cannot locate {image_name}:{image_tag} on DockerHub"
+                raise BodyworkDockerImageError(msg)
+            env_vars = k8s.create_k8s_environment_variables(
+                [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
+            )
+            if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
+                env_vars.append(
+                    k8s.create_k8s_environment_variables(
+                        [(SSH_PRIVATE_KEY_ENV_VAR, os.environ[SSH_PRIVATE_KEY_ENV_VAR])]
+                    )[0]
+                )
+            if config.project.secrets_group:
+                _copy_secrets_to_target_namespace(
+                    namespace, config.project.secrets_group
+                )
+            for step in workflow_dag:
+                _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
+                batch_stages = [
+                    cast(BatchStageConfig, all_stages[stage_name])
+                    for stage_name in step
+                    if type(all_stages[stage_name]) is BatchStageConfig
+                ]
+                service_stages = [
+                    cast(ServiceStageConfig, all_stages[stage_name])
+                    for stage_name in step
+                    if type(all_stages[stage_name]) is ServiceStageConfig
+                ]
+                if batch_stages:
+                    _run_batch_stages(
+                        batch_stages,
+                        config.project.name,
+                        env_vars,
+                        namespace,
+                        repo_branch,
+                        repo_url,
+                        docker_image,
+                    )
+                if service_stages:
+                    _run_service_stages(
+                        service_stages,
+                        config.project.name,
+                        env_vars,
+                        namespace,
+                        repo_branch,
+                        repo_url,
+                        docker_image,
+                    )
+                _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
+            _log.info("Deployment successful")
+            if not workflow_deploys_services(config):
+                _log.info(f"Deleting namespace = {namespace}")
+                k8s.delete_namespace(namespace)
+            if config.project.usage_stats:
+                _ping_usage_stats_server()
+        except Exception as e:
+            msg = f"Deployment failed --> {e}"
+            _log.error(msg)
+            try:
+                if (
+                    type(e)
+                    not in [
+                        BodyworkNamespaceError,
+                        BodyworkDockerImageError,
+                        BodyworkGitError,
+                        BodyworkConfigError,
+                    ]
+                    and config
+                    and config.project.run_on_failure
+                ):
+                    if config.project.usage_stats:
+                        _ping_usage_stats_server()
+                    _run_failure_stage(
+                        config, e, namespace, repo_url, repo_branch, docker_image
+                    )
+            except Exception as ex:
+                failure_msg = (
+                    f"Error executing failure stage = {config.project.run_on_failure} "  # type: ignore  # noqa
+                    f"after failed workflow : {ex}"
+                )
+                _log.error(failure_msg)
+                msg = f"{msg}\n{failure_msg}"
+            raise BodyworkWorkflowExecutionError(msg) from e
+        finally:
+            if cloned_repo_dir.exists():
+                rmtree(cloned_repo_dir, onerror=_remove_readonly)
+    console.rule(characters="=", style="green")
 
 
 def _setup_namespace(config) -> str:
@@ -195,10 +196,14 @@ def _setup_namespace(config) -> str:
     )
     try:
         if not k8s.namespace_exists(namespace):
-            _log.info(f"Creating namespace: {namespace}")
+            _log.info(f"Creating k8s namespace = {namespace}")
             k8s.create_namespace(namespace)
+        else:
+            _log.info(f"Using k8s namespace = {namespace}")
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
-            _log.info(f"Creating service account: {BODYWORK_STAGES_SERVICE_ACCOUNT}")
+            _log.info(
+                f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"
+            )
             k8s.setup_stages_service_account(namespace)
         return namespace
     except ApiException as e:
@@ -259,22 +264,24 @@ def _run_batch_stages(
     ]
     for job_object in job_objects:
         job_name = job_object.metadata.name
-        _log.info(f"creating job={job_name} in namespace={namespace}")
+        stage_name = job_name.split("--")[1]
+        _log.info(f"Creating k8s job for stage = {stage_name}")
         k8s.create_job(job_object)
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
     except TimeoutError as e:
-        _log.error("jobs failed to complete successfully")
+        _log.error("Some (or all) k8s jobs failed to complete successfully")
         raise e
     finally:
         for job_object in job_objects:
             job_name = job_object.metadata.name
-            _log.info(f"completed job={job_name} from namespace={namespace}")
+            stage_name = job_name.split("--")[1]
+            _log.info(f"Completed k8s job for stage = {stage_name}")
             _print_logs_to_stdout(namespace, job_name)
-            _log.info(f"deleting job={job_name} from namespace={namespace}")
+            _log.info(f"Deleting k8s job for stage = {stage_name}")
             k8s.delete_job(namespace, job_name)
-            _log.info(f"deleted job={job_name} from namespace={namespace}")
+            _log.info(f"Deleted k8s job for stage = {stage_name}")
 
 
 def _run_service_stages(
@@ -318,15 +325,12 @@ def _run_service_stages(
     ]
     for deployment_object in deployment_objects:
         deployment_name = deployment_object.metadata.name
+        stage_name = deployment_name.split("--")[1]
         if k8s.is_existing_deployment(namespace, deployment_name):
-            _log.info(
-                f"updating deployment={deployment_name} in " f"namespace={namespace}"
-            )
+            _log.info(f"Updating k8s deployment for stage = {stage_name}")
             k8s.update_deployment(deployment_object)
         else:
-            _log.info(
-                f"creating deployment={deployment_name} in " f"namespace={namespace}"
-            )
+            _log.info(f"Creating k8s deployment and service for stage = {stage_name}")
             k8s.create_deployment(deployment_object)
     try:
         timeout = max(stage.max_startup_time for stage in service_stages)
@@ -334,47 +338,39 @@ def _run_service_stages(
             deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
         )
     except TimeoutError as e:
-        _log.error("deployments failed to roll-out successfully")
+        _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
             deployment_name = deployment_object.metadata.name
-            _print_logs_to_stdout(namespace, deployment_name)
-            _log.info(
-                f"rolling back deployment={deployment_name} in "
-                f"namespace={namespace}"
-            )
+            stage_name = deployment_name.split("--")[1]
+            _print_logs_to_stdout(namespace, stage_name)
+            _log.info(f"Rolling-back k8s deployment for stage = {stage_name}")
             k8s.rollback_deployment(deployment_object)
-            _log.info(
-                f"rolled back deployment={deployment_name} in " f"namespace={namespace}"
-            )
+            _log.info(f"Rolled-back k8s deployment for stage = {stage_name}")
         raise e
 
     for deployment_object, stage in zip(deployment_objects, service_stages):
         deployment_name = deployment_object.metadata.name
         deployment_port = deployment_object.metadata.annotations["port"]
-        _log.info(
-            f"successful deployment={deployment_name} in " f"namespace={namespace}"
-        )
+        stage_name = deployment_name.split("--")[1]
+        _log.info(f"Successfully created k8s deployment for stage = {stage_name}")
         _print_logs_to_stdout(namespace, deployment_name)
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
             _log.info(
-                f"exposing deployment={deployment_name} in "
-                f"namespace={namespace} at"
+                f"Exposing stage = {stage_name} as a k8s service at "
                 f"http://{deployment_name}.{namespace}.svc.cluster"
                 f".local:{deployment_port}"
             )
             k8s.expose_deployment_as_cluster_service(deployment_object)
         if not k8s.has_ingress(namespace, deployment_name) and stage.create_ingress:
             _log.info(
-                f"creating ingress for deployment={deployment_name} in "
-                f"namespace={namespace} with"
-                f"path=/{namespace}/{deployment_name}"
+                f"Creating k8s ingress for stage = {stage_name} at "
+                f"path = /{namespace}/{deployment_name}"
             )
             k8s.create_deployment_ingress(deployment_object)
         if k8s.has_ingress(namespace, deployment_name) and not stage.create_ingress:
             _log.info(
-                f"deleting ingress for deployment={deployment_name} in "
-                f"namespace={namespace} with"
-                f"path=/{namespace}/{deployment_name}"
+                f"Deleting k8s ingress for stage = {stage_name} at "
+                f"path = /{namespace}/{deployment_name}"
             )
             k8s.delete_deployment_ingress(namespace, deployment_name)
 
@@ -396,7 +392,7 @@ def _run_failure_stage(
     :param docker_image: Docker Image to use.
     """
     stage_name = config.project.run_on_failure
-    _log.info(f"Executing Stage: {stage_name}")
+    _log.info(f"Executing stage = {stage_name}")
     stage = [cast(BatchStageConfig, config.stages[stage_name])]
     env_vars = k8s.create_k8s_environment_variables(
         [(FAILURE_EXCEPTION_K8S_ENV_VAR, str(workflow_exception))]
@@ -444,7 +440,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     :return: Image name and image tag tuple.
     """
     err_msg = (
-        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME} file - "
+        f"Invalid Docker image specified in {PROJECT_CONFIG_FILENAME} file - "
         f"cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG"
     )
     if len(image_string.split("/")) != 2:
@@ -469,18 +465,14 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
-        print("-" * 100)
-        print(f"---- pod logs for {job_or_deployment_name}")
-        print("-" * 100)
         if pod_name is not None:
             pod_logs = k8s.get_pod_logs(namespace, pod_name)
-            print(pod_logs)
+            stage_name = job_or_deployment_name.split("--")[1]
+            print_pod_logs(pod_logs, stage_name)
         else:
-            print(f"cannot get logs for {job_or_deployment_name}")
-        print("-" * 100)
-        print("-" * 100)
+            _log.warning(f"Cannot get logs for {job_or_deployment_name}")
     except Exception:
-        print(f"cannot get logs for {job_or_deployment_name}")
+        _log.warning(f"Cannot get logs for {job_or_deployment_name}")
 
 
 def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
@@ -521,11 +513,14 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
     param secrets_group: Group of secrets to copy.
     """
     try:
-        _log.info(f"Replicating {secrets_group} secrets in namespace={namespace}")
+        _log.info(
+            f"Replicating k8s secrets from group = {secrets_group} into "
+            f"namespace = {namespace}"
+        )
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
-        _log.error(
-            f"Unable to replicate secrets from group={secrets_group} to namespace="
-            f"{namespace} - {e}"
+        _log.info(
+            f"Unable to replicate k8s secrets from group = {secrets_group} into "
+            f"namespace = {namespace}"
         )
         raise e

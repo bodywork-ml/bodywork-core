@@ -32,6 +32,3 @@ def k8s_env_vars() -> Iterable[bool]:
     finally:
         yield True
     del os.environ["KUBERNETES_SERVICE_HOST"]
-
-
-
