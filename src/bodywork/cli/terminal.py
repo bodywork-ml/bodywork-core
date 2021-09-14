@@ -38,7 +38,7 @@ def print_dict(
 
 
 def print_pod_logs(logs: str, stage_name: str) -> None:
-    """Render pod lods.
+    """Render pod logs.
 
     :param logs: The logs!
     :param stage_name: The name of the stage associated with the logs.
