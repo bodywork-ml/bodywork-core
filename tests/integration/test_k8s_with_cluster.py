@@ -144,6 +144,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
         assert process_four.returncode == 0
 
+        sleep(5)
         process_five = run(
             [
                 "bodywork",
