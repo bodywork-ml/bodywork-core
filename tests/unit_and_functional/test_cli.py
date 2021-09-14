@@ -268,9 +268,12 @@ def test_cli_deployment_handler_error_handling():
     assert process_two.returncode == 1
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.run_workflow")
-def test_cli_deployment_create(mock_run_workflow: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_create(
+    mock_run_workflow: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="create",
         name=None,
@@ -288,9 +291,12 @@ def test_cli_deployment_create(mock_run_workflow: MagicMock, mock_sys: MagicMock
     )
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.delete_deployment")
-def test_cli_deployment_delete(mock_deployments: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_delete(
+    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="delete",
         name="mydeployment",
@@ -306,9 +312,12 @@ def test_cli_deployment_delete(mock_deployments: MagicMock, mock_sys: MagicMock)
     mock_deployments.assert_called_with(args.name)
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.display_workflow_job_logs")
-def test_cli_deployment_logs(mock_workflow_job: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_logs(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="logs",
         name="mydeployment",
@@ -324,9 +333,12 @@ def test_cli_deployment_logs(mock_workflow_job: MagicMock, mock_sys: MagicMock):
     mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.delete_workflow_job")
-def test_cli_deployment_delete_job(mock_workflow_job: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_delete_job(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="delete_job",
         name="mydeployment",
@@ -342,9 +354,12 @@ def test_cli_deployment_delete_job(mock_workflow_job: MagicMock, mock_sys: Magic
     mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.display_workflow_job_history")
-def test_cli_deployment_job_history(mock_workflow_job: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_job_history(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="job_history",
         name="mydeployment",
@@ -360,9 +375,12 @@ def test_cli_deployment_job_history(mock_workflow_job: MagicMock, mock_sys: Magi
     mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.display_deployments")
-def test_cli_deployment_display(mock_workflow_job: MagicMock, mock_sys: MagicMock):
+def test_cli_deployment_display(
+    mock_display_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
+):
     args = Namespace(
         command="display",
         name="mydeployment",
@@ -375,7 +393,7 @@ def test_cli_deployment_display(mock_workflow_job: MagicMock, mock_sys: MagicMoc
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(args.namespace, args.name)
+    mock_display_deployments.assert_called_with(args.namespace, args.name)
 
 
 def test_cronjobs_subcommand_exists():
