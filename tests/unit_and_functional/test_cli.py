@@ -234,6 +234,7 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         git_repo_branch="foo4",
         local_workflow_controller=True,
         namespace=None,
+        service=None,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
@@ -282,6 +283,7 @@ def test_cli_deployment_create(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
@@ -305,6 +307,7 @@ def test_cli_deployment_delete(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
@@ -326,6 +329,7 @@ def test_cli_deployment_logs(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
@@ -347,6 +351,7 @@ def test_cli_deployment_delete_job(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
@@ -368,6 +373,7 @@ def test_cli_deployment_job_history(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
