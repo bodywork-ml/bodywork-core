@@ -28,6 +28,7 @@ from pytest import raises, mark
 from bodywork.constants import (
     PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -138,9 +139,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert (
-            "deployment=bodywork-test-project deleted." in process_four.stdout
-        )
+        assert "deployment=bodywork-test-project deleted." in process_four.stdout
 
         assert process_four.returncode == 0
 
@@ -327,20 +326,23 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_deployment_of_remote_workflows():
+def test_deployment_of_remote_workflows(docker_image: str):
+    job_name = test_deployment_of_remote_workflows
     try:
         process_one = run(
             [
                 "bodywork",
                 "deployment",
                 "create",
-                "--name=bodywork-test-project",
+                f"--name={job_name}",
                 "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+                f"--bodywork-docker-image={docker_image}"
             ],
             encoding="utf-8",
             capture_output=True,
         )
         assert process_one.returncode == 0
+        assert f"workflow job={job_name} created" in process_one.stdout
 
         sleep(5)
 
@@ -375,6 +377,16 @@ def test_deployment_of_remote_workflows():
         assert False
     finally:
         load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "jobs",
+                f"{job_name}",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+        delete_namespace("bodywork-test-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
@@ -405,7 +417,7 @@ def test_cli_cronjob_handler_crud():
             "--name=bodywork-test-project",
             "--schedule=0,0 1 * * *",
             "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--git-repo-branch=main"
+            "--git-repo-branch=main",
         ],
         encoding="utf-8",
         capture_output=True,
@@ -420,7 +432,9 @@ def test_cli_cronjob_handler_crud():
     )
     assert "bodywork-test-project" in process_three.stdout
     assert "0,0 1 * * *" in process_three.stdout
-    assert "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    assert (
+        "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
+    )
     assert "main" in process_three.stdout
     assert process_three.returncode == 0
 

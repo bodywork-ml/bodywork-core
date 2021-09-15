@@ -22,6 +22,7 @@ import re
 from typing import Optional
 
 from .. import k8s
+from ..constants import BODYWORK_DOCKER_IMAGE
 
 
 def create_workflow_job(
@@ -30,6 +31,8 @@ def create_workflow_job(
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
+    image: str = BODYWORK_DOCKER_IMAGE
+
 ) -> None:
     """Create a new workflow job within a namespace.
 
@@ -42,6 +45,8 @@ def create_workflow_job(
         defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param image: Docker image to use for running the stages within,
+        defaults to BODYWORK_DOCKER_IMAGE.
     """
     if not k8s.namespace_exists(namespace):
         print(f"namespace={namespace} could not be found on k8s cluster")
@@ -50,7 +55,7 @@ def create_workflow_job(
         print(f"workflow job={job_name} already exists in namespace={namespace}")
         return None
     configured_job = k8s.configure_workflow_job(
-        namespace, project_repo_url, project_repo_branch, retries, job_name=job_name
+        namespace, project_repo_url, project_repo_branch, retries, image, job_name
     )
     k8s.create_workflow_job(configured_job)
     print(f"workflow job={job_name} created in namespace={namespace}")

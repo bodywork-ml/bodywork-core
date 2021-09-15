@@ -59,7 +59,7 @@ from ..exceptions import (
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
-from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, BODYWORK_DOCKER_IMAGE
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from bodywork.workflow_execution import run_workflow
@@ -140,6 +140,13 @@ def cli() -> None:
         required=False,
         type=str,
         help="Display command only - Deployed Service to search for.",
+    )
+
+    deployment_cmd_parser.add_argument(
+        "--bodywork-docker-image",
+        type=str,
+        required=False,
+        help="Override the Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",  # noqa
     )
 
     # cronjob interface
@@ -346,6 +353,7 @@ def deployment(args: Namespace) -> None:
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
     service_name = args.service
+    image = args.bodywork_docker_image
 
     if command == "create" and not git_repo_url:
         print("please specify Git repo URL for the deployment you want to create")
@@ -358,7 +366,6 @@ def deployment(args: Namespace) -> None:
             pass_through_args = Namespace(
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
-                bodywork_docker_image="",
             )
             print("testing with local workflow-controller - retries are inactive")
             workflow(pass_through_args)
@@ -378,6 +385,7 @@ def deployment(args: Namespace) -> None:
                 git_repo_url,
                 git_repo_branch,
                 retries,
+                image if image else BODYWORK_DOCKER_IMAGE
             )
     elif command == "delete":
         load_kubernetes_config()
