@@ -145,18 +145,19 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_four.returncode == 0
 
         sleep(5)
+
         process_five = run(
             [
                 "bodywork",
                 "deployment",
                 "display",
-                "--namespace=bodywork-test-project",
+                "--name=bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_five.stdout == "namespace=bodywork-test-project could not be found on k8s cluster"
-        assert process_five.returncode == 1
+        assert "No deployments found" in process_five.stdout
+        assert process_five.returncode == 0
 
     except Exception as e:
         assert False

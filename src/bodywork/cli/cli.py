@@ -132,7 +132,14 @@ def cli() -> None:
         "--ns",
         required=False,
         type=str,
-        help="Display command only - K8s namespace to look in",
+        help="Display command only - K8s namespace to look in.",
+    )
+    deployment_cmd_parser.add_argument(
+        "--service",
+        "--s",
+        required=False,
+        type=str,
+        help="Display command only - Deployed Service to search for.",
     )
 
     # cronjob interface
@@ -338,6 +345,7 @@ def deployment(args: Namespace) -> None:
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
+    service_name = args.service
 
     if command == "create" and not git_repo_url:
         print("please specify Git repo URL for the deployment you want to create")
@@ -385,7 +393,7 @@ def deployment(args: Namespace) -> None:
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         load_kubernetes_config()
-        display_deployments(namespace, name)
+        display_deployments(namespace, name, service_name)
     sys.exit(0)
 
 

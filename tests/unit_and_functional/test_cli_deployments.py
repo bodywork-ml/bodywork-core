@@ -108,12 +108,37 @@ def test_display_all_service_deployments(
 
 
 @patch("bodywork.cli.deployments.k8s")
-def test_display_service_deployment(
+def test_display_deployment(
     mock_k8s_module: MagicMock, capsys: CaptureFixture,
         test_service_stage_deployment
 ):
+    mock_k8s_module.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    display_deployments(name="bodywork-test-project--serve")
+
+    captured_one = capsys.readouterr()
+    mock_k8s_module.list_service_stage_deployments.captured_one(None, "bodywork-test-project--serve")
+    assert re.findall(r"bodywork-test-project--serve", captured_one.out)
+    assert not re.findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
+
+    mock_k8s_module.list_service_stage_deployments.return_value = None
+
+    display_deployments(name="Missing-Service")
+
+    captured_two = capsys.readouterr()
+    assert re.findall(r"No deployments found", captured_two.out)  # noqa
+
+
+@patch("bodywork.cli.deployments.k8s")
+def test_display_service(
+    mock_k8s_module: MagicMock, capsys: CaptureFixture,
+        test_service_stage_deployment
+):
+
     test_service_stage_deployment["bodywork-test-project--second-service"] = {
-        "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",    # noqa
+        "namespace": "bodywork-test-project--second-service",
+        "service_url": "http://bodywork-test-project--second-service.bodywork-dev.svc.cluster.local",    # noqa
         "service_port": 6000,
         "service_exposed": "true",
         "available_replicas": 1,
@@ -123,20 +148,15 @@ def test_display_service_deployment(
         "has_ingress": "true",
         "ingress_route": "/bodywork-dev/bodywork-test-project",
     }
-    mock_k8s_module.list_service_stage_deployments.return_value = (
-        test_service_stage_deployment
-    )
+    mock_k8s_module.list_service_stage_deployments.return_value = test_service_stage_deployment
 
-    display_deployments(service_name="Missing-Service")
+    display_deployments(service_name="bodywork-test-project--second-service")
 
     captured_one = capsys.readouterr()
-    assert re.findall(r"service: Missing-Service could not be found on k8s cluster", captured_one.out)  # noqa
 
-    display_deployments(service_name="bodywork-test-project--serve")
-    captured_two = capsys.readouterr()
-    assert re.findall(r"bodywork-test-project--serve", captured_two.out)
-    assert not re.findall(r"bodywork-test-project--second-service", captured_two.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_two.out)
+    assert not re.findall(r"bodywork-test-project--serve", captured_one.out)
+    assert re.findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert re.findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")

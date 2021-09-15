@@ -389,11 +389,12 @@ def test_cli_deployment_display(
         git_repo_branch="master",
         retries=2,
         namespace=None,
+        service=None,
     )
 
     deployment(args)
 
-    mock_display_deployments.assert_called_with(args.namespace, args.name)
+    mock_display_deployments.assert_called_with(args.namespace, args.name, args.service)
 
 
 def test_cronjobs_subcommand_exists():
