@@ -235,6 +235,7 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         local_workflow_controller=True,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
@@ -284,6 +285,7 @@ def test_cli_deployment_create(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
@@ -308,6 +310,7 @@ def test_cli_deployment_delete(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
@@ -330,6 +333,7 @@ def test_cli_deployment_logs(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
@@ -352,6 +356,7 @@ def test_cli_deployment_delete_job(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
@@ -374,6 +379,7 @@ def test_cli_deployment_job_history(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
@@ -396,6 +402,7 @@ def test_cli_deployment_display(
         retries=2,
         namespace=None,
         service=None,
+        bodywork_docker_image=None,
     )
 
     deployment(args)
