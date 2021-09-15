@@ -366,6 +366,7 @@ def deployment(args: Namespace) -> None:
             pass_through_args = Namespace(
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
+                bodywork_docker_image=image,
             )
             print("testing with local workflow-controller - retries are inactive")
             workflow(pass_through_args)
@@ -558,9 +559,7 @@ def workflow(args: Namespace) -> None:
     try:
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
-        docker_image = (
-            None if args.bodywork_docker_image == "" else args.bodywork_docker_image
-        )
+        docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
         sys.exit(0)

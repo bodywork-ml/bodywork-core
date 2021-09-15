@@ -241,7 +241,7 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
     expected_pass_through_args = Namespace(
         git_repo_url="foo3",
         git_repo_branch="foo4",
-        bodywork_docker_image="",
+        bodywork_docker_image=None,
     )
     stdout = capsys.readouterr().out
     assert "testing with local workflow-controller - retries are inactive" in stdout
