@@ -23,7 +23,6 @@ being called from the CLI.
 from .. import k8s
 from ..constants import (
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 
 
@@ -45,15 +44,11 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
             k8s.workflow_cluster_role_binding_name(namespace)
         )
     )
-    jobs_and_deployments_sa_exists = k8s.service_account_exists(
-        namespace, BODYWORK_STAGES_SERVICE_ACCOUNT
-    )
     is_namespace_setup = (
         True
         if (
             workflow_controller_sa_exists
             and workflow_controller_sa_cluster_role_binding_exists
-            and jobs_and_deployments_sa_exists
         )
         else False
     )
@@ -70,11 +65,6 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
             print(
                 f"cluster-role-binding="
                 f"{k8s.workflow_cluster_role_binding_name(namespace)} is missing"
-            )
-        if not jobs_and_deployments_sa_exists:
-            print(
-                f"service-account={BODYWORK_STAGES_SERVICE_ACCOUNT} is "
-                f"missing from namespace={namespace}"
             )
         return False
 
