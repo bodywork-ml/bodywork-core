@@ -133,12 +133,6 @@ def setup_workflow_service_accounts(namespace: str) -> None:
         ),
         rules=[
             k8s.V1PolicyRule(api_groups=[""], resources=["*"], verbs=["*"]),
-            k8s.V1PolicyRule(
-                api_groups=["apps", "batch"], resources=["*"], verbs=["*"]
-            ),
-            k8s.V1PolicyRule(
-                api_groups=["extensions"], resources=["ingresses"], verbs=["*"]
-            ),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -172,7 +166,7 @@ def setup_workflow_service_accounts(namespace: str) -> None:
             rules=[
                 k8s.V1PolicyRule(
                     api_groups=[""],
-                    resources=["namespaces"],
+                    resources=["namespaces", "services"],
                     verbs=["get", "list", "create", "delete"],
                 ),
                 k8s.V1PolicyRule(
@@ -192,8 +186,19 @@ def setup_workflow_service_accounts(namespace: str) -> None:
                 ),
                 k8s.V1PolicyRule(
                     api_groups=[""],
-                    resources=["secrets", "configmaps"],
+                    resources=["configmaps"],
                     verbs=["get", "list"],
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=[""],
+                    resources=["secrets"],
+                    verbs=["get", "list", "create", "update"],
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=["apps", "batch"], resources=["*"], verbs=["*"]
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=["extensions"], resources=["ingresses"], verbs=["*"]
                 ),
             ],
         )

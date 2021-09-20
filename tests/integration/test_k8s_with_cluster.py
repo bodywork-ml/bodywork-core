@@ -327,8 +327,9 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("add_secrets")
 def test_deployment_of_remote_workflows(docker_image: str):
-    job_name = "test_remote_workflows"
+    job_name = "test-remote-workflows"
     try:
         process_one = run(
             [
@@ -345,7 +346,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         assert process_one.returncode == 0
         assert f"workflow job={job_name} created" in process_one.stdout
 
-        sleep(5)
+        sleep(15)
 
         process_two = run(
             [
@@ -365,7 +366,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "bodywork",
                 "deployment",
                 "logs",
-                "--name=bodywork-test-project",
+                f"--name={job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -382,7 +383,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
             [
                 "kubectl",
                 "delete",
-                "jobs",
+                "job",
                 f"{job_name}",
                 f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
             ]
