@@ -171,7 +171,9 @@ def setup_workflow_service_accounts(namespace: str) -> None:
             metadata=k8s.V1ObjectMeta(name=BODYWORK_WORKFLOW_CLUSTER_ROLE),
             rules=[
                 k8s.V1PolicyRule(
-                    api_groups=[""], resources=["namespaces"], verbs=["get", "list", "create", "delete"]
+                    api_groups=[""],
+                    resources=["namespaces"],
+                    verbs=["get", "list", "create", "delete"],
                 ),
                 k8s.V1PolicyRule(
                     api_groups=["rbac.authorization.k8s.io"],
@@ -192,7 +194,7 @@ def setup_workflow_service_accounts(namespace: str) -> None:
                     api_groups=[""],
                     resources=["secrets", "configmaps"],
                     verbs=["get", "list"],
-                )
+                ),
             ],
         )
         k8s.RbacAuthorizationV1Api().create_cluster_role(body=cluster_role_object)
