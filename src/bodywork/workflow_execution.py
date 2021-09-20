@@ -444,7 +444,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     :return: Image name and image tag tuple.
     """
     err_msg = (
-        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME} file - "
+        f"Invalid DOCKER_IMAGE specified: {image_string} - "
         f"cannot be parsed as DOCKERHUB_USERNAME/IMAGE_NAME:TAG"
     )
     if len(image_string.split("/")) != 2:

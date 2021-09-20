@@ -50,7 +50,7 @@ def service_account_exists(namespace: str, name: str) -> bool:
 
     :param namespace: Kubernetes namespace to check.
     :param name: The name of the service-account to check.
-    :return: True if the service-account was found, othewise False.
+    :return: True if the service-account was found, otherwise False.
     """
     service_account_objects = (
         k8s.CoreV1Api().list_namespaced_service_account(namespace=namespace).items
@@ -66,7 +66,7 @@ def cluster_role_exists(name: str) -> bool:
     """Does the cluster-role exist.
 
     :param name: The name of the cluster-role to check.
-    :return: True if the cluster-role was found, othewise False.
+    :return: True if the cluster-role was found, otherwise False.
     """
     cluster_role_objects = k8s.RbacAuthorizationV1Api().list_cluster_role().items
     cluster_role_names = [
@@ -92,7 +92,7 @@ def cluster_role_binding_exists(name: str) -> bool:
     """Does the cluster-role-binding exist.
 
     :param name: The name of the cluster-role-binding to check.
-    :return: True if the cluster-role-binding was found, othewise False.
+    :return: True if the cluster-role-binding was found, otherwise False.
     """
     cluster_role_binding_objects = (
         k8s.RbacAuthorizationV1Api().list_cluster_role_binding().items
@@ -139,11 +139,6 @@ def setup_workflow_service_accounts(namespace: str) -> None:
             k8s.V1PolicyRule(
                 api_groups=["extensions"], resources=["ingresses"], verbs=["*"]
             ),
-            k8s.V1PolicyRule(
-                api_groups=[""],
-                resources=["namespaces"],
-                verbs=["get", "list", "create", "delete"],
-            ),
         ],
     )
     k8s.RbacAuthorizationV1Api().create_namespaced_role(
@@ -176,13 +171,28 @@ def setup_workflow_service_accounts(namespace: str) -> None:
             metadata=k8s.V1ObjectMeta(name=BODYWORK_WORKFLOW_CLUSTER_ROLE),
             rules=[
                 k8s.V1PolicyRule(
-                    api_groups=[""], resources=["namespaces"], verbs=["get", "list"]
+                    api_groups=[""], resources=["namespaces"], verbs=["get", "list", "create", "delete"]
                 ),
                 k8s.V1PolicyRule(
                     api_groups=["rbac.authorization.k8s.io"],
                     resources=["clusterrolebindings"],
-                    verbs=["get", "list"],
+                    verbs=["get", "list", "create"],
                 ),
+                k8s.V1PolicyRule(
+                    api_groups=[""],
+                    resources=["serviceaccounts"],
+                    verbs=["list", "create"],
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=["rbac.authorization.k8s.io"],
+                    resources=["roles", "rolebindings"],
+                    verbs=["create"],
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=[""],
+                    resources=["secrets", "configmaps"],
+                    verbs=["get", "list"],
+                )
             ],
         )
         k8s.RbacAuthorizationV1Api().create_cluster_role(body=cluster_role_object)

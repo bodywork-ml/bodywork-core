@@ -326,7 +326,6 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-@mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test_remote_workflows"
     try:
