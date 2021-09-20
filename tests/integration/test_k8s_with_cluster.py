@@ -330,6 +330,7 @@ def test_workflow_with_ssh_github_connectivity(
 @mark.usefixtures("add_secrets")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
+    sleep(10)
     try:
         process_one = run(
             [
@@ -346,7 +347,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         assert process_one.returncode == 0
         assert f"workflow job={job_name} created" in process_one.stdout
 
-        sleep(20)
+        sleep(15)
 
         process_two = run(
             [
