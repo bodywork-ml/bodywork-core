@@ -346,7 +346,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         assert process_one.returncode == 0
         assert f"workflow job={job_name} created" in process_one.stdout
 
-        sleep(15)
+        sleep(20)
 
         process_two = run(
             [
