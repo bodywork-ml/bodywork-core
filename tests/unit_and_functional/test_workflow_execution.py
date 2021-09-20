@@ -71,7 +71,7 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
         BodyworkDockerImageError,
-        match=f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}",
+        match=f"Invalid DOCKER_IMAGE specified: bodyworkml",
     ):
         parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
         parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
