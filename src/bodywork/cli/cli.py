@@ -243,7 +243,6 @@ def cli() -> None:
     workflow_cmd_parser.add_argument(
         "--bodywork-docker-image",
         type=str,
-        default="",
         help="Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",
     )
 

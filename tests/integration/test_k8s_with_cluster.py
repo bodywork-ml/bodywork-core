@@ -250,19 +250,20 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(
 def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
     test_namespace: str,
 ):
+    bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
     process_one = run(
         [
             "bodywork",
             "workflow",
             "https://github.com/bodywork-ml/bodywork-test-project",
             "master",
-            "--bodywork-docker-image=bad:bodyworkml/bodywork-core:0.0.0",
+            f"--bodywork-docker-image={bad_image}",
         ],
         encoding="utf-8",
         capture_output=True,
     )
     assert (
-        f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}"
+        f"Invalid DOCKER_IMAGE specified: {bad_image}"
         in process_one.stdout
     )
     assert process_one.returncode == 1
