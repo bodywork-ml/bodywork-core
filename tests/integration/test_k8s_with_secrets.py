@@ -35,7 +35,6 @@ def test_replicate_secrets_in_namespace():
 
 
 @mark.usefixtures("add_secrets")
-@mark.usefixtures("setup_cluster")
 def test_update_secret():
     process_one = run(
         [
@@ -56,7 +55,6 @@ def test_update_secret():
 
 
 @mark.usefixtures("add_secrets")
-@mark.usefixtures("setup_cluster")
 def test_display_all_secrets():
     process_one = run(
         [
@@ -72,8 +70,7 @@ def test_display_all_secrets():
     assert "testsecrets-bodywork-test-project-credentials" in process_one.stdout
 
 
-@mark.usefixtures("setup_cluster")
-def test_cli_secret_handler_crud(test_namespace: str):
+def test_cli_secret_handler_crud():
 
     process_one = run(
         [

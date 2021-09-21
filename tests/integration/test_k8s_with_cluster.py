@@ -26,7 +26,6 @@ from time import sleep
 from pytest import raises, mark
 
 from bodywork.constants import (
-    PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
     BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 )
@@ -40,7 +39,6 @@ from bodywork.k8s import (
 
 
 @mark.usefixtures("add_secrets")
-@mark.usefixtures("setup_cluster")
 def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
 ):
@@ -169,7 +167,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
-    random_test_namespace: str, docker_image: str
+    docker_image: str
 ):
     try:
         process_one = run(
@@ -218,10 +216,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
-@mark.usefixtures("setup_cluster")
-def test_workflow_will_run_failure_stage_on_workflow_failure(
-    test_namespace: str, docker_image: str
-):
+def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
         process_one = run(
             [
@@ -246,10 +241,7 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(
         assert False
 
 
-@mark.usefixtures("setup_cluster")
-def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
-    test_namespace: str,
-):
+def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
     bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
     process_one = run(
         [
@@ -327,10 +319,24 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
+    with raises(CalledProcessError):
+        run(
+            [
+                "bodywork",
+                "workflow",
+                f"--namespace={test_namespace}",
+                "http://bad.repo",
+                "master",
+            ],
+            check=True,
+        )
+
+
 @mark.usefixtures("add_secrets")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
-    sleep(30)
+    sleep(20)
     try:
         process_one = run(
             [
@@ -347,7 +353,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         assert process_one.returncode == 0
         assert f"workflow job={job_name} created" in process_one.stdout
 
-        sleep(30)
+        sleep(20)
 
         process_two = run(
             [
@@ -393,7 +399,6 @@ def test_deployment_of_remote_workflows(docker_image: str):
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-@mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud():
     process_one = run(
         [
@@ -461,17 +466,3 @@ def test_cli_cronjob_handler_crud():
     )
     assert "" in process_five.stdout
     assert process_five.returncode == 0
-
-
-def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
-    with raises(CalledProcessError):
-        run(
-            [
-                "bodywork",
-                "workflow",
-                f"--namespace={test_namespace}",
-                "http://bad.repo",
-                "master",
-            ],
-            check=True,
-        )
