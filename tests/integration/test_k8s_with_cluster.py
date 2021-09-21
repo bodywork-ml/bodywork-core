@@ -278,7 +278,6 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
     assert process_two.returncode == 1
 
 
-@mark.usefixtures("add_secrets")
 def test_workflow_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
@@ -288,7 +287,7 @@ def test_workflow_with_ssh_github_connectivity(
             [
                 "bodywork",
                 "workflow",
-                "git@github.com:bodywork-ml/bodywork-test-project.git",
+                "git@github.com:bodywork-ml/test_single-service-project.git",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
             ],
@@ -297,25 +296,23 @@ def test_workflow_with_ssh_github_connectivity(
         )
         expected_output_1 = (
             "attempting to run workflow for "
-            "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
+            "project=git@github.com:bodywork-ml/test_single-service-project.git on "
             "branch=master"
         )
         expected_output_2 = (
             "successfully ran workflow for "
-            "project=git@github.com:bodywork-ml/bodywork-test-project.git on "
+            "project=git@github.com:bodywork-ml/test_single-service-project.git on "
             "branch=master"
         )
-        expected_output_3 = "successfully ran stage=stage_1"
         assert expected_output_1 in process_one.stdout
         assert expected_output_2 in process_one.stdout
-        assert expected_output_3 in process_one.stdout
         assert process_one.returncode == 0
 
     except Exception:
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace("bodywork-test-project")
+        delete_namespace("bodywork-test-single-service-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
@@ -331,72 +328,6 @@ def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
             ],
             check=True,
         )
-
-
-@mark.usefixtures("add_secrets")
-def test_deployment_of_remote_workflows(docker_image: str):
-    job_name = "test-remote-workflows"
-    sleep(20)
-    try:
-        process_one = run(
-            [
-                "bodywork",
-                "deployment",
-                "create",
-                f"--name={job_name}",
-                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-                f"--bodywork-docker-image={docker_image}"
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_one.returncode == 0
-        assert f"workflow job={job_name} created" in process_one.stdout
-
-        sleep(20)
-
-        process_two = run(
-            [
-                "bodywork",
-                "deployment",
-                "display",
-                "--name=bodywork-test-project",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_two.returncode == 0
-        assert "bodywork-test-project" in process_two.stdout
-
-        process_three = run(
-            [
-                "bodywork",
-                "deployment",
-                "logs",
-                f"--name={job_name}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_three.returncode == 0
-        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
-        assert "ERROR" not in process_three.stdout
-
-    except Exception:
-        assert False
-    finally:
-        load_kubernetes_config()
-        run(
-            [
-                "kubectl",
-                "delete",
-                "job",
-                f"{job_name}",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
-            ]
-        )
-        delete_namespace("bodywork-test-project")
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
 def test_cli_cronjob_handler_crud():
@@ -466,3 +397,68 @@ def test_cli_cronjob_handler_crud():
     )
     assert "" in process_five.stdout
     assert process_five.returncode == 0
+
+
+def test_deployment_of_remote_workflows(docker_image: str):
+    job_name = "test-remote-workflows"
+    sleep(5)
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                f"--name={job_name}",
+                "--git-repo-url=https://github.com/bodywork-ml/test_single-service-project.git",
+                f"--bodywork-docker-image={docker_image}"
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_one.returncode == 0
+        assert f"workflow job={job_name} created" in process_one.stdout
+
+        sleep(10)
+
+        process_two = run(
+            [
+                "bodywork",
+                "deployment",
+                "display",
+                "--name=bodywork-test-single-service-project",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_two.returncode == 0
+        assert "bodywork-test-single-service-project" in process_two.stdout
+
+        process_three = run(
+            [
+                "bodywork",
+                "deployment",
+                "logs",
+                f"--name={job_name}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_three.returncode == 0
+        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+        assert "ERROR" not in process_three.stdout
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "job",
+                f"{job_name}",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+        delete_namespace("bodywork-test-single-service-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
