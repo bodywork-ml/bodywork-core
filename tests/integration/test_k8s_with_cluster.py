@@ -308,70 +308,81 @@ def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
 
 
 def test_cli_cronjob_handler_crud():
-    process_one = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--name=bodywork-test-project",
-            "--schedule=0,30 * * * *",
-            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--retries=2",
-            "--history-limit=1",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Created cronjob=bodywork-test-project" in process_one.stdout
-    assert process_one.returncode == 0
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "cronjob",
+                "create",
+                "--name=bodywork-test-project",
+                "--schedule=0,30 * * * *",
+                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--retries=2",
+                "--history-limit=1",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Created cronjob=bodywork-test-project" in process_one.stdout
+        assert process_one.returncode == 0
 
-    process_two = run(
-        [
-            "bodywork",
-            "cronjob",
-            "update",
-            "--name=bodywork-test-project",
-            "--schedule=0,0 1 * * *",
-            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--git-repo-branch=main",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Updated cronjob=bodywork-test-project" in process_two.stdout
-    assert process_two.returncode == 0
+        process_two = run(
+            [
+                "bodywork",
+                "cronjob",
+                "update",
+                "--name=bodywork-test-project",
+                "--schedule=0,0 1 * * *",
+                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-repo-branch=main",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Updated cronjob=bodywork-test-project" in process_two.stdout
+        assert process_two.returncode == 0
 
-    process_three = run(
-        ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "bodywork-test-project" in process_three.stdout
-    assert "0,0 1 * * *" in process_three.stdout
-    assert ("https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout)  # noqa
-    assert "main" in process_three.stdout
-    assert process_three.returncode == 0
+        process_three = run(
+            ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "bodywork-test-project" in process_three.stdout
+        assert "0,0 1 * * *" in process_three.stdout
+        assert ("https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout)  # noqa
+        assert "main" in process_three.stdout
+        assert process_three.returncode == 0
 
-    process_four = run(
-        [
-            "bodywork",
-            "cronjob",
-            "delete",
-            "--name=bodywork-test-project",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
-    assert process_four.returncode == 0
+        process_four = run(
+            [
+                "bodywork",
+                "cronjob",
+                "delete",
+                "--name=bodywork-test-project",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
+        assert process_four.returncode == 0
 
-    process_five = run(
-        ["bodywork", "cronjob", "display"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "" in process_five.stdout
-    assert process_five.returncode == 0
+        process_five = run(
+            ["bodywork", "cronjob", "display"],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "" in process_five.stdout
+        assert process_five.returncode == 0
+    finally:
+        run(
+            [
+                "kubectl",
+                "delete",
+                "cronjobs",
+                "bodywork-test-project",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
 
 
 def test_deployment_of_remote_workflows(docker_image: str):
@@ -390,7 +401,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
             capture_output=True,
         )
         assert process_one.returncode == 0
-        assert f"workflow job={job_name} created" in process_one.stdout
+        assert f"Created workflow-job={job_name}" in process_one.stdout
 
         sleep(20)
 

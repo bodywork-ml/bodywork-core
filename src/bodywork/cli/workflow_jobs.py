@@ -125,7 +125,7 @@ def create_workflow_cronjob(
     print_info(f"Created cronjob={job_name}.")
 
 
-def update_workflow_cronjob_in_namespace(
+def update_workflow_cronjob(
     namespace: str,
     job_name: str,
     schedule: Optional[str] = None,
@@ -191,7 +191,7 @@ def display_cronjobs(namespace: str, job_name: Optional[str] = None) -> None:
     """Print cronjobs to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
-    :param name: Name of cronjob resource, defaults to None.
+    :param job_name: Name of cronjob resource, defaults to None.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")

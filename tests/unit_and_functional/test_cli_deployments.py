@@ -56,7 +56,7 @@ def test_display_service_deployments_in_namespace(
     mock_k8s_module.namespace_exists.return_value = False
     display_deployments("bodywork-dev")
     captured_one = capsys.readouterr()
-    assert "namespace=bodywork-dev could not be found" in captured_one.out
+    assert "Could not find namespace=bodywork-dev on k8s cluster" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = (
@@ -103,8 +103,6 @@ def test_display_all_service_deployments(
     captured_one = capsys.readouterr()
     assert findall(r"bodywork-test-project--serve", captured_one.out)
     assert findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
-    assert findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")
@@ -120,7 +118,6 @@ def test_display_deployment(
     mock_k8s_module.list_service_stage_deployments.captured_one(None, "bodywork-test-project--serve")
     assert findall(r"bodywork-test-project--serve", captured_one.out)
     assert not findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
 
     mock_k8s_module.list_service_stage_deployments.return_value = None
 
@@ -156,7 +153,6 @@ def test_display_service(
 
     assert not findall(r"bodywork-test-project--serve", captured_one.out)
     assert findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")

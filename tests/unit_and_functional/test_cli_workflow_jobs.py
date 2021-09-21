@@ -330,7 +330,7 @@ def test_display_workflow_cronjobs_in_namespace(
     captured_two = capsys.readouterr()
     assert findall(r"bodywork-test-project.+project_repo_url", captured_two.out)
 
-    display_cronjobs_in_namespace("bodywork-dev", "bodywork-test-project")
+    display_cronjobs("bodywork-dev", "bodywork-test-project")
     captured_three = capsys.readouterr()
     assert findall(r"schedule.+0 * * * *", captured_three.out)
     assert findall(r"last_scheduled_time.+2020-09-15 00:00:00", captured_three.out)
