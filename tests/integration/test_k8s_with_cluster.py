@@ -287,7 +287,7 @@ def test_workflow_with_ssh_github_connectivity(
             [
                 "bodywork",
                 "workflow",
-                "git@github.com:bodywork-ml/test_single-service-project.git",
+                "git@github.com:bodywork-ml/test_bodywork-batch-job-project.git",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
             ],
@@ -296,12 +296,12 @@ def test_workflow_with_ssh_github_connectivity(
         )
         expected_output_1 = (
             "attempting to run workflow for "
-            "project=git@github.com:bodywork-ml/test_single-service-project.git on "
+            "project=git@github.com:bodywork-ml/test_bodywork-batch-job-project.git on "
             "branch=master"
         )
         expected_output_2 = (
             "successfully ran workflow for "
-            "project=git@github.com:bodywork-ml/test_single-service-project.git on "
+            "project=git@github.com:bodywork-ml/test_bodywork-batch-job-project.git on "
             "branch=master"
         )
         assert expected_output_1 in process_one.stdout
@@ -312,7 +312,7 @@ def test_workflow_with_ssh_github_connectivity(
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace("bodywork-test-single-service-project")
+        delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
@@ -401,7 +401,6 @@ def test_cli_cronjob_handler_crud():
 
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
-    sleep(10)
     try:
         process_one = run(
             [
