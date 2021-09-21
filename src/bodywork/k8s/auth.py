@@ -127,39 +127,6 @@ def setup_workflow_service_accounts(namespace: str) -> None:
         namespace=namespace, body=service_account_object
     )
 
-    role_object = k8s.V1Role(
-        metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
-        ),
-        rules=[
-            k8s.V1PolicyRule(api_groups=[""], resources=["*"], verbs=["*"]),
-        ],
-    )
-    k8s.RbacAuthorizationV1Api().create_namespaced_role(
-        namespace=namespace, body=role_object
-    )
-
-    role_binding_object = k8s.V1RoleBinding(
-        metadata=k8s.V1ObjectMeta(
-            namespace=namespace, name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT
-        ),
-        role_ref=k8s.V1RoleRef(
-            kind="Role",
-            name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-            api_group="rbac.authorization.k8s.io",
-        ),
-        subjects=[
-            k8s.V1Subject(
-                kind="ServiceAccount",
-                name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
-                namespace=namespace,
-            )
-        ],
-    )
-    k8s.RbacAuthorizationV1Api().create_namespaced_role_binding(
-        namespace=namespace, body=role_binding_object
-    )
-
     if not cluster_role_exists(BODYWORK_WORKFLOW_CLUSTER_ROLE):
         cluster_role_object = k8s.V1ClusterRole(
             metadata=k8s.V1ObjectMeta(name=BODYWORK_WORKFLOW_CLUSTER_ROLE),

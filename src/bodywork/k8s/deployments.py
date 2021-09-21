@@ -364,6 +364,7 @@ def list_service_stage_deployments(
 
     :param namespace: Namespace in which to list services.
     :param name: Name of service.
+    :return: Dict of deployments and their attributes.
     """
     label_selector = f"app=bodywork,deployment-name={name}" if name else "app=bodywork"
     if namespace:

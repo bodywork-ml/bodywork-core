@@ -158,8 +158,6 @@ def test_setup_workflow_service_account_creates_service_accounts_and_roles():
             )
             setup_workflow_service_accounts("bodywork-dev")
             mock_k8s_core_api().create_namespaced_service_account.assert_called_once()
-            mock_k8s_rbac_api().create_namespaced_role.assert_called_once()
-            mock_k8s_rbac_api().create_namespaced_role_binding.assert_called_once()
             mock_k8s_rbac_api().create_cluster_role.assert_called_once()
             mock_k8s_rbac_api().create_cluster_role_binding.assert_called_once()
 
@@ -178,8 +176,6 @@ def test_setup_workflow_service_account_creates_service_accounts_and_roles():
             )
             setup_workflow_service_accounts("bodywork-dev")
             mock_k8s_core_api().create_namespaced_service_account.assert_called_once()
-            mock_k8s_rbac_api().create_namespaced_role.assert_called_once()
-            mock_k8s_rbac_api().create_namespaced_role_binding.assert_called_once()
             mock_k8s_rbac_api().create_cluster_role.assert_not_called()
             mock_k8s_rbac_api().create_cluster_role_binding.assert_called_once()
 
