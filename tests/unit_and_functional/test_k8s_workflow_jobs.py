@@ -119,7 +119,9 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
     )
     pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
     pod_template_spec = k8s_client.V1PodTemplateSpec(spec=pod_spec)
-    job_spec = k8s_client.V1JobSpec(template=pod_template_spec, completions=1, backoff_limit=2)
+    job_spec = k8s_client.V1JobSpec(
+        template=pod_template_spec, completions=1, backoff_limit=2
+    )
     job_template = k8s_client.V1beta1JobTemplateSpec(spec=job_spec)
     cronjob_spec = k8s_client.V1beta1CronJobSpec(
         schedule="0,30 * * * *",
@@ -132,7 +134,9 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
             name="bodywork-test-project", namespace="bodywork-dev"
         ),
         spec=cronjob_spec,
-        status=k8s_client.V1beta1CronJobStatus(last_schedule_time=datetime(2020, 9, 15)),
+        status=k8s_client.V1beta1CronJobStatus(
+            last_schedule_time=datetime(2020, 9, 15)
+        ),
     )
     return cronjob
 
@@ -180,13 +184,17 @@ def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
 ):
     pod_spec = k8s_client.V1PodSpec(
-        containers=[k8s_client.V1Container(name="bodywork", args=["fg", "test-branch"])],
+        containers=[
+            k8s_client.V1Container(name="bodywork", args=["fg", "test-branch"])
+        ],
     )
     job_spec = k8s_client.V1JobSpec(
         template=k8s_client.V1PodTemplateSpec(spec=pod_spec),
         backoff_limit=3,
     )
-    job_template = k8s_client.V1beta1JobTemplateSpec(spec=k8s_client.V1Job(spec=job_spec).spec)
+    job_template = k8s_client.V1beta1JobTemplateSpec(
+        spec=k8s_client.V1Job(spec=job_spec).spec
+    )
     expected_result = k8s_client.V1beta1CronJob(
         spec=k8s_client.V1beta1CronJobSpec(
             job_template=job_template,

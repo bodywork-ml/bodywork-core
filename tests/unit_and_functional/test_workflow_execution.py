@@ -17,6 +17,7 @@
 """
 Test Bodywork workflow execution.
 """
+import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch, ANY
 from typing import Iterable
@@ -24,6 +25,7 @@ from typing import Iterable
 import requests
 from pytest import raises
 from _pytest.capture import CaptureFixture
+from _pytest.logging import LogCaptureFixture
 from kubernetes import client as k8sclient
 
 from bodywork.constants import (
@@ -71,7 +73,7 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
         BodyworkDockerImageError,
-        match=f"Invalid DOCKER_IMAGE specified: bodyworkml",
+        match=f"Invalid Docker image specified: bodyworkml",
     ):
         parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
         parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
@@ -108,7 +110,9 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
 
 
 @patch("bodywork.workflow_execution.k8s")
-def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
+def test_print_logs_to_stdout(
+    mock_k8s: MagicMock, capsys: CaptureFixture, caplog: LogCaptureFixture
+):
     mock_k8s.get_latest_pod_name.return_value = "bodywork-test-project--stage-1"
     mock_k8s.get_pod_logs.return_value = "foo-bar"
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
@@ -117,13 +121,14 @@ def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
 
     mock_k8s.get_latest_pod_name.return_value = None
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
-    captured_stdout = capsys.readouterr().out
-    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
+    captured_logs = caplog.text
+    assert "Cannot get logs for bodywork-test-project--stage-1" in captured_logs
 
+    caplog.clear()
     mock_k8s.get_latest_pod_name.side_effect = Exception
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
-    captured_stdout = capsys.readouterr().out
-    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
+    captured_logs = caplog.text
+    assert "Cannot get logs for bodywork-test-project--stage-1" in captured_logs
 
 
 @patch("bodywork.workflow_execution.rmtree")

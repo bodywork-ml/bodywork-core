@@ -47,8 +47,8 @@ def run_stage(
     """
     log = bodywork_log_factory()
     log.info(
-        f"attempting to run stage={stage_name} from {repo_branch} branch of repo"
-        f" at {repo_url}"
+        f"Attempting to run stage = {stage_name} from {repo_branch} branch of repo "
+        f"at {repo_url}"
     )
     try:
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
@@ -64,8 +64,8 @@ def run_stage(
             encoding="utf-8",
         )
         log.info(
-            f"successfully ran stage={stage_name} from {repo_branch} branch of repo"
-            f" at {repo_url}"
+            f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
+            f"at {repo_url}"
         )
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())

@@ -20,6 +20,7 @@ Kubernetes namespace with the necessary service accounts and roles to
 run workflows, jobs and service deployments, securely. It is target at
 being called from the CLI.
 """
+from .terminal import print_info, print_warn
 from .. import k8s
 from ..constants import (
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -34,7 +35,7 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
         running Bodywork projects.
     """
     if not k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} does not exist")
+        print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return False
     workflow_controller_sa_exists = k8s.service_account_exists(
         namespace, BODYWORK_WORKFLOW_SERVICE_ACCOUNT
@@ -53,18 +54,17 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
         else False
     )
     if is_namespace_setup:
-        print(f"namespace={namespace} is setup for use by Bodywork")
         return True
     else:
         if not workflow_controller_sa_exists:
-            print(
-                f"service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT} is "
-                f"missing from namespace={namespace}"
+            print_warn(
+                f"Missing service-account={BODYWORK_WORKFLOW_SERVICE_ACCOUNT} from "
+                f"namespace={namespace}."
             )
         if not workflow_controller_sa_cluster_role_binding_exists:
-            print(
-                f"cluster-role-binding="
-                f"{k8s.workflow_cluster_role_binding_name(namespace)} is missing"
+            print_warn(
+                f"Missing cluster-role-binding="
+                f"{k8s.workflow_cluster_role_binding_name(namespace)}."
             )
         return False
 
@@ -83,16 +83,18 @@ def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     :param namespace: Name of namespace.
     """
     if k8s.namespace_exists(namespace):
-        print(f"namespace={namespace} already exists")
+        print_warn(f"namespace={namespace} already exists.")
     else:
-        print(f"creating namespace={namespace}")
+        print_info(f"Creating namespace={namespace}.")
         k8s.create_namespace(namespace)
 
     workflow_sa = BODYWORK_WORKFLOW_SERVICE_ACCOUNT
     workflow_crb = k8s.workflow_cluster_role_binding_name(namespace)
     if k8s.service_account_exists(namespace, workflow_sa):
-        print(f"service-account={workflow_sa} already exists in namespace={namespace}")
+        print_warn(
+            f"service-account={workflow_sa} already exists in namespace={namespace}."
+        )
     else:
-        print(f"creating service-account={workflow_sa} in namespace={namespace}")
-        print(f"creating cluster-role-binding={workflow_crb}")
+        print_info(f"Creating service-account={workflow_sa} in namespace={namespace}.")
+        print_info(f"Creating cluster-role-binding={workflow_crb}.")
         k8s.setup_workflow_service_accounts(namespace)

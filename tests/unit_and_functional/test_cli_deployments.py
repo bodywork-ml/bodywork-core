@@ -17,7 +17,7 @@
 """
 Test high-level service and deployment management functions.
 """
-import re
+from re import findall
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
@@ -64,16 +64,16 @@ def test_display_service_deployments_in_namespace(
     )
     display_deployments("bodywork-dev")
     captured_two = capsys.readouterr()
-    assert re.findall(r"REPLICAS_AVAILABLE\s+1", captured_two.out)
-    assert re.findall(r"REPLICAS_UNAVAILABLE\s+0", captured_two.out)
-    assert re.findall(r"GIT_URL\s+project_repo_url", captured_two.out)
-    assert re.findall(r"GIT_BRANCH\s+project_repo_branch", captured_two.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_two.out)
-    assert re.findall(
+    assert findall(r"REPLICAS_AVAILABLE\s+1", captured_two.out)
+    assert findall(r"REPLICAS_UNAVAILABLE\s+0", captured_two.out)
+    assert findall(r"GIT_URL\s+project_repo_url", captured_two.out)
+    assert findall(r"GIT_BRANCH\s+project_repo_branch", captured_two.out)
+    assert findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_two.out)
+    assert findall(
         r"CLUSTER_SERVICE_URL\s+http://bodywork-test-project--serve.bodywork-dev.svc",
         captured_two.out,
     )
-    assert re.findall(
+    assert findall(
         r"INGRESS_ROUTE\s+/bodywork-dev/bodywork-test-project", captured_two.out
     )
 
@@ -101,10 +101,10 @@ def test_display_all_service_deployments(
     )
     display_deployments()
     captured_one = capsys.readouterr()
-    assert re.findall(r"bodywork-test-project--serve", captured_one.out)
-    assert re.findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
+    assert findall(r"bodywork-test-project--serve", captured_one.out)
+    assert findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
+    assert findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")
@@ -118,16 +118,16 @@ def test_display_deployment(
 
     captured_one = capsys.readouterr()
     mock_k8s_module.list_service_stage_deployments.captured_one(None, "bodywork-test-project--serve")
-    assert re.findall(r"bodywork-test-project--serve", captured_one.out)
-    assert not re.findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
+    assert findall(r"bodywork-test-project--serve", captured_one.out)
+    assert not findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert findall(r"CLUSTER_SERVICE_PORT\s+5000", captured_one.out)
 
     mock_k8s_module.list_service_stage_deployments.return_value = None
 
     display_deployments(name="Missing-Service")
 
     captured_two = capsys.readouterr()
-    assert re.findall(r"No deployments found", captured_two.out)  # noqa
+    assert findall(r"No deployments found", captured_two.out)  # noqa
 
 
 @patch("bodywork.cli.deployments.k8s")
@@ -154,9 +154,9 @@ def test_display_service(
 
     captured_one = capsys.readouterr()
 
-    assert not re.findall(r"bodywork-test-project--serve", captured_one.out)
-    assert re.findall(r"bodywork-test-project--second-service", captured_one.out)
-    assert re.findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
+    assert not findall(r"bodywork-test-project--serve", captured_one.out)
+    assert findall(r"bodywork-test-project--second-service", captured_one.out)
+    assert findall(r"CLUSTER_SERVICE_PORT\s+6000", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")
@@ -169,7 +169,7 @@ def test_delete_deployment_in_namespace(
         "bodywork-dev", "bodywork-test-project--serve"
     )
     captured_one = capsys.readouterr()
-    assert "namespace=bodywork-dev could not be found" in captured_one.out
+    assert "Could not find namespace=bodywork-dev on k8s cluster" in captured_one.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = {"foo": {}}
@@ -177,7 +177,7 @@ def test_delete_deployment_in_namespace(
         "bodywork-dev", "bodywork-test-project--serve"
     )
     captured_two = capsys.readouterr()
-    assert "deployment=bodywork-test-project--serve not found" in captured_two.out
+    assert "Could not find service=bodywork-test-project--serve" in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = {
@@ -210,9 +210,10 @@ def test_delete_deployment_in_namespace(
         "bodywork-dev", "bodywork-test-project--serve"
     )
     captured_four = capsys.readouterr()
-    assert (
-        "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local deleted"
-        in captured_four.out
+    assert findall(
+        r"Stopped exposing service at(.|\n)*"
+        r"http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",
+        captured_four.out,
     )
 
     mock_k8s_module.namespace_exists.return_value = True
@@ -227,7 +228,7 @@ def test_delete_deployment_in_namespace(
         "bodywork-dev", "bodywork-test-project--serve"
     )
     captured_five = capsys.readouterr()
-    assert "" in captured_five.out
+    assert "Deleted service=bodywork-test-project--serve" in captured_five.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_service_stage_deployments.return_value = {
@@ -246,7 +247,8 @@ def test_delete_deployment_in_namespace(
     )
     captured_six = capsys.readouterr()
     assert (
-        "ingress route /bodywork-dev/bodywork-test-project--serve" in captured_six.out
+        "Deleted ingress to service at /bodywork-dev/bodywork-test-project--serve"
+        in captured_six.out
     )
 
 

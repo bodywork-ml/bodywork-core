@@ -59,7 +59,7 @@ def test_handle_k8s_exceptions_decorator_handles_max_retry_error(
 
     outer_func()
     captured_stdout = capsys.readouterr().out
-    assert "failed to connect to the Kubernetes API" in captured_stdout
+    assert "Failed to connect to the Kubernetes API" in captured_stdout
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
@@ -71,7 +71,7 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
 
     func()
     captured_stdout = capsys.readouterr().out
-    assert "cannot load authentication credentials from kubeconfig" in captured_stdout
+    assert "Cannot load authentication credentials from kubeconfig" in captured_stdout
 
 
 def test_stage_subcommand_exists():
@@ -86,7 +86,7 @@ def test_stage_command_receives_correct_args():
         encoding="utf-8",
         capture_output=True,
     )
-    expected_output = "stage=train from master branch of repo at http://my.project.com"
+    expected_output = "Attempting to run stage"
     assert expected_output in process.stdout
 
 
@@ -147,7 +147,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify the name of the secret" in process_one.stdout
+    assert "Please specify the name of the secret" in process_one.stdout
 
     process_two = run(
         [
@@ -162,7 +162,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify the name of the secret" in process_two.stdout
+    assert "Please specify the name of the secret" in process_two.stdout
 
     process_three = run(
         [
@@ -175,7 +175,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify keys and values" in process_three.stdout
+    assert "Please specify keys and values" in process_three.stdout
 
     process_four = run(
         [
@@ -191,7 +191,7 @@ def test_cli_secret_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "could not parse secret data" in process_four.stdout
+    assert "Could not parse secret data" in process_four.stdout
 
     process_five = run(
         [
@@ -207,7 +207,7 @@ def test_cli_secret_handler_error_handling():
         capture_output=True,
     )
     assert (
-        "please specify the secret group the secret belongs to" in process_five.stdout
+        "Please specify the secret group the secret belongs to" in process_five.stdout
     )
 
 
@@ -233,18 +233,15 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         git_repo_url="foo3",
         git_repo_branch="foo4",
         local_workflow_controller=True,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
         git_repo_url="foo3",
         git_repo_branch="foo4",
-        bodywork_docker_image=None,
+        bodywork_docker_image="",
     )
     stdout = capsys.readouterr().out
-    assert "testing with local workflow-controller - retries are inactive" in stdout
+    assert "Using local workflow controller - retries inactive" in stdout
     mock_workflow_cli_handler.assert_called_once_with(expected_pass_through_args)
 
 
@@ -254,7 +251,7 @@ def test_cli_deployment_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the deployment" in process_one.stdout
+    assert "Please specify --name for the deployment job" in process_one.stdout
     assert process_one.returncode == 1
 
     process_two = run(
@@ -266,7 +263,7 @@ def test_cli_deployment_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify Git repo URL" in process_two.stdout
+    assert "Please specify Git repo URL" in process_two.stdout
     assert process_two.returncode == 1
 
 
@@ -422,7 +419,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the cronjob" in process_one.stdout
+    assert "Please specify --name for the cronjob" in process_one.stdout
     assert process_one.returncode == 1
 
     process_two = run(
@@ -430,7 +427,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the cronjob" in process_two.stdout
+    assert "Please specify --name for the cronjob" in process_two.stdout
     assert process_two.returncode == 1
 
     process_three = run(
@@ -438,7 +435,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the cronjob" in process_three.stdout
+    assert "Please specify --name for the cronjob" in process_three.stdout
     assert process_three.returncode == 1
 
     process_three = run(
@@ -446,7 +443,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify --name for the cronjob" in process_three.stdout
+    assert "Please specify --name for the cronjob" in process_three.stdout
     assert process_three.returncode == 1
 
     process_five = run(
@@ -459,7 +456,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify schedule for the cronjob" in process_five.stdout
+    assert "Please specify schedule for the cronjob" in process_five.stdout
     assert process_five.returncode == 1
 
     process_six = run(
@@ -473,7 +470,7 @@ def test_cli_cronjob_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "please specify Git repo URL" in process_six.stdout
+    assert "Please specify Git repo URL" in process_six.stdout
     assert process_six.returncode == 1
 
 
@@ -581,5 +578,5 @@ def test_validate_subcommand(project_repo_location: Path):
         capture_output=True,
     )
     assert process_five.returncode == 1
-    assert "missing or invalid parameters" in process_five.stdout
+    assert "Missing or invalid parameters" in process_five.stdout
     assert "* stages._" in process_five.stdout
