@@ -269,7 +269,7 @@ def test_workflow_with_ssh_github_connectivity(
             [
                 "bodywork",
                 "workflow",
-                "git@github.com:bodywork-ml/test_bodywork-batch-job-project.git",
+                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
             ],
@@ -277,7 +277,7 @@ def test_workflow_with_ssh_github_connectivity(
             capture_output=True,
         )
         expected_output_1 = (
-            "deploying master branch from git@github.com:bodywork-ml/test_bodywork-batch-job-project.git"   # noqa
+            "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"   # noqa
         )
         expected_output_2 = "Deployment successful"
 
@@ -394,7 +394,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "deployment",
                 "create",
                 f"--name={job_name}",
-                "--git-repo-url=https://github.com/bodywork-ml/test_single-service-project.git",
+                "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
                 f"--bodywork-docker-image={docker_image}"
             ],
             encoding="utf-8",

@@ -140,7 +140,7 @@ def cli() -> None:
         "--s",
         required=False,
         type=str,
-        help="Display command only - Deployed Service to search for.",
+        help="Display command only - deployed Service to search for.",
     )
 
     deployment_cmd_parser.add_argument(
@@ -561,9 +561,7 @@ def workflow(args: Namespace) -> None:
     try:
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
-        docker_image = (
-            None if args.bodywork_docker_image == "" else args.bodywork_docker_image
-        )
+        docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
         sys.exit(0)
