@@ -221,6 +221,8 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
         assert process_one.returncode == 1
     except Exception:
         assert False
+    finally:
+        delete_namespace("bodywork-failing-test-project")
 
 
 def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
