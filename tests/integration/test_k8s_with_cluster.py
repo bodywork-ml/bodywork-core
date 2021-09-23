@@ -226,40 +226,43 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
 
 
 def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
-    bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
-    process_one = run(
-        [
-            "bodywork",
-            "workflow",
-            "https://github.com/bodywork-ml/bodywork-test-project",
-            "master",
-            f"--bodywork-docker-image={bad_image}",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert (
-        f"Invalid Docker image specified: {bad_image}"
-        in process_one.stdout
-    )
-    assert process_one.returncode == 1
+    try:
+        bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
+        process_one = run(
+            [
+                "bodywork",
+                "workflow",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                f"--bodywork-docker-image={bad_image}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert (
+            f"Invalid Docker image specified: {bad_image}"
+            in process_one.stdout
+        )
+        assert process_one.returncode == 1
 
-    process_two = run(
-        [
-            "bodywork",
-            "workflow",
-            "https://github.com/bodywork-ml/bodywork-test-project",
-            "master",
-            "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert (
-        "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
-        in process_two.stdout
-    )
-    assert process_two.returncode == 1
+        process_two = run(
+            [
+                "bodywork",
+                "workflow",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert (
+            "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
+            in process_two.stdout
+        )
+        assert process_two.returncode == 1
+    finally:
+        delete_namespace("bodywork-test-project")
 
 
 def test_workflow_with_ssh_github_connectivity(
