@@ -27,8 +27,8 @@ from time import sleep
 from pytest import raises, mark
 
 from bodywork.constants import (
-    PROJECT_CONFIG_FILENAME,
     SSH_DIR_NAME,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 )
 from bodywork.k8s import (
     cluster_role_binding_exists,
@@ -40,7 +40,6 @@ from bodywork.k8s import (
 
 
 @mark.usefixtures("add_secrets")
-@mark.usefixtures("setup_cluster")
 def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
 ):
@@ -88,7 +87,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_two.returncode == 0
 
         process_three = run(
-            ["bodywork", "service", "display"],
+            ["bodywork", "deployment", "display", "--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -115,42 +114,33 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_four = run(
             [
                 "bodywork",
-                "service",
+                "deployment",
                 "delete",
-                "--namespace=bodywork-test-project",
-                "--name=bodywork-test-project--stage-3",
+                "--name=bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        assert "Deleted service=bodywork-test-project--stage-3" in process_four.stdout
-        assert "Stopped exposing service" in process_four.stdout
-        assert "Deleted ingress to service at" in process_four.stdout
+        assert "deployment=bodywork-test-project deleted." in process_four.stdout
+
         assert process_four.returncode == 0
+
+        sleep(5)
 
         process_five = run(
             [
                 "bodywork",
-                "service",
-                "delete",
-                "--namespace=bodywork-test-project",
-                "--name=bodywork-test-project--stage-4",
+                "deployment",
+                "display",
+                "--name=bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
         )
+        assert "No deployments found" in process_five.stdout
         assert process_five.returncode == 0
 
-        process_six = run(
-            ["bodywork", "service", "display"],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert "bodywork-test-project--stage-3" not in process_six.stdout
-        assert "bodywork-test-project--stage-4" not in process_six.stdout
-        assert process_six.returncode == 0
-
-    except Exception:
+    except Exception as e:
         assert False
     finally:
         load_kubernetes_config()
@@ -161,7 +151,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
-    random_test_namespace: str, docker_image: str
+    docker_image: str
 ):
     try:
         process_one = run(
@@ -208,10 +198,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
-@mark.usefixtures("setup_cluster")
-def test_workflow_will_run_failure_stage_on_workflow_failure(
-    test_namespace: str, docker_image: str
-):
+def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
         process_one = run(
             [
@@ -234,48 +221,50 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(
         assert process_one.returncode == 1
     except Exception:
         assert False
+    finally:
+        delete_namespace("bodywork-failing-test-project")
 
 
-@mark.usefixtures("setup_cluster")
-def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located(
-    test_namespace: str,
-):
-    process_one = run(
-        [
-            "bodywork",
-            "workflow",
-            "https://github.com/bodywork-ml/bodywork-test-project",
-            "master",
-            "--bodywork-docker-image=bad:bodyworkml/bodywork-core:0.0.0",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert (
-        f"Invalid Docker image specified in {PROJECT_CONFIG_FILENAME}"
-        in process_one.stdout
-    )
-    assert process_one.returncode == 1
+def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
+    try:
+        bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
+        process_one = run(
+            [
+                "bodywork",
+                "workflow",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                f"--bodywork-docker-image={bad_image}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert (
+            f"Invalid Docker image specified: {bad_image}"
+            in process_one.stdout
+        )
+        assert process_one.returncode == 1
 
-    process_two = run(
-        [
-            "bodywork",
-            "workflow",
-            "https://github.com/bodywork-ml/bodywork-test-project",
-            "master",
-            "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert (
-        "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
-        in process_two.stdout
-    )
-    assert process_two.returncode == 1
+        process_two = run(
+            [
+                "bodywork",
+                "workflow",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert (
+            "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
+            in process_two.stdout
+        )
+        assert process_two.returncode == 1
+    finally:
+        delete_namespace("bodywork-test-project")
 
 
-@mark.usefixtures("add_secrets")
 def test_workflow_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
@@ -285,15 +274,18 @@ def test_workflow_with_ssh_github_connectivity(
             [
                 "bodywork",
                 "workflow",
-                "git@github.com:bodywork-ml/bodywork-test-project.git",
+                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
                 "master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/bodywork-test-project.git"  # noqa
+        expected_output_1 = (
+            "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"   # noqa
+        )
         expected_output_2 = "Deployment successful"
+
         assert expected_output_1 in process_one.stdout
         assert expected_output_2 in process_one.stdout
         assert process_one.returncode == 0
@@ -302,129 +294,8 @@ def test_workflow_with_ssh_github_connectivity(
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace("bodywork-test-project")
+        delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
-def test_deployment_of_remote_workflows():
-    try:
-        process_one = run(
-            [
-                "bodywork",
-                "deployment",
-                "create",
-                "--name=bodywork-test-project",
-                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_one.returncode == 0
-
-        sleep(5)
-
-        process_two = run(
-            [
-                "bodywork",
-                "deployment",
-                "display",
-                "--name=bodywork-test-project",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_two.returncode == 0
-        assert "bodywork-test-project" in process_two.stdout
-
-        process_three = run(
-            [
-                "bodywork",
-                "deployment",
-                "logs",
-                "--name=bodywork-test-project",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_three.returncode == 0
-        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
-        assert "ERROR" not in process_three.stdout
-
-    except Exception:
-        assert False
-    finally:
-        load_kubernetes_config()
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
-@mark.usefixtures("setup_cluster")
-def test_cli_cronjob_handler_crud():
-    process_one = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--name=bodywork-test-project",
-            "--schedule=0,30 * * * *",
-            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--retries=2",
-            "--history-limit=1",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Created cronjob=bodywork-test-project" in process_one.stdout
-    assert process_one.returncode == 0
-
-    process_two = run(
-        [
-            "bodywork",
-            "cronjob",
-            "update",
-            "--name=bodywork-test-project",
-            "--schedule=0,0 1 * * *",
-            "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
-            "--git-repo-branch=main",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Updated cronjob=bodywork-test-project" in process_two.stdout
-    assert process_two.returncode == 0
-
-    process_three = run(
-        ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "bodywork-test-project" in process_three.stdout
-    assert "0,0 1 * * *" in process_three.stdout
-    assert (
-        "https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout
-    )  # noqa
-    assert "main" in process_three.stdout
-    assert process_three.returncode == 0
-
-    process_four = run(
-        [
-            "bodywork",
-            "cronjob",
-            "delete",
-            "--name=bodywork-test-project",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
-    assert process_four.returncode == 0
-
-    process_five = run(
-        ["bodywork", "cronjob", "display"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "" in process_five.stdout
-    assert process_five.returncode == 0
 
 
 def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
@@ -439,3 +310,145 @@ def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
             ],
             check=True,
         )
+
+
+def test_cli_cronjob_handler_crud():
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "cronjob",
+                "create",
+                "--name=bodywork-test-project",
+                "--schedule=0,30 * * * *",
+                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--retries=2",
+                "--history-limit=1",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Created cronjob=bodywork-test-project" in process_one.stdout
+        assert process_one.returncode == 0
+
+        process_two = run(
+            [
+                "bodywork",
+                "cronjob",
+                "update",
+                "--name=bodywork-test-project",
+                "--schedule=0,0 1 * * *",
+                "--git-repo-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-repo-branch=main",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Updated cronjob=bodywork-test-project" in process_two.stdout
+        assert process_two.returncode == 0
+
+        process_three = run(
+            ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "bodywork-test-project" in process_three.stdout
+        assert "0,0 1 * * *" in process_three.stdout
+        assert ("https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout)  # noqa
+        assert "main" in process_three.stdout
+        assert process_three.returncode == 0
+
+        process_four = run(
+            [
+                "bodywork",
+                "cronjob",
+                "delete",
+                "--name=bodywork-test-project",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
+        assert process_four.returncode == 0
+
+        process_five = run(
+            ["bodywork", "cronjob", "display"],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert "" in process_five.stdout
+        assert process_five.returncode == 0
+    finally:
+        run(
+            [
+                "kubectl",
+                "delete",
+                "cronjobs",
+                "bodywork-test-project",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+
+
+def test_deployment_of_remote_workflows(docker_image: str):
+    job_name = "test-remote-workflows"
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                f"--name={job_name}",
+                "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                f"--bodywork-docker-image={docker_image}"
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_one.returncode == 0
+        assert f"Created workflow-job={job_name}" in process_one.stdout
+
+        sleep(20)
+
+        process_two = run(
+            [
+                "bodywork",
+                "deployment",
+                "display",
+                "--name=bodywork-test-single-service-project",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_two.returncode == 0
+        assert "bodywork-test-single-service-project" in process_two.stdout
+
+        process_three = run(
+            [
+                "bodywork",
+                "deployment",
+                "logs",
+                f"--name={job_name}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_three.returncode == 0
+        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+        assert "ERROR" not in process_three.stdout
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "job",
+                f"{job_name}",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+        delete_namespace("bodywork-test-single-service-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)

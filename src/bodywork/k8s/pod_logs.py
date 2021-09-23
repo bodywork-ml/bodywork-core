@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-High-level interface to the Kubernetes APIs used to retreive logs from
+High-level interface to the Kubernetes APIs used to retrieve logs from
 active pods.
 """
 from typing import cast, Optional
@@ -47,10 +47,10 @@ def get_latest_pod_name(namespace: str, pod_name_prefix: str) -> Optional[str]:
 
 
 def get_pod_logs(namespace: str, pod_name: str) -> str:
-    """Retreive the logs from the named pod.
+    """Retrieve the logs from the named pod.
 
     :param namespace: The namespace in which to look for the pods.
-    :param pod_name: The name of the pod to retreive logs from.
+    :param pod_name: The name of the pod to retrieve logs from.
     :return: The pod logs as a single string object.
     """
     pod_logs = k8s.CoreV1Api().read_namespaced_pod_log(

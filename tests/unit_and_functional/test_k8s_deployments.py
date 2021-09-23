@@ -26,7 +26,7 @@ import kubernetes
 import copy
 from pytest import fixture, raises
 
-from bodywork.k8s.service_deployments import (
+from bodywork.k8s.deployments import (
     cluster_service_url,
     configure_service_stage_deployment,
     create_deployment,
@@ -249,7 +249,7 @@ def test_rollback_deployment_tries_to_patch_deployment_to_force_rollback(
 
 
 @patch("kubernetes.client.AppsV1Api")
-@patch("bodywork.k8s.service_deployments.delete_deployment")
+@patch("bodywork.k8s.deployments.delete_deployment")
 def test_rollback_deployment_tries_to_delete_new_deployments(
     mock_delete_deployment: MagicMock,
     mock_k8s_apps_api: MagicMock,
@@ -392,7 +392,7 @@ def test_get_deployment_status_raises_exception_when_deployment_cannot_be_found(
         _get_deployment_status(service_stage_deployment_object)
 
 
-@patch("bodywork.k8s.service_deployments._get_deployment_status")
+@patch("bodywork.k8s.deployments._get_deployment_status")
 def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
@@ -404,7 +404,7 @@ def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_s
         )
 
 
-@patch("bodywork.k8s.service_deployments._get_deployment_status")
+@patch("bodywork.k8s.deployments._get_deployment_status")
 def test_monitor_deployments_to_completion_identifies_successful_deployments(
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,

@@ -23,19 +23,22 @@ from typing import Optional
 
 from .terminal import print_dict, print_info, print_pod_logs, print_warn
 from .. import k8s
+from ..constants import BODYWORK_DOCKER_IMAGE
 
 
-def create_workflow_job_in_namespace(
+def create_workflow_job(
     namespace: str,
     job_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
+    image: str = BODYWORK_DOCKER_IMAGE
+
 ) -> None:
     """Create a new workflow job within a namespace.
 
     :param namespace: The namespace to deploy the job to.
-    :param job_name: The name of the Bodywork the job.
+    :param job_name: The name of the Bodywork job.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The branch of the Bodywork project Git
@@ -43,6 +46,8 @@ def create_workflow_job_in_namespace(
         defaults to 'master'.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param image: Docker image to use for running the stages within,
+        defaults to BODYWORK_DOCKER_IMAGE.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -51,13 +56,13 @@ def create_workflow_job_in_namespace(
         print_warn(f"Cannot create workflow-job={job_name} as it already exists.")
         return None
     configured_job = k8s.configure_workflow_job(
-        namespace, project_repo_url, project_repo_branch, retries, job_name=job_name
+        namespace, project_repo_url, project_repo_branch, retries, image, job_name
     )
     k8s.create_workflow_job(configured_job)
     print_info(f"Created workflow-job={job_name}.")
 
 
-def delete_workflow_job_in_namespace(namespace: str, job_name: str) -> None:
+def delete_workflow_job(namespace: str, job_name: str) -> None:
     """Delete workflow job from a specific namespace.
 
     :param namespace: Namespace where the job resides.
@@ -120,7 +125,7 @@ def create_workflow_cronjob(
     print_info(f"Created cronjob={job_name}.")
 
 
-def update_workflow_cronjob_in_namespace(
+def update_workflow_cronjob(
     namespace: str,
     job_name: str,
     schedule: Optional[str] = None,
@@ -166,7 +171,7 @@ def update_workflow_cronjob_in_namespace(
     print_info(f"Updated cronjob={job_name}.")
 
 
-def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
+def delete_workflow_cronjob(namespace: str, job_name: str) -> None:
     """Create a new cronjob within a k8s namespace.
 
     :param namespace: The namespace where the cronjob resides.
@@ -182,13 +187,11 @@ def delete_workflow_cronjob_in_namespace(namespace: str, job_name: str) -> None:
     print_info(f"Deleted cronjob={job_name}.")
 
 
-def display_cronjobs_in_namespace(
-    namespace: str, job_name: Optional[str] = None
-) -> None:
+def display_cronjobs(namespace: str, job_name: Optional[str] = None) -> None:
     """Print cronjobs to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
-    :param name: Name of cronjob resource, defaults to None.
+    :param job_name: Name of cronjob resource, defaults to None.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")

@@ -35,7 +35,7 @@ from .utils import make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
-    "Possible states of a k8s deployment."
+    """Possible states of a k8s deployment."""
 
     COMPLETE = "complete"
     PROGRESSING = "progressing"
@@ -132,7 +132,7 @@ def configure_service_stage_deployment(
         namespace=namespace,
         name=make_valid_k8s_name(f"{project_name}--{stage_name}"),
         annotations={"port": str(port)},
-        labels={"app": "bodywork", "stage": stage_name},
+        labels={"app": "bodywork", "stage": stage_name, "deployment-name": project_name},
     )
     deployment = k8s.V1Deployment(metadata=deployment_metadata, spec=deployment_spec)
     return deployment
@@ -358,18 +358,22 @@ def monitor_deployments_to_completion(
 
 def list_service_stage_deployments(
     namespace: Optional[str] = None,
+    name: Optional[str] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Get all service deployments and their high-level info.
 
     :param namespace: Namespace in which to list services.
+    :param name: Name of service.
+    :return: Dict of deployments and their attributes.
     """
+    label_selector = f"app=bodywork,deployment-name={name}" if name else "app=bodywork"
     if namespace:
         k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
-            namespace=namespace, label_selector="app=bodywork"
+            namespace=namespace, label_selector=label_selector
         )
     else:
         k8s_deployment_query = k8s.AppsV1Api().list_deployment_for_all_namespaces(
-            label_selector="app=bodywork"
+            label_selector=label_selector
         )
 
     deployment_info = {}

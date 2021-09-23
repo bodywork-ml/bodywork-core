@@ -29,6 +29,7 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.cli.cli import deployment, handle_k8s_exceptions
+from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
@@ -232,12 +233,15 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         git_repo_url="foo3",
         git_repo_branch="foo4",
         local_workflow_controller=True,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
     )
     deployment(args)
     expected_pass_through_args = Namespace(
         git_repo_url="foo3",
         git_repo_branch="foo4",
-        bodywork_docker_image="",
+        bodywork_docker_image=None,
     )
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
@@ -264,6 +268,146 @@ def test_cli_deployment_handler_error_handling():
     )
     assert "Please specify Git repo URL" in process_two.stdout
     assert process_two.returncode == 1
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.run_workflow")
+def test_cli_deployment_create(
+    mock_run_workflow: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="create",
+        name=None,
+        local_workflow_controller=True,
+        git_repo_url="http://Test",
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_run_workflow.assert_called_with(
+        args.git_repo_url, args.git_repo_branch, docker_image_override=None
+    )
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.delete_deployment")
+def test_cli_deployment_delete(
+    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="delete",
+        name="mydeployment",
+        local_workflow_controller=None,
+        git_repo_url=None,
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_deployments.assert_called_with(args.name)
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.display_workflow_job_logs")
+def test_cli_deployment_logs(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="logs",
+        name="mydeployment",
+        local_workflow_controller=None,
+        git_repo_url=None,
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.delete_workflow_job")
+def test_cli_deployment_delete_job(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="delete_job",
+        name="mydeployment",
+        local_workflow_controller=None,
+        git_repo_url=None,
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.display_workflow_job_history")
+def test_cli_deployment_job_history(
+    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="job_history",
+        name="mydeployment",
+        local_workflow_controller=None,
+        git_repo_url=None,
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.sys")
+@patch("bodywork.cli.cli.display_deployments")
+def test_cli_deployment_display(
+    mock_display_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
+):
+    args = Namespace(
+        command="display",
+        name="mydeployment",
+        local_workflow_controller=None,
+        git_repo_url=None,
+        git_repo_branch="master",
+        retries=2,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+    )
+
+    deployment(args)
+
+    mock_display_deployments.assert_called_with(args.namespace, args.name, args.service)
 
 
 def test_cronjobs_subcommand_exists():
@@ -349,22 +493,6 @@ def test_cronjob_update_error_handling():
         "Please specify both --git-repo-url and --git-repo-branch."
         in process_one.stdout
     )
-    assert process_one.returncode == 1
-
-
-def test_services_subcommand_exists():
-    process = run(["bodywork", "service", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork service [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_services_handler_error_handling():
-    process_one = run(
-        ["bodywork", "service", "delete", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "Please specify --name for the service" in process_one.stdout
     assert process_one.returncode == 1
 
 

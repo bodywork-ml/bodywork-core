@@ -32,20 +32,17 @@ from pkg_resources import get_distribution
 
 from ..config import BodyworkConfig
 from .terminal import print_info, print_warn
-from .workflow_jobs import (
-    create_workflow_job_in_namespace,
+from bodywork.cli.workflow_jobs import (
+    create_workflow_job,
     create_workflow_cronjob,
-    display_cronjobs_in_namespace,
+    display_cronjobs,
     display_workflow_job_history,
     display_workflow_job_logs,
-    delete_workflow_cronjob_in_namespace,
-    delete_workflow_job_in_namespace,
-    update_workflow_cronjob_in_namespace,
+    delete_workflow_cronjob,
+    delete_workflow_job,
+    update_workflow_cronjob,
 )
-from .service_deployments import (
-    delete_service_deployment_in_namespace,
-    display_service_deployments,
-)
+from .deployments import display_deployments, delete_deployment
 from .secrets import (
     create_secret,
     delete_secret,
@@ -63,10 +60,10 @@ from ..exceptions import (
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
-from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, BODYWORK_DOCKER_IMAGE
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
-from ..workflow_execution import run_workflow
+from bodywork.workflow_execution import run_workflow
 
 warnings.simplefilter(action="ignore")
 
@@ -100,7 +97,7 @@ def cli() -> None:
     deployment_cmd_parser.add_argument(
         "command",
         type=str,
-        choices=["create", "display", "logs", "delete_job"],
+        choices=["create", "delete", "display", "logs", "delete_job", "display_job"],
         help="Deployment action to perform.",
     )
     deployment_cmd_parser.add_argument(
@@ -130,6 +127,27 @@ def cli() -> None:
         default=False,
         action="store_true",
         help="Run the workflow-controller locally.",
+    )
+    deployment_cmd_parser.add_argument(
+        "--namespace",
+        "--ns",
+        required=False,
+        type=str,
+        help="Display command only - K8s namespace to look in.",
+    )
+    deployment_cmd_parser.add_argument(
+        "--service",
+        "--s",
+        required=False,
+        type=str,
+        help="Display command only - deployed Service to search for.",
+    )
+
+    deployment_cmd_parser.add_argument(
+        "--bodywork-docker-image",
+        type=str,
+        required=False,
+        help="Override the Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",  # noqa
     )
 
     # cronjob interface
@@ -170,26 +188,6 @@ def cli() -> None:
         type=int,
         default=1,
         help="Minimum number of historic workflow jobs to keep for logs.",
-    )
-
-    # service interface
-    service_cmd_parser = cli_arg_subparser.add_parser("service")
-    service_cmd_parser.set_defaults(func=service)
-    service_cmd_parser.add_argument(
-        "command",
-        type=str,
-        choices=["delete", "display"],
-        help="Service action to perform.",
-    )
-    service_cmd_parser.add_argument(
-        "--namespace",
-        "--ns",
-        required=False,
-        type=str,
-        help="Kubernetes namespace to operate in.",
-    )
-    service_cmd_parser.add_argument(
-        "--name", type=str, help="The name given to the service."
     )
 
     # secrets interface
@@ -246,7 +244,6 @@ def cli() -> None:
     workflow_cmd_parser.add_argument(
         "--bodywork-docker-image",
         type=str,
-        default="",
         help="Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",
     )
 
@@ -349,16 +346,19 @@ def deployment(args: Namespace) -> None:
     :param args: Arguments passed to the deploy command from the CLI.
     """
     name = args.name
+    namespace = args.namespace
     command = args.command
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
     run_workflow_controller_locally = args.local_workflow_controller
+    service_name = args.service
+    image = args.bodywork_docker_image
 
     if command == "create" and not git_repo_url:
         print_warn("Please specify Git repo URL for the deployment you want to create.")
         sys.exit(1)
-    if command != "create" and not name:
+    if (command != "create" and command != "display") and not name:
         print_warn("Please specify --name for the deployment job.")
         sys.exit(1)
     if command == "create":
@@ -366,7 +366,7 @@ def deployment(args: Namespace) -> None:
             pass_through_args = Namespace(
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
-                bodywork_docker_image="",
+                bodywork_docker_image=image,
             )
             print_info("Using local workflow controller - retries inactive.")
             workflow(pass_through_args)
@@ -380,22 +380,29 @@ def deployment(args: Namespace) -> None:
                     f"use by Bodywork - run 'bodywork configure-cluster'"
                 )
                 sys.exit(1)
-            create_workflow_job_in_namespace(
+            create_workflow_job(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 name,
                 git_repo_url,
                 git_repo_branch,
                 retries,
+                image if image else BODYWORK_DOCKER_IMAGE
             )
+    elif command == "delete":
+        load_kubernetes_config()
+        delete_deployment(name)
     elif command == "logs":
         load_kubernetes_config()
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "delete_job":
         load_kubernetes_config()
-        delete_workflow_job_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    else:
+        delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    elif command == "job_history":
         load_kubernetes_config()
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    else:
+        load_kubernetes_config()
+        display_deployments(namespace, name, service_name)
     sys.exit(0)
 
 
@@ -453,7 +460,7 @@ def cronjob(args: Namespace) -> None:
             history_limit,
         )
     elif command == "update":
-        update_workflow_cronjob_in_namespace(
+        update_workflow_cronjob(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             name,
             schedule,
@@ -463,33 +470,13 @@ def cronjob(args: Namespace) -> None:
             history_limit,
         )
     elif command == "delete":
-        delete_workflow_cronjob_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "history":
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif command == "logs":
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
-        display_cronjobs_in_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    sys.exit(0)
-
-
-@handle_k8s_exceptions
-def service(args: Namespace) -> None:
-    """Service deployment command handler.
-
-    :param args: Arguments passed to the run command from the CLI.
-    """
-    command = args.command
-    namespace = args.namespace
-    name = args.name
-    if command == "delete" and not name:
-        print_warn("Please specify --name for the service.")
-        sys.exit(1)
-    load_kubernetes_config()
-    if command == "delete":
-        delete_service_deployment_in_namespace(namespace, name)
-    else:
-        display_service_deployments(namespace, name)
+        display_cronjobs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 
@@ -574,9 +561,7 @@ def workflow(args: Namespace) -> None:
     try:
         repo_url = args.git_repo_url
         repo_branch = args.git_repo_branch
-        docker_image = (
-            None if args.bodywork_docker_image == "" else args.bodywork_docker_image
-        )
+        docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
         sys.exit(0)

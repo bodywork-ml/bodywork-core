@@ -93,7 +93,7 @@ def configure_workflow_job(
         metadata=k8s.V1ObjectMeta(
             name=make_valid_k8s_name(job_name),
             namespace=namespace,
-            labels={"app": "bodywork"},
+            labels={"app": "bodywork", "deployment-name": job_name},
         ),
         spec=job_spec,
     )
