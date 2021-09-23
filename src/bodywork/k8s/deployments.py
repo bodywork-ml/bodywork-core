@@ -134,13 +134,11 @@ def configure_service_stage_deployment(
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
         name=make_valid_k8s_name(f"{project_name}--{stage_name}"),
-        annotations={"port": port},
+        annotations={"port": str(port)},
         labels={
             "app": "bodywork",
             "stage": stage_name,
             "deployment-name": project_name,
-            "git-url": project_repo_url,
-            "git-branch": project_repo_branch,
             "git-commit-hash": git_commit_hash,
         },
     )
@@ -416,8 +414,8 @@ def list_service_stage_deployments(
                 if deployment.status.unavailable_replicas is None
                 else deployment.status.unavailable_replicas
             ),
-            "git_url": deployment.metadata.labels["git-url"],
-            "git_branch": deployment.metadata.labels["git-branch"],
+            "git_url": deployment.spec.template.spec.containers[0].args[0],
+            "git_branch": deployment.spec.template.spec.containers[0].args[1],
             "git_commit_hash": deployment.metadata.labels["git-commit-hash"],
             "has_ingress": (
                 has_ingress(deployment.metadata.namespace, deployment.metadata.name)

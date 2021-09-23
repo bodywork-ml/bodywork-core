@@ -84,8 +84,6 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
         labels={
             "app": "bodywork",
             "deployment-name": "myproject",
-            "git-url": "project_repo_url",
-            "git-branch": "project_repo_branch",
             "git-commit-hash": "abc123",
         }
     )
