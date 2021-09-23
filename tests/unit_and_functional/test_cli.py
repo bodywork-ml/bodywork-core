@@ -221,7 +221,7 @@ def test_deployment_subcommand_exists():
 
 @patch("bodywork.cli.cli.workflow")
 @patch("sys.exit")
-def test_deployment_run_locally_option_calls_run_workflow_handler(
+def test_deployment_run_locally_calls_run_workflow_handler(
     mock_sys_exit: MagicMock,
     mock_workflow_cli_handler: MagicMock,
     capsys: CaptureFixture,
@@ -232,7 +232,7 @@ def test_deployment_run_locally_option_calls_run_workflow_handler(
         retries=0,
         git_repo_url="foo3",
         git_repo_branch="foo4",
-        local_workflow_controller=True,
+        async_workflow=None,
         namespace=None,
         service=None,
         bodywork_docker_image=None,
@@ -270,28 +270,37 @@ def test_cli_deployment_handler_error_handling():
     assert process_two.returncode == 1
 
 
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
 @patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.run_workflow")
-def test_cli_deployment_create(
-    mock_run_workflow: MagicMock, mock_sys: MagicMock, mock_load_config
+@patch("bodywork.cli.cli.create_workflow_job")
+def test_cli_deployment_create_async(
+    mock_create_workflow: MagicMock,
+    mock_sys: MagicMock,
+    mock_load_config: MagicMock,
+    mock_namespace: MagicMock,
 ):
     args = Namespace(
         command="create",
-        name=None,
-        local_workflow_controller=True,
+        name="test_cli",
+        async_workflow=True,
         git_repo_url="http://Test",
         git_repo_branch="master",
         retries=2,
         namespace=None,
         service=None,
-        bodywork_docker_image=None,
+        bodywork_docker_image="bodywork-ml:myimage",
     )
 
     deployment(args)
 
-    mock_run_workflow.assert_called_with(
-        args.git_repo_url, args.git_repo_branch, docker_image_override=None
+    mock_create_workflow.assert_called_with(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        args.name,
+        args.git_repo_url,
+        args.git_repo_branch,
+        args.retries,
+        args.bodywork_docker_image,
     )
 
 
@@ -304,7 +313,7 @@ def test_cli_deployment_delete(
     args = Namespace(
         command="delete",
         name="mydeployment",
-        local_workflow_controller=None,
+        async_workflow=None,
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
@@ -327,7 +336,7 @@ def test_cli_deployment_logs(
     args = Namespace(
         command="logs",
         name="mydeployment",
-        local_workflow_controller=None,
+        async_workflow=None,
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
@@ -350,7 +359,7 @@ def test_cli_deployment_delete_job(
     args = Namespace(
         command="delete_job",
         name="mydeployment",
-        local_workflow_controller=None,
+        async_workflow=None,
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
@@ -373,7 +382,7 @@ def test_cli_deployment_job_history(
     args = Namespace(
         command="job_history",
         name="mydeployment",
-        local_workflow_controller=None,
+        async_workflow=None,
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,
@@ -396,7 +405,7 @@ def test_cli_deployment_display(
     args = Namespace(
         command="display",
         name="mydeployment",
-        local_workflow_controller=None,
+        async_workflow=None,
         git_repo_url=None,
         git_repo_branch="master",
         retries=2,

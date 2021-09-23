@@ -121,12 +121,12 @@ def cli() -> None:
         help="Number of times to retry a failed workflow job.",
     )
     deployment_cmd_parser.add_argument(
-        "--local-workflow-controller",
-        "--local",
-        "-L",
+        "--async",
+        "--A",
+        dest="async_workflow",
         default=False,
         action="store_true",
-        help="Run the workflow-controller locally.",
+        help="Run the workflow-controller asynchronously (remotely).",
     )
     deployment_cmd_parser.add_argument(
         "--namespace",
@@ -351,7 +351,7 @@ def deployment(args: Namespace) -> None:
     retries = args.retries
     git_repo_url = args.git_repo_url
     git_repo_branch = args.git_repo_branch
-    run_workflow_controller_locally = args.local_workflow_controller
+    async_workflow = args.async_workflow
     service_name = args.service
     image = args.bodywork_docker_image
 
@@ -362,7 +362,7 @@ def deployment(args: Namespace) -> None:
         print_warn("Please specify --name for the deployment job.")
         sys.exit(1)
     if command == "create":
-        if run_workflow_controller_locally:
+        if not async_workflow:
             pass_through_args = Namespace(
                 git_repo_url=git_repo_url,
                 git_repo_branch=git_repo_branch,
