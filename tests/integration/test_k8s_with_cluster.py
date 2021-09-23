@@ -400,7 +400,8 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "create",
                 f"--name={job_name}",
                 "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
-                f"--bodywork-docker-image={docker_image}"
+                f"--bodywork-docker-image={docker_image}",
+                "--async"
             ],
             encoding="utf-8",
             capture_output=True,
