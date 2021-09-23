@@ -63,7 +63,9 @@ def test_service_stage_deployment() -> Dict[str, Any]:
 
 @patch("bodywork.cli.deployments.k8s")
 def test_display_service_deployments_in_namespace(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture, test_service_stage_deployment
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
 ):
     mock_k8s_module.namespace_exists.return_value = False
     display_deployments("bodywork-dev")
@@ -87,7 +89,9 @@ def test_display_service_deployments_in_namespace(
 
 @patch("bodywork.cli.deployments.k8s")
 def test_display_all_service_deployments(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture, test_service_stage_deployment
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
 ):
     mock_k8s_module.list_service_stage_deployments.return_value = (
         test_service_stage_deployment
@@ -100,7 +104,9 @@ def test_display_all_service_deployments(
 
 @patch("bodywork.cli.deployments.k8s")
 def test_display_deployment(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture, test_service_stage_deployment
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
 ):
     mock_k8s_module.list_service_stage_deployments.return_value = (
         test_service_stage_deployment
@@ -125,7 +131,9 @@ def test_display_deployment(
 
 @patch("bodywork.cli.deployments.k8s")
 def test_display_service(
-    mock_k8s_module: MagicMock, capsys: CaptureFixture, test_service_stage_deployment
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
 ):
     mock_k8s_module.list_service_stage_deployments.return_value = (
         test_service_stage_deployment
