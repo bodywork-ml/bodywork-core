@@ -126,7 +126,7 @@ def cli() -> None:
         dest="async_workflow",
         default=False,
         action="store_true",
-        help="Run the workflow-controller asynchronously (remotely).",
+        help="Run the workflow-controller asynchronously (remotely on the k8s cluster).",
     )
     deployment_cmd_parser.add_argument(
         "--namespace",
