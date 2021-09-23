@@ -99,8 +99,9 @@ def run_workflow(
             if not image_exists_on_dockerhub(image_name, image_tag):
                 msg = f"Cannot locate {image_name}:{image_tag} on DockerHub"
                 raise BodyworkDockerImageError(msg)
+            git_commit_hash = get_git_commit_hash(cloned_repo_dir)
             env_vars = k8s.create_k8s_environment_variables(
-                [(GIT_COMMIT_HASH_K8S_ENV_VAR, get_git_commit_hash(cloned_repo_dir))]
+                [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
             )
             if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
                 env_vars.append(
@@ -143,6 +144,7 @@ def run_workflow(
                         repo_branch,
                         repo_url,
                         docker_image,
+                        git_commit_hash
                     )
                 _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
             _log.info("Deployment successful")
@@ -292,6 +294,7 @@ def _run_service_stages(
     repo_branch: str,
     repo_url: str,
     docker_image: str,
+    git_commit_hash: str,
 ) -> None:
     """Run Service Stages defined in the workflow.
 
@@ -302,6 +305,7 @@ def _run_service_stages(
     :param repo_branch: The Git branch to download.
     :param repo_url: Git repository URL.
     :param docker_image: Docker Image to use.
+    :param git_commit_hash: The git commit hash of this Bodywork project.
     """
     deployment_objects = [
         k8s.configure_service_stage_deployment(
@@ -309,6 +313,7 @@ def _run_service_stages(
             stage.name,
             project_name,
             repo_url,
+            git_commit_hash,
             repo_branch,
             replicas=stage.replicas,
             port=stage.port,
