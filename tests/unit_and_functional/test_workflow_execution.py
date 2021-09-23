@@ -165,6 +165,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         ANY,
         ANY,
         ANY,
+        ANY,
         replicas=ANY,
         port=ANY,
         container_env_vars=expected_result,
