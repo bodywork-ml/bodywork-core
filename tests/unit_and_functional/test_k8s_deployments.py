@@ -81,6 +81,11 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
         namespace="bodywork-dev",
         name="bodywork-test-project--serve",
         annotations={"port": "5000"},
+        labels={
+            "app": "bodywork",
+            "deployment-name": "myproject",
+            "git-commit-hash": "abc123",
+        }
     )
     deployment = kubernetes.client.V1Deployment(
         metadata=deployment_metadata, spec=deployment_spec
@@ -94,6 +99,7 @@ def test_configure_service_stage_deployment():
         stage_name="serve",
         project_name="bodywork-test-project",
         project_repo_url="bodywork-ml/bodywork-test-project",
+        git_commit_hash="xyz123",
         project_repo_branch="dev",
         image="bodyworkml/bodywork-core:latest",
         replicas=2,
@@ -485,6 +491,7 @@ def test_list_service_stage_deployments_returns_service_stage_info(
                     deployment_info[service_name]["git_branch"] == "project_repo_branch"
                 )  # noqa
                 assert deployment_info[service_name]["git_url"] == "project_repo_url"
+                assert deployment_info[service_name]["git_commit_hash"] == "abc123"
                 assert deployment_info[service_name]["has_ingress"] is True
 
 

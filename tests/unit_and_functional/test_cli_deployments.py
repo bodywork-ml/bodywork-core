@@ -43,6 +43,7 @@ def test_service_stage_deployment() -> Dict[str, Any]:
             "unavailable_replicas": 0,
             "git_url": "project_repo_url",
             "git_branch": "project_repo_branch",
+            "git_commit_hash": "abc123",
             "has_ingress": "true",
             "ingress_route": "/bodywork-dev/bodywork-test-project",
         },
@@ -55,6 +56,7 @@ def test_service_stage_deployment() -> Dict[str, Any]:
             "unavailable_replicas": 0,
             "git_url": "project_repo_url",
             "git_branch": "project_repo_branch",
+            "git_commit_hash": "abc123",
             "has_ingress": "true",
             "ingress_route": "/bodywork-dev/bodywork-test-project",
         },
@@ -149,6 +151,7 @@ def test_display_service(
     assert findall(r"unavailable_replicas.+0", captured_one.out)
     assert findall(r"git_url.+project_repo_url", captured_one.out)
     assert findall(r"git_branch.+project_repo_branch", captured_one.out)
+    assert findall(r"git_commit_hash.+abc123", captured_one.out)
     assert findall(r"service_port.+6000", captured_one.out)
     assert findall(
         r"service_url.+http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",

@@ -46,6 +46,7 @@ def configure_service_stage_deployment(
     stage_name: str,
     project_name: str,
     project_repo_url: str,
+    git_commit_hash: str,
     project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
     replicas: int = 1,
@@ -64,6 +65,7 @@ def configure_service_stage_deployment(
         belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
+    :param git_commit_hash: The git commit hash of this Bodywork project.
     :param project_repo_branch: The Bodywork project Git repository
         branch to use, defaults to 'master'.
     :param image: Docker image to use for running the stage within,
@@ -82,6 +84,7 @@ def configure_service_stage_deployment(
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
+
     """
     vcs_env_vars = [
         k8s.V1EnvVar(
@@ -132,7 +135,12 @@ def configure_service_stage_deployment(
         namespace=namespace,
         name=make_valid_k8s_name(f"{project_name}--{stage_name}"),
         annotations={"port": str(port)},
-        labels={"app": "bodywork", "stage": stage_name, "deployment-name": project_name},
+        labels={
+            "app": "bodywork",
+            "stage": stage_name,
+            "deployment-name": project_name,
+            "git-commit-hash": git_commit_hash,
+        },
     )
     deployment = k8s.V1Deployment(metadata=deployment_metadata, spec=deployment_spec)
     return deployment
@@ -408,6 +416,7 @@ def list_service_stage_deployments(
             ),
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.spec.template.spec.containers[0].args[1],
+            "git_commit_hash": deployment.metadata.labels["git-commit-hash"],
             "has_ingress": (
                 has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),
