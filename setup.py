@@ -36,7 +36,8 @@ with open("README.md", "r") as f:
 setup(
     name="bodywork",
     description=(
-        "ML pipeline orchestration and model deployments on k8s, made really easy."
+        "ML pipeline orchestration and model deployments on Kubernetes, "
+        "made really easy."
     ),
     long_description=readme,
     long_description_content_type="text/markdown",
