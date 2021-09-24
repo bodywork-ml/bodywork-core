@@ -35,7 +35,9 @@ with open("README.md", "r") as f:
 
 setup(
     name="bodywork",
-    description="Deploy machine learning to Kubernetes - MLOps accelerated.",
+    description=(
+        "ML pipeline orchestration and model deployments on k8s, made really easy."
+    ),
     long_description=readme,
     long_description_content_type="text/markdown",
     version=version,
@@ -62,6 +64,7 @@ setup(
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )
 
