@@ -104,12 +104,12 @@ def cli() -> None:
         "--name", type=str, help="The name given to the workflow job."
     )
     deployment_cmd_parser.add_argument(
-        "--git-repo-url",
+        "--git-url",
         type=str,
         help="Git repository URL containing the Bodywork project.",
     )
     deployment_cmd_parser.add_argument(
-        "--git-repo-branch",
+        "--git-branch",
         type=str,
         default="master",
         help="Git repository branch to run.",
@@ -126,7 +126,7 @@ def cli() -> None:
         dest="async_workflow",
         default=False,
         action="store_true",
-        help="Run the workflow-controller asynchronously (remotely on the k8s cluster).",
+        help="Run workflow-controller asynchronously (remotely on the k8s cluster).",
     )
     deployment_cmd_parser.add_argument(
         "--namespace",
@@ -168,12 +168,12 @@ def cli() -> None:
         help='Workflow cronjob expressed as a cron schedule - e.g. "0 30 * * *".',
     )
     cronjob_cmd_parser.add_argument(
-        "--git-repo-url",
+        "--git-url",
         type=str,
         help="Git repository URL containing the Bodywork project codebase.",
     )
     cronjob_cmd_parser.add_argument(
-        "--git-repo-branch",
+        "--git-branch",
         type=str,
         help="Git repository branch to run.",
     )
@@ -223,10 +223,10 @@ def cli() -> None:
     stage_cmd_parser = cli_arg_subparser.add_parser("stage")
     stage_cmd_parser.set_defaults(func=stage)
     stage_cmd_parser.add_argument(
-        "git_repo_url", type=str, help="Bodywork project URL."
+        "git_url", type=str, help="Bodywork project URL."
     )
     stage_cmd_parser.add_argument(
-        "git_repo_branch", type=str, help="Bodywork project Git repo branch."
+        "git_branch", type=str, help="Bodywork project Git repo branch."
     )
     stage_cmd_parser.add_argument(
         "stage_name", type=str, help="The Bodywork project stage to execute."
@@ -236,10 +236,10 @@ def cli() -> None:
     workflow_cmd_parser = cli_arg_subparser.add_parser("workflow")
     workflow_cmd_parser.set_defaults(func=workflow)
     workflow_cmd_parser.add_argument(
-        "git_repo_url", type=str, help="Bodywork project URL."
+        "git_url", type=str, help="Bodywork project URL."
     )
     workflow_cmd_parser.add_argument(
-        "git_repo_branch", type=str, help="Bodywork project Git repo branch."
+        "git_branch", type=str, help="Bodywork project Git repo branch."
     )
     workflow_cmd_parser.add_argument(
         "--bodywork-docker-image",
@@ -349,13 +349,13 @@ def deployment(args: Namespace) -> None:
     namespace = args.namespace
     command = args.command
     retries = args.retries
-    git_repo_url = args.git_repo_url
-    git_repo_branch = args.git_repo_branch
+    git_url = args.git_url
+    git_branch = args.git_branch
     async_workflow = args.async_workflow
     service_name = args.service
     image = args.bodywork_docker_image
 
-    if command == "create" and not git_repo_url:
+    if command == "create" and not git_url:
         print_warn("Please specify Git repo URL for the deployment you want to create.")
         sys.exit(1)
     if (command != "create" and command != "display") and not name:
@@ -364,8 +364,8 @@ def deployment(args: Namespace) -> None:
     if command == "create":
         if not async_workflow:
             pass_through_args = Namespace(
-                git_repo_url=git_repo_url,
-                git_repo_branch=git_repo_branch,
+                git_url=git_url,
+                git_branch=git_branch,
                 bodywork_docker_image=image,
             )
             print_info("Using local workflow controller - retries inactive.")
@@ -383,8 +383,8 @@ def deployment(args: Namespace) -> None:
             create_workflow_job(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 name,
-                git_repo_url,
-                git_repo_branch,
+                git_url,
+                git_branch,
                 retries,
                 image if image else BODYWORK_DOCKER_IMAGE
             )
@@ -417,8 +417,8 @@ def cronjob(args: Namespace) -> None:
     schedule = args.schedule
     retries = args.retries
     history_limit = args.history_limit
-    git_repo_url = args.git_repo_url
-    git_repo_branch = args.git_repo_branch
+    git_url = args.git_url
+    git_branch = args.git_branch
     if (
         command == "create"
         or command == "delete"
@@ -431,15 +431,15 @@ def cronjob(args: Namespace) -> None:
     elif command == "create" and not schedule:
         print_warn("Please specify schedule for the cronjob you want to create.")
         sys.exit(1)
-    elif command == "create" and not git_repo_url:
+    elif command == "create" and not git_url:
         print_warn("Please specify Git repo URL for the cronjob you want to create.")
         sys.exit(1)
     elif (
         command == "update"
-        and (git_repo_url and not git_repo_branch)
-        or (not git_repo_url and git_repo_branch)
+        and (git_url and not git_branch)
+        or (not git_url and git_branch)
     ):
-        print("Please specify both --git-repo-url and --git-repo-branch.")
+        print("Please specify both --git-url and --git-branch.")
         sys.exit(1)
 
     load_kubernetes_config()
@@ -454,8 +454,8 @@ def cronjob(args: Namespace) -> None:
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             schedule,
             name,
-            git_repo_url,
-            git_repo_branch if git_repo_branch else "master",
+            git_url,
+            git_branch if git_branch else "master",
             retries,
             history_limit,
         )
@@ -464,8 +464,8 @@ def cronjob(args: Namespace) -> None:
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             name,
             schedule,
-            git_repo_url,
-            git_repo_branch,
+            git_url,
+            git_branch,
             retries,
             history_limit,
         )
@@ -543,8 +543,8 @@ def stage(args: Namespace) -> None:
     :param args: Arguments passed to the run command from the CLI.
     """
     try:
-        repo_url = args.git_repo_url
-        repo_branch = args.git_repo_branch
+        repo_url = args.git_url
+        repo_branch = args.git_branch
         stage_name = args.stage_name
         run_stage(stage_name, repo_url, repo_branch)
         sys.exit(0)
@@ -559,8 +559,8 @@ def workflow(args: Namespace) -> None:
     :param args: Arguments passed to the workflow command from the CLI.
     """
     try:
-        repo_url = args.git_repo_url
-        repo_branch = args.git_repo_branch
+        repo_url = args.git_url
+        repo_branch = args.git_branch
         docker_image = args.bodywork_docker_image
         load_kubernetes_config()
         run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
