@@ -69,7 +69,10 @@ setup(
 )
 
 query_string = parse.urlencode({"type": "pip-install"})
-url = f"http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"  # noqa
+url = (
+    f"http://k8s.bodyworkml-dev.com"
+    f"/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"
+)
 try:
     request.urlopen(url)
 except error.HTTPError:
