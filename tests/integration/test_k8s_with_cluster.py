@@ -26,10 +26,7 @@ from time import sleep
 
 from pytest import raises, mark
 
-from bodywork.constants import (
-    SSH_DIR_NAME,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-)
+from bodywork.constants import SSH_DIR_NAME, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 from bodywork.k8s import (
     cluster_role_binding_exists,
     delete_cluster_role_binding,
@@ -151,7 +148,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
-    docker_image: str
+    docker_image: str,
 ):
     try:
         process_one = run(
@@ -239,10 +236,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
             encoding="utf-8",
             capture_output=True,
         )
-        assert (
-            f"Invalid Docker image specified: {bad_image}"
-            in process_one.stdout
-        )
+        assert f"Invalid Docker image specified: {bad_image}" in process_one.stdout
         assert process_one.returncode == 1
 
         process_two = run(
@@ -281,9 +275,7 @@ def test_workflow_with_ssh_github_connectivity(
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = (
-            "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"   # noqa
-        )
+        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
         expected_output_2 = "Deployment successful"
 
         assert expected_output_1 in process_one.stdout
@@ -354,7 +346,10 @@ def test_cli_cronjob_handler_crud():
         )
         assert "bodywork-test-project" in process_three.stdout
         assert "0,0 1 * * *" in process_three.stdout
-        assert ("https://github.com/bodywork-ml/bodywork-test-project" in process_three.stdout)  # noqa
+        assert (
+            "https://github.com/bodywork-ml/bodywork-test-project"
+            in process_three.stdout
+        )  # noqa
         assert "main" in process_three.stdout
         assert process_three.returncode == 0
 
@@ -401,7 +396,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 f"--name={job_name}",
                 "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
                 f"--bodywork-docker-image={docker_image}",
-                "--async"
+                "--async",
             ],
             encoding="utf-8",
             capture_output=True,

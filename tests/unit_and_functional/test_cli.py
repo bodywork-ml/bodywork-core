@@ -498,10 +498,7 @@ def test_cronjob_update_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert (
-        "Please specify both --git-url and --git-branch."
-        in process_one.stdout
-    )
+    assert "Please specify both --git-url and --git-branch." in process_one.stdout
     assert process_one.returncode == 1
 
 

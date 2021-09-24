@@ -222,9 +222,7 @@ def cli() -> None:
     # stage interface
     stage_cmd_parser = cli_arg_subparser.add_parser("stage")
     stage_cmd_parser.set_defaults(func=stage)
-    stage_cmd_parser.add_argument(
-        "git_url", type=str, help="Bodywork project URL."
-    )
+    stage_cmd_parser.add_argument("git_url", type=str, help="Bodywork project URL.")
     stage_cmd_parser.add_argument(
         "git_branch", type=str, help="Bodywork project Git repo branch."
     )
@@ -235,9 +233,7 @@ def cli() -> None:
     # workflow interface
     workflow_cmd_parser = cli_arg_subparser.add_parser("workflow")
     workflow_cmd_parser.set_defaults(func=workflow)
-    workflow_cmd_parser.add_argument(
-        "git_url", type=str, help="Bodywork project URL."
-    )
+    workflow_cmd_parser.add_argument("git_url", type=str, help="Bodywork project URL.")
     workflow_cmd_parser.add_argument(
         "git_branch", type=str, help="Bodywork project Git repo branch."
     )
@@ -386,7 +382,7 @@ def deployment(args: Namespace) -> None:
                 git_url,
                 git_branch,
                 retries,
-                image if image else BODYWORK_DOCKER_IMAGE
+                image if image else BODYWORK_DOCKER_IMAGE,
             )
     elif command == "delete":
         load_kubernetes_config()

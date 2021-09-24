@@ -32,8 +32,7 @@ def create_workflow_job(
     project_repo_url: str,
     project_repo_branch: str = "master",
     retries: int = 2,
-    image: str = BODYWORK_DOCKER_IMAGE
-
+    image: str = BODYWORK_DOCKER_IMAGE,
 ) -> None:
     """Create a new workflow job within a namespace.
 
