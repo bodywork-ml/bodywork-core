@@ -147,6 +147,71 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             delete_cluster_role_binding(workflow_sa_crb)
 
 
+def test_deployment_of_remote_workflows(docker_image: str):
+    job_name = "test-remote-workflows"
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                f"--name={job_name}",
+                "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                f"--bodywork-docker-image={docker_image}",
+                "--async",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_one.returncode == 0
+        assert f"Created workflow-job={job_name}" in process_one.stdout
+
+        sleep(20)
+
+        process_two = run(
+            [
+                "bodywork",
+                "deployment",
+                "display",
+                "--name=bodywork-test-single-service-project",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_two.returncode == 0
+        assert "bodywork-test-single-service-project" in process_two.stdout
+
+        process_three = run(
+            [
+                "bodywork",
+                "deployment",
+                "logs",
+                f"--name={job_name}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_three.returncode == 0
+        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
+        assert "ERROR" not in process_three.stdout
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "job",
+                f"{job_name}",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+        delete_namespace("bodywork-test-single-service-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+        
+
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
 ):
@@ -257,71 +322,6 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         assert process_two.returncode == 1
     finally:
         delete_namespace("bodywork-test-project")
-
-
-def test_deployment_of_remote_workflows(docker_image: str):
-    job_name = "test-remote-workflows"
-    try:
-        process_one = run(
-            [
-                "bodywork",
-                "deployment",
-                "create",
-                f"--name={job_name}",
-                "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
-                f"--bodywork-docker-image={docker_image}",
-                "--async",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_one.returncode == 0
-        assert f"Created workflow-job={job_name}" in process_one.stdout
-
-        sleep(20)
-
-        process_two = run(
-            [
-                "bodywork",
-                "deployment",
-                "display",
-                "--name=bodywork-test-single-service-project",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_two.returncode == 0
-        assert "bodywork-test-single-service-project" in process_two.stdout
-
-        process_three = run(
-            [
-                "bodywork",
-                "deployment",
-                "logs",
-                f"--name={job_name}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        assert process_three.returncode == 0
-        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
-        assert "ERROR" not in process_three.stdout
-
-    except Exception:
-        assert False
-    finally:
-        load_kubernetes_config()
-        run(
-            [
-                "kubectl",
-                "delete",
-                "job",
-                f"{job_name}",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
-            ]
-        )
-        delete_namespace("bodywork-test-single-service-project")
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
 def test_workflow_with_ssh_github_connectivity(
