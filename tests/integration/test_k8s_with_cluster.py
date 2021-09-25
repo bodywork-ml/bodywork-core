@@ -210,7 +210,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         )
         delete_namespace("bodywork-test-single-service-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
-        
+
 
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
@@ -467,6 +467,8 @@ def test_services_from_previous_deployments_are_deleted():
         )
         assert process_one.returncode == 0
         assert "Deployment successful" in process_one.stdout
+
+        sleep(5)
 
         process_two = run(
             [
