@@ -46,9 +46,7 @@ def display_deployments(
             return None
         print_dict(deployments[service_name], service_name)
     else:
-        table_data = {
-            name: data["git_url"] for name, data in deployments.items()
-        }
+        table_data = {name: data["git_url"] for name, data in deployments.items()}
         print_dict(table_data, "services", "Name", "Git Repository URL")
 
 

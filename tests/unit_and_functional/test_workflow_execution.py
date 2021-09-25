@@ -102,11 +102,11 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
 ):
     mock_config.logging.log_level = "DEBUG"
 
-    git_repo_url = f"file://{project_repo_location.absolute()}"
+    git_url = f"file://{project_repo_location.absolute()}"
     mock_k8s.namespace_exists.return_value = False
     mock_k8s.create_namespace.side_effect = k8sclient.ApiException
     with raises(BodyworkWorkflowExecutionError, match="Unable to setup namespace"):
-        run_workflow(git_repo_url, config=mock_config)
+        run_workflow(git_url, config=mock_config)
 
 
 @patch("bodywork.workflow_execution.k8s")

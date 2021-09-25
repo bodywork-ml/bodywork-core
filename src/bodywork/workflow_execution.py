@@ -144,7 +144,7 @@ def run_workflow(
                         repo_branch,
                         repo_url,
                         docker_image,
-                        git_commit_hash
+                        git_commit_hash,
                     )
                 _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
             _log.info("Deployment successful")
