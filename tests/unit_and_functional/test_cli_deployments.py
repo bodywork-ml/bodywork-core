@@ -21,7 +21,6 @@ from re import findall
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
-from pytest import fixture
 from typing import Dict, Any
 
 from bodywork.cli.deployments import (
@@ -29,38 +28,6 @@ from bodywork.cli.deployments import (
     display_deployments,
     delete_deployment,
 )
-
-
-@fixture(scope="function")
-def test_service_stage_deployment() -> Dict[str, Any]:
-    return {
-        "bodywork-test-project--serve-v1": {
-            "namespace": "bodywork-dev",
-            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
-            "service_port": 5000,
-            "service_exposed": "true",
-            "available_replicas": 1,
-            "unavailable_replicas": 0,
-            "git_url": "project_repo_url",
-            "git_branch": "project_repo_branch",
-            "git_commit_hash": "abc123",
-            "has_ingress": "true",
-            "ingress_route": "/bodywork-dev/bodywork-test-project",
-        },
-        "bodywork-test-project--serve-v2": {
-            "namespace": "bodywork-dev",
-            "service_url": "http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",  # noqa
-            "service_port": 6000,
-            "service_exposed": "true",
-            "available_replicas": 1,
-            "unavailable_replicas": 0,
-            "git_url": "project_repo_url",
-            "git_branch": "project_repo_branch",
-            "git_commit_hash": "abc123",
-            "has_ingress": "true",
-            "ingress_route": "/bodywork-dev/bodywork-test-project",
-        },
-    }
 
 
 @patch("bodywork.cli.deployments.k8s")
