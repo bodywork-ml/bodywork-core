@@ -468,7 +468,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_one.returncode == 0
         assert "Deployment successful" in process_one.stdout
 
-        sleep(5)
+        sleep(15)
 
         process_two = run(
             [
