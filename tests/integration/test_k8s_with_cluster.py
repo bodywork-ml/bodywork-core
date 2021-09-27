@@ -155,7 +155,6 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                f"--name={job_name}",
                 "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
                 "--git-repo-branch=test-two-services",
             ],
@@ -172,8 +171,8 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                f"--name={job_name}",
                 "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-branch=master"
             ],
             encoding="utf-8",
             capture_output=True,
