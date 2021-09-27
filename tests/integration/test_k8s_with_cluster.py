@@ -148,7 +148,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 
 def test_services_from_previous_deployments_are_deleted():
-    job_name = "test-service-cleanup"
     try:
         process_one = run(
             [
@@ -172,7 +171,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "deployment",
                 "create",
                 "--git-repo-url=https://github.com/bodywork-ml/test-single-service-project.git",
-                "--git-branch=master"
+                "--git-repo-branch=master"
             ],
             encoding="utf-8",
             capture_output=True,
