@@ -151,6 +151,8 @@ def run_workflow(
             if not workflow_deploys_services(config):
                 _log.info(f"Deleting namespace = {namespace}")
                 k8s.delete_namespace(namespace)
+            else:
+                _cleanup_redundant_services(git_commit_hash, namespace)
             if config.project.usage_stats:
                 _ping_usage_stats_server()
         except Exception as e:
@@ -185,6 +187,23 @@ def run_workflow(
             if cloned_repo_dir.exists():
                 rmtree(cloned_repo_dir, onerror=_remove_readonly)
     console.rule(characters="=", style="green")
+
+
+def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
+    """Deletes services that are not part of this git commit.
+
+    :param git_commit_hash: Git commit hash of current deployment.
+    :param namespace: Namespace deployment is in.
+    """
+    _log.info("Searching for services from previous deployment.")
+    deployments = k8s.list_service_stage_deployments(namespace)
+    for name, deployment in deployments.items():
+        if deployment["git_commit_hash"] != git_commit_hash:
+            _log.info(
+                f"Removing service: {name} from previous deployment with "
+                f"git-commit-hash: {deployment['git_commit_hash']}."
+            )
+            k8s.delete_deployment(namespace, name)
 
 
 def _setup_namespace(config) -> str:
