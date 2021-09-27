@@ -463,6 +463,6 @@ def test_cannot_deploy_different_project_repo_to_same_namespace(
 
     with raises(
         BodyworkWorkflowExecutionError,
-        match=r"A project with the name \(or namespace\): bodywork-test-project",
+        match=r"A project with the same name \(or namespace\): bodywork-test-project",
     ):
         run_workflow("https://my_new_project", config=config)
