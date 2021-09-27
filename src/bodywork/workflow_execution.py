@@ -87,7 +87,7 @@ def run_workflow(
                 config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
 
             _log.setLevel(config.logging.log_level)
-            namespace = _setup_namespace(config)
+            namespace = _setup_namespace(config, repo_url)
             workflow_dag = config.project.workflow
             all_stages = config.stages
             docker_image = (
@@ -206,7 +206,7 @@ def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
             k8s.delete_deployment(namespace, name)
 
 
-def _setup_namespace(config) -> str:
+def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
     """Creates namespace to run workflow in.
 
     :param config: Bodywork config.
@@ -221,6 +221,12 @@ def _setup_namespace(config) -> str:
             k8s.create_namespace(namespace)
         else:
             _log.info(f"Using k8s namespace = {namespace}")
+            deployments = k8s.list_service_stage_deployments(namespace)
+            for name, deployment in deployments.items():
+                if deployment["git_url"] != repo_url:
+                    raise BodyworkNamespaceError(
+                        f"A project with the same name (or namespace): {namespace}, originating from a different git"   # noqa
+                        f" repository, has already been deployed. Please choose another name.")  # noqa
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
             _log.info(
                 f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"

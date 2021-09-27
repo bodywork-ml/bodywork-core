@@ -425,14 +425,44 @@ def test_old_deployments_are_cleaned_up(
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
     project_repo_location: Path,
-    test_service_stage_deployment: Dict[str, Any]
+    test_service_stage_deployment: Dict[str, Any],
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
-    mock_git_hash.return_value = test_service_stage_deployment["bodywork-test-project--serve-v2"]["git_commit_hash"]
+    mock_git_hash.return_value = test_service_stage_deployment[
+        "bodywork-test-project--serve-v2"
+    ]["git_commit_hash"]
     mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
 
-    run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+    run_workflow("project_repo_url", config=config)
 
-    mock_k8s.delete_deployment.assert_called_once_with("bodywork-test-project", "bodywork-test-project--serve-v1")
+    mock_k8s.delete_deployment.assert_called_once_with(
+        "bodywork-test-project", "bodywork-test-project--serve-v1"
+    )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_cannot_deploy_different_project_repo_to_same_namespace(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    with raises(
+        BodyworkWorkflowExecutionError,
+        match=r"A project with the name \(or namespace\): bodywork-test-project",
+    ):
+        run_workflow("https://my_new_project", config=config)
