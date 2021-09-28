@@ -230,19 +230,6 @@ def cli() -> None:
         "stage_name", type=str, help="The Bodywork project stage to execute."
     )
 
-    # workflow interface
-    workflow_cmd_parser = cli_arg_subparser.add_parser("workflow")
-    workflow_cmd_parser.set_defaults(func=workflow)
-    workflow_cmd_parser.add_argument("git_url", type=str, help="Bodywork project URL.")
-    workflow_cmd_parser.add_argument(
-        "git_branch", type=str, help="Bodywork project Git repo branch."
-    )
-    workflow_cmd_parser.add_argument(
-        "--bodywork-docker-image",
-        type=str,
-        help="Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",
-    )
-
     # setup-namespace interface
     setup_namespace_cmd_parser = cli_arg_subparser.add_parser("setup-namespace")
     setup_namespace_cmd_parser.set_defaults(func=setup_namespace)
@@ -358,16 +345,12 @@ def deployment(args: Namespace) -> None:
         print_warn("Please specify --name for the deployment job.")
         sys.exit(1)
     if command == "create":
+        load_kubernetes_config()
         if not async_workflow:
-            pass_through_args = Namespace(
-                git_url=git_url,
-                git_branch=git_branch,
-                bodywork_docker_image=image,
-            )
             print_info("Using local workflow controller - retries inactive.")
-            workflow(pass_through_args)
+            run_workflow(git_url, git_branch, docker_image_override=image)
         else:
-            load_kubernetes_config()
+            print_info("Using async workflow controller.")
             if not is_namespace_available_for_bodywork(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
             ):
@@ -545,23 +528,6 @@ def stage(args: Namespace) -> None:
         run_stage(stage_name, repo_url, repo_branch)
         sys.exit(0)
     except Exception:
-        sys.exit(1)
-
-
-@handle_k8s_exceptions
-def workflow(args: Namespace) -> None:
-    """Workflow execution handler
-
-    :param args: Arguments passed to the workflow command from the CLI.
-    """
-    try:
-        repo_url = args.git_url
-        repo_branch = args.git_branch
-        docker_image = args.bodywork_docker_image
-        load_kubernetes_config()
-        run_workflow(repo_url, repo_branch, docker_image_override=docker_image)
-        sys.exit(0)
-    except BodyworkWorkflowExecutionError:
         sys.exit(1)
 
 
