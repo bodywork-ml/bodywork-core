@@ -212,7 +212,18 @@ def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
 ):
     pod_spec = k8s_client.V1PodSpec(
         containers=[
-            k8s_client.V1Container(name="bodywork", args=["fg", "test-branch"])
+            k8s_client.V1Container(
+                name="bodywork",
+                command=[
+                    "bodywork",
+                    "deployment",
+                    "create",
+                    "--git-url",
+                    "fg",
+                    "--git-branch",
+                    "test-branch",
+                ],
+            )
         ],
     )
     job_spec = k8s_client.V1JobSpec(

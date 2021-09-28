@@ -228,7 +228,16 @@ def update_workflow_cronjob(
         pod_spec = k8s.V1PodSpec(
             containers=[
                 k8s.V1Container(
-                    name="bodywork", args=[project_repo_url, project_repo_branch]
+                    name="bodywork",
+                    command=[
+                        "bodywork",
+                        "deployment",
+                        "create",
+                        "--git-url",
+                        project_repo_url,
+                        "--git-branch",
+                        project_repo_branch,
+                    ],
                 )
             ],
         )
