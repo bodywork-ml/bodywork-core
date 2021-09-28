@@ -226,8 +226,10 @@ def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
             for name, deployment in deployments.items():
                 if deployment["git_url"] != repo_url:
                     raise BodyworkNamespaceError(
-                        f"A project with the same name (or namespace): {namespace}, originating from a different git"   # noqa
-                        f" repository, has already been deployed. Please choose another name.")  # noqa
+                        f"A project with the same name (or namespace): {namespace},"
+                        " originating from a different git repository, has already "
+                        "been deployed. Please choose another name."
+                    )
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
             _log.info(
                 f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"
