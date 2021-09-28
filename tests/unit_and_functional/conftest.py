@@ -38,7 +38,7 @@ def k8s_env_vars() -> Iterable[bool]:
 def test_service_stage_deployment() -> Dict[str, Any]:
     return {
         "bodywork-test-project--serve-v1": {
-            "namespace": "bodywork-dev",
+            "namespace": "bodywork-test-project",
             "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
             "service_port": 5000,
             "service_exposed": "true",
@@ -51,7 +51,7 @@ def test_service_stage_deployment() -> Dict[str, Any]:
             "ingress_route": "/bodywork-dev/bodywork-test-project",
         },
         "bodywork-test-project--serve-v2": {
-            "namespace": "bodywork-dev",
+            "namespace": "bodywork-test-project",
             "service_url": "http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",  # noqa
             "service_port": 6000,
             "service_exposed": "true",
