@@ -72,8 +72,13 @@ def configure_workflow_job(
         image=image,
         image_pull_policy="Always",
         env=vcs_env_vars,
-        command=["bodywork", "workflow"],
-        args=[project_repo_url, project_repo_branch],
+        command=[
+            "bodywork",
+            "deployment",
+            "create",
+            f"--git-url={project_repo_url}",
+            f"--git-branch={project_repo_branch}",
+        ],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,

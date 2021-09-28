@@ -239,7 +239,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             capture_output=True,
         )
         expected_output_1 = "Deployments failed to roll-out successfully"
-        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"  # noqa
+        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"
         assert expected_output_1 in process_two.stdout
         assert expected_output_2 in process_two.stdout
         assert process_two.returncode == 1
