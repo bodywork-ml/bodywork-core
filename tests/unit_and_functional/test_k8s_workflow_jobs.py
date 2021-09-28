@@ -51,8 +51,10 @@ def workflow_job_object() -> k8s_client.V1Job:
             "bodywork",
             "deployment",
             "create",
-            f"--git-url=project_repo_url",
-            f"--git-branch=project_repo_branch",
+            "--git-url",
+            "project_repo_url",
+            "--git-branch",
+            "project_repo_branch",
         ],
     )
     pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
@@ -97,8 +99,10 @@ def test_configure_workflow_job(mock_random: MagicMock):
         "bodywork",
         "deployment",
         "create",
-        f"--git-url=bodywork-ml/bodywork-test-project",
-        f"--git-branch=dev",
+        "--git-url",
+        "bodywork-ml/bodywork-test-project",
+        "--git-branch",
+        "dev",
     ]
     assert (
         job_definition.spec.template.spec.containers[0].image
@@ -126,8 +130,10 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
             "bodywork",
             "deployment",
             "create",
-            f"--git-url=project_repo_url",
-            f"--git-branch=project_repo_branch",
+            "--git-url",
+            "project_repo_url",
+            "--git-branch",
+            "project_repo_branch",
         ],
     )
     pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
@@ -178,8 +184,10 @@ def test_configure_workflow_cronjob():
         "bodywork",
         "deployment",
         "create",
-        f"--git-url=bodywork-ml/bodywork-test-project",
-        f"--git-branch=dev",
+        "--git-url",
+        "bodywork-ml/bodywork-test-project",
+        "--git-branch",
+        "dev",
     ]
     assert (
         cronjob_definition.spec.job_template.spec.template.spec.containers[0].image
