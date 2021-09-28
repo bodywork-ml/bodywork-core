@@ -219,11 +219,13 @@ def test_deployment_subcommand_exists():
     assert process.stdout.find(expected_output) != -1
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.run_workflow")
 @patch("sys.exit")
 def test_deployment_run_locally_calls_run_workflow_handler(
     mock_sys_exit: MagicMock,
     mock_workflow_cli_handler: MagicMock,
+    mock_load_config: MagicMock,
     capsys: CaptureFixture,
 ):
     args = Namespace(
@@ -304,7 +306,7 @@ def test_cli_deployment_create_async(
 @patch("bodywork.cli.cli.sys")
 @patch("bodywork.cli.cli.delete_deployment")
 def test_cli_deployment_delete(
-    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
+    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config: MagicMock
 ):
     args = Namespace(
         command="delete",
