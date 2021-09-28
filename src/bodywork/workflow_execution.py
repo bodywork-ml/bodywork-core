@@ -210,6 +210,7 @@ def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
     """Creates namespace to run workflow in.
 
     :param config: Bodywork config.
+    :param config: Git repository URL.
     :return: Name of namespace.
     """
     namespace = str(

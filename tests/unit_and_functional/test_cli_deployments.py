@@ -223,10 +223,13 @@ def test_delete_deployment_in_namespace(
 
 
 @patch("bodywork.cli.deployments.k8s")
-def test_delete_deployment(mock_k8s_module: MagicMock, capsys: CaptureFixture):
-    mock_k8s_module.namespace_exists.return_value = False
-    mock_k8s_module.list_service_stage_deployments.return_value = {"foo": {}}
-    deployment_name = "bodywork-test-project--serve"
+def test_delete_deployment(
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    deployment_name = "bodywork-test-project"
+    mock_k8s_module.list_service_stage_deployments.return_value = []
 
     delete_deployment(deployment_name)
 
@@ -236,8 +239,10 @@ def test_delete_deployment(mock_k8s_module: MagicMock, capsys: CaptureFixture):
         in captured_one.out
     )
 
-    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_service_stage_deployments.return_value = (
+        test_service_stage_deployment
+    )
 
-    delete_deployment("bodywork-test-project--serve")
+    delete_deployment(deployment_name)
 
     mock_k8s_module.delete_namespace.assert_called_with(deployment_name)
