@@ -58,7 +58,6 @@ from ..exceptions import (
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
-    BodyworkWorkflowExecutionError,
 )
 from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, BODYWORK_DOCKER_IMAGE
 from ..k8s import api_exception_msg, load_kubernetes_config
