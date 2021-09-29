@@ -58,6 +58,7 @@ from ..exceptions import (
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
+    BodyworkWorkflowExecutionError,
 )
 from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, BODYWORK_DOCKER_IMAGE
 from ..k8s import api_exception_msg, load_kubernetes_config
@@ -347,9 +348,12 @@ def deployment(args: Namespace) -> None:
         load_kubernetes_config()
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
-            run_workflow(git_url, git_branch, docker_image_override=image)
+            try:
+                run_workflow(git_url, git_branch, docker_image_override=image)
+            except BodyworkWorkflowExecutionError:
+                sys.exit(1)
         else:
-            print_info("Using async workflow controller.")
+            print_info("Using asynchronous workflow controller.")
             if not is_namespace_available_for_bodywork(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
             ):

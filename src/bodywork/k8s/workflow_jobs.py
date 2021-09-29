@@ -76,6 +76,8 @@ def configure_workflow_job(
             "bodywork",
             "deployment",
             "create",
+        ],
+        args=[
             "--git-url",
             project_repo_url,
             "--git-branch",
@@ -233,6 +235,8 @@ def update_workflow_cronjob(
                         "bodywork",
                         "deployment",
                         "create",
+                    ],
+                    args=[
                         "--git-url",
                         project_repo_url,
                         "--git-branch",
@@ -289,10 +293,10 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
             "last_scheduled_time": cronjob.status.last_schedule_time,
             "retries": cronjob.spec.job_template.spec.backoff_limit,
             "git_url": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].command[4]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
             ),
             "git_branch": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].command[6]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[3]
             ),
         }
         for cronjob in cronjobs.items

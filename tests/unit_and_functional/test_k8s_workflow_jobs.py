@@ -99,6 +99,8 @@ def test_configure_workflow_job(mock_random: MagicMock):
         "bodywork",
         "deployment",
         "create",
+    ]
+    assert job_definition.spec.template.spec.containers[0].args == [
         "--git-url",
         "bodywork-ml/bodywork-test-project",
         "--git-branch",
@@ -130,6 +132,8 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
             "bodywork",
             "deployment",
             "create",
+        ],
+        args=[
             "--git-url",
             "project_repo_url",
             "--git-branch",
@@ -184,6 +188,10 @@ def test_configure_workflow_cronjob():
         "bodywork",
         "deployment",
         "create",
+    ]
+    assert cronjob_definition.spec.job_template.spec.template.spec.containers[
+        0
+    ].args == [
         "--git-url",
         "bodywork-ml/bodywork-test-project",
         "--git-branch",
@@ -218,6 +226,8 @@ def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
                     "bodywork",
                     "deployment",
                     "create",
+                ],
+                args=[
                     "--git-url",
                     "fg",
                     "--git-branch",
