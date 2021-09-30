@@ -38,7 +38,7 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
     key = kv_string[:equals_sign]
     if len(key) == 0:
         raise ValueError(error_msg)
-    value = kv_string[(equals_sign + 1) :]
+    value = kv_string[(equals_sign + 1):]
     if len(value) == 0:
         raise ValueError(error_msg)
     return key, value
@@ -142,10 +142,12 @@ def display_secrets(
         return None
     if secret_name:
         try:
-            complete_secret_name = _create_complete_secret_name(group, secret_name)
+            complete_secret_name = _create_complete_secret_name(
+                str(group), str(secret_name)
+            )
             print_dict(
                 secrets[complete_secret_name].data,
-                _create_table_name(secret_name, group),
+                _create_table_name(str(secret_name), str(group)),
             )
         except KeyError:
             print_warn(f"Cannot find secret={secret_name}.")
