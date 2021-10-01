@@ -447,7 +447,7 @@ def test_list_service_stage_deployments_returns_service_stage_info(
         )
     )
 
-    service_stage_ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+    service_stage_ingress_object = kubernetes.client.V1Ingress(
         metadata=kubernetes.client.V1ObjectMeta(
             namespace=service_namespace,
             name=service_name,
@@ -461,7 +461,7 @@ def test_list_service_stage_deployments_returns_service_stage_info(
 
     with patch("kubernetes.client.AppsV1Api") as mock_k8s_apps_api:
         with patch("kubernetes.client.CoreV1Api") as mock_k8s_core_api:
-            with patch("kubernetes.client.ExtensionsV1beta1Api") as mock_k8s_ext_api:
+            with patch("kubernetes.client.NetworkingV1Api") as mock_k8s_ext_api:
                 mock_k8s_apps_api().list_namespaced_deployment.return_value = (
                     kubernetes.client.V1DeploymentList(
                         items=[service_stage_deployment_object]
@@ -473,7 +473,7 @@ def test_list_service_stage_deployments_returns_service_stage_info(
                     )
                 )
                 mock_k8s_ext_api().list_namespaced_ingress.return_value = (
-                    kubernetes.client.ExtensionsV1beta1IngressList(
+                    kubernetes.client.V1IngressList(
                         items=[service_stage_ingress_object]
                     )
                 )
@@ -521,7 +521,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
         metadata=kubernetes.client.V1ObjectMeta(namespace="abc", name="deployment-two")
     )
 
-    service_stage_ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+    service_stage_ingress_object = kubernetes.client.V1Ingress(
         metadata=kubernetes.client.V1ObjectMeta(
             namespace=service_namespace,
             name=service_name,
@@ -534,7 +534,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
     )
 
     with patch("kubernetes.client.CoreV1Api") as mock_k8s_core_api:
-        with patch("kubernetes.client.ExtensionsV1beta1Api") as mock_k8s_ext_api:
+        with patch("kubernetes.client.NetworkingV1Api") as mock_k8s_ext_api:
             mock_k8s_apps_api().list_deployment_for_all_namespaces.return_value = (
                 kubernetes.client.V1DeploymentList(
                     items=[
@@ -548,7 +548,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
                 kubernetes.client.V1ServiceList(items=[service_stage_service_object_2]),
             ]
             mock_k8s_ext_api().list_namespaced_ingress.return_value = (
-                kubernetes.client.ExtensionsV1beta1IngressList(
+                kubernetes.client.V1IngressList(
                     items=[service_stage_ingress_object]
                 )
             )
@@ -638,22 +638,27 @@ def test_ingress_route(service_stage_deployment_object: kubernetes.client.V1Depl
     assert ingress_route(namespace, name) == f"/{namespace}/{name}"
 
 
-@patch("kubernetes.client.ExtensionsV1beta1Api")
+@patch("kubernetes.client.NetworkingV1Api")
 def test_create_deployment_ingress_tries_to_create_ingress_resource(
-    mock_k8s_extensions_api: MagicMock,
+    mock_k8s_networking_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
 
-    ingress_spec = kubernetes.client.ExtensionsV1beta1IngressSpec(
+    ingress_spec = kubernetes.client.V1IngressSpec(
         rules=[
-            kubernetes.client.ExtensionsV1beta1IngressRule(
-                http=kubernetes.client.ExtensionsV1beta1HTTPIngressRuleValue(
+            kubernetes.client.V1IngressRule(
+                http=kubernetes.client.V1HTTPIngressRuleValue(
                     paths=[
-                        kubernetes.client.ExtensionsV1beta1HTTPIngressPath(
+                        kubernetes.client.V1HTTPIngressPath(
                             path="/bodywork-dev/bodywork-test-project--serve(/|$)(.*)",
-                            backend=kubernetes.client.ExtensionsV1beta1IngressBackend(
-                                service_name="bodywork-test-project--serve",
-                                service_port=5000,
+                            path_type="Exact",
+                            backend=kubernetes.client.V1IngressBackend(
+                                service=kubernetes.client.V1IngressServiceBackend(
+                                    name="bodywork-test-project--serve",
+                                    port=kubernetes.client.V1ServiceBackendPort(
+                                        number=5000
+                                    )
+                                )
                             ),
                         )
                     ]
@@ -662,7 +667,7 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
         ]
     )
 
-    ingress_object = kubernetes.client.ExtensionsV1beta1Ingress(
+    ingress_object = kubernetes.client.V1Ingress(
         metadata=kubernetes.client.V1ObjectMeta(
             namespace="bodywork-dev",
             name="bodywork-test-project--serve",
@@ -676,31 +681,31 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
     )
 
     create_deployment_ingress(service_stage_deployment_object)
-    mock_k8s_extensions_api().create_namespaced_ingress.assert_called_once_with(
+    mock_k8s_networking_api().create_namespaced_ingress.assert_called_once_with(
         namespace="bodywork-dev", body=ingress_object
     )
 
 
-@patch("kubernetes.client.ExtensionsV1beta1Api")
+@patch("kubernetes.client.NetworkingV1Api")
 def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
-    mock_k8s_extensions_api: MagicMock,
+    mock_k8s_networking_api: MagicMock,
 ):
     delete_deployment_ingress("bodywork-dev", "bodywork-test-project--serve")
-    mock_k8s_extensions_api().delete_namespaced_ingress.assert_called_once_with(
+    mock_k8s_networking_api().delete_namespaced_ingress.assert_called_once_with(
         namespace="bodywork-dev",
         name="bodywork-test-project--serve",
         propagation_policy="Background",
     )
 
 
-@patch("kubernetes.client.ExtensionsV1beta1Api")
+@patch("kubernetes.client.NetworkingV1Api")
 def test_has_ingress_identifies_existing_ingress_resources(
-    mock_k8s_extensions_api: MagicMock,
+    mock_k8s_networking_api: MagicMock,
 ):
-    mock_k8s_extensions_api().list_namespaced_ingress.side_effect = [
-        kubernetes.client.ExtensionsV1beta1IngressList(
+    mock_k8s_networking_api().list_namespaced_ingress.side_effect = [
+        kubernetes.client.V1IngressList(
             items=[
-                kubernetes.client.ExtensionsV1beta1Ingress(
+                kubernetes.client.V1Ingress(
                     metadata=kubernetes.client.V1ObjectMeta(
                         name="bodywork--serve",
                         annotations={"kubernetes.io/ingress.class": "nginx"},
@@ -709,9 +714,9 @@ def test_has_ingress_identifies_existing_ingress_resources(
                 )
             ]
         ),
-        kubernetes.client.ExtensionsV1beta1IngressList(
+        kubernetes.client.V1IngressList(
             items=[
-                kubernetes.client.ExtensionsV1beta1Ingress(
+                kubernetes.client.V1Ingress(
                     metadata=kubernetes.client.V1ObjectMeta(
                         name="bodywork--some-other-service",
                         annotations={"kubernetes.io/ingress.class": "nginx"},
