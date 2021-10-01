@@ -18,6 +18,7 @@
 This module contains all of the functions and classes required to
 download the project code and run stages.
 """
+from enum import Enum
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Sequence
@@ -27,6 +28,13 @@ from .constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
 from .exceptions import BodyworkStageFailure
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
+
+
+class ExecutableType(Enum):
+    "Executable file type."
+
+    JUPYTER_NB = ".ipynb"
+    PY_MODULE = ".py"
 
 
 def run_stage(
@@ -89,3 +97,18 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     except CalledProcessError as e:
         msg = f"Cannot install stage requirements: {e.cmd} failed with {e.stderr}"
         raise RuntimeError(msg)
+
+
+def _infer_python_executable(file_name: str) -> ExecutableType:
+    """Infer the type of Python executable from the filename.
+
+    :param file_name: The name of the executable.
+    :raises ValueError: If the filename is not a valie Jupyter notebook
+        or Python module filename.
+    """
+    if file_name.endswith(".ipynb"):
+        return ExecutableType.JUPYTER_NB
+    elif file_name.endswith(".py"):
+        return ExecutableType.PY_MODULE
+    else:
+        raise ValueError(f"Bodywork cannot execute {file_name}")

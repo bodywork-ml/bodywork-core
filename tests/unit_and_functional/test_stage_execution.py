@@ -18,13 +18,18 @@
 Test Bodywork project stage execution.
 """
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Match
 
 from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
-from bodywork.stage_execution import _install_python_requirements, run_stage
+from bodywork.stage_execution import (
+    _infer_python_executable,
+    _install_python_requirements,
+    ExecutableType,
+    run_stage
+)
 
 
 def test_that_requirements_can_be_installed(
@@ -149,3 +154,11 @@ def test_run_stage_failure_raises_exception_for_failed_setup(
 ):
     with raises(BodyworkStageFailure, match="KeyError"):
         run_stage("stage_5", project_repo_connection_string)
+
+
+def test_infer_python_executable_type():
+    assert _infer_python_executable("train_model.ipynb") == ExecutableType.JUPYTER_NB
+    assert _infer_python_executable("train_model.py") == ExecutableType.PY_MODULE
+
+    with raises(ValueError, match=r"cannot execute train_model.exe"):
+        _infer_python_executable("train_model.exe")
