@@ -73,7 +73,7 @@ def run_stage(
             notebook = nbformat.read(
                 stage.executable_module_path, as_version=nbformat.NO_CONVERT
             )
-            nb_runner = ExecutePreprocessor(kernel_name="python3")
+            nb_runner = ExecutePreprocessor()
             nb_runner.preprocess(
                 notebook,
                 {"metadata": {"path": stage.executable_module_path.parent}},

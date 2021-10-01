@@ -403,7 +403,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
     assert config.project.name == "bodywork-test-project"
     assert config.logging.log_level == "INFO"
-    assert len(config.stages) == 5
+    assert len(config.stages) == 6
 
     assert "stage_1" in config.stages
     assert config.stages["stage_1"].executable_module == "main.py"
