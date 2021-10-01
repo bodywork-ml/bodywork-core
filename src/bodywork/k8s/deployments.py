@@ -84,7 +84,6 @@ def configure_service_stage_deployment(
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
-
     """
     vcs_env_vars = [
         k8s.V1EnvVar(
@@ -506,15 +505,19 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
 
     ingress_path = f"{ingress_route(namespace, name)}(/|$)(.*)"
 
-    ingress_spec = k8s.ExtensionsV1beta1IngressSpec(
+    ingress_spec = k8s.V1IngressSpec(
         rules=[
-            k8s.ExtensionsV1beta1IngressRule(
-                http=k8s.ExtensionsV1beta1HTTPIngressRuleValue(
+            k8s.V1IngressRule(
+                http=k8s.V1HTTPIngressRuleValue(
                     paths=[
-                        k8s.ExtensionsV1beta1HTTPIngressPath(
+                        k8s.V1HTTPIngressPath(
                             path=ingress_path,
-                            backend=k8s.ExtensionsV1beta1IngressBackend(
-                                service_name=name, service_port=pod_port
+                            path_type="Exact",
+                            backend=k8s.V1IngressBackend(
+                                service=k8s.V1IngressServiceBackend(
+                                    name=name,
+                                    port=k8s.V1ServiceBackendPort(number=pod_port)
+                                )
                             ),
                         )
                     ]
@@ -533,9 +536,9 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
         labels={"app": "bodywork", "stage": name},
     )
 
-    ingress = k8s.ExtensionsV1beta1Ingress(metadata=ingress_metadata, spec=ingress_spec)
+    ingress = k8s.V1Ingress(metadata=ingress_metadata, spec=ingress_spec)
 
-    k8s.ExtensionsV1beta1Api().create_namespaced_ingress(
+    k8s.NetworkingV1Api().create_namespaced_ingress(
         namespace=namespace, body=ingress
     )
 
@@ -546,7 +549,7 @@ def delete_deployment_ingress(namespace: str, name: str) -> None:
     :param namespace: Namespace in which exists the ingress to delete.
     :param name: The name of the ingress.
     """
-    k8s.ExtensionsV1beta1Api().delete_namespaced_ingress(
+    k8s.NetworkingV1Api().delete_namespaced_ingress(
         namespace=namespace, name=name, propagation_policy="Background"
     )
 
@@ -557,7 +560,7 @@ def has_ingress(namespace: str, name: str) -> bool:
     :param namespace: Namespace in which to look for ingress resources.
     :param name: The name of the ingress.
     """
-    ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(
+    ingresses = k8s.NetworkingV1Api().list_namespaced_ingress(
         namespace=namespace, label_selector="app=bodywork"
     )
     ingress_names = [ingress.metadata.name for ingress in ingresses.items]

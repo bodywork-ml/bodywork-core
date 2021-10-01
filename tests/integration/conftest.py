@@ -21,9 +21,11 @@ import os
 from pathlib import Path
 from random import randint
 from typing import cast
+from urllib.parse import urlparse
+
 from pytest import fixture
 from _pytest.fixtures import FixtureRequest
-from kubernetes import client as k8s, config as k8s_config
+from kubernetes import client as k8s_client, config as k8s_config
 from subprocess import run
 
 from bodywork.constants import (
@@ -110,19 +112,24 @@ def set_git_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
-def ingress_load_balancer_url() -> str:
+def ingress_url() -> str:
     try:
         k8s_config.load_kube_config()
-        services_in_namespace = k8s.CoreV1Api().list_namespaced_service(
-            namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
-        )
-        nginx_service = [
-            service
-            for service in services_in_namespace.items
-            if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
-        ][0]
-        load_balancer = nginx_service.status.load_balancer.ingress[0].hostname
-        return cast(str, load_balancer)
+        contexts, active_context = k8s_config.list_kube_config_contexts()
+        if active_context["name"] == "minikube":
+            kube_config = k8s_client.configuration.Configuration.get_default_copy()
+            url = urlparse(kube_config.host).hostname
+        else:
+            services_in_namespace = k8s_client.CoreV1Api().list_namespaced_service(
+                namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
+            )
+            nginx_service = [
+                service
+                for service in services_in_namespace.items
+                if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
+            ][0]
+            url = nginx_service.status.load_balancer.ingress[0].hostname
+        return cast(str, url)
     except IndexError:
         msg = (
             f"cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
@@ -136,7 +143,7 @@ def ingress_load_balancer_url() -> str:
             f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
         )
         raise RuntimeError(msg)
-    except k8s.rest.ApiException as e:
+    except k8s_client.rest.ApiException as e:
         msg = f"k8s API error - {e}"
         raise RuntimeError(msg)
     except Exception as e:
@@ -149,7 +156,7 @@ def setup_cluster(request: FixtureRequest) -> None:
     setup_namespace_with_service_accounts_and_roles("bodywork-dev")
 
     def delete_namespace():
-        k8s.CoreV1Api().delete_namespace("bodywork-dev")
+        k8s_client.CoreV1Api().delete_namespace("bodywork-dev")
 
     request.addfinalizer(delete_namespace)
 

@@ -41,7 +41,7 @@ from bodywork.k8s import (
 
 @mark.usefixtures("add_secrets")
 def test_workflow_and_service_management_end_to_end_from_cli(
-    docker_image: str, ingress_load_balancer_url: str
+    docker_image: str, ingress_url: str
 ):
     try:
         process_one = run(
@@ -96,16 +96,15 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process_three.returncode == 0
 
         stage_3_service_external_url = (
-            f"http://{ingress_load_balancer_url}/bodywork-test-project/"
+            f"http://{ingress_url}/bodywork-test-project/"
             f"/bodywork-test-project--stage-3/v1/predict"
         )
-
         response_stage_3 = requests.get(url=stage_3_service_external_url)
         assert response_stage_3.ok
         assert response_stage_3.json()["y"] == "hello_world"
 
         stage_4_service_external_url = (
-            f"http://{ingress_load_balancer_url}/bodywork-test-project/"
+            f"http://{ingress_url}/bodywork-test-project/"
             f"/bodywork-test-project--stage-4/v2/predict"
         )
         response_stage_4 = requests.get(url=stage_4_service_external_url)
