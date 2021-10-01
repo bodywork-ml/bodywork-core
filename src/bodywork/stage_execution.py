@@ -23,6 +23,9 @@ from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Sequence
 
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
+
 from .config import BodyworkConfig
 from .constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
 from .exceptions import BodyworkStageFailure
@@ -65,12 +68,23 @@ def run_stage(
         stage = project_config.stages[stage_name]
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        run(
-            ["python", stage.executable_module, *stage.args],
-            check=True,
-            cwd=stage.executable_module_path.parent,
-            encoding="utf-8",
-        )
+        executable_type = _infer_executable_type(stage.executable_module)
+        if executable_type is ExecutableType.JUPYTER_NB:
+            notebook = nbformat.read(
+                stage.executable_module_path, as_version=nbformat.NO_CONVERT
+            )
+            nb_runner = ExecutePreprocessor(kernel_name="python3")
+            nb_runner.preprocess(
+                notebook,
+                {"metadata": {"path": stage.executable_module_path.parent}},
+            )
+        else:
+            run(
+                ["python", stage.executable_module, *stage.args],
+                check=True,
+                cwd=stage.executable_module_path.parent,
+                encoding="utf-8",
+            )
         log.info(
             f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
             f"at {repo_url}"
@@ -99,7 +113,7 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
         raise RuntimeError(msg)
 
 
-def _infer_python_executable(file_name: str) -> ExecutableType:
+def _infer_executable_type(file_name: str) -> ExecutableType:
     """Infer the type of Python executable from the filename.
 
     :param file_name: The name of the executable.

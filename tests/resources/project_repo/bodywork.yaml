@@ -47,6 +47,13 @@ stages:
     batch:
       max_completion_time_seconds: 60
       retries: 4
+  stage_jupyter:
+    executable_module_path: stage_jupyter/main.ipynb
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
   on_fail_stage:
     executable_module_path: on_fail_stage/main.py
     cpu_request: 0.5
