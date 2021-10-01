@@ -516,7 +516,7 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
                             backend=k8s.V1IngressBackend(
                                 service=k8s.V1IngressServiceBackend(
                                     name=name,
-                                    port=k8s.V1ServiceBackendPort(number=pod_port)
+                                    port=k8s.V1ServiceBackendPort(number=pod_port),
                                 )
                             ),
                         )
@@ -538,9 +538,7 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
 
     ingress = k8s.V1Ingress(metadata=ingress_metadata, spec=ingress_spec)
 
-    k8s.NetworkingV1Api().create_namespaced_ingress(
-        namespace=namespace, body=ingress
-    )
+    k8s.NetworkingV1Api().create_namespaced_ingress(namespace=namespace, body=ingress)
 
 
 def delete_deployment_ingress(namespace: str, name: str) -> None:

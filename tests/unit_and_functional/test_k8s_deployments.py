@@ -548,9 +548,7 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
                 kubernetes.client.V1ServiceList(items=[service_stage_service_object_2]),
             ]
             mock_k8s_ext_api().list_namespaced_ingress.return_value = (
-                kubernetes.client.V1IngressList(
-                    items=[service_stage_ingress_object]
-                )
+                kubernetes.client.V1IngressList(items=[service_stage_ingress_object])
             )
             deployment_info = list_service_stage_deployments()
             mock_k8s_apps_api().list_deployment_for_all_namespaces.assert_called_once()
@@ -657,7 +655,7 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
                                     name="bodywork-test-project--serve",
                                     port=kubernetes.client.V1ServiceBackendPort(
                                         number=5000
-                                    )
+                                    ),
                                 )
                             ),
                         )
