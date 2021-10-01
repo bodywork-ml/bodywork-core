@@ -28,7 +28,7 @@ from bodywork.stage_execution import (
     _infer_executable_type,
     _install_python_requirements,
     ExecutableType,
-    run_stage
+    run_stage,
 )
 
 

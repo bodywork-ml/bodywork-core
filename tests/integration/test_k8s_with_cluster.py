@@ -171,7 +171,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "deployment",
                 "create",
                 "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
-                "--git-branch=master"
+                "--git-branch=master",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -179,7 +179,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: bodywork-test-single-service-project--stage-2 from previous deployment with git-commit-hash" # noqa
+            "Removing service: bodywork-test-single-service-project--stage-2 from previous deployment with git-commit-hash"  # noqa
             in process_two.stdout
         )
 
