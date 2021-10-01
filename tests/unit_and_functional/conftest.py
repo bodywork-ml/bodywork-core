@@ -19,7 +19,7 @@ Pytest fixtures for use with all unit and functional testing modules.
 """
 import os
 
-from typing import Iterable
+from typing import Iterable, Dict, Any
 from pytest import fixture
 
 
@@ -32,3 +32,35 @@ def k8s_env_vars() -> Iterable[bool]:
     finally:
         yield True
     del os.environ["KUBERNETES_SERVICE_HOST"]
+
+
+@fixture(scope="function")
+def test_service_stage_deployment() -> Dict[str, Any]:
+    return {
+        "bodywork-test-project--serve-v1": {
+            "namespace": "bodywork-test-project",
+            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
+            "service_port": 5000,
+            "service_exposed": "true",
+            "available_replicas": 1,
+            "unavailable_replicas": 0,
+            "git_url": "project_repo_url",
+            "git_branch": "project_repo_branch",
+            "git_commit_hash": "abc123",
+            "has_ingress": "true",
+            "ingress_route": "/bodywork-dev/bodywork-test-project",
+        },
+        "bodywork-test-project--serve-v2": {
+            "namespace": "bodywork-test-project",
+            "service_url": "http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",  # noqa
+            "service_port": 6000,
+            "service_exposed": "true",
+            "available_replicas": 1,
+            "unavailable_replicas": 0,
+            "git_url": "project_repo_url",
+            "git_branch": "project_repo_branch",
+            "git_commit_hash": "xyz123",
+            "has_ingress": "true",
+            "ingress_route": "/bodywork-dev/bodywork-test-project",
+        },
+    }

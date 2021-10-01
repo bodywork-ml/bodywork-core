@@ -17,10 +17,9 @@
 """
 Test Bodywork workflow execution.
 """
-import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch, ANY
-from typing import Iterable
+from typing import Iterable, Dict, Any
 
 import requests
 from pytest import raises
@@ -102,11 +101,11 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
 ):
     mock_config.logging.log_level = "DEBUG"
 
-    git_repo_url = f"file://{project_repo_location.absolute()}"
+    git_url = f"file://{project_repo_location.absolute()}"
     mock_k8s.namespace_exists.return_value = False
     mock_k8s.create_namespace.side_effect = k8sclient.ApiException
     with raises(BodyworkWorkflowExecutionError, match="Unable to setup namespace"):
-        run_workflow(git_repo_url, config=mock_config)
+        run_workflow(git_url, config=mock_config)
 
 
 @patch("bodywork.workflow_execution.k8s")
@@ -412,3 +411,58 @@ def test_namespace_is_deleted_if_only_batch_stages(
         pass
 
     mock_k8s.delete_namespace.assert_called()
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_old_deployments_are_cleaned_up(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    mock_git_hash.return_value = test_service_stage_deployment[
+        "bodywork-test-project--serve-v2"
+    ]["git_commit_hash"]
+    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    run_workflow("project_repo_url", config=config)
+
+    mock_k8s.delete_deployment.assert_called_once_with(
+        "bodywork-test-project", "bodywork-test-project--serve-v1"
+    )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_cannot_deploy_different_project_repo_to_same_namespace(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    with raises(
+        BodyworkWorkflowExecutionError,
+        match=r"A project with the same name \(or namespace\): bodywork-test-project",
+    ):
+        run_workflow("https://my_new_project", config=config)

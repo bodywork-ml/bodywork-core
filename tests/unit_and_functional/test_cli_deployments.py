@@ -21,7 +21,6 @@ from re import findall
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
-from pytest import fixture
 from typing import Dict, Any
 
 from bodywork.cli.deployments import (
@@ -29,38 +28,6 @@ from bodywork.cli.deployments import (
     display_deployments,
     delete_deployment,
 )
-
-
-@fixture(scope="function")
-def test_service_stage_deployment() -> Dict[str, Any]:
-    return {
-        "bodywork-test-project--serve-v1": {
-            "namespace": "bodywork-dev",
-            "service_url": "http://bodywork-test-project--serve.bodywork-dev.svc.cluster.local",  # noqa
-            "service_port": 5000,
-            "service_exposed": "true",
-            "available_replicas": 1,
-            "unavailable_replicas": 0,
-            "git_url": "project_repo_url",
-            "git_branch": "project_repo_branch",
-            "git_commit_hash": "abc123",
-            "has_ingress": "true",
-            "ingress_route": "/bodywork-dev/bodywork-test-project",
-        },
-        "bodywork-test-project--serve-v2": {
-            "namespace": "bodywork-dev",
-            "service_url": "http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",  # noqa
-            "service_port": 6000,
-            "service_exposed": "true",
-            "available_replicas": 1,
-            "unavailable_replicas": 0,
-            "git_url": "project_repo_url",
-            "git_branch": "project_repo_branch",
-            "git_commit_hash": "abc123",
-            "has_ingress": "true",
-            "ingress_route": "/bodywork-dev/bodywork-test-project",
-        },
-    }
 
 
 @patch("bodywork.cli.deployments.k8s")
@@ -151,7 +118,7 @@ def test_display_service(
     assert findall(r"unavailable_replicas.+0", captured_one.out)
     assert findall(r"git_url.+project_repo_url", captured_one.out)
     assert findall(r"git_branch.+project_repo_branch", captured_one.out)
-    assert findall(r"git_commit_hash.+abc123", captured_one.out)
+    assert findall(r"git_commit_hash.+xyz123", captured_one.out)
     assert findall(r"service_port.+6000", captured_one.out)
     assert findall(
         r"service_url.+http://bodywork-test-project--serve-v2.bodywork-dev.svc.cluster.local",
@@ -256,10 +223,13 @@ def test_delete_deployment_in_namespace(
 
 
 @patch("bodywork.cli.deployments.k8s")
-def test_delete_deployment(mock_k8s_module: MagicMock, capsys: CaptureFixture):
-    mock_k8s_module.namespace_exists.return_value = False
-    mock_k8s_module.list_service_stage_deployments.return_value = {"foo": {}}
-    deployment_name = "bodywork-test-project--serve"
+def test_delete_deployment(
+    mock_k8s_module: MagicMock,
+    capsys: CaptureFixture,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    deployment_name = "bodywork-test-project"
+    mock_k8s_module.list_service_stage_deployments.return_value = []
 
     delete_deployment(deployment_name)
 
@@ -269,8 +239,10 @@ def test_delete_deployment(mock_k8s_module: MagicMock, capsys: CaptureFixture):
         in captured_one.out
     )
 
-    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.list_service_stage_deployments.return_value = (
+        test_service_stage_deployment
+    )
 
-    delete_deployment("bodywork-test-project--serve")
+    delete_deployment(deployment_name)
 
     mock_k8s_module.delete_namespace.assert_called_with(deployment_name)

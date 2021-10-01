@@ -87,7 +87,7 @@ def run_workflow(
                 config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
 
             _log.setLevel(config.logging.log_level)
-            namespace = _setup_namespace(config)
+            namespace = _setup_namespace(config, repo_url)
             workflow_dag = config.project.workflow
             all_stages = config.stages
             docker_image = (
@@ -144,13 +144,15 @@ def run_workflow(
                         repo_branch,
                         repo_url,
                         docker_image,
-                        git_commit_hash
+                        git_commit_hash,
                     )
                 _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
             _log.info("Deployment successful")
             if not workflow_deploys_services(config):
                 _log.info(f"Deleting namespace = {namespace}")
                 k8s.delete_namespace(namespace)
+            else:
+                _cleanup_redundant_services(git_commit_hash, namespace)
             if config.project.usage_stats:
                 _ping_usage_stats_server()
         except Exception as e:
@@ -187,10 +189,28 @@ def run_workflow(
     console.rule(characters="=", style="green")
 
 
-def _setup_namespace(config) -> str:
+def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
+    """Deletes services that are not part of this git commit.
+
+    :param git_commit_hash: Git commit hash of current deployment.
+    :param namespace: Namespace deployment is in.
+    """
+    _log.info("Searching for services from previous deployment.")
+    deployments = k8s.list_service_stage_deployments(namespace)
+    for name, deployment in deployments.items():
+        if deployment["git_commit_hash"] != git_commit_hash:
+            _log.info(
+                f"Removing service: {name} from previous deployment with "
+                f"git-commit-hash: {deployment['git_commit_hash']}."
+            )
+            k8s.delete_deployment(namespace, name)
+
+
+def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
     """Creates namespace to run workflow in.
 
     :param config: Bodywork config.
+    :param config: Git repository URL.
     :return: Name of namespace.
     """
     namespace = str(
@@ -202,6 +222,14 @@ def _setup_namespace(config) -> str:
             k8s.create_namespace(namespace)
         else:
             _log.info(f"Using k8s namespace = {namespace}")
+            deployments = k8s.list_service_stage_deployments(namespace)
+            for name, deployment in deployments.items():
+                if deployment["git_url"] != repo_url:
+                    raise BodyworkNamespaceError(
+                        f"A project with the same name (or namespace): {namespace},"
+                        " originating from a different git repository, has already "
+                        "been deployed. Please choose another name."
+                    )
         if not k8s.service_account_exists(namespace, BODYWORK_STAGES_SERVICE_ACCOUNT):
             _log.info(
                 f"Creating k8s service account = {BODYWORK_STAGES_SERVICE_ACCOUNT}"

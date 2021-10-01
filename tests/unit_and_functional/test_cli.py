@@ -121,8 +121,8 @@ def test_workflow_subcommand_exists():
     process = run(["bodywork", "workflow", "-h"], encoding="utf-8", capture_output=True)
     expected_output = (
         "usage: bodywork workflow [-h] [--bodywork-docker-image"
-        "BODYWORK_DOCKER_IMAGE] namespace git_repo_url"
-        " git_repo_branch"
+        "BODYWORK_DOCKER_IMAGE] namespace git_url"
+        " git_branch"
     )
     assert process.stdout.find(expected_output) != 0
 
@@ -230,8 +230,8 @@ def test_deployment_run_locally_calls_run_workflow_handler(
         command="create",
         name="foo2",
         retries=0,
-        git_repo_url="foo3",
-        git_repo_branch="foo4",
+        git_url="foo3",
+        git_branch="foo4",
         async_workflow=None,
         namespace=None,
         service=None,
@@ -239,8 +239,8 @@ def test_deployment_run_locally_calls_run_workflow_handler(
     )
     deployment(args)
     expected_pass_through_args = Namespace(
-        git_repo_url="foo3",
-        git_repo_branch="foo4",
+        git_url="foo3",
+        git_branch="foo4",
         bodywork_docker_image=None,
     )
     stdout = capsys.readouterr().out
@@ -284,8 +284,8 @@ def test_cli_deployment_create_async(
         command="create",
         name="test_cli",
         async_workflow=True,
-        git_repo_url="http://Test",
-        git_repo_branch="master",
+        git_url="http://Test",
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -297,8 +297,8 @@ def test_cli_deployment_create_async(
     mock_create_workflow.assert_called_with(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         args.name,
-        args.git_repo_url,
-        args.git_repo_branch,
+        args.git_url,
+        args.git_branch,
         args.retries,
         args.bodywork_docker_image,
     )
@@ -314,8 +314,8 @@ def test_cli_deployment_delete(
         command="delete",
         name="mydeployment",
         async_workflow=None,
-        git_repo_url=None,
-        git_repo_branch="master",
+        git_url=None,
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -337,8 +337,8 @@ def test_cli_deployment_logs(
         command="logs",
         name="mydeployment",
         async_workflow=None,
-        git_repo_url=None,
-        git_repo_branch="master",
+        git_url=None,
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -360,8 +360,8 @@ def test_cli_deployment_delete_job(
         command="delete_job",
         name="mydeployment",
         async_workflow=None,
-        git_repo_url=None,
-        git_repo_branch="master",
+        git_url=None,
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -383,8 +383,8 @@ def test_cli_deployment_job_history(
         command="job_history",
         name="mydeployment",
         async_workflow=None,
-        git_repo_url=None,
-        git_repo_branch="master",
+        git_url=None,
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -406,8 +406,8 @@ def test_cli_deployment_display(
         command="display",
         name="mydeployment",
         async_workflow=None,
-        git_repo_url=None,
-        git_repo_branch="master",
+        git_url=None,
+        git_branch="master",
         retries=2,
         namespace=None,
         service=None,
@@ -493,15 +493,12 @@ def test_cronjob_update_error_handling():
             "cronjob",
             "update",
             "--name=the-cronjob",
-            "--git-repo-url=https://test",
+            "--git-url=https://test",
         ],
         encoding="utf-8",
         capture_output=True,
     )
-    assert (
-        "Please specify both --git-repo-url and --git-repo-branch."
-        in process_one.stdout
-    )
+    assert "Please specify both --git-url and --git-branch." in process_one.stdout
     assert process_one.returncode == 1
 
 

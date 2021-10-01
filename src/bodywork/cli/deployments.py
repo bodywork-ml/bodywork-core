@@ -46,9 +46,7 @@ def display_deployments(
             return None
         print_dict(deployments[service_name], service_name)
     else:
-        table_data = {
-            name: data["git_url"] for name, data in deployments.items()
-        }
+        table_data = {name: data["git_url"] for name, data in deployments.items()}
         print_dict(table_data, "services", "Name", "Git Repository URL")
 
 
@@ -79,13 +77,14 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
         )
 
 
-def delete_deployment(deployment_name) -> None:
+def delete_deployment(deployment_name: str) -> None:
     """Delete a deployment by deleting the namespace it's in.
 
     :param deployment_name: The name of the deployment.
     """
-    if not k8s.namespace_exists(deployment_name):
+    deployments = k8s.list_service_stage_deployments(name=deployment_name)
+    if not deployments:
         print_info(f"deployment={deployment_name} could not be found on k8s cluster.")
         return None
-    k8s.delete_namespace(deployment_name)
+    k8s.delete_namespace(list(deployments.values())[0]["namespace"])
     print_info(f"deployment={deployment_name} deleted.")
