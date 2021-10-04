@@ -177,7 +177,7 @@ def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
     mock_job_status: MagicMock, batch_stage_job_object: kubernetes.client.V1Job
 ):
     mock_job_status.return_value = JobStatus.ACTIVE
-    with raises(TimeoutError, match="have yet to reach status=succeeded"):
+    with raises(TimeoutError, match="yet to reach status=succeeded"):
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
 

@@ -19,11 +19,12 @@ Test Bodywork workflow execution.
 """
 from pathlib import Path
 from unittest.mock import MagicMock, patch, ANY
-from typing import Iterable
+from typing import Iterable, Dict, Any
 
 import requests
 from pytest import raises
 from _pytest.capture import CaptureFixture
+from _pytest.logging import LogCaptureFixture
 from kubernetes import client as k8sclient
 
 from bodywork.constants import (
@@ -71,7 +72,7 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
         BodyworkDockerImageError,
-        match=f"invalid DOCKER_IMAGE specified in {PROJECT_CONFIG_FILENAME}",
+        match=f"Invalid Docker image specified: bodyworkml",
     ):
         parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
         parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
@@ -88,20 +89,29 @@ def test_parse_dockerhub_image_string_parses_valid_strings():
     )
 
 
+@patch("bodywork.workflow_execution.BodyworkConfig")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
 @patch("bodywork.workflow_execution.k8s")
-def test_run_workflow_raises_exception_if_namespace_does_not_exist(
+def test_run_workflow_raises_exception_if_cannot_setup_namespace(
     mock_k8s: MagicMock,
+    mock_git: MagicMock,
+    mock_config: MagicMock,
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path,
 ):
-    git_repo_url = f"file://{project_repo_location.absolute()}"
+    mock_config.logging.log_level = "DEBUG"
+
+    git_url = f"file://{project_repo_location.absolute()}"
     mock_k8s.namespace_exists.return_value = False
-    with raises(BodyworkWorkflowExecutionError, match="not a valid namespace"):
-        run_workflow("foo_bar_foo_993", git_repo_url)
+    mock_k8s.create_namespace.side_effect = k8sclient.ApiException
+    with raises(BodyworkWorkflowExecutionError, match="Unable to setup namespace"):
+        run_workflow(git_url, config=mock_config)
 
 
 @patch("bodywork.workflow_execution.k8s")
-def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
+def test_print_logs_to_stdout(
+    mock_k8s: MagicMock, capsys: CaptureFixture, caplog: LogCaptureFixture
+):
     mock_k8s.get_latest_pod_name.return_value = "bodywork-test-project--stage-1"
     mock_k8s.get_pod_logs.return_value = "foo-bar"
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
@@ -110,13 +120,14 @@ def test_print_logs_to_stdout(mock_k8s: MagicMock, capsys: CaptureFixture):
 
     mock_k8s.get_latest_pod_name.return_value = None
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
-    captured_stdout = capsys.readouterr().out
-    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
+    captured_logs = caplog.text
+    assert "Cannot get logs for bodywork-test-project--stage-1" in captured_logs
 
+    caplog.clear()
     mock_k8s.get_latest_pod_name.side_effect = Exception
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
-    captured_stdout = capsys.readouterr().out
-    assert "cannot get logs for bodywork-test-project--stage-1" in captured_stdout
+    captured_logs = caplog.text
+    assert "Cannot get logs for bodywork-test-project--stage-1" in captured_logs
 
 
 @patch("bodywork.workflow_execution.rmtree")
@@ -144,10 +155,11 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     run_workflow(
         "foo_bar_foo_993",
         project_repo_location,
-        config_override=BodyworkConfig(config_path),
+        config=BodyworkConfig(config_path),
     )
 
     mock_k8s.configure_service_stage_deployment.assert_called_once_with(
+        ANY,
         ANY,
         ANY,
         ANY,
@@ -205,7 +217,7 @@ def test_run_workflow_runs_failure_stage_on_failure(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
 
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -237,7 +249,7 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
     mock_session().get.return_value = requests.Response().status_code = 401
 
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -253,7 +265,7 @@ def test_failure_stage_does_not_run_for_namespace_exception(
     config = BodyworkConfig(config_path)
     mock_k8s.namespace_exists.return_value = False
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -270,7 +282,7 @@ def test_failure_stage_does_not_run_for_git_exception(
     mock_git_download.side_effect = BodyworkGitError("Test Exception")
 
     try:
-        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
     except BodyworkWorkflowExecutionError:
         pass
 
@@ -302,7 +314,7 @@ def test_failure_of_failure_stage_is_recorded_in_exception(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
 
     with raises(BodyworkWorkflowExecutionError, match=f"{error_message}"):
-        run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
 
 
 @patch("bodywork.workflow_execution.rmtree")
@@ -322,7 +334,7 @@ def test_run_workflow_pings_usage_stats_server(
     config = BodyworkConfig(config_path)
     config.project.usage_stats = True
 
-    run_workflow("foo_bar_foo_993", project_repo_location, config_override=config)
+    run_workflow("foo_bar_foo_993", project_repo_location, config=config)
 
     mock_session().get.assert_called_with(
         USAGE_STATS_SERVER_URL, params={"type": "workflow"}
@@ -347,7 +359,110 @@ def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
     run_workflow(
         "foo_bar_foo_993",
         project_repo_location,
-        config_override=BodyworkConfig(config_path),
+        config=BodyworkConfig(config_path),
     )
 
     mock_session().get.assert_called_once()
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_namespace_is_not_deleted_if_there_are_service_stages(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_requests: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
+    config = BodyworkConfig(config_path)
+
+    try:
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+    except BodyworkWorkflowExecutionError:
+        pass
+
+    mock_k8s.delete_namespace.assert_not_called()
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_namespace_is_deleted_if_only_batch_stages(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_requests: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+):
+    config_path = Path(f"{project_repo_location}/bodywork_batch_stage.yaml")
+    config = BodyworkConfig(config_path)
+
+    try:
+        run_workflow("foo_bar_foo_993", project_repo_location, config=config)
+    except BodyworkWorkflowExecutionError:
+        pass
+
+    mock_k8s.delete_namespace.assert_called()
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_old_deployments_are_cleaned_up(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    mock_git_hash.return_value = test_service_stage_deployment[
+        "bodywork-test-project--serve-v2"
+    ]["git_commit_hash"]
+    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    run_workflow("project_repo_url", config=config)
+
+    mock_k8s.delete_deployment.assert_called_once_with(
+        "bodywork-test-project", "bodywork-test-project--serve-v1"
+    )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_cannot_deploy_different_project_repo_to_same_namespace(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path,
+    test_service_stage_deployment: Dict[str, Any],
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+
+    with raises(
+        BodyworkWorkflowExecutionError,
+        match=r"A project with the same name \(or namespace\): bodywork-test-project",
+    ):
+        run_workflow("https://my_new_project", config=config)

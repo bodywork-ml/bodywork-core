@@ -65,11 +65,9 @@ def download_project_code_from_repo(
                     f"Unable to derive hostname from URL {url}. Please check "
                 )
         elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            log.warning("Not configured for use with private GitHub repos")
+            log.warning("Not configured for use with private Git repos")
     except Exception as e:
-        msg = (
-            f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
-        )
+        msg = f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
         raise BodyworkGitError(msg)
     try:
         run(
@@ -96,7 +94,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
     """Derive connection protocol used to retrieve Git repo.
 
     :param connection_string: The string containing the connection
-        details for the remote Git repository - e.g. the GitHUb URL.
+        details for the remote Git repository - e.g. the GitHub URL.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.
     :return: The connection protocol type.

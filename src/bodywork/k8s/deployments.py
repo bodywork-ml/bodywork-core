@@ -21,13 +21,13 @@ Bodywork service deployment stages.
 from datetime import datetime
 from enum import Enum
 from time import sleep, time
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Any
 
 from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
 )
@@ -35,7 +35,7 @@ from .utils import make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
-    "Possible states of a k8s deployment."
+    """Possible states of a k8s deployment."""
 
     COMPLETE = "complete"
     PROGRESSING = "progressing"
@@ -46,6 +46,7 @@ def configure_service_stage_deployment(
     stage_name: str,
     project_name: str,
     project_repo_url: str,
+    git_commit_hash: str,
     project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
     replicas: int = 1,
@@ -64,6 +65,7 @@ def configure_service_stage_deployment(
         belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
+    :param git_commit_hash: The git commit hash of this Bodywork project.
     :param project_repo_branch: The Bodywork project Git repository
         branch to use, defaults to 'master'.
     :param image: Docker image to use for running the stage within,
@@ -82,6 +84,7 @@ def configure_service_stage_deployment(
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
+
     """
     vcs_env_vars = [
         k8s.V1EnvVar(
@@ -110,7 +113,7 @@ def configure_service_stage_deployment(
         args=[project_repo_url, project_repo_branch, stage_name],
     )
     pod_spec = k8s.V1PodSpec(
-        service_account_name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+        service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
         containers=[container],
         restart_policy="Always",
     )
@@ -132,7 +135,12 @@ def configure_service_stage_deployment(
         namespace=namespace,
         name=make_valid_k8s_name(f"{project_name}--{stage_name}"),
         annotations={"port": str(port)},
-        labels={"app": "bodywork", "stage": stage_name},
+        labels={
+            "app": "bodywork",
+            "stage": stage_name,
+            "deployment-name": project_name,
+            "git-commit-hash": git_commit_hash,
+        },
     )
     deployment = k8s.V1Deployment(metadata=deployment_metadata, spec=deployment_spec)
     return deployment
@@ -179,7 +187,7 @@ def update_deployment(deployment: k8s.V1Deployment) -> None:
 def rollback_deployment(deployment: k8s.V1Deployment) -> None:
     """Rollback a deployment to its previous version.
 
-    The Kubernetes API has no dedicated enpoint for managing rollbacks.
+    The Kubernetes API has no dedicated endpoint for managing rollbacks.
     This function was implemented by reverse-engineering the API calls
     made by the equivalent kubectl command,`kubectl rollout undo ...`.
 
@@ -318,7 +326,7 @@ def monitor_deployments_to_completion(
 ) -> bool:
     """Monitor deployment status until completion or timeout.
 
-    :param deployents: The deployments to monitor.
+    :param deployments: The deployments to monitor.
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time (in seconds) between status
@@ -327,7 +335,7 @@ def monitor_deployments_to_completion(
         monitor deployments - e.g. to allow deployments to be created.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
-    :return: True if all of the deployments are successfull.
+    :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
     start_time = time()
@@ -356,37 +364,44 @@ def monitor_deployments_to_completion(
     return True
 
 
-def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
+def list_service_stage_deployments(
+    namespace: Optional[str] = None,
+    name: Optional[str] = None,
+) -> Dict[str, Dict[str, Any]]:
     """Get all service deployments and their high-level info.
 
-    :param namespace: Namespace in which to list cronjobs.
+    :param namespace: Namespace in which to list services.
+    :param name: Name of service.
+    :return: Dict of deployments and their attributes.
     """
-    k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
-        namespace=namespace, label_selector="app=bodywork"
-    )
-    deployment_info = {
-        deployment.metadata.name: {
-            "service_exposed": (
-                "true"
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
-                else "false"
-            ),
+    label_selector = f"app=bodywork,deployment-name={name}" if name else "app=bodywork"
+    if namespace:
+        k8s_deployment_query = k8s.AppsV1Api().list_namespaced_deployment(
+            namespace=namespace, label_selector=label_selector
+        )
+    else:
+        k8s_deployment_query = k8s.AppsV1Api().list_deployment_for_all_namespaces(
+            label_selector=label_selector
+        )
+
+    deployment_info = {}
+    for deployment in k8s_deployment_query.items:
+        exposed_as_cluster_service = is_exposed_as_cluster_service(
+            deployment.metadata.namespace, deployment.metadata.name
+        )
+        deployment_info[deployment.metadata.name] = {
+            "namespace": deployment.metadata.namespace,
+            "service_exposed": exposed_as_cluster_service,
             "service_url": (
                 cluster_service_url(
                     deployment.metadata.namespace, deployment.metadata.name
                 )
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
+                if exposed_as_cluster_service
                 else "none"
             ),
             "service_port": (
                 deployment.metadata.annotations["port"]
-                if is_exposed_as_cluster_service(
-                    deployment.metadata.namespace, deployment.metadata.name
-                )
+                if exposed_as_cluster_service
                 else "none"
             ),
             "available_replicas": (
@@ -401,17 +416,17 @@ def list_service_stage_deployments(namespace: str) -> Dict[str, Dict[str, str]]:
             ),
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.spec.template.spec.containers[0].args[1],
+            "git_commit_hash": deployment.metadata.labels["git-commit-hash"],
             "has_ingress": (
-                "true" if has_ingress(namespace, deployment.metadata.name) else "false"
+                has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),
             "ingress_route": (
                 ingress_route(deployment.metadata.namespace, deployment.metadata.name)
-                if has_ingress(namespace, deployment.metadata.name)
+                if has_ingress(deployment.metadata.namespace, deployment.metadata.name)
                 else "none"
             ),
         }
-        for deployment in k8s_deployment_query.items
-    }
+
     return deployment_info
 
 
@@ -452,7 +467,7 @@ def is_exposed_as_cluster_service(namespace: str, name: str) -> bool:
     """Is a deployment exposed as a cluster service.
 
     :param namespace: Namespace in which to look for services.
-    :param names: The name of the service.
+    :param name: The name of the service.
     """
     services = k8s.CoreV1Api().list_namespaced_service(namespace=namespace)
     service_names = [service.metadata.name for service in services.items]
@@ -463,7 +478,7 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
     """Delete a service associated with a deployment.
 
     :param namespace: Namespace in which exists the service to delete.
-    :param names: The name of the service.
+    :param name: The name of the service.
     """
     k8s.CoreV1Api().delete_namespaced_service(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -529,7 +544,7 @@ def delete_deployment_ingress(namespace: str, name: str) -> None:
     """Delete an ingress to a service backed by a deployment.
 
     :param namespace: Namespace in which exists the ingress to delete.
-    :param names: The name of the ingress.
+    :param name: The name of the ingress.
     """
     k8s.ExtensionsV1beta1Api().delete_namespaced_ingress(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -540,7 +555,7 @@ def has_ingress(namespace: str, name: str) -> bool:
     """Does a service backed by a deployment have an ingress?
 
     :param namespace: Namespace in which to look for ingress resources.
-    :param names: The name of the ingress.
+    :param name: The name of the ingress.
     """
     ingresses = k8s.ExtensionsV1beta1Api().list_namespaced_ingress(
         namespace=namespace, label_selector="app=bodywork"

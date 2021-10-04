@@ -22,13 +22,19 @@ from pathlib import Path
 from random import randint
 from typing import cast
 from pytest import fixture
+from _pytest.fixtures import FixtureRequest
 from kubernetes import client as k8s, config as k8s_config
+from subprocess import CalledProcessError, run
 
 from bodywork.constants import (
     BODYWORK_DOCKERHUB_IMAGE_REPO,
     SSH_PRIVATE_KEY_ENV_VAR,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
+from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
+from bodywork.k8s.auth import load_kubernetes_config
+
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
@@ -135,3 +141,54 @@ def ingress_load_balancer_url() -> str:
         raise RuntimeError(msg)
     except Exception as e:
         raise RuntimeError() from e
+
+
+@fixture(scope="session")
+def setup_cluster(request: FixtureRequest) -> None:
+    load_kubernetes_config()
+    setup_namespace_with_service_accounts_and_roles("bodywork-dev")
+
+    def delete_namespace():
+        k8s.CoreV1Api().delete_namespace("bodywork-dev")
+
+    request.addfinalizer(delete_namespace)
+
+
+@fixture(scope="function")
+def add_secrets(request: FixtureRequest) -> None:
+    run(
+        [
+            "kubectl",
+            "create",
+            "secret",
+            "generic",
+            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            "testsecrets-bodywork-test-project-credentials",
+            "--from-literal=USERNAME=alex",
+            "--from-literal=PASSWORD=alex123",
+        ]
+    )
+
+    run(
+        [
+            "kubectl",
+            "label",
+            "secret",
+            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            "testsecrets-bodywork-test-project-credentials",
+            "group=testsecrets",
+        ]
+    )
+
+    def delete_secrets():
+        run(
+            [
+                "kubectl",
+                "delete",
+                "secret",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                "testsecrets-bodywork-test-project-credentials",
+            ]
+        )
+
+    request.addfinalizer(delete_secrets)

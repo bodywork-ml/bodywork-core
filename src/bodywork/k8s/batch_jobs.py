@@ -26,7 +26,7 @@ from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
 )
@@ -105,7 +105,7 @@ def configure_batch_stage_job(
         args=[project_repo_url, project_repo_branch, stage_name],
     )
     pod_spec = k8s.V1PodSpec(
-        service_account_name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+        service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
         containers=[container],
         restart_policy="Never",
     )
@@ -212,7 +212,7 @@ def monitor_jobs_to_completion(
                 if status != JobStatus.SUCCEEDED
             ]
             msg = (
-                f'{"; ".join(unsuccessful_jobs_msg)} have yet to reach '
+                f'{"; ".join(unsuccessful_jobs_msg)} yet to reach '
                 f"status=succeeded after {timeout_seconds}s"
             )
             raise TimeoutError(msg)
