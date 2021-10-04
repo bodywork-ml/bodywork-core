@@ -72,8 +72,10 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
     hostname = "github.com"
     if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
-        setup_ssh_for_git_host(hostname)
+    with patch.object(Path, "exists") as mock_exists:
+        mock_exists.return_value = False
+        with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
+            setup_ssh_for_git_host(hostname)
 
 
 @patch("bodywork.git.Path.read_text")
