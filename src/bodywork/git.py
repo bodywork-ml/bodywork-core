@@ -33,7 +33,6 @@ from .constants import (
     GITHUB_SSH_FINGERPRINT,
     GITLAB_SSH_FINGERPRINT,
     BITBUCKET_SSH_FINGERPRINT,
-    GIT_SSH_COMMAND,
     AZURE_SSH_FINGERPRINT,
 )
 from .logs import bodywork_log_factory
@@ -126,13 +125,13 @@ def setup_ssh_for_git_host(hostname: str) -> None:
 
     :param hostname: Hostname to SSH to.
     """
-    ssh_dir = Path(".") / SSH_DIR_NAME
+    ssh_dir = Path.home() / SSH_DIR_NAME
     private_key = ssh_dir / "id_rsa"
     if not private_key.exists():
         if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             msg = (
-                f"failed to setup SSH for {hostname} - cannot find "
-                f"{SSH_PRIVATE_KEY_ENV_VAR} environment variable"
+                f"failed to setup SSH for {hostname} - cannot find SSH key in "
+                f"{private_key} file or in {SSH_PRIVATE_KEY_ENV_VAR} environment variable." # noqa
             )
             raise KeyError(msg)
         try:
@@ -145,7 +144,7 @@ def setup_ssh_for_git_host(hostname: str) -> None:
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
-                f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable"
+                f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable."
             ) from e
 
     try:
@@ -158,13 +157,8 @@ def setup_ssh_for_git_host(hostname: str) -> None:
                 file_handle.write(get_ssh_public_key_from_domain(hostname))
     except OSError as e:
         raise RuntimeError(
-            f"Error updating known hosts with public key from {hostname}"
+            f"Error updating known hosts with public key from {hostname}."
         ) from e
-
-    os.environ[GIT_SSH_COMMAND] = (
-        f"ssh -i '{private_key}' -o UserKnownHostsFile='{known_hosts}'"
-        f" -o IdentitiesOnly=yes"
-    )
 
 
 def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -> bool:

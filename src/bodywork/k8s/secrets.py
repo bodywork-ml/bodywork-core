@@ -42,7 +42,7 @@ def configure_env_vars_from_secrets(
     This function can be used to configure the environment variables FOO
     and BAR for any batch job or service deployment.
 
-    :param namespece: Kubernetes namespace in which to look for secrets.
+    :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_varname_pairs: List of secret, variable-name pairs.
     :raises RuntimeError: if any of the secrets or their keys cannot be
         found.
@@ -76,7 +76,7 @@ def secret_exists(
 ) -> bool:
     """Does a secret and a key within a secret, exist.
 
-    :param namespece: Kubernetes namespace in which to look for secrets.
+    :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_name: The name of the k8s secret to look for.
     :param secret_key: The variable key within the secret to look for.
     :return: True if the secret was found and the key within the secret
