@@ -18,7 +18,6 @@
 Tests for Git repository interaction functions.
 """
 import os
-import shutil
 from pytest import raises
 from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
@@ -28,8 +27,6 @@ from bodywork.exceptions import BodyworkGitError
 from bodywork.constants import (
     SSH_PRIVATE_KEY_ENV_VAR,
     DEFAULT_PROJECT_DIR,
-    SSH_DIR_NAME,
-    GIT_SSH_COMMAND,
 )
 from bodywork.git import (
     ConnectionProtocol,
@@ -149,7 +146,7 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
             setup_ssh_for_git_host("github.com")
 
             mock_write.assert_any_call("MY_PRIVATE_KEY\n")
-            mock_get_ssh.assert_called_with()
-            mock_write.assert_any_call("github.com")
+            mock_get_ssh.assert_called_with("github.com")
+            mock_write.assert_any_call("fingerprint")
     except Exception:
         assert False
