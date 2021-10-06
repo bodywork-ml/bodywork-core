@@ -108,7 +108,7 @@ def test_configure_service_stage_deployment():
         seconds_to_be_ready_before_completing=5,
     )
     assert deployment.metadata.namespace == "bodywork-dev"
-    assert deployment.metadata.name == "bodywork-test-project--serve"
+    assert deployment.metadata.name == "serve"
     assert deployment.spec.replicas == 2
     assert deployment.spec.template.spec.containers[0].args == [
         "bodywork-ml/bodywork-test-project",

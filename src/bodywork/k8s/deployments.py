@@ -119,7 +119,12 @@ def configure_service_stage_deployment(
     )
     pod_template_spec = k8s.V1PodTemplateSpec(
         metadata=k8s.V1ObjectMeta(
-            labels={"app": "bodywork", "stage": stage_name},
+            labels={
+                "app": "bodywork",
+                "stage": stage_name,
+                "git-commit-hash": git_commit_hash,
+                "deployment-name": project_name,
+            },
             annotations={"last-updated": datetime.now().isoformat()},
         ),
         spec=pod_spec,
@@ -133,7 +138,7 @@ def configure_service_stage_deployment(
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=make_valid_k8s_name(f"{project_name}--{stage_name}"),
+        name=make_valid_k8s_name(stage_name),
         annotations={"port": str(port)},
         labels={
             "app": "bodywork",

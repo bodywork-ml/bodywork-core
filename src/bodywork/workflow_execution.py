@@ -128,7 +128,6 @@ def run_workflow(
                 if batch_stages:
                     _run_batch_stages(
                         batch_stages,
-                        config.project.name,
                         env_vars,
                         namespace,
                         repo_branch,
@@ -257,7 +256,6 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
 
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
-    project_name: str,
     env_vars: k8s.EnvVars,
     namespace: str,
     repo_branch: str,
@@ -267,7 +265,6 @@ def _run_batch_stages(
     """Run Batch Stages defined in the workflow.
 
     :param batch_stages: List of batch stages to execute.
-    :param project_name: Project name
     :param env_vars: List of k8s environment variables to add.
     :param namespace: K8s namespace to execute the batch stage in.
     :param repo_branch: The Git branch to download'.
@@ -278,7 +275,6 @@ def _run_batch_stages(
         k8s.configure_batch_stage_job(
             namespace,
             stage.name,
-            project_name,
             repo_url,
             repo_branch,
             retries=stage.retries,
@@ -294,8 +290,7 @@ def _run_batch_stages(
     ]
     for job_object in job_objects:
         job_name = job_object.metadata.name
-        stage_name = job_name.split("--")[1]
-        _log.info(f"Creating k8s job for stage = {stage_name}")
+        _log.info(f"Creating k8s job for stage = {job_name}")
         k8s.create_job(job_object)
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
@@ -306,12 +301,11 @@ def _run_batch_stages(
     finally:
         for job_object in job_objects:
             job_name = job_object.metadata.name
-            stage_name = job_name.split("--")[1]
-            _log.info(f"Completed k8s job for stage = {stage_name}")
+            _log.info(f"Completed k8s job for stage = {job_name}")
             _print_logs_to_stdout(namespace, job_name)
-            _log.info(f"Deleting k8s job for stage = {stage_name}")
+            _log.info(f"Deleting k8s job for stage = {job_name}")
             k8s.delete_job(namespace, job_name)
-            _log.info(f"Deleted k8s job for stage = {stage_name}")
+            _log.info(f"Deleted k8s job for stage = {job_name}")
 
 
 def _run_service_stages(
@@ -358,12 +352,11 @@ def _run_service_stages(
     ]
     for deployment_object in deployment_objects:
         deployment_name = deployment_object.metadata.name
-        stage_name = deployment_name.split("--")[1]
         if k8s.is_existing_deployment(namespace, deployment_name):
-            _log.info(f"Updating k8s deployment for stage = {stage_name}")
+            _log.info(f"Updating k8s deployment for stage = {deployment_name}")
             k8s.update_deployment(deployment_object)
         else:
-            _log.info(f"Creating k8s deployment and service for stage = {stage_name}")
+            _log.info(f"Creating k8s deployment and service for stage = {deployment_name}")
             k8s.create_deployment(deployment_object)
     try:
         timeout = max(stage.max_startup_time for stage in service_stages)
@@ -374,35 +367,33 @@ def _run_service_stages(
         _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
             deployment_name = deployment_object.metadata.name
-            stage_name = deployment_name.split("--")[1]
-            _print_logs_to_stdout(namespace, stage_name)
-            _log.info(f"Rolling-back k8s deployment for stage = {stage_name}")
+            _print_logs_to_stdout(namespace, deployment_name)
+            _log.info(f"Rolling-back k8s deployment for stage = {deployment_name}")
             k8s.rollback_deployment(deployment_object)
-            _log.info(f"Rolled-back k8s deployment for stage = {stage_name}")
+            _log.info(f"Rolled-back k8s deployment for stage = {deployment_name}")
         raise e
 
     for deployment_object, stage in zip(deployment_objects, service_stages):
         deployment_name = deployment_object.metadata.name
         deployment_port = deployment_object.metadata.annotations["port"]
-        stage_name = deployment_name.split("--")[1]
-        _log.info(f"Successfully created k8s deployment for stage = {stage_name}")
+        _log.info(f"Successfully created k8s deployment for stage = {deployment_name}")
         _print_logs_to_stdout(namespace, deployment_name)
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
             _log.info(
-                f"Exposing stage = {stage_name} as a k8s service at "
+                f"Exposing stage = {deployment_name} as a k8s service at "
                 f"http://{deployment_name}.{namespace}.svc.cluster"
                 f".local:{deployment_port}"
             )
             k8s.expose_deployment_as_cluster_service(deployment_object)
         if not k8s.has_ingress(namespace, deployment_name) and stage.create_ingress:
             _log.info(
-                f"Creating k8s ingress for stage = {stage_name} at "
+                f"Creating k8s ingress for stage = {deployment_name} at "
                 f"path = /{namespace}/{deployment_name}"
             )
             k8s.create_deployment_ingress(deployment_object)
         if k8s.has_ingress(namespace, deployment_name) and not stage.create_ingress:
             _log.info(
-                f"Deleting k8s ingress for stage = {stage_name} at "
+                f"Deleting k8s ingress for stage = {deployment_name} at "
                 f"path = /{namespace}/{deployment_name}"
             )
             k8s.delete_deployment_ingress(namespace, deployment_name)
@@ -432,7 +423,6 @@ def _run_failure_stage(
     )
     _run_batch_stages(
         stage,
-        config.project.name,
         env_vars,
         namespace,
         repo_branch,

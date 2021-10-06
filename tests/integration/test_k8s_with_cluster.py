@@ -94,7 +94,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
         stage_3_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-3/v1/predict"
+            f"/stage-3/v1/predict"
         )
 
         response_stage_3 = requests.get(url=stage_3_service_external_url)
@@ -103,7 +103,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
         stage_4_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-4/v2/predict"
+            f"/stage-4/v2/predict"
         )
         response_stage_4 = requests.get(url=stage_4_service_external_url)
         assert response_stage_4.status_code == 404
@@ -179,7 +179,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: bodywork-test-single-service-project--stage-2 from previous deployment with git-commit-hash" # noqa
+            "Removing service: stage-2 from previous deployment with git-commit-hash" # noqa
             in process_two.stdout
         )
 
@@ -194,9 +194,9 @@ def test_services_from_previous_deployments_are_deleted():
             capture_output=True,
         )
         assert process_three.returncode == 0
-        assert "bodywork-test-single-service-project--stage-1" in process_three.stdout
+        assert "stage-1" in process_three.stdout
         assert (
-            "bodywork-test-single-service-project--stage-2" not in process_three.stdout
+            "stage-2" not in process_three.stdout
         )
 
     finally:

@@ -67,7 +67,6 @@ def test_configure_batch_stage_job():
     job = configure_batch_stage_job(
         namespace="bodywork-dev",
         stage_name="train",
-        project_name="bodywork-test-project",
         project_repo_url="bodywork-ml/bodywork-test-project",
         project_repo_branch="dev",
         image="bodyworkml/bodywork-core:0.0.7",
@@ -76,7 +75,7 @@ def test_configure_batch_stage_job():
         retries=2,
     )
     assert job.metadata.namespace == "bodywork-dev"
-    assert job.metadata.name == "bodywork-test-project--train"
+    assert job.metadata.name == "train"
     assert job.spec.backoff_limit == 2
     assert job.spec.template.spec.containers[0].args == [
         "bodywork-ml/bodywork-test-project",

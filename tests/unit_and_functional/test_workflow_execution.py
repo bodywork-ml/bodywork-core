@@ -178,7 +178,6 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         ANY,
         ANY,
         ANY,
-        ANY,
         retries=ANY,
         container_env_vars=expected_result,
         image=ANY,
@@ -224,7 +223,6 @@ def test_run_workflow_runs_failure_stage_on_failure(
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,
         "on_fail_stage",
-        ANY,
         ANY,
         ANY,
         retries=ANY,
