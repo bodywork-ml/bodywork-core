@@ -356,7 +356,9 @@ def _run_service_stages(
             _log.info(f"Updating k8s deployment for stage = {deployment_name}")
             k8s.update_deployment(deployment_object)
         else:
-            _log.info(f"Creating k8s deployment and service for stage = {deployment_name}")
+            _log.info(
+                f"Creating k8s deployment and service for stage = {deployment_name}"
+            )
             k8s.create_deployment(deployment_object)
     try:
         timeout = max(stage.max_startup_time for stage in service_stages)

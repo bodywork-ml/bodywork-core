@@ -49,7 +49,10 @@ def display_deployments(
             f"{deployments[service_name]['namespace']}: {service_name}",
         )
     else:
-        table_data = {f"{data['namespace']} : {name}": data["git_url"] for name, data in deployments.items()}
+        table_data = {
+            f"{data['namespace']} : {name}": data["git_url"]
+            for name, data in deployments.items()
+        }
         print_dict(table_data, "services", "Deployment : Service", "Git Repository URL")
 
 
