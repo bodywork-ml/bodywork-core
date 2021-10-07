@@ -140,12 +140,21 @@ def display_secrets(
     if secret_name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         return None
-    elif secret_name and group:
+    if secret_name:
         try:
-            complete_secret_name = _create_complete_secret_name(group, secret_name)
-            print_dict(secrets[complete_secret_name].data, complete_secret_name)
+            complete_secret_name = _create_complete_secret_name(
+                str(group), str(secret_name)
+            )
+            print_dict(
+                secrets[complete_secret_name].data,
+                _create_table_name(str(secret_name), str(group)),
+            )
         except KeyError:
             print_warn(f"Cannot find secret={secret_name}.")
+    elif group:
+        for secret in secrets.items():
+            table_name = _create_table_name(secret[0].split("-")[1], group)
+            print_dict(secret[1].data, table_name)
     else:
         table_data = {
             secret.name.split(f"{secret.group}-")[1]: secret.group
@@ -157,3 +166,7 @@ def display_secrets(
 
 def _create_complete_secret_name(group: str, name: str) -> str:
     return f"{group}-{name}"
+
+
+def _create_table_name(secret_name: str, group: str) -> str:
+    return f"{secret_name} in group {group}"
