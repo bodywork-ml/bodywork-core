@@ -117,7 +117,7 @@ def _infer_executable_type(file_name: str) -> ExecutableType:
     """Infer the type of Python executable from the filename.
 
     :param file_name: The name of the executable.
-    :raises ValueError: If the filename is not a valie Jupyter notebook
+    :raises ValueError: If the filename is not a valid Jupyter notebook
         or Python module filename.
     """
     if file_name.endswith(".ipynb"):
