@@ -383,7 +383,7 @@ def _run_service_stages(
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
             _log.info(
                 f"Exposing stage = {deployment_name} as a k8s service at "
-                f"http://{namespace}.{deployment_name}.svc.cluster"
+                f"http://{deployment_name}.{namespace}.svc.cluster"
                 f".local:{deployment_port}"
             )
             k8s.expose_deployment_as_cluster_service(deployment_object)

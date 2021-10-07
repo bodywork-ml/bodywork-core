@@ -443,7 +443,7 @@ def cluster_service_url(namespace: str, deployment_name: str) -> str:
     :return: The internal URL to access the cluster service from within
         the cluster.
     """
-    return f"http://{namespace}.{deployment_name}.svc.cluster.local"
+    return f"http://{deployment_name}.{namespace}.svc.cluster.local"
 
 
 def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
