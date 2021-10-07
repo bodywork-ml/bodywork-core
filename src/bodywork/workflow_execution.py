@@ -383,7 +383,7 @@ def _run_service_stages(
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
             _log.info(
                 f"Exposing stage = {deployment_name} as a k8s service at "
-                f"http://{deployment_name}.{namespace}.svc.cluster"
+                f"http://{namespace}.{deployment_name}.svc.cluster"
                 f".local:{deployment_port}"
             )
             k8s.expose_deployment_as_cluster_service(deployment_object)
@@ -492,8 +492,7 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
         if pod_name is not None:
             pod_logs = k8s.get_pod_logs(namespace, pod_name)
-            stage_name = job_or_deployment_name.split("--")[1]
-            print_pod_logs(pod_logs, stage_name)
+            print_pod_logs(pod_logs, pod_name)
         else:
             _log.warning(f"Cannot get logs for {job_or_deployment_name}")
     except Exception:

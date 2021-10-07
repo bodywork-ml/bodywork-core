@@ -88,8 +88,8 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "bodywork-test-project--stage-3" in process_three.stdout
-        assert "bodywork-test-project--stage-4" in process_three.stdout
+        assert "stage-3" in process_three.stdout
+        assert "stage-4" in process_three.stdout
         assert process_three.returncode == 0
 
         stage_3_service_external_url = (
@@ -276,6 +276,7 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
     except Exception:
         assert False
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-failing-test-project")
 
 
@@ -313,6 +314,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         )
         assert process_two.returncode == 1
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-test-project")
 
 
