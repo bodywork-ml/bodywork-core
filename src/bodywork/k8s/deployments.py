@@ -369,6 +369,21 @@ def monitor_deployments_to_completion(
     return True
 
 
+def deployment_id(deployment_name: str, stage_name: str) -> str:
+    """Return deployment ID implied by deployment and stage names.
+
+    Args:
+        deployment_name: The name given to the Bodywork deployment
+            project.
+        stage_name: The name of the stage that deployed a single
+            service, within the Bodywork deployment project.
+
+    Returns:
+        Deployment ID string to use for locating services.
+    """
+    return f"{deployment_name}/{stage_name}"
+
+
 def list_service_stage_deployments(
     namespace: Optional[str] = None,
     name: Optional[str] = None,
@@ -388,13 +403,16 @@ def list_service_stage_deployments(
         k8s_deployment_query = k8s.AppsV1Api().list_deployment_for_all_namespaces(
             label_selector=label_selector
         )
-
     deployment_info = {}
     for deployment in k8s_deployment_query.items:
         exposed_as_cluster_service = is_exposed_as_cluster_service(
             deployment.metadata.namespace, deployment.metadata.name
         )
-        deployment_info[deployment.metadata.name] = {
+        id = deployment_id(
+            deployment.metadata.labels["deployment-name"],
+            deployment.metadata.labels["stage"]
+        )
+        deployment_info[id] = {
             "namespace": deployment.metadata.namespace,
             "service_exposed": exposed_as_cluster_service,
             "service_url": (
@@ -421,7 +439,7 @@ def list_service_stage_deployments(
             ),
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.spec.template.spec.containers[0].args[1],
-            "git_commit_hash": deployment.metadata.labels["git-commit-hash"],
+            "git_commit_hash": deployment.metadata.labels.get("git-commit-hash", "NA"),
             "has_ingress": (
                 has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),

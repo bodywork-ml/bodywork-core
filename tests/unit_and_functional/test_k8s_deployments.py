@@ -34,6 +34,7 @@ from bodywork.k8s.deployments import (
     delete_all_namespace_deployments,
     delete_deployment,
     delete_deployment_ingress,
+    deployment_id,
     DeploymentStatus,
     expose_deployment_as_cluster_service,
     has_ingress,
@@ -427,6 +428,10 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
         polling_freq_seconds=0.5,
     )
     assert successful is True
+
+
+def test_deployment_id_creates_valid_deployed_service_identifiers():
+    assert deployment_id("x", "y") == "x/y"
 
 
 def test_list_service_stage_deployments_returns_service_stage_info(
