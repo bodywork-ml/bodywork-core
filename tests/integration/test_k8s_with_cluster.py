@@ -171,7 +171,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "deployment",
                 "create",
                 "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
-                "--git-branch=master"
+                "--git-branch=master",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -179,7 +179,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: stage-2 from previous deployment with git-commit-hash" # noqa
+            "Removing service: stage-2 from previous deployment with git-commit-hash"  # noqa
             in process_two.stdout
         )
 
@@ -195,9 +195,7 @@ def test_services_from_previous_deployments_are_deleted():
         )
         assert process_three.returncode == 0
         assert "stage-1" in process_three.stdout
-        assert (
-            "stage-2" not in process_three.stdout
-        )
+        assert "stage-2" not in process_three.stdout
 
     finally:
         load_kubernetes_config()

@@ -148,9 +148,7 @@ def test_is_existing_deployment_correctly_filters_deployments(
         kubernetes.client.V1DeploymentList(
             items=[
                 kubernetes.client.V1Deployment(
-                    metadata=kubernetes.client.V1ObjectMeta(
-                        name="myservice"
-                    )
+                    metadata=kubernetes.client.V1ObjectMeta(name="myservice")
                 )
             ]
         ),
@@ -348,9 +346,7 @@ def test_get_deployment_status_correctly_determines_complete_status(
         kubernetes.client.V1DeploymentList(
             items=[
                 kubernetes.client.V1Deployment(
-                    metadata=kubernetes.client.V1ObjectMeta(
-                        name="myservice"
-                    ),
+                    metadata=kubernetes.client.V1ObjectMeta(name="myservice"),
                     status=kubernetes.client.V1DeploymentStatus(
                         available_replicas=1, unavailable_replicas=None
                     ),
@@ -373,9 +369,7 @@ def test_get_deployment_status_raises_exception_when_status_cannot_be_determined
         kubernetes.client.V1DeploymentList(
             items=[
                 kubernetes.client.V1Deployment(
-                    metadata=kubernetes.client.V1ObjectMeta(
-                        name="myservice"
-                    ),
+                    metadata=kubernetes.client.V1ObjectMeta(name="myservice"),
                     status=kubernetes.client.V1DeploymentStatus(
                         available_replicas=0, unavailable_replicas=0
                     ),
@@ -494,8 +488,10 @@ def test_list_service_stage_deployments_returns_service_stage_info(
                 assert deployment_info[deployment_id]["service_exposed"] is True
                 assert deployment_info[deployment_id]["available_replicas"] == 1
                 assert deployment_info[deployment_id]["unavailable_replicas"] == 0
-                assert (deployment_info[deployment_id]["git_branch"]
-                        == "project_repo_branch")
+                assert (
+                    deployment_info[deployment_id]["git_branch"]
+                    == "project_repo_branch"
+                )
                 assert deployment_info[deployment_id]["git_url"] == "project_repo_url"
                 assert deployment_info[deployment_id]["git_commit_hash"] == "abc123"
                 assert deployment_info[deployment_id]["has_ingress"] is True

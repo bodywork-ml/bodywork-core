@@ -47,17 +47,17 @@ def display_deployments(
         if id not in deployments:
             print_warn(f"Could not find service={service_name}.")
             return None
-        print_dict(deployments[id], id,)
+        print_dict(
+            deployments[id],
+            id,
+        )
     else:
-        table_data = {
-            svc_key: data["git_url"]
-            for svc_key, data in deployments.items()
-        }
+        table_data = {svc_key: data["git_url"] for svc_key, data in deployments.items()}
         print_dict(
             table_data,
             "operational services",
             "Deployment Name / Service Name",
-            "Git Repository URL"
+            "Git Repository URL",
         )
 
 

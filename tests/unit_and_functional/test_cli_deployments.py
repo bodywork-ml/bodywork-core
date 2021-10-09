@@ -124,9 +124,7 @@ def test_display_service_prints_service_info_to_stdout(
         r"service_url.+http://serve-v2.bodywork-dev.svc.cluster.local",
         captured_one.out,
     )
-    assert findall(
-        r"ingress_route.+/bodywork-dev/serve-v2", captured_one.out
-    )
+    assert findall(r"ingress_route.+/bodywork-dev/serve-v2", captured_one.out)
 
 
 @patch("bodywork.cli.deployments.k8s")
