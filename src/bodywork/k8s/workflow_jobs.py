@@ -41,7 +41,7 @@ def configure_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
-    job_name: str = None,
+    job_name: Optional[str] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
