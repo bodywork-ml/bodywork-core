@@ -86,6 +86,7 @@ def configure_service_stage_deployment(
     :return: A configured k8s deployment object.
 
     """
+    service_name = make_valid_k8s_name(stage_name)
     vcs_env_vars = [
         k8s.V1EnvVar(
             name=SSH_PRIVATE_KEY_ENV_VAR,
@@ -121,7 +122,7 @@ def configure_service_stage_deployment(
         metadata=k8s.V1ObjectMeta(
             labels={
                 "app": "bodywork",
-                "stage": stage_name,
+                "stage": service_name,
                 "deployment-name": project_name,
                 "git-commit-hash": git_commit_hash,
             },
@@ -132,17 +133,17 @@ def configure_service_stage_deployment(
     deployment_spec = k8s.V1DeploymentSpec(
         replicas=replicas,
         template=pod_template_spec,
-        selector={"matchLabels": {"stage": stage_name}},
+        selector={"matchLabels": {"stage": service_name}},
         revision_history_limit=0,
         min_ready_seconds=seconds_to_be_ready_before_completing,
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
-        name=make_valid_k8s_name(stage_name),
+        name=service_name,
         annotations={"port": str(port)},
         labels={
             "app": "bodywork",
-            "stage": stage_name,
+            "stage": service_name,
             "deployment-name": project_name,
             "git-commit-hash": git_commit_hash,
         },

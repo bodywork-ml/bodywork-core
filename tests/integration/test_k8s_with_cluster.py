@@ -88,6 +88,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
+
         assert "stage-3" in process_three.stdout
         assert "stage-4" in process_three.stdout
         assert process_three.returncode == 0
@@ -137,7 +138,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert "No deployments found" in process_five.stdout
         assert process_five.returncode == 0
 
-    except Exception as e:
+    except Exception as e:  # noqa
         assert False
     finally:
         load_kubernetes_config()
