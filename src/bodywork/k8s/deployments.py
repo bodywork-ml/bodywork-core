@@ -122,8 +122,8 @@ def configure_service_stage_deployment(
             labels={
                 "app": "bodywork",
                 "stage": stage_name,
-                "git-commit-hash": git_commit_hash,
                 "deployment-name": project_name,
+                "git-commit-hash": git_commit_hash,
             },
             annotations={"last-updated": datetime.now().isoformat()},
         ),
@@ -204,7 +204,7 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
     associated_replica_sets = k8s.AppsV1Api().list_namespaced_replica_set(
         namespace=namespace,
         label_selector=(
-            f'app=bodywork,stage={deployment.spec.template.metadata.labels["stage"]}'
+            f'app=bodywork,stage={deployment.metadata.labels["stage"]}'
         ),
     )
 
@@ -413,6 +413,7 @@ def list_service_stage_deployments(
             deployment.metadata.labels["stage"]
         )
         deployment_info[id] = {
+            "name": deployment.metadata.name,
             "namespace": deployment.metadata.namespace,
             "service_exposed": exposed_as_cluster_service,
             "service_url": (

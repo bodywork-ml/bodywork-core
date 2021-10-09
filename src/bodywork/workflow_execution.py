@@ -196,7 +196,8 @@ def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
     """
     _log.info("Searching for services from previous deployment.")
     deployments = k8s.list_service_stage_deployments(namespace)
-    for name, deployment in deployments.items():
+    for _, deployment in deployments.items():
+        name = deployment["name"]
         if deployment["git_commit_hash"] != git_commit_hash:
             _log.info(
                 f"Removing service: {name} from previous deployment with "
