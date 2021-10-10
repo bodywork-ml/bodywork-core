@@ -16,11 +16,11 @@
 
 version: 2.1
 orbs:
-  aws-eks: circleci/aws-eks@1.0.3
+  aws-eks: circleci/aws-eks@1.1.0
 jobs:
   run-static-code-analysis:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
           command: tox -e py310-static_code_analysis -- -s -vv
   run-unit-and-functional-tests:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run:
@@ -101,7 +101,7 @@ jobs:
             docker push bodyworkml/bodywork-core
   build-python-package-push-to-pypi:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run:
@@ -115,7 +115,7 @@ jobs:
           command: twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD --verbose
   create-and-push-new-git-tag:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run:
@@ -126,7 +126,7 @@ jobs:
           command: git push origin v$(cat VERSION)
   ensure-package-version-number-incremented:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run:
