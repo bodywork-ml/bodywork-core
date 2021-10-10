@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM python:3.10-slim as py310-base
+FROM python:3.10 as py310-base
 RUN apt -y update &&\
     apt-get install -y git &&\
     apt -y install build-essential &&\
