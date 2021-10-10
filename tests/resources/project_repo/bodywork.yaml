@@ -17,7 +17,7 @@ stages:
       FOO: foobar-secret
       BAR: foobar-secret
     requirements:
-      - numpy==1.19.1
+      - numpy>=1.21.2
   stage_2:
     executable_module_path: stage_2/main.py
     cpu_request: 0.5
