@@ -53,7 +53,7 @@ jobs:
   run-integration-tests:
     executor:
       name: aws-eks/python
-      tag: "3.10"
+      tag: "3.9"
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
