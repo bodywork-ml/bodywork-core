@@ -73,7 +73,7 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run:
           name: Running tests
-          command: tox -e py310-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
+          command: tox -e py39-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
       - store_test_results:
           path: ~/tox_int/
       - run:
