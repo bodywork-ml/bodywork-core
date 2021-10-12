@@ -47,8 +47,15 @@ def workflow_job_object() -> k8s_client.V1Job:
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
         image_pull_policy="Always",
-        command=["bodywork", "workflow"],
-        args=["bodywork-dev", "project_repo_url", "project_repo_branch"],
+        command=[
+            "bodywork",
+            "deployment",
+            "create",
+            "--git-url",
+            "project_repo_url",
+            "--git-branch",
+            "project_repo_branch",
+        ],
     )
     pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
     pod_template_spec = k8s_client.V1PodTemplateSpec(spec=pod_spec)
@@ -88,8 +95,15 @@ def test_configure_workflow_job(mock_random: MagicMock):
         job_definition.spec.ttl_seconds_after_finished
         == BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE
     )
+    assert job_definition.spec.template.spec.containers[0].command == [
+        "bodywork",
+        "deployment",
+        "create",
+    ]
     assert job_definition.spec.template.spec.containers[0].args == [
+        "--git-url",
         "bodywork-ml/bodywork-test-project",
+        "--git-branch",
         "dev",
     ]
     assert (
@@ -114,8 +128,17 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
         image_pull_policy="Always",
-        command=["bodywork", "workflow"],
-        args=["project_repo_url", "project_repo_branch"],
+        command=[
+            "bodywork",
+            "deployment",
+            "create",
+        ],
+        args=[
+            "--git-url",
+            "project_repo_url",
+            "--git-branch",
+            "project_repo_branch",
+        ],
     )
     pod_spec = k8s_client.V1PodSpec(containers=[container], restart_policy="Never")
     pod_template_spec = k8s_client.V1PodTemplateSpec(spec=pod_spec)
@@ -161,7 +184,19 @@ def test_configure_workflow_cronjob():
     assert cronjob_definition.spec.job_template.spec.backoff_limit == 2
     assert cronjob_definition.spec.job_template.spec.template.spec.containers[
         0
-    ].args == ["bodywork-ml/bodywork-test-project", "dev"]
+    ].command == [
+        "bodywork",
+        "deployment",
+        "create",
+    ]
+    assert cronjob_definition.spec.job_template.spec.template.spec.containers[
+        0
+    ].args == [
+        "--git-url",
+        "bodywork-ml/bodywork-test-project",
+        "--git-branch",
+        "dev",
+    ]
     assert (
         cronjob_definition.spec.job_template.spec.template.spec.containers[0].image
         == "bodyworkml/bodywork-core:0.0.7"
@@ -185,7 +220,20 @@ def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
 ):
     pod_spec = k8s_client.V1PodSpec(
         containers=[
-            k8s_client.V1Container(name="bodywork", args=["fg", "test-branch"])
+            k8s_client.V1Container(
+                name="bodywork",
+                command=[
+                    "bodywork",
+                    "deployment",
+                    "create",
+                ],
+                args=[
+                    "--git-url",
+                    "fg",
+                    "--git-branch",
+                    "test-branch",
+                ],
+            )
         ],
     )
     job_spec = k8s_client.V1JobSpec(

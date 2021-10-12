@@ -44,9 +44,10 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -73,9 +74,10 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -211,9 +213,10 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -226,16 +229,17 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
         expected_output_1 = "Deployments failed to roll-out successfully"
-        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"  # noqa
+        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"
         assert expected_output_1 in process_two.stdout
         assert expected_output_2 in process_two.stdout
         assert process_two.returncode == 1
@@ -252,14 +256,15 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
-def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
+def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -279,15 +284,16 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
         delete_namespace("bodywork-failing-test-project")
 
 
-def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
+def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
     try:
         bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={bad_image}",
             ],
             encoding="utf-8",
@@ -299,9 +305,10 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
             ],
             encoding="utf-8",
@@ -316,7 +323,7 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
-def test_workflow_with_ssh_github_connectivity(
+def test_deployment_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
 ):
@@ -324,9 +331,10 @@ def test_workflow_with_ssh_github_connectivity(
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -347,15 +355,16 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
+def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
             [
                 "bodywork",
-                "workflow",
+                "deployment",
+                "create",
                 f"--namespace={test_namespace}",
-                "http://bad.repo",
-                "master",
+                "--git-url=http://bad.repo",
+                "--git-branch=master",
             ],
             check=True,
         )
