@@ -243,7 +243,7 @@ def test_bodywork_config_generic_stage_validation():
     stage = StageConfig(stage_name, config_bad_args, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
 
-    config_all_valid_params = {
+    config_all_valid_params_python_module = {
         "executable_module_path": "stage_dir/main.py",
         "args": ["Hello", "World"],
         "cpu_request": 0.5,
@@ -252,7 +252,20 @@ def test_bodywork_config_generic_stage_validation():
         "secrets": {"FOO_UN": "secret-bar", "FOO_PWD": "secret-bar"},
     }
     expected_missing_or_invalid_param = []
-    stage = StageConfig(stage_name, config_all_valid_params, root_dir)
+    stage = StageConfig(stage_name, config_all_valid_params_python_module, root_dir)
+    assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
+    assert stage.env_vars_from_secrets[1] == ("secret-bar", "FOO_PWD")
+
+    config_all_valid_params_jupyter_nb = {
+        "executable_module_path": "stage_dir/main.ipynb",
+        "args": ["Hello", "World"],
+        "cpu_request": 0.5,
+        "memory_request_mb": 100,
+        "requirements": ["foo==1.0.0", "bar==2.0"],
+        "secrets": {"FOO_UN": "secret-bar", "FOO_PWD": "secret-bar"},
+    }
+    expected_missing_or_invalid_param = []
+    stage = StageConfig(stage_name, config_all_valid_params_jupyter_nb, root_dir)
     assert stage._missing_or_invalid_param == expected_missing_or_invalid_param
     assert stage.env_vars_from_secrets[1] == ("secret-bar", "FOO_PWD")
 
@@ -390,7 +403,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
     assert config.project.name == "bodywork-test-project"
     assert config.logging.log_level == "INFO"
-    assert len(config.stages) == 5
+    assert len(config.stages) == 6
 
     assert "stage_1" in config.stages
     assert config.stages["stage_1"].executable_module == "main.py"
