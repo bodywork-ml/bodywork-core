@@ -182,7 +182,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: stage-2 from previous deployment with git-commit-hash"  # noqa
+            "Removing service: stage-2 from previous deployment with git-commit-hash"
             in process_two.stdout
         )
 

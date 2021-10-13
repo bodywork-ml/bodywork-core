@@ -1,5 +1,8 @@
 Cerberus==1.3.2
+jupyter==1.0.0
 kubernetes==17.17.0
+nbconvert==6.2.0
+nbformat==5.1.3
 PyYAML==5.4.1
 requests>=2.25.0
 rich==10.9.0
