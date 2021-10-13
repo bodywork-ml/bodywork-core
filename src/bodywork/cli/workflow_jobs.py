@@ -20,6 +20,7 @@ They are targeted for use via the CLI.
 """
 import re
 from typing import Optional
+from pathlib import Path
 
 from .terminal import print_dict, print_info, print_pod_logs, print_warn
 from .. import k8s
@@ -33,6 +34,8 @@ def create_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
+    ssh_key_path: str = None,
+    secrets_group: str = None,
 ) -> None:
     """Create a new workflow job within a namespace.
 
@@ -54,9 +57,24 @@ def create_workflow_job(
     if _is_existing_workflow_job(namespace, job_name):
         print_warn(f"Cannot create workflow-job={job_name} as it already exists.")
         return None
-    configured_job = k8s.configure_workflow_job(
-        namespace, project_repo_url, project_repo_branch, retries, image, job_name
-    )
+    if ssh_key_path:
+        if not secrets_group:
+            print_warn("Please specify Secrets Group in config to use SSH.")
+            return None
+        configured_job = k8s.configure_workflow_job(
+            namespace,
+            project_repo_url,
+            project_repo_branch,
+            retries,
+            image,
+            job_name,
+            container_env_vars=[k8s.create_ssh_key_secret_from_file(
+                secrets_group, Path(ssh_key_path)
+            )])
+    else:
+        configured_job = k8s.configure_workflow_job(
+            namespace, project_repo_url, project_repo_branch, retries, image, job_name
+        )
     k8s.create_workflow_job(configured_job)
     print_info(f"Created workflow-job={job_name}.")
 

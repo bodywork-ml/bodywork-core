@@ -143,14 +143,25 @@ def cli() -> None:
         type=str,
         help="Display command only - deployed Service to search for.",
     )
-
     deployment_cmd_parser.add_argument(
         "--bodywork-docker-image",
         type=str,
         required=False,
         help="Override the Bodywork Docker image to use - must exist on Bodywork DockerHub repo.",  # noqa
     )
-
+    deployment_cmd_parser.add_argument(
+        "--ssh",
+        dest="ssh_key_path",
+        type=str,
+        required=False,
+        help="The filepath to the ssh key to use (typically located in your .ssh folder).",  # noqa
+    )
+    deployment_cmd_parser.add_argument(
+        "--group",
+        type=str,
+        required=False,
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config)."
+    )
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")
     cronjob_cmd_parser.set_defaults(func=cronjob)
@@ -338,6 +349,8 @@ def deployment(args: Namespace) -> None:
     async_workflow = args.async_workflow
     service_name = args.service
     image = args.bodywork_docker_image
+    ssh_key_path = args.ssh_key_path
+    group = args.group
 
     if command == "create" and not git_url:
         print_warn("Please specify Git repo URL for the deployment you want to create.")
@@ -350,7 +363,7 @@ def deployment(args: Namespace) -> None:
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
             try:
-                run_workflow(git_url, git_branch, docker_image_override=image)
+                run_workflow(git_url, git_branch, docker_image_override=image, ssh_key_path=ssh_key_path)
             except BodyworkWorkflowExecutionError:
                 sys.exit(1)
         else:
@@ -370,6 +383,8 @@ def deployment(args: Namespace) -> None:
                 git_branch,
                 retries,
                 image if image else BODYWORK_DOCKER_IMAGE,
+                ssh_key_path,
+                group
             )
     elif command == "delete":
         load_kubernetes_config()

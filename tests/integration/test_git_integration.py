@@ -17,13 +17,10 @@
 """
 Integration tests for interactions with hosted Git repositories.
 """
-import os
-import stat
 from pathlib import Path
 from typing import Iterable
 
 from bodywork.git import download_project_code_from_repo, get_git_commit_hash
-from bodywork.constants import SSH_DIR_NAME, SSH_PRIVATE_KEY_ENV_VAR, GIT_SSH_COMMAND
 
 
 def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
@@ -33,7 +30,9 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     set_github_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(github_repo_connection_string)
+        download_project_code_from_repo(
+            github_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -46,7 +45,9 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(gitlab_repo_connection_string)
+        download_project_code_from_repo(
+            gitlab_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -59,7 +60,9 @@ def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(bitbucket_repo_connection_string)
+        download_project_code_from_repo(
+            bitbucket_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -72,7 +75,9 @@ def test_that_git_project_repo_can_be_cloned_from_azure_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(azure_repo_connection_string)
+        download_project_code_from_repo(
+            azure_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False

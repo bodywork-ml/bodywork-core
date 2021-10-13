@@ -21,7 +21,8 @@ to create and manage cronjobs that execute Bodywork project workflows.
 import os
 import random
 from datetime import datetime
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, List
+from pathlib import Path
 
 from kubernetes import client as k8s
 
@@ -29,8 +30,10 @@ from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_DIR_NAME,
+    DEFAULT_SSH_FILE,
 )
 from .utils import make_valid_k8s_name
 
@@ -42,6 +45,7 @@ def configure_workflow_job(
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     job_name: str = None,
+    container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
@@ -57,32 +61,27 @@ def configure_workflow_job(
     :param job_name: Set the job name.
     :return: A configured k8s job object.
     """
-    vcs_env_vars = [
-        k8s.V1EnvVar(
-            name=SSH_PRIVATE_KEY_ENV_VAR,
-            value_from=k8s.V1EnvVarSource(
-                secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
-                )
-            ),
-        )
+    args = [
+        "--git-url",
+        project_repo_url,
+        "--git-branch",
+        project_repo_branch,
     ]
+    if container_env_vars and any(env_var.name == SSH_PRIVATE_KEY_ENV_VAR for env_var in container_env_vars):
+        args.append("--ssh")
+        args.append(f"{Path.home() / SSH_DIR_NAME / DEFAULT_SSH_FILE}")
+
     container = k8s.V1Container(
         name="bodywork",
         image=image,
         image_pull_policy="Always",
-        env=vcs_env_vars,
+        env=container_env_vars,
         command=[
             "bodywork",
             "deployment",
             "create",
         ],
-        args=[
-            "--git-url",
-            project_repo_url,
-            "--git-branch",
-            project_repo_branch,
-        ],
+        args=args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,

@@ -21,11 +21,16 @@ manage secrets required by Bodywork stage containers.
 from typing import Dict, List, Optional, Tuple
 from base64 import b64decode
 from dataclasses import dataclass
-
+from pathlib import Path
 from kubernetes import client as k8s
 
 from .utils import make_valid_k8s_name
-from ..constants import SECRET_GROUP_LABEL, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from ..constants import (
+    SECRET_GROUP_LABEL,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_SECRET_NAME,
+)
 
 
 @dataclass
@@ -94,7 +99,7 @@ def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None
         label_selector=f"{SECRET_GROUP_LABEL}={secrets_group}",
     )
     for secret in secrets.items:
-        secret_name = secret.metadata.name.split("-", 1)[1]
+        secret_name = secret.metadata.name.split(f"{secrets_group}-", 1)[1]
         copy = k8s.V1Secret(
             metadata=k8s.V1ObjectMeta(
                 namespace=target_namespace,
@@ -216,3 +221,30 @@ def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secre
         )
         for s in result.items
     }
+
+
+def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> k8s.V1EnvVar:
+    with ssh_key_path.open() as file_handle:
+        data = {SSH_PRIVATE_KEY_ENV_VAR: file_handle.read()}
+    secret_name = create_complete_secret_name(group, SSH_SECRET_NAME)
+    if secret_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, secret_name):
+        update_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, secret_name, data)
+    else:
+        create_secret(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            secret_name,
+            group,
+            data,
+        )
+    return k8s.V1EnvVar(
+        name=SSH_PRIVATE_KEY_ENV_VAR,
+        value_from=k8s.V1EnvVarSource(
+            secret_key_ref=k8s.V1SecretKeySelector(
+                key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
+            )
+        ),
+    )
+
+
+def create_complete_secret_name(group: str, name: str) -> str:
+    return f"{group}-{name}"

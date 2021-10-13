@@ -238,12 +238,14 @@ def test_deployment_run_locally_calls_run_workflow_handler(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
     deployment(args)
 
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None)
+    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None, ssh_key_path=None)
 
 
 def test_cli_deployment_handler_error_handling():
@@ -288,6 +290,8 @@ def test_cli_deployment_create_async(
         namespace=None,
         service=None,
         bodywork_docker_image="bodywork-ml:myimage",
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -299,6 +303,8 @@ def test_cli_deployment_create_async(
         args.git_branch,
         args.retries,
         args.bodywork_docker_image,
+        None,
+        None,
     )
 
 
@@ -318,6 +324,8 @@ def test_cli_deployment_delete(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -341,6 +349,8 @@ def test_cli_deployment_logs(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -364,6 +374,8 @@ def test_cli_deployment_delete_job(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -387,6 +399,8 @@ def test_cli_deployment_job_history(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -410,6 +424,8 @@ def test_cli_deployment_display(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)

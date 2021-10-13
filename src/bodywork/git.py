@@ -39,7 +39,7 @@ from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
-    url: str, branch: str = "master", destination: Path = DEFAULT_PROJECT_DIR
+    url: str, branch: str = "master", destination: Path = DEFAULT_PROJECT_DIR, ssh_key_path: Path = None
 ) -> None:
     """Download Bodywork project code from Git repository,
 
@@ -59,13 +59,11 @@ def download_project_code_from_repo(
         if get_connection_protocol(url) is ConnectionProtocol.SSH:
             hostname = urlparse(f"ssh://{url}").hostname
             if hostname:
-                setup_ssh_for_git_host(hostname)
+                setup_ssh_for_git_host(hostname, ssh_key_path)
             else:
                 raise ValueError(
                     f"Unable to derive hostname from URL {url}. Please check "
                 )
-        elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            log.warning("Not configured for use with private Git repos")
     except Exception as e:
         msg = f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
         raise BodyworkGitError(msg)
@@ -113,7 +111,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
         raise RuntimeError(msg)
 
 
-def setup_ssh_for_git_host(hostname: str) -> None:
+def setup_ssh_for_git_host(hostname: str, ssh_key_path: Path = None) -> None:
     """Setup system for SSH interaction with GitHub.
 
     Using the private key assigned to an environment variable, this
@@ -124,7 +122,10 @@ def setup_ssh_for_git_host(hostname: str) -> None:
     :param hostname: Hostname to SSH to.
     """
     ssh_dir = Path.home() / SSH_DIR_NAME
-    private_key = ssh_dir / "id_rsa"
+    if ssh_key_path:
+        private_key = ssh_key_path
+    else:
+        private_key = ssh_dir / "id_rsa_bodywork"
     if not private_key.exists():
         if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             msg = (

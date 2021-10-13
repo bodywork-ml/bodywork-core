@@ -39,6 +39,8 @@ from .constants import (
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
     SSH_PRIVATE_KEY_ENV_VAR,
+    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    SSH_SECRET_NAME,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -58,6 +60,7 @@ def run_workflow(
     repo_branch: str = "master",
     docker_image_override: Optional[str] = None,
     config: Optional[BodyworkConfig] = None,
+    ssh_key_path: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the workflow.
@@ -82,7 +85,9 @@ def run_workflow(
     )
     with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
         try:
-            download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
+            download_project_code_from_repo(
+                repo_url, repo_branch, cloned_repo_dir, ssh_key_path
+            )
             if config is None:
                 config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
 
@@ -103,12 +108,10 @@ def run_workflow(
             env_vars = k8s.create_k8s_environment_variables(
                 [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
             )
-            if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
-                env_vars.append(
-                    k8s.create_k8s_environment_variables(
-                        [(SSH_PRIVATE_KEY_ENV_VAR, os.environ[SSH_PRIVATE_KEY_ENV_VAR])]
-                    )[0]
-                )
+            if ssh_key_path:
+                if not config.project.secrets_group:
+                    raise Exception("Please specify Secrets Group in config to use SSH.")
+                env_vars.append(k8s.create_ssh_key_secret_from_file(config.project.secrets_group, Path(ssh_key_path)))
             if config.project.secrets_group:
                 _copy_secrets_to_target_namespace(
                     namespace, config.project.secrets_group
@@ -187,6 +190,28 @@ def run_workflow(
             if cloned_repo_dir.exists():
                 rmtree(cloned_repo_dir, onerror=_remove_readonly)
     console.rule(characters="=", style="green")
+
+
+def _create_ssh_key_secret(group: str, ssh_key_path: Path):
+    try:
+        with ssh_key_path.open() as file_handle:
+            data = {SSH_PRIVATE_KEY_ENV_VAR: file_handle.read()}
+        secret_name = k8s.create_complete_secret_name(group, SSH_SECRET_NAME)
+        if k8s.secret_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, secret_name):
+            k8s.update_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, SSH_SECRET_NAME, data)
+        else:
+            k8s.create_secret(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+                secret_name,
+                group,
+                data,
+            )
+    except IOError as e:
+        _log.error(f"Unable to read SSH Key file: {ssh_key_path} - {e}")
+        raise e
+    except ApiException as e:
+        _log.error(f"Unable to create SSH Secret in group: {group} - {e}")
+        raise e
 
 
 def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
@@ -552,7 +577,7 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
         )
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
-        _log.info(
+        _log.error(
             f"Unable to replicate k8s secrets from group = {secrets_group} into "
             f"namespace = {namespace}"
         )

@@ -58,6 +58,8 @@ from .secrets import (
     replicate_secrets_in_namespace,
     update_secret,
     Secret,
+    create_complete_secret_name,
+    create_ssh_key_secret_from_file,
 )
 from .deployments import (
     DeploymentStatus,
@@ -79,7 +81,11 @@ from .deployments import (
     delete_deployment_ingress,
     has_ingress,
 )
-from .utils import api_exception_msg, create_k8s_environment_variables, EnvVars
+from .utils import (
+    api_exception_msg,
+    create_k8s_environment_variables,
+    EnvVars,
+)
 
 
 __all__ = [

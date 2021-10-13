@@ -94,7 +94,11 @@ def set_github_ssh_private_key_env_var() -> None:
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        private_key = Path.home() / ".ssh/id_ed25519"
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
 @fixture(scope="function")

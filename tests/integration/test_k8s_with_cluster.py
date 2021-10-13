@@ -23,6 +23,7 @@ from re import findall
 from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
+from pathlib import Path
 
 from pytest import raises, mark
 
@@ -33,6 +34,7 @@ from bodywork.k8s import (
     delete_namespace,
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
+    namespace_exists,
 )
 
 
@@ -336,11 +338,12 @@ def test_deployment_with_ssh_github_connectivity(
                 "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
+                f"--ssh={Path.home() / '.ssh/id_rsa_bodywork_test'}"
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
+        expected_output_1  = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
         expected_output_2 = "Deployment successful"
 
         assert expected_output_1 in process_one.stdout
@@ -351,7 +354,8 @@ def test_deployment_with_ssh_github_connectivity(
         assert False
     finally:
         load_kubernetes_config()
-        delete_namespace("bodywork-test-batch-job-project")
+        if namespace_exists("bodywork-test-batch-job-project"):
+            delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
@@ -514,3 +518,88 @@ def test_deployment_of_remote_workflows(docker_image: str):
         )
         delete_namespace("bodywork-test-single-service-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_remote_deployment_with_ssh_github_connectivity(
+        docker_image: str,
+        set_github_ssh_private_key_env_var: None,
+):
+    job_name = "test-remote-ssh-workflow"
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                f"--name={job_name}",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
+                f"--bodywork-docker-image={docker_image}",
+                f"--ssh={Path.home() / '.ssh/id_rsa_bodywork_test'}",
+                "--async",
+                "--group=bodywork-tests"
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_one.returncode == 0
+        assert f"Created workflow-job={job_name}" in process_one.stdout
+
+        sleep(10)
+
+        process_two = run(
+            [
+                "bodywork",
+                "deployment",
+                "logs",
+                f"--name={job_name}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_two.returncode == 0
+        assert type(process_two.stdout) is str and len(process_two.stdout) != 0
+        assert "ERROR" or "error" not in process_two.stdout
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "job",
+                f"{job_name}",
+                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            ]
+        )
+        if namespace_exists("bodywork-test-batch-job-project"):
+            delete_namespace("bodywork-test-batch-job-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_deployment_with_ssh(docker_image: str,
+):
+    from bodywork.cli.cli import deployment
+    from argparse import Namespace
+    try:
+
+        args = Namespace(
+            command="create",
+            name="test_deployment_with_ssh",
+            async_workflow=True,
+            git_url="git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+            git_branch="master",
+            retries=2,
+            namespace=None,
+            service=None,
+            bodywork_docker_image=docker_image,
+            ssh_key_path=f"{Path.home() / '.ssh/id_rsa_bodywork'}",
+            group="bodywork-tests"
+        )
+
+        deployment(args)
+
+    except Exception:
+        assert False
