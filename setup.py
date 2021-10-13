@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
-from urllib import request, parse, error
+from urllib import request, parse
 
 
 # get package version
@@ -76,5 +76,5 @@ url = (
 )
 try:
     request.urlopen(url)
-except error.HTTPError:
+except Exception:
     pass
