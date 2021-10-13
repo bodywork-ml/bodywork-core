@@ -39,7 +39,10 @@ from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
-    url: str, branch: str = "master", destination: Path = DEFAULT_PROJECT_DIR, ssh_key_path: Path = None
+    url: str,
+    branch: str = "master",
+    destination: Path = DEFAULT_PROJECT_DIR,
+    ssh_key_path: str = None,
 ) -> None:
     """Download Bodywork project code from Git repository,
 
@@ -111,7 +114,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
         raise RuntimeError(msg)
 
 
-def setup_ssh_for_git_host(hostname: str, ssh_key_path: Path = None) -> None:
+def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     """Setup system for SSH interaction with GitHub.
 
     Using the private key assigned to an environment variable, this
@@ -123,14 +126,14 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: Path = None) -> None:
     """
     ssh_dir = Path.home() / SSH_DIR_NAME
     if ssh_key_path:
-        private_key = ssh_key_path
+        private_key = Path(ssh_key_path)
     else:
         private_key = ssh_dir / "id_rsa_bodywork"
     if not private_key.exists():
         if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             msg = (
                 f"failed to setup SSH for {hostname} - cannot find SSH key in "
-                f"{private_key} file or in {SSH_PRIVATE_KEY_ENV_VAR} environment variable." # noqa
+                f"{private_key} file or in {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
             )
             raise KeyError(msg)
         try:

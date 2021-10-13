@@ -160,7 +160,7 @@ def cli() -> None:
         "--group",
         type=str,
         required=False,
-        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config)."
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",
     )
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")
@@ -363,7 +363,12 @@ def deployment(args: Namespace) -> None:
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
             try:
-                run_workflow(git_url, git_branch, docker_image_override=image, ssh_key_path=ssh_key_path)
+                run_workflow(
+                    git_url,
+                    git_branch,
+                    docker_image_override=image,
+                    ssh_key_path=ssh_key_path,
+                )
             except BodyworkWorkflowExecutionError:
                 sys.exit(1)
         else:
@@ -384,7 +389,7 @@ def deployment(args: Namespace) -> None:
                 retries,
                 image if image else BODYWORK_DOCKER_IMAGE,
                 ssh_key_path,
-                group
+                group,
             )
     elif command == "delete":
         load_kubernetes_config()

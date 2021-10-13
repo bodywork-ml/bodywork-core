@@ -110,8 +110,14 @@ def run_workflow(
             )
             if ssh_key_path:
                 if not config.project.secrets_group:
-                    raise Exception("Please specify Secrets Group in config to use SSH.")
-                env_vars.append(k8s.create_ssh_key_secret_from_file(config.project.secrets_group, Path(ssh_key_path)))
+                    raise Exception(
+                        "Please specify Secrets Group in config to use SSH."
+                    )
+                env_vars.append(
+                    k8s.create_ssh_key_secret_from_file(
+                        config.project.secrets_group, Path(ssh_key_path)
+                    )
+                )
             if config.project.secrets_group:
                 _copy_secrets_to_target_namespace(
                     namespace, config.project.secrets_group

@@ -30,7 +30,6 @@ from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    SSH_SECRET_NAME,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_DIR_NAME,
     DEFAULT_SSH_FILE,
@@ -67,7 +66,9 @@ def configure_workflow_job(
         "--git-branch",
         project_repo_branch,
     ]
-    if container_env_vars and any(env_var.name == SSH_PRIVATE_KEY_ENV_VAR for env_var in container_env_vars):
+    if container_env_vars and any(
+        env_var.name == SSH_PRIVATE_KEY_ENV_VAR for env_var in container_env_vars
+    ):
         args.append("--ssh")
         args.append(f"{Path.home() / SSH_DIR_NAME / DEFAULT_SSH_FILE}")
 
