@@ -160,7 +160,7 @@ def cli() -> None:
         "--group",
         type=str,
         required=False,
-        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",   # noqa
     )
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")

@@ -58,8 +58,6 @@ from .secrets import (
     replicate_secrets_in_namespace,
     update_secret,
     Secret,
-    create_complete_secret_name,
-    create_ssh_key_secret_from_file,
 )
 from .deployments import (
     DeploymentStatus,

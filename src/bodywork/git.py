@@ -53,7 +53,6 @@ def download_project_code_from_repo(
     :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
-    log = bodywork_log_factory()
     try:
         run(["git", "--version"], check=True, stdout=DEVNULL)
     except CalledProcessError:

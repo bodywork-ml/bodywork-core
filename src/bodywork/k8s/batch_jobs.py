@@ -27,8 +27,6 @@ from kubernetes import client as k8s
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import make_valid_k8s_name
