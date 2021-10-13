@@ -44,9 +44,10 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -73,9 +74,10 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -88,13 +90,14 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "bodywork-test-project--stage-3" in process_three.stdout
-        assert "bodywork-test-project--stage-4" in process_three.stdout
+
+        assert "stage-3" in process_three.stdout
+        assert "stage-4" in process_three.stdout
         assert process_three.returncode == 0
 
         stage_3_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-3/v1/predict"
+            f"/stage-3/v1/predict"
         )
 
         response_stage_3 = requests.get(url=stage_3_service_external_url)
@@ -103,7 +106,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
         stage_4_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-4/v2/predict"
+            f"/stage-4/v2/predict"
         )
         response_stage_4 = requests.get(url=stage_4_service_external_url)
         assert response_stage_4.status_code == 404
@@ -137,7 +140,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert "No deployments found" in process_five.stdout
         assert process_five.returncode == 0
 
-    except Exception as e:
+    except Exception as e:  # noqa
         assert False
     finally:
         load_kubernetes_config()
@@ -179,7 +182,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: bodywork-test-single-service-project--stage-2 from previous deployment with git-commit-hash"  # noqa
+            "Removing service: stage-2 from previous deployment with git-commit-hash"
             in process_two.stdout
         )
 
@@ -194,10 +197,8 @@ def test_services_from_previous_deployments_are_deleted():
             capture_output=True,
         )
         assert process_three.returncode == 0
-        assert "bodywork-test-single-service-project--stage-1" in process_three.stdout
-        assert (
-            "bodywork-test-single-service-project--stage-2" not in process_three.stdout
-        )
+        assert "stage-1" in process_three.stdout
+        assert "stage-2" not in process_three.stdout
 
     finally:
         load_kubernetes_config()
@@ -211,9 +212,10 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -226,16 +228,17 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
         expected_output_1 = "Deployments failed to roll-out successfully"
-        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"  # noqa
+        expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"
         assert expected_output_1 in process_two.stdout
         assert expected_output_2 in process_two.stdout
         assert process_two.returncode == 1
@@ -252,14 +255,15 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
-def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
+def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -276,18 +280,20 @@ def test_workflow_will_run_failure_stage_on_workflow_failure(docker_image: str):
     except Exception:
         assert False
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-failing-test-project")
 
 
-def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
+def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
     try:
         bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 f"--bodywork-docker-image={bad_image}",
             ],
             encoding="utf-8",
@@ -299,9 +305,10 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         process_two = run(
             [
                 "bodywork",
-                "workflow",
-                "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
+                "--git-branch=master",
                 "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
             ],
             encoding="utf-8",
@@ -313,10 +320,11 @@ def test_workflow_will_not_run_if_bodywork_docker_image_cannot_be_located():
         )
         assert process_two.returncode == 1
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-test-project")
 
 
-def test_workflow_with_ssh_github_connectivity(
+def test_deployment_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
 ):
@@ -324,9 +332,10 @@ def test_workflow_with_ssh_github_connectivity(
         process_one = run(
             [
                 "bodywork",
-                "workflow",
-                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-                "master",
+                "deployment",
+                "create",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
             encoding="utf-8",
@@ -347,15 +356,16 @@ def test_workflow_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
-def test_workflow_command_unsuccessful_raises_exception(test_namespace: str):
+def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
             [
                 "bodywork",
-                "workflow",
+                "deployment",
+                "create",
                 f"--namespace={test_namespace}",
-                "http://bad.repo",
-                "master",
+                "--git-url=http://bad.repo",
+                "--git-branch=master",
             ],
             check=True,
         )
