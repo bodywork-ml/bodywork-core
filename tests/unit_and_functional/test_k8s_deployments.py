@@ -502,7 +502,6 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
-    deployment_name = service_stage_deployment_object.metadata.labels["deployment-name"]
     service_namespace = service_stage_deployment_object.metadata.namespace
     service_name = service_stage_deployment_object.metadata.name
 
@@ -651,11 +650,16 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
             kubernetes.client.V1IngressRule(
                 http=kubernetes.client.V1HTTPIngressRuleValue(
                     paths=[
-                        kubernetes.client.ExtensionsV1beta1HTTPIngressPath(
+                        kubernetes.client.V1HTTPIngressPath(
                             path="/bodywork-dev/myservice(/|$)(.*)",
-                            backend=kubernetes.client.ExtensionsV1beta1IngressBackend(
-                                service_name="myservice",
-                                service_port=5000,
+                            path_type="Exact",
+                            backend=kubernetes.client.V1IngressBackend(
+                                service=kubernetes.client.V1IngressServiceBackend(
+                                    name="myservice",
+                                    port=kubernetes.client.V1ServiceBackendPort(
+                                        number=5000
+                                    ),
+                                )
                             ),
                         )
                     ]
@@ -688,7 +692,7 @@ def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
     mock_k8s_networking_api: MagicMock,
 ):
     delete_deployment_ingress("bodywork-dev", "myservice")
-    mock_k8s_extensions_api().delete_namespaced_ingress.assert_called_once_with(
+    mock_k8s_networking_api().delete_namespaced_ingress.assert_called_once_with(
         namespace="bodywork-dev",
         name="myservice",
         propagation_policy="Background",
