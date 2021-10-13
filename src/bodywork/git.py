@@ -35,7 +35,6 @@ from .constants import (
     BITBUCKET_SSH_FINGERPRINT,
     AZURE_SSH_FINGERPRINT,
 )
-from .logs import bodywork_log_factory
 
 
 def download_project_code_from_repo(
