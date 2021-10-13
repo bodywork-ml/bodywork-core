@@ -38,7 +38,7 @@ from bodywork.k8s import (
 
 @mark.usefixtures("add_secrets")
 def test_workflow_and_service_management_end_to_end_from_cli(
-    docker_image: str, ingress_url: str
+    docker_image: str, ingress_load_balancer_url: str
 ):
     try:
         process_one = run(
@@ -156,7 +156,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 "--git-branch=test-two-services",
             ],
             encoding="utf-8",
@@ -172,7 +172,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 "--git-branch=master",
             ],
             encoding="utf-8",
@@ -333,7 +333,7 @@ def test_deployment_with_ssh_github_connectivity(
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
             ],
@@ -460,7 +460,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "deployment",
                 "create",
                 f"--name={job_name}",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 f"--bodywork-docker-image={docker_image}",
                 "--async",
             ],

@@ -112,7 +112,7 @@ def set_git_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
-def ingress_url() -> str:
+def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
         contexts, active_context = k8s_config.list_kube_config_contexts()
