@@ -413,7 +413,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     assert config.stages["stage_1"].max_completion_time == 60
     assert config.stages["stage_1"].retries == 4
     assert config.stages["stage_1"].env_vars_from_secrets[0] == ("foobar-secret", "FOO")
-    assert config.stages["stage_1"].requirements == ["numpy==1.19.1"]
+    assert config.stages["stage_1"].requirements == ["numpy>=1.21.2"]
 
     assert "stage_3" in config.stages
     assert config.stages["stage_3"].executable_module == "main.py"

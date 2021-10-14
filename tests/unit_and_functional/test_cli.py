@@ -243,7 +243,9 @@ def test_deployment_run_locally_calls_run_workflow_handler(
 
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None)
+    mock_workflow_cli_handler.assert_called_once_with(
+        "foo3", "foo4", docker_image_override=None
+    )
 
 
 def test_cli_deployment_handler_error_handling():
