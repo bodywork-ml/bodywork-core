@@ -346,6 +346,14 @@ def deployment(args: Namespace) -> None:
         sys.exit(1)
     if command == "create":
         load_kubernetes_config()
+        if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
+            print_warn(
+                "Cluster has not been configured for Bodywork - "
+                "running 'bodywork configure-cluster'."
+            )
+            setup_namespace_with_service_accounts_and_roles(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+            )
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
             try:
@@ -354,14 +362,6 @@ def deployment(args: Namespace) -> None:
                 sys.exit(1)
         else:
             print_info("Using asynchronous workflow controller.")
-            if not is_namespace_available_for_bodywork(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-            ):
-                print_warn(
-                    f"Namespace = {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} not setup for "
-                    f"use by Bodywork - run 'bodywork configure-cluster'"
-                )
-                sys.exit(1)
             create_workflow_job(
                 BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
                 name,

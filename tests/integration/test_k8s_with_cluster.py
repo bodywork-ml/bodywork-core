@@ -36,6 +36,7 @@ from bodywork.k8s import (
 )
 
 
+@mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
@@ -144,11 +145,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-test-project")
-        workflow_sa_crb = workflow_cluster_role_binding_name("bodywork-test-project")
-        if cluster_role_binding_exists(workflow_sa_crb):
-            delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_services_from_previous_deployments_are_deleted():
     try:
         process_one = run(
@@ -204,6 +203,7 @@ def test_services_from_previous_deployments_are_deleted():
         delete_namespace("bodywork-test-single-service-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
 ):
@@ -254,6 +254,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
         process_one = run(
@@ -283,6 +284,7 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
         delete_namespace("bodywork-failing-test-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
     try:
         bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
@@ -323,6 +325,7 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
@@ -355,6 +358,7 @@ def test_deployment_with_ssh_github_connectivity(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
@@ -370,6 +374,7 @@ def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
         )
 
 
+@mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud():
     try:
         process_one = run(
@@ -451,6 +456,7 @@ def test_cli_cronjob_handler_crud():
         )
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
     try:

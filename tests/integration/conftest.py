@@ -36,7 +36,7 @@ from bodywork.constants import (
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
-from bodywork.k8s.auth import load_kubernetes_config
+from bodywork.k8s.auth import load_kubernetes_config, workflow_cluster_role_binding_name
 from bodywork.k8s.namespaces import create_namespace, delete_namespace
 
 
@@ -160,13 +160,13 @@ def setup_cluster(request: FixtureRequest) -> None:
     create_namespace(TEST_NAMESPACE)
 
     def clean_up():
-        # delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
-        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
-        #     BODYWORK_WORKFLOW_CLUSTER_ROLE
-        # )
-        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
-        #     f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}"
-        # )
+        delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
+            BODYWORK_WORKFLOW_CLUSTER_ROLE
+        )
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
+            workflow_cluster_role_binding_name(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        )
         delete_namespace(TEST_NAMESPACE)
 
     request.addfinalizer(clean_up)
