@@ -27,13 +27,7 @@ from time import sleep
 from pytest import raises, mark
 
 from bodywork.constants import SSH_DIR_NAME, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-from bodywork.k8s import (
-    cluster_role_binding_exists,
-    delete_cluster_role_binding,
-    delete_namespace,
-    workflow_cluster_role_binding_name,
-    load_kubernetes_config,
-)
+from bodywork.k8s import delete_namespace, load_kubernetes_config
 
 
 @mark.usefixtures("setup_cluster")
@@ -247,11 +241,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-rollback-deployment-test-project")
-        workflow_sa_crb = workflow_cluster_role_binding_name(
-            "bodywork-rollback-deployment-test-project"
-        )
-        if cluster_role_binding_exists(workflow_sa_crb):
-            delete_cluster_role_binding(workflow_sa_crb)
 
 
 @mark.usefixtures("setup_cluster")
