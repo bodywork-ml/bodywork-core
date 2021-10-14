@@ -37,10 +37,12 @@ from bodywork.constants import (
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
 from bodywork.k8s.auth import load_kubernetes_config
+from bodywork.k8s.namespaces import create_namespace, delete_namespace
 
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
+TEST_NAMESPACE = "bodywork-test"
 
 
 @fixture(scope="function")
@@ -75,7 +77,7 @@ def random_test_namespace() -> str:
 
 @fixture(scope="function")
 def test_namespace() -> str:
-    return "bodywork-dev"
+    return TEST_NAMESPACE
 
 
 @fixture(scope="function")
@@ -155,15 +157,17 @@ def ingress_load_balancer_url() -> str:
 def setup_cluster(request: FixtureRequest) -> None:
     load_kubernetes_config()
     setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+    create_namespace(TEST_NAMESPACE)
 
     def clean_up():
-        k8s_client.CoreV1Api().delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
-        k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
-            BODYWORK_WORKFLOW_CLUSTER_ROLE
-        )
-        k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
-            f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}"
-        )
+        # delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
+        #     BODYWORK_WORKFLOW_CLUSTER_ROLE
+        # )
+        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
+        #     f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}"
+        # )
+        delete_namespace(TEST_NAMESPACE)
 
     request.addfinalizer(clean_up)
 

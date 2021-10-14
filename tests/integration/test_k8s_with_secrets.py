@@ -27,11 +27,9 @@ from bodywork.k8s import replicate_secrets_in_namespace, secret_exists
 
 @mark.usefixtures("add_secrets")
 @mark.usefixtures("setup_cluster")
-def test_replicate_secrets_in_namespace():
-    namespace = "bodywork-dev"
-
+def test_replicate_secrets_in_namespace(test_namespace: str):
+    namespace = test_namespace
     replicate_secrets_in_namespace(namespace, "testsecrets")
-
     assert secret_exists(namespace, "bodywork-test-project-credentials", "USERNAME")
 
 
