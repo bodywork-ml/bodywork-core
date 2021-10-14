@@ -29,9 +29,10 @@ from kubernetes import client as k8s_client, config as k8s_config
 from subprocess import run
 
 from bodywork.constants import (
-    BODYWORK_DOCKERHUB_IMAGE_REPO,
-    SSH_PRIVATE_KEY_ENV_VAR,
     BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    BODYWORK_DOCKERHUB_IMAGE_REPO,
+    BODYWORK_WORKFLOW_CLUSTER_ROLE,
+    SSH_PRIVATE_KEY_ENV_VAR,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
@@ -153,12 +154,18 @@ def ingress_load_balancer_url() -> str:
 @fixture(scope="session")
 def setup_cluster(request: FixtureRequest) -> None:
     load_kubernetes_config()
-    setup_namespace_with_service_accounts_and_roles("bodywork-dev")
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
 
-    def delete_namespace():
-        k8s_client.CoreV1Api().delete_namespace("bodywork-dev")
+    def clean_up():
+        k8s_client.CoreV1Api().delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
+            BODYWORK_WORKFLOW_CLUSTER_ROLE
+        )
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
+            f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}"
+        )
 
-    request.addfinalizer(delete_namespace)
+    request.addfinalizer(clean_up)
 
 
 @fixture(scope="function")
