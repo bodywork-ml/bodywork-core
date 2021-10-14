@@ -60,6 +60,7 @@ from .secrets import (
     Secret,
     create_complete_secret_name,
     create_ssh_key_secret_from_file,
+    create_secret_env_variable,
 )
 from .deployments import (
     DeploymentStatus,
@@ -146,4 +147,5 @@ __all__ = [
     "update_workflow_cronjob",
     "create_complete_secret_name",
     "create_ssh_key_secret_from_file",
+    "create_secret_env_variable",
 ]

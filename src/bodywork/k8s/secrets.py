@@ -223,7 +223,7 @@ def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secre
     }
 
 
-def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> k8s.V1EnvVar:
+def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> None:
     with ssh_key_path.open() as file_handle:
         data = {SSH_PRIVATE_KEY_ENV_VAR: file_handle.read()}
     secret_name = create_complete_secret_name(group, SSH_SECRET_NAME)
@@ -236,14 +236,20 @@ def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> k8s.V1Env
             group,
             data,
         )
+
+
+def create_secret_env_variable(group_prefix: str = None) -> k8s.V1EnvVar:
+    if group_prefix:
+        name = f"{group_prefix}-{SSH_SECRET_NAME}"
+    else:
+        name = SSH_SECRET_NAME
     return k8s.V1EnvVar(
         name=SSH_PRIVATE_KEY_ENV_VAR,
         value_from=k8s.V1EnvVarSource(
             secret_key_ref=k8s.V1SecretKeySelector(
-                key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
+                key=SSH_PRIVATE_KEY_ENV_VAR, name=name, optional=False
             )
-        ),
-    )
+        ),)
 
 
 def create_complete_secret_name(group: str, name: str) -> str:

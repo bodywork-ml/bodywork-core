@@ -61,6 +61,7 @@ def create_workflow_job(
         if not secrets_group:
             print_warn("Please specify Secrets Group in config to use SSH.")
             return None
+        k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
         configured_job = k8s.configure_workflow_job(
             namespace,
             project_repo_url,
@@ -68,9 +69,7 @@ def create_workflow_job(
             retries,
             image,
             job_name,
-            container_env_vars=[k8s.create_ssh_key_secret_from_file(
-                secrets_group, Path(ssh_key_path)
-            )])
+            container_env_vars=[k8s.create_secret_env_variable(secrets_group)])
     else:
         configured_job = k8s.configure_workflow_job(
             namespace, project_repo_url, project_repo_branch, retries, image, job_name

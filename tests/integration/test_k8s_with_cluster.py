@@ -338,7 +338,7 @@ def test_deployment_with_ssh_github_connectivity(
                 "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
-                f"--ssh={Path.home() / '.ssh/id_rsa_bodywork_test'}"
+                f"--ssh={Path.home() / '.ssh/id_rsa_bodywork'}"
             ],
             encoding="utf-8",
             capture_output=True,
@@ -580,6 +580,32 @@ def test_remote_deployment_with_ssh_github_connectivity(
 
 
 def test_deployment_with_ssh(docker_image: str,
+):
+    from bodywork.cli.cli import deployment
+    from argparse import Namespace
+    try:
+
+        args = Namespace(
+            command="create",
+            name="test_deployment_with_ssh",
+            async_workflow=False,
+            git_url="git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+            git_branch="master",
+            retries=2,
+            namespace=None,
+            service=None,
+            bodywork_docker_image=docker_image,
+            ssh_key_path=f"{Path.home() / '.ssh/id_rsa_bodywork'}",
+            group=None
+        )
+
+        deployment(args)
+
+    except Exception:
+        assert False
+
+
+def test_remote_deployment_with_ssh(docker_image: str,
 ):
     from bodywork.cli.cli import deployment
     from argparse import Namespace

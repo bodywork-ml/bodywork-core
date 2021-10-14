@@ -35,6 +35,9 @@ from .constants import (
     BITBUCKET_SSH_FINGERPRINT,
     AZURE_SSH_FINGERPRINT,
 )
+from .logs import bodywork_log_factory
+
+_log = bodywork_log_factory()
 
 
 def download_project_code_from_repo(
@@ -135,12 +138,23 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
             )
             raise KeyError(msg)
         try:
+            _log.info("Using SSH key from environment variable.")
+            print("Hello")
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
             private_key.touch(0o700, exist_ok=False)
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
             private_key.write_text(key)
+            _log.info(f"Wrote SSH key to {private_key}")
+            _log.info(f"private key ={key}")
+            # run(
+            #     ["ssh-add", "-l", "-E", private_key],
+            #     check=True,
+            #     encoding="utf-8",
+            #     stdout=DEVNULL,
+            #     stderr=PIPE,
+            # )
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
