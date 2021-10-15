@@ -35,6 +35,7 @@ from .constants import (
     BITBUCKET_SSH_FINGERPRINT,
     AZURE_SSH_FINGERPRINT,
     GIT_SSH_COMMAND,
+    DEFAULT_SSH_FILE,
 )
 from .logs import bodywork_log_factory
 
@@ -53,6 +54,7 @@ def download_project_code_from_repo(
     :param branch: The Git branch to download, defaults to 'master'.
     :param destination: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+    :param ssh_key_path: SSH key filepath.
     :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
@@ -130,7 +132,7 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     if ssh_key_path:
         private_key = Path(ssh_key_path)
     else:
-        private_key = ssh_dir / "id_rsa_bodywork"
+        private_key = ssh_dir / DEFAULT_SSH_FILE
     if not private_key.exists():
         if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
             msg = (
@@ -140,15 +142,12 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
             raise KeyError(msg)
         try:
             _log.info("Using SSH key from environment variable.")
-            print("Hello")
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
             private_key.touch(0o700, exist_ok=False)
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
             private_key.write_text(key)
-            _log.info(f"Wrote SSH key to {private_key}")
-            _log.info(f"private key ={key}")
             os.environ[GIT_SSH_COMMAND] = (
                 f"ssh -i '{private_key}'"
                 f" -o IdentitiesOnly=yes"

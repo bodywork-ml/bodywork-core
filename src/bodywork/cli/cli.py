@@ -26,6 +26,7 @@ from functools import wraps
 from pathlib import Path
 from time import sleep
 from typing import Callable, Any
+from .terminal import console
 
 import kubernetes
 from pkg_resources import get_distribution
@@ -201,6 +202,19 @@ def cli() -> None:
         default=1,
         help="Minimum number of historic workflow jobs to keep for logs.",
     )
+    cronjob_cmd_parser.add_argument(
+        "--ssh",
+        dest="ssh_key_path",
+        type=str,
+        required=False,
+        help="The filepath to the ssh key to use (typically located in your .ssh folder).",  # noqa
+    )
+    cronjob_cmd_parser.add_argument(
+        "--group",
+        type=str,
+        required=False,
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",   # noqa
+    )
 
     # secrets interface
     secret_cmd_parser = cli_arg_subparser.add_parser("secret")
@@ -363,12 +377,20 @@ def deployment(args: Namespace) -> None:
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
             try:
-                run_workflow(
-                    git_url,
-                    git_branch,
-                    docker_image_override=image,
-                    ssh_key_path=ssh_key_path,
+                console.rule(
+                    f"[green]deploying[/green] [bold purple]{git_branch}[/bold purple] "
+                    f"[green]branch from[/green] [bold purple]{git_url}[/bold purple]",
+                    characters="=",
+                    style="green",
                 )
+                with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
+                    run_workflow(
+                        git_url,
+                        git_branch,
+                        docker_image_override=image,
+                        ssh_key_path=ssh_key_path,
+                    )
+                console.rule(characters="=", style="green")
             except BodyworkWorkflowExecutionError:
                 sys.exit(1)
         else:
@@ -422,6 +444,8 @@ def cronjob(args: Namespace) -> None:
     history_limit = args.history_limit
     git_url = args.git_url
     git_branch = args.git_branch
+    ssh_key_path = args.ssh_key_path
+    group = args.group
     if (
         command == "create"
         or command == "delete"
@@ -461,6 +485,8 @@ def cronjob(args: Namespace) -> None:
             git_branch if git_branch else "master",
             retries,
             history_limit,
+            ssh_key_path,
+            group,
         )
     elif command == "update":
         update_workflow_cronjob(

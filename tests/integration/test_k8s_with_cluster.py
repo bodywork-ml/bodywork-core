@@ -545,7 +545,7 @@ def test_remote_deployment_with_ssh_github_connectivity(
         assert process_one.returncode == 0
         assert f"Created workflow-job={job_name}" in process_one.stdout
 
-        sleep(10)
+        sleep(5)
 
         process_two = run(
             [
