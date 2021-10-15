@@ -1,7 +1,8 @@
 from datetime import datetime
+from time import sleep
 from typing import Optional
 
-from typer import Argument, echo, Exit, Typer
+from typer import Argument, echo, Exit, Option, Typer
 
 from bodywork.k8s.utils import make_valid_k8s_name
 
@@ -45,16 +46,27 @@ cli_app = Typer()
 create = Typer()
 cli_app.add_typer(create, name="create")
 
+get = Typer()
+cli_app.add_typer(get, name="get")
+
+update = Typer()
+cli_app.add_typer(get, name="update")
+
 delete = Typer()
 cli_app.add_typer(delete, name="delete")
 
-get = Typer()
-cli_app.add_typer(get, name="get")
 
 try:
     load_kubernetes_config()
 except Exception:
     print_warn("Could not authenticate using the active Kubernetes context.")
+
+
+@cli_app.command("debug")
+def _debug(seconds: int = Argument(600)) -> None:
+    print_info(f"sleeping for {seconds}s")
+    sleep(seconds)
+    Exit()
 
 
 @create.command("deployment")
@@ -103,15 +115,6 @@ def _create_deployment(
         Exit()
 
 
-@delete.command("deployment")
-def _delete_deployment(name: str, async_deployment_job: bool = False):
-    if async_deployment_job:
-        delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    else:
-        delete_deployment(name)
-    Exit()
-
-
 @get.command("deployment")
 def _get_deployment(
     name: str,
@@ -129,6 +132,96 @@ def _get_deployment(
         Exit(1)
     else:
         display_deployments(namespace, name, service_name)
+    Exit()
+
+
+@update.command("deployment")
+def _update_deployment(
+    git_url: str,
+    git_branch: str,
+    asynchronous: bool = False,
+    image: Optional[str] = None,
+    retries: int = 1
+):
+    pass
+
+
+@delete.command("deployment")
+def _delete_deployment(name: str, async_deployment_job: bool = False):
+    if async_deployment_job:
+        delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    else:
+        delete_deployment(name)
+    Exit()
+
+
+@create.command("cronjob")
+def _create_cronjob(
+    git_url: str,
+    git_branch: str,
+    schedule: str = Option(...),
+    name: str = Option(...),
+    retries: int = 1,
+    history_limit: int = 1
+):
+    if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
+        print_warn(
+            "Cluster has not been configured for Bodywork - "
+            "running 'bodywork configure-cluster'."
+        )
+        setup_namespace_with_service_accounts_and_roles(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+        )
+    create_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        schedule,
+        make_valid_k8s_name(name),
+        git_url,
+        git_branch if git_branch else "master",
+        retries,
+        history_limit,
+    )
+    Exit()
+
+
+@get.command("cronjob")
+def _get_cronjob(name: str, history: bool = False, logs: str = ""):
+    if history and not logs:
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    elif not history and logs:
+        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, logs)
+    elif history and logs:
+        print_warn("Cannot specify both --logs and --history.")
+        Exit(1)
+    else:
+        display_cronjobs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    Exit()
+
+
+@update.command("cronjob")
+def _update_cronjob(
+    git_url: str,
+    git_branch: str,
+    schedule: str = Option(...),
+    name: str = Option(...),
+    retries: int = 1,
+    history_limit: int = 1
+):
+    update_workflow_cronjob(
+        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        name,
+        schedule,
+        git_url,
+        git_branch,
+        retries,
+        history_limit,
+    )
+    Exit()
+
+
+@delete.command("cronjob")
+def _delete_cronjob(name: str):
+    delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     Exit()
 
 
