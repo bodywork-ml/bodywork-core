@@ -127,6 +127,7 @@ def test_get_git_commit_hash_throws_bodyworkgiterror_when_invalid_path(
         get_git_commit_hash()
 
 
+@patch("bodywork.git.run")
 @patch("bodywork.git.get_ssh_public_key_from_domain")
 @patch("bodywork.git.Path.write_text")
 @patch("bodywork.git.Path.touch")
@@ -138,6 +139,7 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
     mock_touch: MagicMock,
     mock_write: MagicMock,
     mock_get_ssh: MagicMock,
+        mock_run:MagicMock,
 ):
     mock_os.environ = {SSH_PRIVATE_KEY_ENV_VAR: "MY_PRIVATE_KEY"}
     mock_get_ssh.return_value = "fingerprint"
