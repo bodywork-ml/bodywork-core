@@ -58,7 +58,10 @@ setup(
     extras_require={"dev": requirements_dev},
     zip_safe=True,
     entry_points={
-        "console_scripts": ["bodywork=bodywork.cli.cli:cli", "bw=bodywork.cli.cli:cli"]
+        "console_scripts": [
+            "bodywork=bodywork.cli.cli:cli_app",
+            "bw=bodywork.cli.cli:cli_app"
+        ]
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
