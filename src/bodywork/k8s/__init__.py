@@ -80,7 +80,12 @@ from .deployments import (
     delete_deployment_ingress,
     has_ingress,
 )
-from .utils import api_exception_msg, create_k8s_environment_variables, EnvVars
+from .utils import (
+    api_exception_msg,
+    create_k8s_environment_variables,
+    EnvVars,
+    make_valid_k8s_name
+)
 
 
 __all__ = [
@@ -136,6 +141,7 @@ __all__ = [
     "api_exception_msg",
     "create_k8s_environment_variables",
     "EnvVars",
+    "make_valid_k8s_name",
     "replicate_secrets_in_namespace",
     "update_secret",
     "Secret",
