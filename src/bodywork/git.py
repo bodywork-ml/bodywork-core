@@ -34,6 +34,7 @@ from .constants import (
     GITLAB_SSH_FINGERPRINT,
     BITBUCKET_SSH_FINGERPRINT,
     AZURE_SSH_FINGERPRINT,
+    GIT_SSH_COMMAND,
 )
 from .logs import bodywork_log_factory
 
@@ -148,12 +149,9 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
             private_key.write_text(key)
             _log.info(f"Wrote SSH key to {private_key}")
             _log.info(f"private key ={key}")
-            run(
-                ["ssh-add", "-l", "-E", private_key],
-                check=True,
-                encoding="utf-8",
-                stdout=DEVNULL,
-                stderr=PIPE,
+            os.environ[GIT_SSH_COMMAND] = (
+                f"ssh -i '{private_key}'"
+                f" -o IdentitiesOnly=yes"
             )
         except OSError as e:
             raise RuntimeError(
