@@ -10,7 +10,7 @@ from typing import Any, Callable, List, Optional
 
 import kubernetes
 from pkg_resources import get_distribution
-from typer import Argument, Exit, Option, Typer
+from typer import Argument, Option, Typer
 
 from bodywork.k8s.utils import make_valid_k8s_name
 from ..config import BodyworkConfig
@@ -104,38 +104,38 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
     return wrapper
 
 
-@cli_app.command("validate-config")
-def _validate_config(file: str, check_files: bool = False):
+@cli_app.command("validate")
+def _validate_config(file: str = "bodywork.yaml", check_files: bool = False):
     file_path = Path(file)
     try:
         BodyworkConfig(file_path, check_files)
         print_info(f"--> {file_path} is a valid Bodywork config file.")
-        Exit()
+        sys.exit(0)
     except (
         FileExistsError,
         BodyworkConfigParsingError,
         BodyworkConfigMissingSectionError,
     ) as e:
         print_warn(f"--> {e}")
-        Exit(1)
+        sys.exit(1)
     except BodyworkConfigValidationError as e:
         print_warn(f"Missing or invalid parameters found in {file_path}:")
         missing_or_invalid_param_list = "\n* ".join(e.missing_params)
         print_warn(f"* {missing_or_invalid_param_list}")
-        Exit(1)
+        sys.exit(1)
 
 
 @cli_app.command("version")
 def _version():
     print_info(get_distribution("bodywork").version)
-    Exit()
+    sys.exit(0)
 
 
 @cli_app.command("configure-cluster")
 @handle_k8s_exceptions
 def _configure_cluster():
     setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
-    Exit()
+    sys.exit(0)
 
 
 @cli_app.command("stage", hidden=True)
@@ -143,9 +143,9 @@ def _configure_cluster():
 def _stage(git_url: str, git_branch: str, stage_name: str):
     try:
         run_stage(stage_name, git_url, git_branch)
-        Exit()
+        sys.exit(0)
     except Exception:
-        Exit(1)
+        sys.exit(1)
 
 
 @cli_app.command("debug", hidden=True)
@@ -153,7 +153,7 @@ def _stage(git_url: str, git_branch: str, stage_name: str):
 def _debug(seconds: int = Argument(600)) -> None:
     print_info(f"sleeping for {seconds}s")
     sleep(seconds)
-    Exit()
+    sys.exit(0)
 
 
 @create.command("deployment")
@@ -178,7 +178,7 @@ def _create_deployment(
         try:
             run_workflow(git_url, git_branch, docker_image_override=image)
         except BodyworkWorkflowExecutionError:
-            Exit()
+            sys.exit(0)
     else:
         print_info("Using asynchronous workflow controller.")
         print_warn(
@@ -199,7 +199,7 @@ def _create_deployment(
             retries,
             image if image else BODYWORK_DOCKER_IMAGE,
         )
-        Exit()
+        sys.exit(0)
 
 
 @get.command("deployment")
@@ -218,10 +218,10 @@ def _get_deployment(
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     elif logs and async_deployment_job_history:
         print_warn("Cannot specify both --logs and --async-deployment-job-history.")
-        Exit(1)
+        sys.exit(1)
     else:
         display_deployments(namespace, name, service_name)
-    Exit()
+    sys.exit(0)
 
 
 @update.command("deployment")
@@ -243,7 +243,7 @@ def _delete_deployment(name: str, async_deployment_job: bool = False):
         delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         delete_deployment(name)
-    Exit()
+    sys.exit(0)
 
 
 @create.command("cronjob")
@@ -273,7 +273,7 @@ def _create_cronjob(
         retries,
         history_limit,
     )
-    Exit()
+    sys.exit(0)
 
 
 @get.command("cronjob")
@@ -286,10 +286,10 @@ def _get_cronjob(name: str, history: bool = False, logs: str = ""):
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, logs)
     elif history and logs:
         print_warn("Cannot specify both --logs and --history.")
-        Exit(1)
+        sys.exit(1)
     else:
         display_cronjobs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    Exit()
+    sys.exit(0)
 
 
 @update.command("cronjob")
@@ -311,14 +311,14 @@ def _update_cronjob(
         retries,
         history_limit,
     )
-    Exit()
+    sys.exit(0)
 
 
 @delete.command("cronjob")
 @handle_k8s_exceptions
 def _delete_cronjob(name: str):
     delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    Exit()
+    sys.exit(0)
 
 
 @create.command("secret")
@@ -331,11 +331,11 @@ def _create_secret(name: str, data: List[str] = Option(...), group: str = Option
             "Could not parse secret data - example format: --data USERNAME=alex "
             "PASSWORD=alex123"
         )
-        Exit(1)
+        sys.exit(1)
     create_secret(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
     )
-    Exit()
+    sys.exit(0)
 
 
 @get.command("secret")
@@ -346,13 +346,13 @@ def _get_secret(
 ):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
-        Exit(1)
+        sys.exit(1)
     display_secrets(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         group,
         name,
     )
-    Exit()
+    sys.exit(0)
 
 
 @update.command("secret")
@@ -365,11 +365,11 @@ def _update_secret(name: str, data: List[str] = Option(...), group: str = Option
             "Could not parse secret data - example format: --data USERNAME=alex "
             "PASSWORD=alex123"
         )
-        Exit(1)
+        sys.exit(1)
     update_secret(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
     )
-    Exit()
+    sys.exit(0)
 
 
 @delete.command("secret")

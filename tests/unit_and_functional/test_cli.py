@@ -18,17 +18,17 @@
 Test the Bodywork CLI.
 """
 import urllib3
-from argparse import Namespace
 from pathlib import Path
+from re import findall
 from subprocess import run, CalledProcessError
 from typing import Iterable
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, MagicMock
 
 import kubernetes
 from pytest import raises
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cli import deployment, handle_k8s_exceptions
+from bodywork.cli.cli import _configure_cluster, handle_k8s_exceptions
 from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
@@ -74,477 +74,112 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
     assert "Cannot load authentication credentials from kubeconfig" in captured_stdout
 
 
-def test_stage_subcommand_exists():
-    process = run(["bodywork", "stage", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "bodywork stage [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_stage_command_receives_correct_args():
-    process = run(
-        ["bodywork", "stage", "http://my.project.com", "master", "train"],
+def test_cli_commands_exist():
+    validate = run(
+        ["bodywork", "validate", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    expected_output = "Attempting to run stage"
-    assert expected_output in process.stdout
+    assert validate.returncode == 0
 
-
-def test_stage_command_successful_has_zero_exit_code(
-    setup_bodywork_test_project: Iterable[bool], project_repo_connection_string: str
-):
-    try:
-        run(
-            [
-                "bodywork",
-                "stage",
-                project_repo_connection_string,
-                "master",
-                "stage_1",
-            ],
-            check=True,
-            capture_output=True,
-            encoding="utf-8",
-        )
-        assert True
-    except CalledProcessError as e:
-        print(f"Test Failed - {e.stderr}")
-        assert False
-
-
-def test_stage_command_unsuccessful_raises_exception():
-    with raises(CalledProcessError):
-        run(["bodywork", "stage", "http://bad.repo", "master", "train"], check=True)
-
-
-def test_workflow_subcommand_exists():
-    process = run(["bodywork", "workflow", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = (
-        "usage: bodywork workflow [-h] [--bodywork-docker-image"
-        "BODYWORK_DOCKER_IMAGE] namespace git_url"
-        " git_branch"
-    )
-    assert process.stdout.find(expected_output) != 0
-
-
-def test_secrets_subcommand_exists():
-    process = run(["bodywork", "secret", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "bodywork secret [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_secret_handler_error_handling():
-    process_one = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--group=bodywork-dev",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
+    version = run(
+        ["bodywork", "version", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify the name of the secret" in process_one.stdout
+    assert version.returncode == 0
 
-    process_two = run(
-        [
-            "bodywork",
-            "secret",
-            "delete",
-            "--group=bodywork-dev",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
+    stage = run(
+        ["bodywork", "stage", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify the name of the secret" in process_two.stdout
+    assert stage.returncode == 0
 
-    process_three = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--group=bodywork-dev",
-            "--name=pytest-credentials",
-        ],
+    debug = run(
+        ["bodywork", "debug", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify keys and values" in process_three.stdout
+    assert debug.returncode == 0
 
-    process_four = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--group=bodywork-dev",
-            "--name=pytest-credentials",
-            "--data",
-            "FOO",
-            "bar",
-        ],
+    create_deployment = run(
+        ["bodywork", "create", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Could not parse secret data" in process_four.stdout
-
-    process_five = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--name=pytest-credentials",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
+    get_deployment = run(
+        ["bodywork", "get", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert (
-        "Please specify the secret group the secret belongs to" in process_five.stdout
-    )
-
-
-def test_deployment_subcommand_exists():
-    process = run(
-        ["bodywork", "deployment", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "usage: bodywork deployment [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.run_workflow")
-@patch("sys.exit")
-def test_deployment_run_locally_calls_run_workflow_handler(
-    mock_sys_exit: MagicMock,
-    mock_workflow_cli_handler: MagicMock,
-    mock_load_config: MagicMock,
-    capsys: CaptureFixture,
-):
-    args = Namespace(
-        command="create",
-        name="foo2",
-        retries=0,
-        git_url="foo3",
-        git_branch="foo4",
-        async_workflow=None,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-    deployment(args)
-
-    stdout = capsys.readouterr().out
-    assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with(
-        "foo3", "foo4", docker_image_override=None
-    )
-
-
-def test_cli_deployment_handler_error_handling():
-    process_one = run(
-        ["bodywork", "deployment", "logs"],
+    update_deployment = run(
+        ["bodywork", "update", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify --name for the deployment job" in process_one.stdout
-    assert process_one.returncode == 1
-
-    process_two = run(
-        [
-            "bodywork",
-            "deployment",
-            "create",
-        ],
+    delete_deployment = run(
+        ["bodywork", "delete", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify Git repo URL" in process_two.stdout
-    assert process_two.returncode == 1
+    assert create_deployment.returncode == 0
+    assert get_deployment.returncode == 0
+    assert update_deployment.returncode == 0
+    assert delete_deployment.returncode == 0
 
-
-@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.create_workflow_job")
-def test_cli_deployment_create_async(
-    mock_create_workflow: MagicMock,
-    mock_sys: MagicMock,
-    mock_load_config: MagicMock,
-    mock_namespace: MagicMock,
-):
-    args = Namespace(
-        command="create",
-        name="test_cli",
-        async_workflow=True,
-        git_url="http://Test",
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image="bodywork-ml:myimage",
-    )
-
-    deployment(args)
-
-    mock_create_workflow.assert_called_with(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
-        args.name,
-        args.git_url,
-        args.git_branch,
-        args.retries,
-        args.bodywork_docker_image,
-    )
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.delete_deployment")
-def test_cli_deployment_delete(
-    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config: MagicMock
-):
-    args = Namespace(
-        command="delete",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-
-    deployment(args)
-
-    mock_deployments.assert_called_with(args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_workflow_job_logs")
-def test_cli_deployment_logs(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="logs",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.delete_workflow_job")
-def test_cli_deployment_delete_job(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="delete_job",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_workflow_job_history")
-def test_cli_deployment_job_history(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="job_history",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_deployments")
-def test_cli_deployment_display(
-    mock_display_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="display",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-    )
-
-    deployment(args)
-
-    mock_display_deployments.assert_called_with(args.namespace, args.name, args.service)
-
-
-def test_cronjobs_subcommand_exists():
-    process = run(["bodywork", "cronjob", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork cronjob [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_cronjob_handler_error_handling():
-    process_one = run(
-        ["bodywork", "cronjob", "create"],
+    create_cronjob = run(
+        ["bodywork", "create", "cronjob", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify --name for the cronjob" in process_one.stdout
-    assert process_one.returncode == 1
-
-    process_two = run(
-        ["bodywork", "cronjob", "delete"],
+    get_cronjob = run(
+        ["bodywork", "get", "cronjob", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify --name for the cronjob" in process_two.stdout
-    assert process_two.returncode == 1
-
-    process_three = run(
-        ["bodywork", "cronjob", "history"],
+    update_cronjob = run(
+        ["bodywork", "update", "cronjob", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify --name for the cronjob" in process_three.stdout
-    assert process_three.returncode == 1
-
-    process_three = run(
-        ["bodywork", "cronjob", "logs"],
+    delete_cronjob = run(
+        ["bodywork", "delete", "cronjob", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify --name for the cronjob" in process_three.stdout
-    assert process_three.returncode == 1
+    assert create_cronjob.returncode == 0
+    assert get_cronjob.returncode == 0
+    assert update_cronjob.returncode == 0
+    assert delete_cronjob.returncode == 0
 
-    process_five = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--name=the-cronjob",
-        ],
+    create_secret = run(
+        ["bodywork", "create", "secret", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify schedule for the cronjob" in process_five.stdout
-    assert process_five.returncode == 1
-
-    process_six = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--name=the-cronjob",
-            "--schedule=0 * * * *",
-        ],
+    get_secret = run(
+        ["bodywork", "get", "secret", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify Git repo URL" in process_six.stdout
-    assert process_six.returncode == 1
-
-
-def test_cronjob_update_error_handling():
-    process_one = run(
-        [
-            "bodywork",
-            "cronjob",
-            "update",
-            "--name=the-cronjob",
-            "--git-url=https://test",
-        ],
+    update_secret = run(
+        ["bodywork", "update", "secret", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify both --git-url and --git-branch." in process_one.stdout
-    assert process_one.returncode == 1
-
-
-def test_setup_namespace_subcommand_exists():
-    process = run(
-        ["bodywork", "setup-namespace", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "usage: bodywork setup-namespace [-h] namespace"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_debug_subcommand_exists():
-    process = run(["bodywork", "debug", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork debug [-h] seconds"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_debug_subcommand_sleeps():
-    process = run(
-        ["bodywork", "debug", "1"],
+    delete_secret = run(
+        ["bodywork", "delete", "secret", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    expected_output = "sleeping for 1s"
-    assert process.stdout.find(expected_output) != -1
-    assert process.returncode == 0
+    assert create_secret.returncode == 0
+    assert get_secret.returncode == 0
+    assert update_secret.returncode == 0
+    assert delete_secret.returncode == 0
 
 
-def test_configure_cluster_subcommand_exists():
-    process = run(
-        ["bodywork", "configure-cluster", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "bodywork configure-cluster [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_graceful_exit_when_no_command_specified():
-    process = run(
-        ["bodywork"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process.returncode == 0
-
-
-def test_validate_subcommand(project_repo_location: Path):
+def test_validate(project_repo_location: Path):
     config_file_path = project_repo_location / "bodywork.yaml"
     process_one = run(
         ["bodywork", "validate", "--file", config_file_path],
@@ -589,3 +224,103 @@ def test_validate_subcommand(project_repo_location: Path):
     assert process_five.returncode == 1
     assert "Missing or invalid parameters" in process_five.stdout
     assert "* stages._" in process_five.stdout
+
+
+def test_version_returns_version():
+    with open("VERSION") as file:
+        expected_version = findall("[0-9].[0.9].[0.9]", file.read())
+    process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
+    actual_version = findall("[0-9].[0.9].[0.9]", process.stdout)
+    if expected_version and actual_version:
+        assert actual_version[0] == expected_version[0]
+    else:
+        assert False
+
+
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+def test_configure_cluster_configures_cluster(mock_setup: MagicMock):
+    try:
+        _configure_cluster()
+        assert False
+    except SystemExit:
+        mock_setup.assert_called_once_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+
+
+def test_stage_command_successful_has_zero_exit_code(
+    setup_bodywork_test_project: Iterable[bool], project_repo_connection_string: str
+):
+    try:
+        run(
+            [
+                "bodywork",
+                "stage",
+                project_repo_connection_string,
+                "master",
+                "stage_1",
+            ],
+            check=True,
+            capture_output=True,
+            encoding="utf-8",
+        )
+        assert True
+    except CalledProcessError as e:
+        print(f"Test Failed - {e.stderr}")
+        assert False
+
+
+def test_stage_command_unsuccessful_returns_non_zero_exit_code():
+    process = run(["bodywork", "stage", "http://bad.repo", "master", "train"])
+    assert process.returncode != 0
+
+
+def test_debug_subcommand_sleeps():
+    process = run(
+        ["bodywork", "debug", "1"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    expected_output = "sleeping for 1s"
+    assert process.stdout.find(expected_output) != -1
+    assert process.returncode == 0
+
+
+def test_get_deployments_options():
+    pass
+
+
+def test_delete_deployments_options():
+    pass
+
+
+def test_create_cronjob_options():
+    pass
+
+
+def test_get_cronjob_options():
+    pass
+
+
+def test_create_secrets_options():
+    process_one = run(
+        [
+            "bodywork",
+            "create",
+            "secret",
+            "pytest-credentials",
+            "--group=bodywork-dev",
+            "--data",
+            "FOO",
+        ],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_one.returncode != 0
+    assert "Could not parse secret data" in process_one.stdout
+
+
+def test_get_secrets_options():
+    pass
+
+
+def test_update_secrets_options():
+    pass
