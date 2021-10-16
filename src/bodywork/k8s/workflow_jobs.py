@@ -140,7 +140,7 @@ def configure_workflow_cronjob(
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,
     image: str = BODYWORK_DOCKER_IMAGE,
-    env_vars = None
+    env_vars: Optional[List[k8s.V1EnvVar]] = None,
 ) -> k8s.V1beta1CronJob:
     """Configure a Bodywork workflow cronjob.
 
@@ -163,6 +163,7 @@ def configure_workflow_cronjob(
         runs (pods) to keep, defaults to 1.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
+    :param env_vars: List of k8s environment variables to add.
     :return: A configured k8s cronjob object.
     """
     job = configure_workflow_job(

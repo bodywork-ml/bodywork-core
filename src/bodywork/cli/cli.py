@@ -161,7 +161,7 @@ def cli() -> None:
         "--group",
         type=str,
         required=False,
-        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",   # noqa
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",  # noqa
     )
     # cronjob interface
     cronjob_cmd_parser = cli_arg_subparser.add_parser("cronjob")
@@ -213,7 +213,7 @@ def cli() -> None:
         "--group",
         type=str,
         required=False,
-        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",   # noqa
+        help="For async workflows, the secrets group to create the SSH key in (must match secrets group in config).",  # noqa
     )
 
     # secrets interface
@@ -383,7 +383,9 @@ def deployment(args: Namespace) -> None:
                     characters="=",
                     style="green",
                 )
-                with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
+                with console.status(
+                    "[purple]Bodywork deploying[/purple]", spinner="aesthetic"
+                ):
                     run_workflow(
                         git_url,
                         git_branch,
