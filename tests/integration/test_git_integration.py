@@ -30,9 +30,7 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     set_github_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(
-            github_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
-        )
+        download_project_code_from_repo(github_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -45,9 +43,7 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(
-            gitlab_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
-        )
+        download_project_code_from_repo(gitlab_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -60,9 +56,7 @@ def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(
-            bitbucket_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
-        )
+        download_project_code_from_repo(bitbucket_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -75,9 +69,7 @@ def test_that_git_project_repo_can_be_cloned_from_azure_using_ssh(
     set_git_ssh_private_key_env_var: None,
 ):
     try:
-        download_project_code_from_repo(
-            azure_repo_connection_string, ssh_key_path=Path.home() / ".ssh/xyz"
-        )
+        download_project_code_from_repo(azure_repo_connection_string)
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False

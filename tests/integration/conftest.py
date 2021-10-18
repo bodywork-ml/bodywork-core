@@ -107,6 +107,8 @@ def set_git_ssh_private_key_env_var() -> None:
         private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
         private_key = Path.home() / ".ssh/id_rsa"
+        if not private_key.exists():
+            private_key = ".ssh/id_ed25519"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:

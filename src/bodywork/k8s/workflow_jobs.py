@@ -22,17 +22,12 @@ import os
 import random
 from datetime import datetime
 from typing import Dict, Union, Optional, List
-from pathlib import Path
-
 from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_DIR_NAME,
-    DEFAULT_SSH_FILE,
 )
 from .utils import make_valid_k8s_name
 
@@ -67,11 +62,6 @@ def configure_workflow_job(
         "--git-branch",
         project_repo_branch,
     ]
-    if container_env_vars and any(
-        env_var.name == SSH_PRIVATE_KEY_ENV_VAR for env_var in container_env_vars
-    ):
-        args.append("--ssh")
-        args.append(f"{Path.home() / SSH_DIR_NAME / DEFAULT_SSH_FILE}")
 
     container = k8s.V1Container(
         name="bodywork",
@@ -150,7 +140,7 @@ def configure_workflow_cronjob(
 
     :param cron_schedule: A valid cron schedule definition.
     :param job_name: The name to give the cronjob.
-    :param namespace: Namespace to create the cronjob in.
+    :param namespace: Namespace to create cronjob in.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository

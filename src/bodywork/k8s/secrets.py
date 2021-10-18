@@ -229,6 +229,8 @@ def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> None:
     :param group: Secrets group to create the key in.
     :param ssh_key_path: The filepath to the SSH key file.
     """
+    if not ssh_key_path.exists():
+        raise FileNotFoundError(f"Could not find SSH key file at: {ssh_key_path}")
     with ssh_key_path.open() as file_handle:
         data = {SSH_PRIVATE_KEY_ENV_VAR: file_handle.read()}
     secret_name = create_complete_secret_name(group, SSH_SECRET_NAME)

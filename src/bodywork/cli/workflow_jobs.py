@@ -24,7 +24,7 @@ from pathlib import Path
 
 from .terminal import print_dict, print_info, print_pod_logs, print_warn
 from .. import k8s
-from ..constants import BODYWORK_DOCKER_IMAGE
+from ..constants import BODYWORK_DOCKER_IMAGE, SSH_SECRET_NAME
 
 
 def create_workflow_job(
@@ -63,10 +63,22 @@ def create_workflow_job(
         if not secrets_group:
             print_warn("Please specify Secrets Group in config to use SSH.")
             return None
-        k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        try:
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        except FileNotFoundError:
+            print_warn(f"Could not find SSH key file at: {ssh_key_path}")
+            return None
+    if secrets_group:
+        if not k8s.secret_exists(
+            namespace, k8s.create_complete_secret_name(SSH_SECRET_NAME, secrets_group)
+        ):
+            print_warn(
+                f"Could not find SSH secret: {SSH_SECRET_NAME} in group: {secrets_group}"
+            )
         env_vars = [k8s.create_secret_env_variable(secrets_group)]
     else:
         env_vars = None
+
     configured_job = k8s.configure_workflow_job(
         namespace,
         project_repo_url,
@@ -137,7 +149,18 @@ def create_workflow_cronjob(
         if not secrets_group:
             print_warn("Please specify Secrets Group in config to use SSH.")
             return None
-        k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        try:
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        except FileNotFoundError:
+            print_warn(f"Could not find SSH key file at: {ssh_key_path}")
+            return None
+    if secrets_group:
+        if not k8s.secret_exists(
+            namespace, k8s.create_complete_secret_name(SSH_SECRET_NAME, secrets_group)
+        ):
+            print_warn(
+                f"Could not find SSH secret: {SSH_SECRET_NAME} in group: {secrets_group}"
+            )
         env_vars = [k8s.create_secret_env_variable(secrets_group)]
     else:
         env_vars = None

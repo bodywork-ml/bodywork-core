@@ -69,6 +69,9 @@ jobs:
             - "14:5e:d0:95:2e:2c:7d:d8:dc:f2:bb:f3:97:10:3e:c5"
             - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"
       - run:
+          name: Remove keys from SSH Agent
+          command: ssh-add -D
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
       - run: 
