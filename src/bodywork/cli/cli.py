@@ -105,7 +105,10 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
 
 
 @cli_app.command("validate")
-def _validate_config(file: str = "bodywork.yaml", check_files: bool = False):
+def _validate_config(
+    file: str = Option("bodywork.yaml"),
+    check_files: bool = Option(False)
+):
     file_path = Path(file)
     try:
         BodyworkConfig(file_path, check_files)
@@ -140,7 +143,11 @@ def _configure_cluster():
 
 @cli_app.command("stage", hidden=True)
 @handle_k8s_exceptions
-def _stage(git_url: str, git_branch: str, stage_name: str):
+def _stage(
+    git_url: str = Argument(...),
+    git_branch: str = Argument(...),
+    stage_name: str = Argument(...)
+):
     try:
         run_stage(stage_name, git_url, git_branch)
         sys.exit(0)
@@ -159,11 +166,11 @@ def _debug(seconds: int = Argument(600)) -> None:
 @create.command("deployment")
 @handle_k8s_exceptions
 def _create_deployment(
-    git_url: str,
-    git_branch: str,
+    git_url: str = Argument(...),
+    git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
-    image: Optional[str] = None,
-    retries: int = 1
+    image: Optional[str] = Option(None),
+    retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
         print_warn(
@@ -208,15 +215,15 @@ def _create_deployment(
 def _get_deployment(
     name: str = Argument(None),
     service_name: Optional[str] = Argument(None),
-    namespace: Optional[str] = None,
-    logs: bool = False,
-    async_deployment_job_history: bool = False,
+    logs: bool = Option(False),
+    async_job_history: bool = Option(False, "--async"),
+    namespace: Optional[str] = Option(False)
 ):
-    if logs and not async_deployment_job_history:
+    if logs and not async_job_history:
+        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+    elif not logs and async_job_history:
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    elif not logs and async_deployment_job_history:
-        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    elif logs and async_deployment_job_history:
+    elif logs and async_job_history:
         print_warn("Cannot specify both --logs and --async-deployment-job-history.")
         sys.exit(1)
     else:
@@ -227,19 +234,19 @@ def _get_deployment(
 @update.command("deployment")
 @handle_k8s_exceptions
 def _update_deployment(
-    git_url: str,
-    git_branch: str,
-    asynchronous: bool = Option(False, "--async"),
-    image: Optional[str] = None,
-    retries: int = 1
+    name: str = Argument(None),
+    service_name: Optional[str] = Argument(None),
+    logs: bool = Option(False),
+    async_job_history: bool = Option(False, "--async"),
+    namespace: Optional[str] = Option(False)
 ):
     pass
 
 
 @delete.command("deployment")
 @handle_k8s_exceptions
-def _delete_deployment(name: str, async_deployment_job: bool = False):
-    if async_deployment_job:
+def _delete_deployment(name: str = Argument(...), async_job: bool = Option(False)):
+    if async_job:
         delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         delete_deployment(name)
@@ -249,12 +256,12 @@ def _delete_deployment(name: str, async_deployment_job: bool = False):
 @create.command("cronjob")
 @handle_k8s_exceptions
 def _create_cronjob(
-    git_url: str,
-    git_branch: str,
+    git_url: str = Argument(...),
+    git_branch: str = Argument(...),
     schedule: str = Option(...),
     name: str = Option(...),
-    retries: int = 1,
-    history_limit: int = 1
+    retries: int = Option(1),
+    history_limit: int = Option(1)
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
         print_warn(
@@ -279,12 +286,16 @@ def _create_cronjob(
 @get.command("cronjob")
 @get.command("cronjobs")
 @handle_k8s_exceptions
-def _get_cronjob(name: str, history: bool = False, logs: str = ""):
-    if history and not logs:
+def _get_cronjob(
+    name: Optional[str] = Argument(None),
+    history: bool = Option(False),
+    logs: str = Option("")
+):
+    if name and history and not logs:
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    elif not history and logs:
+    elif name and not history and logs:
         display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, logs)
-    elif history and logs:
+    elif name and history and logs:
         print_warn("Cannot specify both --logs and --history.")
         sys.exit(1)
     else:
@@ -295,12 +306,12 @@ def _get_cronjob(name: str, history: bool = False, logs: str = ""):
 @update.command("cronjob")
 @handle_k8s_exceptions
 def _update_cronjob(
-    git_url: str,
-    git_branch: str,
+    git_url: str = Argument(...),
+    git_branch: str = Argument(...),
     schedule: str = Option(...),
     name: str = Option(...),
-    retries: int = 1,
-    history_limit: int = 1
+    retries: int = Option(1),
+    history_limit: int = Option(1)
 ):
     update_workflow_cronjob(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
@@ -316,25 +327,27 @@ def _update_cronjob(
 
 @delete.command("cronjob")
 @handle_k8s_exceptions
-def _delete_cronjob(name: str):
+def _delete_cronjob(name: str = Argument(...)):
     delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
 
 
 @create.command("secret")
 @handle_k8s_exceptions
-def _create_secret(name: str, data: List[str] = Option(...), group: str = Option(...)):
+def _create_secret(
+    name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
+):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
+        create_secret(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+        )
     except ValueError:
         print_warn(
             "Could not parse secret data - example format: --data USERNAME=alex "
             "PASSWORD=alex123"
         )
         sys.exit(1)
-    create_secret(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
-    )
     sys.exit(0)
 
 
@@ -342,37 +355,45 @@ def _create_secret(name: str, data: List[str] = Option(...), group: str = Option
 @get.command("secrets")
 @handle_k8s_exceptions
 def _get_secret(
-    name: str = Argument(None), group: str = Option(None)
+    name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
 ):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
-    display_secrets(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
-        group,
-        name,
-    )
-    sys.exit(0)
+    else:
+        display_secrets(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            group,
+            name,
+        )
+        sys.exit(0)
 
 
 @update.command("secret")
 @handle_k8s_exceptions
-def _update_secret(name: str, data: List[str] = Option(...), group: str = Option(...)):
+def _update_secret(
+    name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
+):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
+        update_secret(
+            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+        )
+        sys.exit(0)
     except ValueError:
         print_warn(
             "Could not parse secret data - example format: --data USERNAME=alex "
             "PASSWORD=alex123"
         )
         sys.exit(1)
-    update_secret(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
-    )
-    sys.exit(0)
 
 
 @delete.command("secret")
 @handle_k8s_exceptions
-def _delete_secret(name: str, group: str = Option(...)):
-    delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
+def _delete_secret(name: str = Argument(...), group: str = Option(...)):
+    if name and not group:
+        print_warn("Please specify which secrets group the secret belongs to.")
+        sys.exit(1)
+    else:
+        delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
+        sys.exit(0)

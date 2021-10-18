@@ -25,10 +25,23 @@ from typing import Iterable
 from unittest.mock import patch, MagicMock
 
 import kubernetes
-from pytest import raises
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cli import _configure_cluster, handle_k8s_exceptions
+from bodywork.cli.cli import (
+    handle_k8s_exceptions,
+    _configure_cluster,
+    _get_deployment,
+    _delete_deployment,
+    _create_secret,
+    _get_secret,
+    _update_secret,
+    _delete_secret,
+    _create_cronjob,
+    _get_cronjob,
+    _update_cronjob,
+    _delete_cronjob,
+
+)
 from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
 
@@ -238,12 +251,12 @@ def test_version_returns_version():
 
 
 @patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
-def test_configure_cluster_configures_cluster(mock_setup: MagicMock):
-    try:
-        _configure_cluster()
-        assert False
-    except SystemExit:
-        mock_setup.assert_called_once_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+@patch("bodywork.cli.cli.sys")
+def test_configure_cluster_configures_cluster(
+    mock_sys: MagicMock, mock_setup: MagicMock
+):
+    _configure_cluster()
+    mock_setup.assert_called_once_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
 
 
 def test_stage_command_successful_has_zero_exit_code(
@@ -284,43 +297,184 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
-def test_get_deployments_options():
+def test_create_deployments_options():
     pass
 
 
-def test_delete_deployments_options():
+@patch("bodywork.cli.cli.display_workflow_job_history")
+@patch("bodywork.cli.cli.display_workflow_job_logs")
+@patch("bodywork.cli.cli.display_deployments")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_get_deployments_options(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_display_deployment: MagicMock,
+    mock_display_workflow_job_logs: MagicMock,
+    mock_display_workflow_job_history: MagicMock
+):
+    _get_deployment(logs=True, async_job_history=False)
+    mock_display_workflow_job_history.assert_called_once()
+
+    _get_deployment(logs=False, async_job_history=True)
+    mock_display_workflow_job_logs.assert_called_once()
+
+    _get_deployment(logs=True, async_job_history=True)
+    mock_print_warn.assert_called_once()
+
+    _get_deployment(logs=False, async_job_history=False)
+    mock_display_deployment.assert_called_once()
+
+
+def test_update_deployments_options():
     pass
 
 
-def test_create_cronjob_options():
-    pass
+@patch("bodywork.cli.cli.delete_workflow_job")
+@patch("bodywork.cli.cli.delete_deployment")
+@patch("bodywork.cli.cli.sys")
+def test_delete_deployments_options(
+    mock_sys: MagicMock,
+    mock_delete_deployments: MagicMock,
+    mock_delete_workflow_job: MagicMock,
+):
+    _delete_deployment("foo", async_job=False)
+    mock_delete_deployments.assert_called_once()
+
+    _delete_deployment("foo", async_job=True)
+    mock_delete_workflow_job.assert_called_once()
 
 
-def test_get_cronjob_options():
-    pass
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.create_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_create_cronjob_options(
+    mock_sys: MagicMock,
+    mock_create_workflow_cronjob: MagicMock,
+    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
+    mock_is_namespace_available_for_bodywork: MagicMock,
+):
+    mock_is_namespace_available_for_bodywork.return_value = False
+    _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
+    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
+    mock_create_workflow_cronjob.assert_called_once()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_create_workflow_cronjob.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_create_workflow_cronjob.assert_called_once()
 
 
-def test_create_secrets_options():
-    process_one = run(
-        [
-            "bodywork",
-            "create",
-            "secret",
-            "pytest-credentials",
-            "--group=bodywork-dev",
-            "--data",
-            "FOO",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_one.returncode != 0
-    assert "Could not parse secret data" in process_one.stdout
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.display_workflow_job_logs")
+@patch("bodywork.cli.cli.display_workflow_job_history")
+@patch("bodywork.cli.cli.display_cronjobs")
+@patch("bodywork.cli.cli.sys")
+def test_get_cronjob_options(
+    mock_sys: MagicMock,
+    mock_display_cronjobs: MagicMock,
+    mock_display_workflow_job_history: MagicMock,
+    mock_display_workflow_job_logs: MagicMock,
+    mock_print_warn: MagicMock,
+):
+    _get_cronjob(name="foo", history=True, logs=False)
+    mock_display_workflow_job_history.assert_called_once()
+
+    _get_cronjob(name="foo", history=False, logs=True)
+    mock_display_workflow_job_logs.assert_called_once()
+
+    _get_cronjob(name="foo", history=True, logs=True)
+    mock_print_warn.assert_called_once()
+
+    _get_cronjob(name=None, history=False, logs=False)
+    mock_display_cronjobs.assert_called_once()
 
 
-def test_get_secrets_options():
-    pass
+@patch("bodywork.cli.cli.update_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_update_cronjob_options(
+    mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock
+):
+    _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
+    mock_update_workflow_cronjob.assert_called_once()
 
 
-def test_update_secrets_options():
-    pass
+@patch("bodywork.cli.cli.delete_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_delete_cronjob_options(
+    mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock
+):
+    _delete_cronjob("nightly")
+    mock_delete_workflow_cronjob.assert_called_once()
+
+
+@patch("bodywork.cli.cli.create_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_create_secrets_options(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_create_secret: MagicMock
+):
+    _create_secret("foo", "prod", ["bad-secret-data"])
+    mock_print_warn.assert_called_once()
+
+    _create_secret("foo", "prod", ["FOO=BAR"])
+    mock_create_secret.assert_called_once()
+
+
+@patch("bodywork.cli.cli.display_secrets")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_get_secrets_options(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_display_secrets: MagicMock
+):
+    _get_secret(name="foo", group=None)
+    mock_print_warn.assert_called_once()
+
+    _get_secret()
+    mock_display_secrets.assert_called_once()
+
+    mock_display_secrets.reset_mock()
+    mock_display_secrets.reset_mock()
+    _get_secret(name="foo", group="prod")
+    mock_display_secrets.assert_called_once()
+
+    mock_display_secrets.reset_mock()
+    _get_secret(name=None, group="prod")
+    mock_display_secrets.assert_called_once()
+
+
+@patch("bodywork.cli.cli.update_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_update_secrets_options(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_update_secret: MagicMock
+):
+    _update_secret("foo", "prod", ["bad-secret-data"])
+    mock_print_warn.assert_called_once()
+
+    _update_secret("foo", "prod", ["FOO=BAR"])
+    mock_update_secret.assert_called_once()
+
+
+@patch("bodywork.cli.cli.delete_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_delete_secrets_options(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_delete_secret: MagicMock
+):
+    _delete_secret(name="foo", group=None)
+    mock_print_warn.assert_called_once()
+
+    _delete_secret(name="foo", group="prod")
+    mock_delete_secret.assert_called_once()
