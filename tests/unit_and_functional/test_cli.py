@@ -297,7 +297,7 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
-def test_create_deployments_options():
+def test_create_deployments():
     pass
 
 
@@ -306,7 +306,7 @@ def test_create_deployments_options():
 @patch("bodywork.cli.cli.display_deployments")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
-def test_get_deployments_options(
+def test_get_deployments(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_display_deployment: MagicMock,
@@ -326,14 +326,14 @@ def test_get_deployments_options(
     mock_display_deployment.assert_called_once()
 
 
-def test_update_deployments_options():
+def test_update_deployments():
     pass
 
 
 @patch("bodywork.cli.cli.delete_workflow_job")
 @patch("bodywork.cli.cli.delete_deployment")
 @patch("bodywork.cli.cli.sys")
-def test_delete_deployments_options(
+def test_delete_deployments(
     mock_sys: MagicMock,
     mock_delete_deployments: MagicMock,
     mock_delete_workflow_job: MagicMock,
@@ -349,7 +349,7 @@ def test_delete_deployments_options(
 @patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
 @patch("bodywork.cli.cli.create_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_create_cronjob_options(
+def test_create_cronjob(
     mock_sys: MagicMock,
     mock_create_workflow_cronjob: MagicMock,
     mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
@@ -373,7 +373,7 @@ def test_create_cronjob_options(
 @patch("bodywork.cli.cli.display_workflow_job_history")
 @patch("bodywork.cli.cli.display_cronjobs")
 @patch("bodywork.cli.cli.sys")
-def test_get_cronjob_options(
+def test_get_cronjob(
     mock_sys: MagicMock,
     mock_display_cronjobs: MagicMock,
     mock_display_workflow_job_history: MagicMock,
@@ -395,7 +395,7 @@ def test_get_cronjob_options(
 
 @patch("bodywork.cli.cli.update_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_update_cronjob_options(
+def test_update_cronjob(
     mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock
 ):
     _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
@@ -404,7 +404,7 @@ def test_update_cronjob_options(
 
 @patch("bodywork.cli.cli.delete_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_delete_cronjob_options(
+def test_delete_cronjob(
     mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock
 ):
     _delete_cronjob("nightly")
@@ -414,7 +414,7 @@ def test_delete_cronjob_options(
 @patch("bodywork.cli.cli.create_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
-def test_create_secrets_options(
+def test_create_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_create_secret: MagicMock
@@ -429,7 +429,7 @@ def test_create_secrets_options(
 @patch("bodywork.cli.cli.display_secrets")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
-def test_get_secrets_options(
+def test_get_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_display_secrets: MagicMock
@@ -453,7 +453,7 @@ def test_get_secrets_options(
 @patch("bodywork.cli.cli.update_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
-def test_update_secrets_options(
+def test_update_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_update_secret: MagicMock
@@ -468,7 +468,7 @@ def test_update_secrets_options(
 @patch("bodywork.cli.cli.delete_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
-def test_delete_secrets_options(
+def test_delete_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_delete_secret: MagicMock
