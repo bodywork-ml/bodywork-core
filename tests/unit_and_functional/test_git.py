@@ -19,7 +19,7 @@ Tests for Git repository interaction functions.
 """
 import os
 from pytest import raises
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from subprocess import CalledProcessError
 from pathlib import Path
 
@@ -129,7 +129,6 @@ def test_get_git_commit_hash_throws_bodyworkgiterror_when_invalid_path(
 
 @patch("bodywork.git.run")
 @patch("bodywork.git.get_ssh_public_key_from_domain")
-@patch("bodywork.git.Path.write_text")
 @patch("bodywork.git.Path.touch")
 @patch("bodywork.git.Path.mkdir")
 @patch("bodywork.git.os")
@@ -137,20 +136,20 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
     mock_os: MagicMock,
     mock_mkdir: MagicMock,
     mock_touch: MagicMock,
-    mock_write: MagicMock,
     mock_get_ssh: MagicMock,
-        mock_run:MagicMock,
+    mock_run: MagicMock,
 ):
     mock_os.environ = {SSH_PRIVATE_KEY_ENV_VAR: "MY_PRIVATE_KEY"}
     mock_get_ssh.return_value = "fingerprint"
     try:
         with patch.object(Path, "exists") as mock_exists:
             mock_exists.return_value = False
+            with patch.object(Path, 'open', mock_open()) as m:
+                setup_ssh_for_git_host("github.com")
 
-            setup_ssh_for_git_host("github.com")
-
-            mock_write.assert_any_call("MY_PRIVATE_KEY\n")
+            handle = m()
+            handle.write.assert_any_call("MY_PRIVATE_KEY\n")
             mock_get_ssh.assert_called_with("github.com")
-            mock_write.assert_any_call("fingerprint")
+            handle.write.assert_any_call("fingerprint")
     except Exception:
         assert False

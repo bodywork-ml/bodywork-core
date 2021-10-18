@@ -147,7 +147,8 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
-            private_key.write_text(key)
+            with Path(private_key).open(mode='w', newline='\n') as file_handle:
+                file_handle.write(key)
             os.environ[GIT_SSH_COMMAND] = (
                 f"ssh -i '{private_key}'"
                 f" -o IdentitiesOnly=yes"

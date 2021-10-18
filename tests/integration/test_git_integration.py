@@ -17,6 +17,7 @@
 """
 Integration tests for interactions with hosted Git repositories.
 """
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -28,9 +29,15 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     github_repo_connection_string: str,
     cloned_project_repo_location: Path,
     set_github_ssh_private_key_env_var: None,
+    bodywork_output_dir: Path,
 ):
     try:
-        download_project_code_from_repo(github_repo_connection_string)
+        test_ssh_dir = f"{bodywork_output_dir}/.ssh"
+        os.mkdir(test_ssh_dir)
+
+        download_project_code_from_repo(
+            github_repo_connection_string, ssh_key_path=f"{test_ssh_dir}/id_bodywork"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -41,9 +48,15 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
     gitlab_repo_connection_string: str,
     cloned_project_repo_location: Path,
     set_git_ssh_private_key_env_var: None,
+    bodywork_output_dir: Path,
 ):
     try:
-        download_project_code_from_repo(gitlab_repo_connection_string)
+        test_ssh_dir = f"{bodywork_output_dir}/.ssh"
+        os.mkdir(test_ssh_dir)
+
+        download_project_code_from_repo(
+            gitlab_repo_connection_string, ssh_key_path=f"{test_ssh_dir}/id_bodywork"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -54,9 +67,15 @@ def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
     bitbucket_repo_connection_string: str,
     cloned_project_repo_location: Path,
     set_git_ssh_private_key_env_var: None,
+    bodywork_output_dir: Path,
 ):
     try:
-        download_project_code_from_repo(bitbucket_repo_connection_string)
+        test_ssh_dir = f"{bodywork_output_dir}/.ssh"
+        os.mkdir(test_ssh_dir)
+
+        download_project_code_from_repo(
+            bitbucket_repo_connection_string, ssh_key_path=f"{test_ssh_dir}/id_bodywork"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
@@ -67,9 +86,15 @@ def test_that_git_project_repo_can_be_cloned_from_azure_using_ssh(
     azure_repo_connection_string: str,
     cloned_project_repo_location: Path,
     set_git_ssh_private_key_env_var: None,
+    bodywork_output_dir: Path,
 ):
     try:
-        download_project_code_from_repo(azure_repo_connection_string)
+        test_ssh_dir = f"{bodywork_output_dir}/.ssh"
+        os.mkdir(test_ssh_dir)
+
+        download_project_code_from_repo(
+            azure_repo_connection_string, ssh_key_path=f"{test_ssh_dir}/id_bodywork"
+        )
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False
