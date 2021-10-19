@@ -156,9 +156,10 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
         assert False
 
 
+@patch("bodywork.git.known_hosts_contains_domain_key")
 @patch("bodywork.git.Path.exists")
 @patch("bodywork.git.run")
-def test_use_ssh_key_from_file(mock_run: MagicMock, mock_exists: MagicMock):
+def test_use_ssh_key_from_file(mock_run: MagicMock, mock_exists: MagicMock, mock_known_hosts: MagicMock):
 
     download_project_code_from_repo("git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key")
 
