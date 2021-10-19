@@ -18,6 +18,8 @@
 Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
+import stat
+from shutil import rmtree
 from pathlib import Path
 from random import randint
 from typing import cast
@@ -116,6 +118,26 @@ def set_git_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
+def github_ssh_private_key_file(bodywork_output_dir: Path) -> str:
+    try:
+        private_key = Path.home() / ".ssh/id_rsa"
+        if not private_key.exists():
+            private_key = Path.home() / ".ssh/id_ed25519"
+        if not private_key.exists():
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        os.mkdir(bodywork_output_dir)
+        filepath = f"{bodywork_output_dir}/id_bodywork"
+        with Path(filepath).open(mode='w', newline='\n') as file_handle:
+            file_handle.write(private_key.read_text())
+        yield filepath
+    except Exception as e:
+        raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
+    finally:
+        if bodywork_output_dir.exists():
+            rmtree(bodywork_output_dir, onerror=remove_readonly)
+
+
+@fixture(scope="function")
 def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
@@ -198,3 +220,19 @@ def add_secrets(request: FixtureRequest) -> None:
         )
 
     request.addfinalizer(delete_secrets)
+
+
+def remove_readonly(func, path, exc_info):
+    """Error handler for ``shutil.rmtree``.
+
+    If the error is due to an access error (read only file) it attempts to add write
+    permission and then retries. If the error is for another reason it re-raises the
+    error. This is primarily to fix Windows OS access issues.
+
+    Usage: ``shutil.rmtree(path, onerror=remove_readonly)``
+    """
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        raise Exception

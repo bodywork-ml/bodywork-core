@@ -127,38 +127,42 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     GIT_SSH_COMMAND environment variable.
 
     :param hostname: Hostname to SSH to.
+    :param ssh_key_path: SSH key file to use.
     """
     ssh_dir = Path.home() / SSH_DIR_NAME
-    if ssh_key_path:
-        private_key = Path(ssh_key_path)
-    else:
-        private_key = ssh_dir / DEFAULT_SSH_FILE
-    if not private_key.exists():
-        if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            msg = (
-                f"failed to setup SSH for {hostname} - cannot find SSH key in "
-                f"{private_key} file or in {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
-            )
-            raise KeyError(msg)
+    if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
+        _log.info("Using SSH key from environment variable.")
         try:
-            _log.info("Using SSH key from environment variable.")
+            private_key = ssh_dir / DEFAULT_SSH_FILE
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
-            private_key.touch(0o700, exist_ok=False)
+            private_key.touch(0o700, exist_ok=True)
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
             with Path(private_key).open(mode='w', newline='\n') as file_handle:
                 file_handle.write(key)
-            os.environ[GIT_SSH_COMMAND] = (
-                f"ssh -i '{private_key}'"
-                f" -o IdentitiesOnly=yes"
-            )
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
                 f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable."
             ) from e
+    elif ssh_key_path:
+        private_key = Path(ssh_key_path)
+        if not private_key.exists():
+            msg = f"failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"    # noqa
+            raise KeyError(msg)
+    else:
+        msg = f"failed to setup SSH for {hostname} - cannot find SSH keys or {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
+        raise KeyError(msg)
 
+    _configure_known_hosts(hostname, ssh_dir)
+    os.environ[GIT_SSH_COMMAND] = (
+        f"ssh -i '{private_key}'"
+        f" -o IdentitiesOnly=yes"
+    )
+
+
+def _configure_known_hosts(hostname, ssh_dir):
     try:
         known_hosts = ssh_dir / "known_hosts"
         if not known_hosts.exists():

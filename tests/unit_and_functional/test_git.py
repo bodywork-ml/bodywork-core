@@ -27,6 +27,7 @@ from bodywork.exceptions import BodyworkGitError
 from bodywork.constants import (
     SSH_PRIVATE_KEY_ENV_VAR,
     DEFAULT_PROJECT_DIR,
+    GIT_SSH_COMMAND,
 )
 from bodywork.git import (
     ConnectionProtocol,
@@ -91,7 +92,7 @@ def test_setup_ssh_for_github_raises_exception_on_known_hosts_file_exception(
         RuntimeError,
         match=f"Error updating known hosts with public key from {hostname}",
     ):
-        setup_ssh_for_git_host(hostname)
+        setup_ssh_for_git_host(hostname, "test_file")
 
 
 @patch("bodywork.git.run")
@@ -153,3 +154,12 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
             handle.write.assert_any_call("fingerprint")
     except Exception:
         assert False
+
+
+@patch("bodywork.git.Path.exists")
+@patch("bodywork.git.run")
+def test_use_ssh_key_from_file(mock_run: MagicMock, mock_exists: MagicMock):
+
+    download_project_code_from_repo("git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key")
+
+    assert "SSH_key" in os.environ.get(GIT_SSH_COMMAND)

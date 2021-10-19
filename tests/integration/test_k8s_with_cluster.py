@@ -459,6 +459,40 @@ def test_cli_cronjob_handler_crud():
         )
 
 
+def test_deployment_with_ssh_github_connectivity_from_file(
+    docker_image: str,
+    github_ssh_private_key_file: str,
+):
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
+                f"--bodywork-docker-image={docker_image}",
+                f"--ssh={github_ssh_private_key_file}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
+        expected_output_2 = "Deployment successful"
+
+        assert expected_output_1 in process_one.stdout
+        assert expected_output_2 in process_one.stdout
+        assert process_one.returncode == 0
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        if namespace_exists("bodywork-test-batch-job-project"):
+            delete_namespace("bodywork-test-batch-job-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
     try:
@@ -581,3 +615,29 @@ def test_remote_deployment_with_ssh_github_connectivity(
         if namespace_exists("bodywork-test-batch-job-project"):
             delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_deployment_with_ssh(docker_image: str, set_github_ssh_private_key_env_var: None,
+):
+    from bodywork.cli.cli import deployment
+    from argparse import Namespace
+    try:
+
+        args = Namespace(
+            command="create",
+            name="test_deployment_with_ssh",
+            async_workflow=False,
+            git_url="git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+            git_branch="master",
+            retries=2,
+            namespace=None,
+            service=None,
+            bodywork_docker_image=docker_image,
+            ssh_key_path=f"{Path.home() / '.ssh/id_bodywork'}",
+            group=None
+        )
+
+        deployment(args)
+
+    except Exception:
+        assert False
