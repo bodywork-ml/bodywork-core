@@ -30,7 +30,9 @@ from _pytest.capture import CaptureFixture
 from bodywork.cli.cli import (
     handle_k8s_exceptions,
     _configure_cluster,
+    _create_deployment,
     _get_deployment,
+    _update_deployment,
     _delete_deployment,
     _create_secret,
     _get_secret,
@@ -297,8 +299,39 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
-def test_create_deployments():
-    pass
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.run_workflow")
+@patch("bodywork.cli.cli.create_workflow_job")
+@patch("bodywork.cli.cli.sys")
+def test_create_deployments(
+    mock_sys: MagicMock,
+    mock_create_workflow_job: MagicMock,
+    mock_run_workflow: MagicMock,
+    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
+    mock_is_namespace_available_for_bodywork: MagicMock,
+):
+    mock_is_namespace_available_for_bodywork.return_value = False
+    _create_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _create_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _create_deployment("git-url", "git-branch", True)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_not_called()
+    mock_create_workflow_job.assert_called_once()
 
 
 @patch("bodywork.cli.cli.display_workflow_job_history")
@@ -326,8 +359,39 @@ def test_get_deployments(
     mock_display_deployment.assert_called_once()
 
 
-def test_update_deployments():
-    pass
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.run_workflow")
+@patch("bodywork.cli.cli.create_workflow_job")
+@patch("bodywork.cli.cli.sys")
+def test_update_deployments(
+    mock_sys: MagicMock,
+    mock_create_workflow_job: MagicMock,
+    mock_run_workflow: MagicMock,
+    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
+    mock_is_namespace_available_for_bodywork: MagicMock,
+):
+    mock_is_namespace_available_for_bodywork.return_value = False
+    _update_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _update_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _update_deployment("git-url", "git-branch", True)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_not_called()
+    mock_create_workflow_job.assert_called_once()
 
 
 @patch("bodywork.cli.cli.delete_workflow_job")

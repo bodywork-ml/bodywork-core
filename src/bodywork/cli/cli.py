@@ -188,13 +188,6 @@ def _create_deployment(
             sys.exit(0)
     else:
         print_info("Using asynchronous workflow controller.")
-        print_warn(
-            "Cluster has not been configured for Bodywork - "
-            "running 'bodywork configure-cluster'."
-        )
-        setup_namespace_with_service_accounts_and_roles(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-        )
         async_deployment_job_name = make_valid_k8s_name(
             f"{git_url}.{git_branch}.{datetime.now().isoformat(timespec='seconds')}"
         )
@@ -234,13 +227,13 @@ def _get_deployment(
 @update.command("deployment")
 @handle_k8s_exceptions
 def _update_deployment(
-    name: str = Argument(None),
-    service_name: Optional[str] = Argument(None),
-    logs: bool = Option(False),
-    async_job_history: bool = Option(False, "--async"),
-    namespace: Optional[str] = Option(False)
+    git_url: str = Argument(...),
+    git_branch: str = Argument(...),
+    asynchronous: bool = Option(False, "--async"),
+    image: Optional[str] = Option(None),
+    retries: int = Option(1),
 ):
-    pass
+    _create_deployment(git_url, git_branch, asynchronous, image, retries)
 
 
 @delete.command("deployment")
