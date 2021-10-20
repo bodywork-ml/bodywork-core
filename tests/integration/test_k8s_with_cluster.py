@@ -615,29 +615,3 @@ def test_remote_deployment_with_ssh_github_connectivity(
         if namespace_exists("bodywork-test-batch-job-project"):
             delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
-def test_deployment_with_ssh(docker_image: str, set_github_ssh_private_key_env_var: None,
-):
-    from bodywork.cli.cli import deployment
-    from argparse import Namespace
-    try:
-
-        args = Namespace(
-            command="create",
-            name="test_deployment_with_ssh",
-            async_workflow=False,
-            git_url="git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-            git_branch="master",
-            retries=2,
-            namespace=None,
-            service=None,
-            bodywork_docker_image=docker_image,
-            ssh_key_path=f"{Path.home() / '.ssh/id_bodywork'}",
-            group=None
-        )
-
-        deployment(args)
-
-    except Exception:
-        assert False
