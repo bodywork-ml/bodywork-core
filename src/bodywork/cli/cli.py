@@ -246,10 +246,13 @@ def _update_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
+    asynchronous_job_name: str = Option("", "--async-job-name"),
     image: Optional[str] = Option(None, "--bodywork-container-image"),
     retries: int = Option(1),
 ):
-    _create_deployment(git_url, git_branch, asynchronous, image, retries)
+    _create_deployment(
+        git_url, git_branch, asynchronous, asynchronous_job_name, image, retries
+    )
 
 
 @delete.command("deployment")

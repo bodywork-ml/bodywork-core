@@ -166,8 +166,8 @@ def setup_workflow_service_accounts(namespace: str) -> None:
                 ),
                 k8s.V1PolicyRule(
                     api_groups=["networking.k8s.io"],
-                    resources=["ingresses"],
-                    verbs=["*"],  # noqa
+                    resources=["ingress"],
+                    verbs=["*"],
                 ),
             ],
         )
