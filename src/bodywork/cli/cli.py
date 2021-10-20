@@ -65,10 +65,18 @@ delete = Typer()
 cli_app.add_typer(delete, name="delete")
 
 
-try:
-    load_kubernetes_config()
-except Exception as e:
-    print_warn(f"Could not authenticate using the active Kubernetes context. \n--> {e}")
+def k8s_auth(func: Callable[..., None]) -> Callable[..., None]:
+    """Decorator for handling k8s authentication for CLI commands.
+
+    :param func: The inner function to wrap with k8s exception handling.
+    :return: The original function wrapped by a function that handles
+        k8s API exceptions.
+    """
+    try:
+        load_kubernetes_config()
+    except Exception as e:
+        print_warn(f"Could not authenticate with active Kubernetes context. \n--> {e}")
+    return func
 
 
 def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
@@ -136,13 +144,13 @@ def _version():
 
 @cli_app.command("configure-cluster")
 @handle_k8s_exceptions
+@k8s_auth
 def _configure_cluster():
     setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
     sys.exit(0)
 
 
 @cli_app.command("stage", hidden=True)
-@handle_k8s_exceptions
 def _stage(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
@@ -156,7 +164,6 @@ def _stage(
 
 
 @cli_app.command("debug", hidden=True)
-@handle_k8s_exceptions
 def _debug(seconds: int = Argument(600)) -> None:
     print_info(f"sleeping for {seconds}s")
     sleep(seconds)
@@ -165,6 +172,7 @@ def _debug(seconds: int = Argument(600)) -> None:
 
 @create.command("deployment")
 @handle_k8s_exceptions
+@k8s_auth
 def _create_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
@@ -205,6 +213,7 @@ def _create_deployment(
 @get.command("deployment")
 @get.command("deployments")
 @handle_k8s_exceptions
+@k8s_auth
 def _get_deployment(
     name: str = Argument(None),
     service_name: Optional[str] = Argument(None),
@@ -226,6 +235,7 @@ def _get_deployment(
 
 @update.command("deployment")
 @handle_k8s_exceptions
+@k8s_auth
 def _update_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
@@ -238,6 +248,7 @@ def _update_deployment(
 
 @delete.command("deployment")
 @handle_k8s_exceptions
+@k8s_auth
 def _delete_deployment(name: str = Argument(...), async_job: bool = Option(False)):
     if async_job:
         delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
@@ -248,6 +259,7 @@ def _delete_deployment(name: str = Argument(...), async_job: bool = Option(False
 
 @create.command("cronjob")
 @handle_k8s_exceptions
+@k8s_auth
 def _create_cronjob(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
@@ -279,6 +291,7 @@ def _create_cronjob(
 @get.command("cronjob")
 @get.command("cronjobs")
 @handle_k8s_exceptions
+@k8s_auth
 def _get_cronjob(
     name: Optional[str] = Argument(None),
     history: bool = Option(False),
@@ -298,6 +311,7 @@ def _get_cronjob(
 
 @update.command("cronjob")
 @handle_k8s_exceptions
+@k8s_auth
 def _update_cronjob(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
@@ -320,6 +334,7 @@ def _update_cronjob(
 
 @delete.command("cronjob")
 @handle_k8s_exceptions
+@k8s_auth
 def _delete_cronjob(name: str = Argument(...)):
     delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     sys.exit(0)
@@ -327,6 +342,7 @@ def _delete_cronjob(name: str = Argument(...)):
 
 @create.command("secret")
 @handle_k8s_exceptions
+@k8s_auth
 def _create_secret(
     name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
 ):
@@ -347,6 +363,7 @@ def _create_secret(
 @get.command("secret")
 @get.command("secrets")
 @handle_k8s_exceptions
+@k8s_auth
 def _get_secret(
     name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
 ):
@@ -364,6 +381,7 @@ def _get_secret(
 
 @update.command("secret")
 @handle_k8s_exceptions
+@k8s_auth
 def _update_secret(
     name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
 ):
@@ -383,6 +401,7 @@ def _update_secret(
 
 @delete.command("secret")
 @handle_k8s_exceptions
+@k8s_auth
 def _delete_secret(name: str = Argument(...), group: str = Option(...)):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")

@@ -28,6 +28,7 @@ import kubernetes
 from _pytest.capture import CaptureFixture
 
 from bodywork.cli.cli import (
+    k8s_auth,
     handle_k8s_exceptions,
     _configure_cluster,
     _create_deployment,
@@ -45,6 +46,17 @@ from bodywork.cli.cli import (
 
 )
 from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.print_warn")
+def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
+    k8s_auth(lambda e: None)
+    mock_load_k8s_config.assert_called_once()
+
+    mock_load_k8s_config.side_effect = Exception()
+    k8s_auth(lambda e: None)
+    mock_print_warn.assert_called_once()
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
