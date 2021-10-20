@@ -177,7 +177,7 @@ def _create_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
-    image: Optional[str] = Option(None),
+    bodywork_docker_image: Optional[str] = Option(None, "--image"),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
@@ -191,7 +191,9 @@ def _create_deployment(
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
-            run_workflow(git_url, git_branch, docker_image_override=image)
+            run_workflow(
+                git_url, git_branch, docker_image_override=bodywork_docker_image
+            )
         except BodyworkWorkflowExecutionError:
             sys.exit(0)
     else:
@@ -205,7 +207,7 @@ def _create_deployment(
             git_url,
             git_branch,
             retries,
-            image if image else BODYWORK_DOCKER_IMAGE,
+            bodywork_docker_image if bodywork_docker_image else BODYWORK_DOCKER_IMAGE,
         )
         sys.exit(0)
 
@@ -219,7 +221,7 @@ def _get_deployment(
     service_name: Optional[str] = Argument(None),
     logs: bool = Option(False),
     async_job_history: bool = Option(False, "--async"),
-    namespace: Optional[str] = Option(False)
+    namespace: Optional[str] = Option(None)
 ):
     if logs and not async_job_history:
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
@@ -240,7 +242,7 @@ def _update_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
-    image: Optional[str] = Option(None),
+    bodywork_docker_image: Optional[str] = Option(None, "--image"),
     retries: int = Option(1),
 ):
     _create_deployment(git_url, git_branch, asynchronous, image, retries)
