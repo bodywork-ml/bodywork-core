@@ -74,15 +74,10 @@ def configure_workflow_job(
         env=vcs_env_vars,
         command=[
             "bodywork",
-            "deployment",
             "create",
+            "deployment",
         ],
-        args=[
-            "--git-url",
-            project_repo_url,
-            "--git-branch",
-            project_repo_branch,
-        ],
+        args=[project_repo_url, project_repo_branch],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -233,15 +228,10 @@ def update_workflow_cronjob(
                     name="bodywork",
                     command=[
                         "bodywork",
-                        "deployment",
                         "create",
+                        "deployment",
                     ],
-                    args=[
-                        "--git-url",
-                        project_repo_url,
-                        "--git-branch",
-                        project_repo_branch,
-                    ],
+                    args=[project_repo_url, project_repo_branch],
                 )
             ],
         )
@@ -293,10 +283,10 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
             "last_scheduled_time": cronjob.status.last_schedule_time,
             "retries": cronjob.spec.job_template.spec.backoff_limit,
             "git_url": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[0]
             ),
             "git_branch": (
-                cronjob.spec.job_template.spec.template.spec.containers[0].args[3]
+                cronjob.spec.job_template.spec.template.spec.containers[0].args[1]
             ),
         }
         for cronjob in cronjobs.items
