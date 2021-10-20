@@ -232,7 +232,7 @@ def display_workflow_job_logs(namespace: str, job_name: str) -> None:
         print_warn(f"Cannot find pod for workflow job={job_name}.")
         return None
     workflow_job_logs = k8s.get_pod_logs(namespace, workflow_job_pod_name)
-    print_pod_logs(workflow_job_logs, f"logs for cronjob execution {job_name}")
+    print_pod_logs(workflow_job_logs, f"logs for workflow execution = {job_name}")
 
 
 def _is_existing_workflow_job(namespace: str, job_name: str) -> bool:
