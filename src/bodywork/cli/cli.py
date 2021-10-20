@@ -86,6 +86,7 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
     :return: The original function wrapped by a function that handles
         k8s API exceptions.
     """
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> None:
         try:
@@ -109,13 +110,13 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
                 f"Cannot load authentication credentials from kubeconfig file when "
                 f"calling cli.{func.__name__}: {e}"
             )
+
     return wrapper
 
 
 @cli_app.command("validate")
 def _validate_config(
-    file: str = Option("bodywork.yaml"),
-    check_files: bool = Option(False)
+    file: str = Option("bodywork.yaml"), check_files: bool = Option(False)
 ):
     file_path = Path(file)
     try:
@@ -154,7 +155,7 @@ def _configure_cluster():
 def _stage(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
-    stage_name: str = Argument(...)
+    stage_name: str = Argument(...),
 ):
     try:
         run_stage(stage_name, git_url, git_branch)
@@ -192,9 +193,7 @@ def _create_deployment(
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
-            run_workflow(
-                git_url, git_branch, docker_image_override=image
-            )
+            run_workflow(git_url, git_branch, docker_image_override=image)
         except BodyworkWorkflowExecutionError:
             sys.exit(1)
     else:
@@ -226,15 +225,14 @@ def _get_deployment(
     service_name: Optional[str] = Argument(None),
     asynchronous: bool = Option(False, "--async"),
     logs: str = Option(""),
-    namespace: Optional[str] = Option(None)
+    namespace: Optional[str] = Option(None),
 ):
     if asynchronous:
         if logs:
             display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, logs)
         else:
             display_workflow_job_history(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
-                "async-workflow"
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, "async-workflow"
             )
     else:
         display_deployments(namespace, name, service_name)
@@ -276,16 +274,8 @@ def _create_cronjob(
     schedule: str = Option(...),
     name: str = Option(...),
     retries: int = Option(1),
-    history_limit: int = Option(1)
+    history_limit: int = Option(1),
 ):
-    if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
-        print_warn(
-            "Cluster has not been configured for Bodywork - "
-            "running 'bodywork configure-cluster'."
-        )
-        setup_namespace_with_service_accounts_and_roles(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
-        )
     create_workflow_cronjob(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
         schedule,
@@ -305,7 +295,7 @@ def _create_cronjob(
 def _get_cronjob(
     name: Optional[str] = Argument(None),
     history: bool = Option(False),
-    logs: str = Option("")
+    logs: str = Option(""),
 ):
     if name and history and not logs:
         display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
@@ -328,7 +318,7 @@ def _update_cronjob(
     schedule: str = Option(...),
     name: str = Option(...),
     retries: int = Option(1),
-    history_limit: int = Option(1)
+    history_limit: int = Option(1),
 ):
     update_workflow_cronjob(
         BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,

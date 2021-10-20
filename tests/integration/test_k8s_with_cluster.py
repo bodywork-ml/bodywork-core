@@ -221,7 +221,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_0 = "Deleted k8s job for stage = stage-1"  # noqa
+        expected_output_0 = "Deleted k8s job for stage = stage-1"
         assert expected_output_0 in process_one.stdout
         assert process_one.returncode == 0
 
@@ -262,7 +262,7 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
                 "bodywork",
                 "create",
                 "deployment",
-                "https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
+                "https://github.com/bodywork-ml/bodywork-failing-test-project",
                 "master",
                 f"--bodywork-container-image={docker_image}",
             ],
@@ -416,7 +416,7 @@ def test_cli_cronjob_handler_crud():
         assert (
             "https://github.com/bodywork-ml/bodywork-test-project"
             in process_three.stdout
-        )  # noqa
+        )
         assert "main" in process_three.stdout
         assert process_three.returncode == 0
 
@@ -465,7 +465,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "master",
                 f"--bodywork-container-image={docker_image}",
                 "--async",
-                f"--async-job-name={job_name}"
+                f"--async-job-name={job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -477,12 +477,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         sleep(20)
 
         process_two = run(
-            [
-                "bodywork",
-                "get",
-                "deployments",
-                "--async"
-            ],
+            ["bodywork", "get", "deployments", "--async"],
             encoding="utf-8",
             capture_output=True,
         )

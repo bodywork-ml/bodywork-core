@@ -43,7 +43,6 @@ from bodywork.cli.cli import (
     _get_cronjob,
     _update_cronjob,
     _delete_cronjob,
-
 )
 from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
 
@@ -356,7 +355,7 @@ def test_get_deployments(
     mock_print_warn: MagicMock,
     mock_display_deployment: MagicMock,
     mock_display_workflow_job_logs: MagicMock,
-    mock_display_workflow_job_history: MagicMock
+    mock_display_workflow_job_history: MagicMock,
 ):
     _get_deployment(asynchronous=True, logs="")
     mock_display_workflow_job_history.assert_called_once()
@@ -418,26 +417,10 @@ def test_delete_deployments(
     mock_delete_workflow_job.assert_called_once()
 
 
-@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
-@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
 @patch("bodywork.cli.cli.create_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_create_cronjob(
-    mock_sys: MagicMock,
-    mock_create_workflow_cronjob: MagicMock,
-    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
-    mock_is_namespace_available_for_bodywork: MagicMock,
-):
-    mock_is_namespace_available_for_bodywork.return_value = False
+def test_create_cronjob(mock_sys: MagicMock, mock_create_workflow_cronjob: MagicMock):
     _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
-    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
-    mock_create_workflow_cronjob.assert_called_once()
-
-    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
-    mock_create_workflow_cronjob.reset_mock()
-    mock_is_namespace_available_for_bodywork.return_value = True
-    _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
-    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
     mock_create_workflow_cronjob.assert_called_once()
 
 
@@ -468,18 +451,14 @@ def test_get_cronjob(
 
 @patch("bodywork.cli.cli.update_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_update_cronjob(
-    mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock
-):
+def test_update_cronjob(mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock):
     _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_update_workflow_cronjob.assert_called_once()
 
 
 @patch("bodywork.cli.cli.delete_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_delete_cronjob(
-    mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock
-):
+def test_delete_cronjob(mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock):
     _delete_cronjob("nightly")
     mock_delete_workflow_cronjob.assert_called_once()
 
@@ -488,9 +467,7 @@ def test_delete_cronjob(
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_create_secrets(
-    mock_sys: MagicMock,
-    mock_print_warn: MagicMock,
-    mock_create_secret: MagicMock
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_create_secret: MagicMock
 ):
     _create_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -503,9 +480,7 @@ def test_create_secrets(
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_get_secrets(
-    mock_sys: MagicMock,
-    mock_print_warn: MagicMock,
-    mock_display_secrets: MagicMock
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_display_secrets: MagicMock
 ):
     _get_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
@@ -527,9 +502,7 @@ def test_get_secrets(
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_update_secrets(
-    mock_sys: MagicMock,
-    mock_print_warn: MagicMock,
-    mock_update_secret: MagicMock
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_update_secret: MagicMock
 ):
     _update_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -542,9 +515,7 @@ def test_update_secrets(
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_delete_secrets(
-    mock_sys: MagicMock,
-    mock_print_warn: MagicMock,
-    mock_delete_secret: MagicMock
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock
 ):
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
