@@ -62,7 +62,7 @@ from ..exceptions import (
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
-from ..constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, BODYWORK_DOCKER_IMAGE
+from ..constants import BODYWORK_NAMESPACE, BODYWORK_DOCKER_IMAGE
 from ..k8s import api_exception_msg, load_kubernetes_config
 from ..stage_execution import run_stage
 from bodywork.workflow_execution import run_workflow
@@ -398,15 +398,15 @@ def deployment(args: Namespace) -> None:
         else:
             print_info("Using asynchronous workflow controller.")
             if not is_namespace_available_for_bodywork(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+                BODYWORK_NAMESPACE
             ):
                 print_warn(
-                    f"Namespace = {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} not setup for "
+                    f"Namespace = {BODYWORK_NAMESPACE} not setup for "
                     f"use by Bodywork - run 'bodywork configure-cluster'"
                 )
                 sys.exit(1)
             create_workflow_job(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+                BODYWORK_NAMESPACE,
                 name,
                 git_url,
                 git_branch,
@@ -420,13 +420,13 @@ def deployment(args: Namespace) -> None:
         delete_deployment(name)
     elif command == "logs":
         load_kubernetes_config()
-        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        display_workflow_job_logs(BODYWORK_NAMESPACE, name)
     elif command == "delete_job":
         load_kubernetes_config()
-        delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        delete_workflow_job(BODYWORK_NAMESPACE, name)
     elif command == "job_history":
         load_kubernetes_config()
-        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        display_workflow_job_history(BODYWORK_NAMESPACE, name)
     else:
         load_kubernetes_config()
         display_deployments(namespace, name, service_name)
@@ -473,14 +473,14 @@ def cronjob(args: Namespace) -> None:
 
     load_kubernetes_config()
     if command == "create":
-        if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
+        if not is_namespace_available_for_bodywork(BODYWORK_NAMESPACE):
             print_warn(
-                f"Namespace = {BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} not setup for "
+                f"Namespace = {BODYWORK_NAMESPACE} not setup for "
                 f"use by Bodywork - run 'bodywork configure-cluster'"
             )
             sys.exit(1)
         create_workflow_cronjob(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            BODYWORK_NAMESPACE,
             schedule,
             name,
             git_url,
@@ -492,7 +492,7 @@ def cronjob(args: Namespace) -> None:
         )
     elif command == "update":
         update_workflow_cronjob(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            BODYWORK_NAMESPACE,
             name,
             schedule,
             git_url,
@@ -501,13 +501,13 @@ def cronjob(args: Namespace) -> None:
             history_limit,
         )
     elif command == "delete":
-        delete_workflow_cronjob(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        delete_workflow_cronjob(BODYWORK_NAMESPACE, name)
     elif command == "history":
-        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        display_workflow_job_history(BODYWORK_NAMESPACE, name)
     elif command == "logs":
-        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        display_workflow_job_logs(BODYWORK_NAMESPACE, name)
     else:
-        display_cronjobs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
+        display_cronjobs(BODYWORK_NAMESPACE, name)
     sys.exit(0)
 
 
@@ -546,22 +546,22 @@ def secret(args: Namespace) -> None:
         load_kubernetes_config()
         if command == "create":
             create_secret(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+                BODYWORK_NAMESPACE, group, name, var_names_and_values
             )
         else:
             update_secret(
-                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name, var_names_and_values
+                BODYWORK_NAMESPACE, group, name, var_names_and_values
             )
     elif command == "delete":
         load_kubernetes_config()
-        delete_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, group, name)
+        delete_secret(BODYWORK_NAMESPACE, group, name)
     elif command == "display" and name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
     else:
         load_kubernetes_config()
         display_secrets(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            BODYWORK_NAMESPACE,
             group,
             name,
         )
@@ -627,5 +627,5 @@ def configure_cluster(args: Namespace):
     :param args: Arguments passed to the run command from the CLI.
     """
     load_kubernetes_config()
-    setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     sys.exit(0)

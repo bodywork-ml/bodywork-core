@@ -85,7 +85,7 @@ from .deployments import (
 from .utils import (
     api_exception_msg,
     create_k8s_environment_variables,
-    EnvVars,
+    EnvVar,
 )
 
 
@@ -140,7 +140,7 @@ __all__ = [
     "has_ingress",
     "api_exception_msg",
     "create_k8s_environment_variables",
-    "EnvVars",
+    "EnvVar",
     "replicate_secrets_in_namespace",
     "update_secret",
     "Secret",

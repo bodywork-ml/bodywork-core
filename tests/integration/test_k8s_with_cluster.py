@@ -29,7 +29,7 @@ from pytest import raises, mark
 
 from bodywork.constants import (
     SSH_DIR_NAME,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    BODYWORK_NAMESPACE,
     DEFAULT_SSH_FILE,
 )
 from bodywork.k8s import (
@@ -454,7 +454,7 @@ def test_cli_cronjob_handler_crud():
                 "delete",
                 "cronjobs",
                 "bodywork-test-project",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
 
@@ -551,7 +551,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "delete",
                 "job",
                 f"{job_name}",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
         delete_namespace("bodywork-test-single-service-project")
@@ -609,7 +609,7 @@ def test_remote_deployment_with_ssh_github_connectivity(
                 "delete",
                 "job",
                 f"{job_name}",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
         if namespace_exists("bodywork-test-batch-job-project"):

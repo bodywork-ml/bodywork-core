@@ -27,7 +27,7 @@ from kubernetes import client as k8s
 from .utils import make_valid_k8s_name
 from ..constants import (
     SECRET_GROUP_LABEL,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    BODYWORK_NAMESPACE,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
 )
@@ -95,7 +95,7 @@ def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None
     """
 
     secrets = k8s.CoreV1Api().list_namespaced_secret(
-        namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        namespace=BODYWORK_NAMESPACE,
         label_selector=f"{SECRET_GROUP_LABEL}={secrets_group}",
     )
     for secret in secrets.items:
@@ -234,11 +234,11 @@ def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> None:
     with ssh_key_path.open() as file_handle:
         data = {SSH_PRIVATE_KEY_ENV_VAR: file_handle.read()}
     secret_name = create_complete_secret_name(group, SSH_SECRET_NAME)
-    if secret_exists(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, secret_name):
-        update_secret(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, secret_name, data)
+    if secret_exists(BODYWORK_NAMESPACE, secret_name):
+        update_secret(BODYWORK_NAMESPACE, secret_name, data)
     else:
         create_secret(
-            BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+            BODYWORK_NAMESPACE,
             secret_name,
             group,
             data,

@@ -31,7 +31,7 @@ from subprocess import CalledProcessError, run
 from bodywork.constants import (
     BODYWORK_DOCKERHUB_IMAGE_REPO,
     SSH_PRIVATE_KEY_ENV_VAR,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    BODYWORK_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
@@ -190,7 +190,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "create",
             "secret",
             "generic",
-            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            f"--namespace={BODYWORK_NAMESPACE}",
             "testsecrets-bodywork-test-project-credentials",
             "--from-literal=USERNAME=alex",
             "--from-literal=PASSWORD=alex123",
@@ -202,7 +202,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "kubectl",
             "label",
             "secret",
-            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            f"--namespace={BODYWORK_NAMESPACE}",
             "testsecrets-bodywork-test-project-credentials",
             "group=testsecrets",
         ]
@@ -214,7 +214,7 @@ def add_secrets(request: FixtureRequest) -> None:
                 "kubectl",
                 "delete",
                 "secret",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
                 "testsecrets-bodywork-test-project-credentials",
             ]
         )

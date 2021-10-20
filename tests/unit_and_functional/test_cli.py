@@ -29,7 +29,7 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.cli.cli import deployment, handle_k8s_exceptions
-from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from bodywork.constants import BODYWORK_NAMESPACE
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
@@ -297,7 +297,7 @@ def test_cli_deployment_create_async(
     deployment(args)
 
     mock_create_workflow.assert_called_with(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         args.name,
         args.git_url,
         args.git_branch,
@@ -355,7 +355,7 @@ def test_cli_deployment_logs(
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")
@@ -380,7 +380,7 @@ def test_cli_deployment_delete_job(
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")
@@ -405,7 +405,7 @@ def test_cli_deployment_job_history(
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")

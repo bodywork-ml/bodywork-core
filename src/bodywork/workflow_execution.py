@@ -38,6 +38,8 @@ from .constants import (
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    BODYWORK_NAMESPACE,
+    SSH_SECRET_NAME,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -100,15 +102,25 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
         )
+        secrets_group = config.project.secrets_group
         if ssh_key_path:
-            if not config.project.secrets_group:
-                raise Exception("Please specify Secrets Group in config to use SSH.")
-            k8s.create_ssh_key_secret_from_file(
-                config.project.secrets_group, Path(ssh_key_path)
-            )
+            if not secrets_group:
+                secrets_group = config.project.name
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        if secrets_group:
+            if k8s.secret_exists(
+                BODYWORK_NAMESPACE,
+                k8s.create_complete_secret_name(secrets_group, SSH_SECRET_NAME),
+            ):
+                env_vars.append(k8s.create_secret_env_variable())
+            _copy_secrets_to_target_namespace(namespace, secrets_group)
+        elif k8s.secret_exists(
+            BODYWORK_NAMESPACE,
+            k8s.create_complete_secret_name(config.project.name, SSH_SECRET_NAME),
+        ):
             env_vars.append(k8s.create_secret_env_variable())
-        if config.project.secrets_group:
-            _copy_secrets_to_target_namespace(namespace, config.project.secrets_group)
+            _copy_secrets_to_target_namespace(namespace, config.project.name)
+
         for step in workflow_dag:
             _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
             batch_stages = [
@@ -253,7 +265,7 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
     project_name: str,
-    env_vars: k8s.EnvVars,
+    env_vars: List[k8s.EnvVar],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -312,7 +324,7 @@ def _run_batch_stages(
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
-    env_vars: k8s.EnvVars,
+    env_vars: List[k8s.EnvVar],
     namespace: str,
     repo_branch: str,
     repo_url: str,
