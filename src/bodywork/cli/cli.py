@@ -196,7 +196,7 @@ def _create_deployment(
                 git_url, git_branch, docker_image_override=image
             )
         except BodyworkWorkflowExecutionError:
-            sys.exit(0)
+            sys.exit(1)
     else:
         if not asynchronous_job_name:
             async_deployment_job_name = make_valid_k8s_name(

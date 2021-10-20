@@ -31,6 +31,7 @@ from bodywork.k8s import (
     cluster_role_binding_exists,
     delete_cluster_role_binding,
     delete_namespace,
+    namespace_exists,
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
 )
@@ -131,7 +132,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "bodywork",
                 "get",
                 "deployments",
-                "--name=bodywork-test-project",
+                "bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -227,7 +228,7 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process_two = run(
             [
                 "bodywork",
-                "create",
+                "update",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
                 "master",
@@ -433,7 +434,7 @@ def test_cli_cronjob_handler_crud():
         assert process_four.returncode == 0
 
         process_five = run(
-            ["bodywork", "get", "cronjob", "display"],
+            ["bodywork", "get", "cronjob"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -454,6 +455,7 @@ def test_cli_cronjob_handler_crud():
 def test_deployment_of_remote_workflows(docker_image: str):
     try:
         job_name = "foo"
+
         process_one = run(
             [
                 "bodywork",
@@ -468,8 +470,9 @@ def test_deployment_of_remote_workflows(docker_image: str):
             encoding="utf-8",
             capture_output=True,
         )
+
         assert process_one.returncode == 0
-        assert f"Created workflow-job={job_name}" in process_one.stdout
+        assert f"Created workflow-job=async-workflow-{job_name}" in process_one.stdout
 
         sleep(20)
 
@@ -477,8 +480,8 @@ def test_deployment_of_remote_workflows(docker_image: str):
             [
                 "bodywork",
                 "get",
-                "deployment",
-                job_name
+                "deployments",
+                "--async"
             ],
             encoding="utf-8",
             capture_output=True,
@@ -491,8 +494,8 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "bodywork",
                 "get",
                 "deployment",
-                "bodywork-test-single-service-project",
-                f"--logs={job_name}",
+                "--async",
+                f"--logs=async-workflow-{job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -510,9 +513,10 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "kubectl",
                 "delete",
                 "job",
-                job_name,
+                f"async-workflow-{job_name}",
                 f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
             ]
         )
-        delete_namespace("bodywork-test-single-service-project")
+        if namespace_exists("bodywork-test-single-service-project"):
+            delete_namespace("bodywork-test-single-service-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
