@@ -358,16 +358,13 @@ def test_get_deployments(
     mock_display_workflow_job_logs: MagicMock,
     mock_display_workflow_job_history: MagicMock
 ):
-    _get_deployment(logs=True, async_job_history=False)
+    _get_deployment(asynchronous=True, logs="")
     mock_display_workflow_job_history.assert_called_once()
 
-    _get_deployment(logs=False, async_job_history=True)
+    _get_deployment(asynchronous=True, logs="name-of-async-workflow-job")
     mock_display_workflow_job_logs.assert_called_once()
 
-    _get_deployment(logs=True, async_job_history=True)
-    mock_print_warn.assert_called_once()
-
-    _get_deployment(logs=False, async_job_history=False)
+    _get_deployment(asynchronous=False, logs="")
     mock_display_deployment.assert_called_once()
 
 
@@ -414,10 +411,10 @@ def test_delete_deployments(
     mock_delete_deployments: MagicMock,
     mock_delete_workflow_job: MagicMock,
 ):
-    _delete_deployment("foo", async_job=False)
+    _delete_deployment("foo", asynchronous=False)
     mock_delete_deployments.assert_called_once()
 
-    _delete_deployment("foo", async_job=True)
+    _delete_deployment("foo", asynchronous=True)
     mock_delete_workflow_job.assert_called_once()
 
 

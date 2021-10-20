@@ -59,7 +59,7 @@ get = Typer()
 cli_app.add_typer(get, name="get")
 
 update = Typer()
-cli_app.add_typer(get, name="update")
+cli_app.add_typer(update, name="update")
 
 delete = Typer()
 cli_app.add_typer(delete, name="delete")
@@ -177,7 +177,8 @@ def _create_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
-    bodywork_docker_image: Optional[str] = Option(None, "--image"),
+    asynchronous_job_name: str = Option("", "--async-job-name"),
+    image: Optional[str] = Option(None, "--bodywork-container-image"),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
@@ -192,22 +193,26 @@ def _create_deployment(
         print_info("Using local workflow controller - retries inactive.")
         try:
             run_workflow(
-                git_url, git_branch, docker_image_override=bodywork_docker_image
+                git_url, git_branch, docker_image_override=image
             )
         except BodyworkWorkflowExecutionError:
             sys.exit(0)
     else:
+        if not asynchronous_job_name:
+            async_deployment_job_name = make_valid_k8s_name(
+                f"async-workflow-{git_url}.{git_branch}."
+                f"{datetime.now().isoformat(timespec='seconds')}"
+            )
+        else:
+            async_deployment_job_name = f"async-workflow-{asynchronous_job_name}"
         print_info("Using asynchronous workflow controller.")
-        async_deployment_job_name = make_valid_k8s_name(
-            f"{git_url}.{git_branch}.{datetime.now().isoformat(timespec='seconds')}"
-        )
         create_workflow_job(
             BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
             async_deployment_job_name,
             git_url,
             git_branch,
             retries,
-            bodywork_docker_image if bodywork_docker_image else BODYWORK_DOCKER_IMAGE,
+            image if image else BODYWORK_DOCKER_IMAGE,
         )
         sys.exit(0)
 
@@ -219,17 +224,18 @@ def _create_deployment(
 def _get_deployment(
     name: str = Argument(None),
     service_name: Optional[str] = Argument(None),
-    logs: bool = Option(False),
-    async_job_history: bool = Option(False, "--async"),
+    asynchronous: bool = Option(False, "--async"),
+    logs: str = Option(""),
     namespace: Optional[str] = Option(None)
 ):
-    if logs and not async_job_history:
-        display_workflow_job_history(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    elif not logs and async_job_history:
-        display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
-    elif logs and async_job_history:
-        print_warn("Cannot specify both --logs and --async-deployment-job-history.")
-        sys.exit(1)
+    if asynchronous:
+        if logs:
+            display_workflow_job_logs(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, logs)
+        else:
+            display_workflow_job_history(
+                BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+                "async-workflow"
+            )
     else:
         display_deployments(namespace, name, service_name)
     sys.exit(0)
@@ -242,7 +248,7 @@ def _update_deployment(
     git_url: str = Argument(...),
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
-    bodywork_docker_image: Optional[str] = Option(None, "--image"),
+    image: Optional[str] = Option(None, "--bodywork-container-image"),
     retries: int = Option(1),
 ):
     _create_deployment(git_url, git_branch, asynchronous, image, retries)
@@ -251,8 +257,10 @@ def _update_deployment(
 @delete.command("deployment")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_deployment(name: str = Argument(...), async_job: bool = Option(False)):
-    if async_job:
+def _delete_deployment(
+    name: str = Argument(...), asynchronous: bool = Option(False, "--async")
+):
+    if asynchronous:
         delete_workflow_job(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, name)
     else:
         delete_deployment(name)

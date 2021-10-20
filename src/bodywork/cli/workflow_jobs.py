@@ -214,7 +214,7 @@ def display_workflow_job_history(namespace: str, job_name: str) -> None:
         return None
     workflow_jobs_info = k8s.list_workflow_jobs(namespace, job_name)
     for name, data in workflow_jobs_info.items():
-        print_dict(data, f"cronjob execution = {name}")
+        print_dict(data, f"workflow job = {name}")
 
 
 def display_workflow_job_logs(namespace: str, job_name: str) -> None:
