@@ -504,7 +504,6 @@ def test_run_workflow_adds_ssh_key_env_var_from_file(
         ANY,
         ANY,
         ANY,
-        ANY,
         retries=ANY,
         container_env_vars=[expected_result],
         image=ANY,
@@ -549,7 +548,6 @@ def test_workflow_adds_ssh_secret_if_default_exists(
         ANY,
         ANY,
         ANY,
-        ANY,
         retries=ANY,
         container_env_vars=[expected_result],
         image=ANY,
@@ -589,7 +587,6 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
     run_workflow("https://my_new_project", config=config)
 
     mock_k8s.configure_batch_stage_job.assert_called_with(
-        ANY,
         ANY,
         ANY,
         ANY,
