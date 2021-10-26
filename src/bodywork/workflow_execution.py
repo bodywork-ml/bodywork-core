@@ -136,7 +136,6 @@ def run_workflow(
             if batch_stages:
                 _run_batch_stages(
                     batch_stages,
-                    config.project.name,
                     env_vars,
                     namespace,
                     repo_branch,
