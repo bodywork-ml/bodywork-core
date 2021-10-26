@@ -74,7 +74,7 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
     with raises(
         BodyworkDockerImageError,
-        match=f"Invalid Docker image specified: bodyworkml",
+        match="Invalid Docker image specified: bodyworkml",
     ):
         parse_dockerhub_image_string("bodyworkml-bodywork-stage-runner:latest")
         parse_dockerhub_image_string("bodyworkml/bodywork-core:lat:st")
@@ -180,7 +180,6 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         ANY,
         ANY,
         ANY,
-        ANY,
         retries=ANY,
         container_env_vars=expected_result,
         image=ANY,
@@ -226,7 +225,6 @@ def test_run_workflow_runs_failure_stage_on_failure(
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,
         "on_fail_stage",
-        ANY,
         ANY,
         ANY,
         retries=ANY,
@@ -427,20 +425,20 @@ def test_old_deployments_are_cleaned_up(
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
     project_repo_location: Path,
-    test_service_stage_deployment: Dict[str, Any],
+    service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
-    mock_git_hash.return_value = test_service_stage_deployment[
-        "bodywork-test-project--serve-v2"
+    mock_git_hash.return_value = service_stage_deployment_list[
+        "bodywork-test-project/serve-v2"
     ]["git_commit_hash"]
-    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+    mock_k8s.list_service_stage_deployments.return_value = service_stage_deployment_list
 
     run_workflow("project_repo_url", config=config)
 
     mock_k8s.delete_deployment.assert_called_once_with(
-        "bodywork-test-project", "bodywork-test-project--serve-v1"
+        "bodywork-test-project", "serve-v1"
     )
 
 
@@ -456,12 +454,12 @@ def test_cannot_deploy_different_project_repo_to_same_namespace(
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
     project_repo_location: Path,
-    test_service_stage_deployment: Dict[str, Any],
+    service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
-    mock_k8s.list_service_stage_deployments.return_value = test_service_stage_deployment
+    mock_k8s.list_service_stage_deployments.return_value = service_stage_deployment_list
 
     with raises(
         BodyworkWorkflowExecutionError,

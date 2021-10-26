@@ -24,7 +24,12 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
-from bodywork.stage_execution import _install_python_requirements, run_stage
+from bodywork.stage_execution import (
+    _infer_executable_type,
+    _install_python_requirements,
+    ExecutableType,
+    run_stage,
+)
 
 
 def test_that_requirements_can_be_installed(
@@ -149,3 +154,30 @@ def test_run_stage_failure_raises_exception_for_failed_setup(
 ):
     with raises(BodyworkStageFailure, match="KeyError"):
         run_stage("stage_5", project_repo_connection_string)
+
+
+def test_infer_executable_type_type():
+    assert _infer_executable_type("train_model.ipynb") == ExecutableType.JUPYTER_NB
+    assert _infer_executable_type("train_model.py") == ExecutableType.PY_MODULE
+
+    with raises(ValueError, match=r"cannot execute train_model.exe"):
+        _infer_executable_type("train_model.exe")
+
+
+def test_run_stage_with_jupyter_notebook(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Path,
+):
+    try:
+        run_stage("stage_jupyter", project_repo_connection_string)
+        assert True
+    except Exception:
+        assert False
+
+    try:
+        with open(bodywork_output_dir / "stage_jupyter_test_file.txt") as f:
+            stage_output = f.read()
+        assert stage_output.find("Hello from a Jupyter notebook stage") != -1
+    except FileNotFoundError:
+        assert False

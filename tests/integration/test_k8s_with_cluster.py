@@ -96,22 +96,22 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "bodywork-test-project--stage-3" in process_three.stdout
-        assert "bodywork-test-project--stage-4" in process_three.stdout
+
+        assert "stage-3" in process_three.stdout
+        assert "stage-4" in process_three.stdout
         assert process_three.returncode == 0
 
         stage_3_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-3/v1/predict"
+            f"/stage-3/v1/predict"
         )
-
         response_stage_3 = requests.get(url=stage_3_service_external_url)
         assert response_stage_3.ok
         assert response_stage_3.json()["y"] == "hello_world"
 
         stage_4_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
-            f"/bodywork-test-project--stage-4/v2/predict"
+            f"/stage-4/v2/predict"
         )
         response_stage_4 = requests.get(url=stage_4_service_external_url)
         assert response_stage_4.status_code == 404
@@ -162,7 +162,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 "--git-branch=test-two-services",
             ],
             encoding="utf-8",
@@ -178,7 +178,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 "--git-branch=master",
             ],
             encoding="utf-8",
@@ -187,7 +187,7 @@ def test_services_from_previous_deployments_are_deleted():
         assert process_two.returncode == 0
         assert "Deployment successful" in process_two.stdout
         assert (
-            "Removing service: bodywork-test-single-service-project--stage-2 from previous deployment with git-commit-hash"  # noqa
+            "Removing service: stage-2 from previous deployment with git-commit-hash"
             in process_two.stdout
         )
 
@@ -202,10 +202,8 @@ def test_services_from_previous_deployments_are_deleted():
             capture_output=True,
         )
         assert process_three.returncode == 0
-        assert "bodywork-test-single-service-project--stage-1" in process_three.stdout
-        assert (
-            "bodywork-test-single-service-project--stage-2" not in process_three.stdout
-        )
+        assert "stage-1" in process_three.stdout
+        assert "stage-2" not in process_three.stdout
 
     finally:
         load_kubernetes_config()
@@ -287,6 +285,7 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
     except Exception:
         assert False
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-failing-test-project")
 
 
@@ -326,6 +325,7 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         )
         assert process_two.returncode == 1
     finally:
+        load_kubernetes_config()
         delete_namespace("bodywork-test-project")
 
 
@@ -339,7 +339,7 @@ def test_deployment_with_ssh_github_connectivity(
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
                 f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
@@ -502,7 +502,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "deployment",
                 "create",
                 f"--name={job_name}",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",
+                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
                 f"--bodywork-docker-image={docker_image}",
                 "--async",
             ],

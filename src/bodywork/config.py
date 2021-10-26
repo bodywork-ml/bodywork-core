@@ -298,7 +298,7 @@ class StageConfig:
         "executable_module_path": {
             "type": "string",
             "required": True,
-            "regex": r".+(\.py$)",
+            "regex": r".+\.(py|ipynb)$",
         },
         "args": {"type": "list", "required": False, "schema": {"type": "string"}},
         "cpu_request": {"type": "float", "required": True, "min": 0.0},

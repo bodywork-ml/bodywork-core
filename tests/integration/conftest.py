@@ -23,23 +23,28 @@ from shutil import rmtree
 from pathlib import Path
 from random import randint
 from typing import cast
+from urllib.parse import urlparse
+
 from pytest import fixture
 from _pytest.fixtures import FixtureRequest
-from kubernetes import client as k8s, config as k8s_config
-from subprocess import CalledProcessError, run
+from kubernetes import client as k8s_client, config as k8s_config
+from subprocess import run
 
 from bodywork.constants import (
     BODYWORK_DOCKERHUB_IMAGE_REPO,
+    BODYWORK_WORKFLOW_CLUSTER_ROLE,
     SSH_PRIVATE_KEY_ENV_VAR,
     BODYWORK_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
 from bodywork.k8s.auth import load_kubernetes_config
+from bodywork.k8s.namespaces import create_namespace, delete_namespace
 
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
+TEST_NAMESPACE = "bodywork-test"
 
 
 @fixture(scope="function")
@@ -74,7 +79,7 @@ def random_test_namespace() -> str:
 
 @fixture(scope="function")
 def test_namespace() -> str:
-    return "bodywork-dev"
+    return TEST_NAMESPACE
 
 
 @fixture(scope="function")
@@ -141,16 +146,21 @@ def github_ssh_private_key_file(bodywork_output_dir: Path) -> str:
 def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
-        services_in_namespace = k8s.CoreV1Api().list_namespaced_service(
-            namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
-        )
-        nginx_service = [
-            service
-            for service in services_in_namespace.items
-            if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
-        ][0]
-        load_balancer = nginx_service.status.load_balancer.ingress[0].hostname
-        return cast(str, load_balancer)
+        contexts, active_context = k8s_config.list_kube_config_contexts()
+        if active_context["name"] == "minikube":
+            kube_config = k8s_client.configuration.Configuration.get_default_copy()
+            url = urlparse(kube_config.host).hostname
+        else:
+            services_in_namespace = k8s_client.CoreV1Api().list_namespaced_service(
+                namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
+            )
+            nginx_service = [
+                service
+                for service in services_in_namespace.items
+                if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
+            ][0]
+            url = nginx_service.status.load_balancer.ingress[0].hostname
+        return cast(str, url)
     except IndexError:
         msg = (
             f"cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
@@ -164,7 +174,7 @@ def ingress_load_balancer_url() -> str:
             f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
         )
         raise RuntimeError(msg)
-    except k8s.rest.ApiException as e:
+    except k8s_client.rest.ApiException as e:
         msg = f"k8s API error - {e}"
         raise RuntimeError(msg)
     except Exception as e:
@@ -174,12 +184,20 @@ def ingress_load_balancer_url() -> str:
 @fixture(scope="session")
 def setup_cluster(request: FixtureRequest) -> None:
     load_kubernetes_config()
-    setup_namespace_with_service_accounts_and_roles("bodywork-dev")
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
+    create_namespace(TEST_NAMESPACE)
 
-    def delete_namespace():
-        k8s.CoreV1Api().delete_namespace("bodywork-dev")
+    def clean_up():
+        # delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
+        #     BODYWORK_WORKFLOW_CLUSTER_ROLE
+        # )
+        # k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
+        #     f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}"
+        # )
+        delete_namespace(TEST_NAMESPACE)
 
-    request.addfinalizer(delete_namespace)
+    request.addfinalizer(clean_up)
 
 
 @fixture(scope="function")

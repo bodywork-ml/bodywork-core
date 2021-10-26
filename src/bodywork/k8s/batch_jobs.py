@@ -43,7 +43,6 @@ class JobStatus(Enum):
 def configure_batch_stage_job(
     namespace: str,
     stage_name: str,
-    project_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
@@ -75,7 +74,7 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
-    job_name = make_valid_k8s_name(f"{project_name}--{stage_name}")
+    job_name = make_valid_k8s_name(f"{stage_name}--{stage_name}")
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,

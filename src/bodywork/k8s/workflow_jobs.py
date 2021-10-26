@@ -38,7 +38,7 @@ def configure_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
-    job_name: str = None,
+    job_name: Optional[str] = None,
     container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
@@ -56,12 +56,6 @@ def configure_workflow_job(
     :param container_env_vars: List of k8s environment variables to add.
     :return: A configured k8s job object.
     """
-    args = [
-        "--git-url",
-        project_repo_url,
-        "--git-branch",
-        project_repo_branch,
-    ]
 
     container = k8s.V1Container(
         name="bodywork",
@@ -73,7 +67,12 @@ def configure_workflow_job(
             "deployment",
             "create",
         ],
-        args=args,
+        args=[
+            "--git-url",
+            project_repo_url,
+            "--git-branch",
+            project_repo_branch,
+        ],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
