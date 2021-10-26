@@ -56,8 +56,6 @@ def configure_batch_stage_job(
     :param namespace: The k8s namespace to target deployment.
     :param stage_name: The name of the Bodywork project stage that
         will need to be executed.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -74,7 +72,7 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
-    job_name = make_valid_k8s_name(f"{stage_name}--{stage_name}")
+    job_name = make_valid_k8s_name(stage_name)
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
