@@ -179,7 +179,7 @@ def _create_deployment(
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
     asynchronous_job_name: str = Option("", "--async-job-name"),
-    image: Optional[str] = Option(None, "--bodywork-container-image"),
+    image: Optional[str] = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE):
@@ -247,7 +247,7 @@ def _update_deployment(
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
     asynchronous_job_name: str = Option("", "--async-job-name"),
-    image: Optional[str] = Option(None, "--bodywork-container-image"),
+    image: Optional[str] = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     _create_deployment(
