@@ -23,16 +23,22 @@ from re import findall
 from shutil import rmtree
 from subprocess import CalledProcessError, run
 from time import sleep
+from pathlib import Path
 
 from pytest import raises, mark
 
-from bodywork.constants import SSH_DIR_NAME, BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from bodywork.constants import (
+    SSH_DIR_NAME,
+    BODYWORK_NAMESPACE,
+    DEFAULT_SSH_FILE,
+)
 from bodywork.k8s import (
     cluster_role_binding_exists,
     delete_cluster_role_binding,
     delete_namespace,
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
+    namespace_exists,
 )
 
 
@@ -139,7 +145,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert "No deployments found" in process_five.stdout
         assert process_five.returncode == 0
 
-    except Exception as e:  # noqa
+    except Exception as e:
         assert False
     finally:
         load_kubernetes_config()
@@ -323,38 +329,6 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
-def test_deployment_with_ssh_github_connectivity(
-    docker_image: str,
-    set_github_ssh_private_key_env_var: None,
-):
-    try:
-        process_one = run(
-            [
-                "bodywork",
-                "deployment",
-                "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
-        expected_output_2 = "Deployment successful"
-
-        assert expected_output_1 in process_one.stdout
-        assert expected_output_2 in process_one.stdout
-        assert process_one.returncode == 0
-
-    except Exception:
-        assert False
-    finally:
-        load_kubernetes_config()
-        delete_namespace("bodywork-test-batch-job-project")
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
@@ -446,9 +420,43 @@ def test_cli_cronjob_handler_crud():
                 "delete",
                 "cronjobs",
                 "bodywork-test-project",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
+
+
+def test_deployment_with_ssh_github_connectivity_from_file(
+    docker_image: str,
+    github_ssh_private_key_file: str,
+):
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
+                f"--bodywork-docker-image={docker_image}",
+                f"--ssh={github_ssh_private_key_file}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
+        expected_output_2 = "Deployment successful"
+
+        assert expected_output_1 in process_one.stdout
+        assert expected_output_2 in process_one.stdout
+        assert process_one.returncode == 0
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        if namespace_exists("bodywork-test-batch-job-project"):
+            delete_namespace("bodywork-test-batch-job-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
 def test_deployment_of_remote_workflows(docker_image: str):
@@ -509,8 +517,67 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "delete",
                 "job",
                 f"{job_name}",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
         delete_namespace("bodywork-test-single-service-project")
+        rmtree(SSH_DIR_NAME, ignore_errors=True)
+
+
+def test_remote_deployment_with_ssh_github_connectivity(
+    docker_image: str,
+    set_github_ssh_private_key_env_var: None,
+):
+    job_name = "test-remote-ssh-workflow"
+    try:
+        process_one = run(
+            [
+                "bodywork",
+                "deployment",
+                "create",
+                f"--name={job_name}",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-branch=master",
+                f"--bodywork-docker-image={docker_image}",
+                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
+                "--async",
+                "--group=bodywork-tests",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_one.returncode == 0
+        assert f"Created workflow-job={job_name}" in process_one.stdout
+
+        sleep(5)
+
+        process_two = run(
+            [
+                "bodywork",
+                "deployment",
+                "logs",
+                f"--name={job_name}",
+            ],
+            encoding="utf-8",
+            capture_output=True,
+        )
+        assert process_two.returncode == 0
+        assert type(process_two.stdout) is str and len(process_two.stdout) != 0
+        assert "ERROR" or "error" not in process_two.stdout
+
+    except Exception:
+        assert False
+    finally:
+        load_kubernetes_config()
+        run(
+            [
+                "kubectl",
+                "delete",
+                "job",
+                f"{job_name}",
+                f"--namespace={BODYWORK_NAMESPACE}",
+            ]
+        )
+        if namespace_exists("bodywork-test-batch-job-project"):
+            delete_namespace("bodywork-test-batch-job-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)

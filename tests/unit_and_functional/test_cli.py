@@ -29,7 +29,7 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.cli.cli import deployment, handle_k8s_exceptions
-from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from bodywork.constants import BODYWORK_NAMESPACE
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
@@ -238,14 +238,14 @@ def test_deployment_run_locally_calls_run_workflow_handler(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
     deployment(args)
 
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with(
-        "foo3", "foo4", docker_image_override=None
-    )
+    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None, ssh_key_path=None)
 
 
 def test_cli_deployment_handler_error_handling():
@@ -290,17 +290,21 @@ def test_cli_deployment_create_async(
         namespace=None,
         service=None,
         bodywork_docker_image="bodywork-ml:myimage",
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
 
     mock_create_workflow.assert_called_with(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         args.name,
         args.git_url,
         args.git_branch,
         args.retries,
         args.bodywork_docker_image,
+        None,
+        None,
     )
 
 
@@ -320,6 +324,8 @@ def test_cli_deployment_delete(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -343,11 +349,13 @@ def test_cli_deployment_logs(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")
@@ -366,11 +374,13 @@ def test_cli_deployment_delete_job(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")
@@ -389,11 +399,13 @@ def test_cli_deployment_job_history(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
 
-    mock_workflow_job.assert_called_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE, args.name)
+    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
 
 
 @patch("bodywork.cli.cli.load_kubernetes_config")
@@ -412,6 +424,8 @@ def test_cli_deployment_display(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
 
     deployment(args)
@@ -560,7 +574,7 @@ def test_validate_subcommand(project_repo_location: Path):
         capture_output=True,
     )
     assert process_two.returncode == 1
-    assert "no config file found" in process_two.stdout
+    assert "No config file found" in process_two.stdout
 
     config_file_path = project_repo_location / "bodywork_empty.yaml"
     process_three = run(
@@ -569,7 +583,7 @@ def test_validate_subcommand(project_repo_location: Path):
         capture_output=True,
     )
     assert process_three.returncode == 1
-    assert "cannot parse YAML" in process_three.stdout
+    assert "Cannot parse YAML" in process_three.stdout
 
     config_file_path = project_repo_location / "bodywork_missing_sections.yaml"
     process_four = run(

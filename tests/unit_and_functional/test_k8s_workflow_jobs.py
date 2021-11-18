@@ -27,7 +27,7 @@ from pytest import fixture
 
 from bodywork.constants import (
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+    BODYWORK_NAMESPACE,
 )
 from bodywork.k8s.workflow_jobs import (
     configure_workflow_job,
@@ -167,7 +167,7 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
 def test_configure_workflow_cronjob():
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
-        namespace=BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        namespace=BODYWORK_NAMESPACE,
         project_repo_url="bodywork-ml/bodywork-test-project",
         project_repo_branch="dev",
         retries=2,

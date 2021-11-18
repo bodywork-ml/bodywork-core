@@ -32,6 +32,8 @@ from bodywork.constants import (
     GIT_COMMIT_HASH_K8S_ENV_VAR,
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
+    SSH_PRIVATE_KEY_ENV_VAR,
+    SSH_SECRET_NAME
 )
 from bodywork.exceptions import (
     BodyworkWorkflowExecutionError,
@@ -464,3 +466,134 @@ def test_cannot_deploy_different_project_repo_to_same_namespace(
         match=r"A project with the same name \(or namespace\): bodywork-test-project",
     ):
         run_workflow("https://my_new_project", config=config)
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_run_workflow_adds_ssh_key_env_var_from_file(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    expected_result = k8sclient.V1EnvVar(
+        name=SSH_PRIVATE_KEY_ENV_VAR,
+        value_from=k8sclient.V1EnvVarSource(
+            secret_key_ref=k8sclient.V1SecretKeySelector(
+                key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
+            )
+        ),)
+
+    mock_k8s.create_k8s_environment_variables.return_value = []
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+    mock_k8s.create_secret_env_variable.return_value = expected_result
+
+    run_workflow("https://my_new_project", config=config, ssh_key_path="mykey")
+
+    mock_k8s.create_ssh_key_secret_from_file.assert_called_with("test", Path("mykey"))
+    mock_k8s.configure_batch_stage_job.assert_called_with(
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        retries=ANY,
+        container_env_vars=[expected_result],
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+    )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_workflow_adds_ssh_secret_if_default_exists(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path
+):
+    config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
+    config = BodyworkConfig(config_path)
+    config.project.secrets_group = None
+
+    expected_result = k8sclient.V1EnvVar(
+        name=SSH_PRIVATE_KEY_ENV_VAR,
+        value_from=k8sclient.V1EnvVarSource(
+            secret_key_ref=k8sclient.V1SecretKeySelector(
+                key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
+            )
+        ), )
+
+    mock_k8s.create_k8s_environment_variables.return_value = []
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+    mock_k8s.create_secret_env_variable.return_value = expected_result
+
+    run_workflow("git@github.com:my_new_project", config=config)
+
+    mock_k8s.configure_batch_stage_job.assert_called_with(
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        retries=ANY,
+        container_env_vars=[expected_result],
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+    )
+
+
+@patch("bodywork.workflow_execution.rmtree")
+@patch("bodywork.workflow_execution.requests.Session")
+@patch("bodywork.workflow_execution.download_project_code_from_repo")
+@patch("bodywork.workflow_execution.get_git_commit_hash")
+@patch("bodywork.workflow_execution.k8s")
+def test_workflow_adds_ssh_secret_if_exists_in_group(
+    mock_k8s: MagicMock,
+    mock_git_hash: MagicMock,
+    mock_git_download: MagicMock,
+    mock_session: MagicMock,
+    mock_rmtree: MagicMock,
+    project_repo_location: Path
+):
+    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config = BodyworkConfig(config_path)
+
+    expected_result = k8sclient.V1EnvVar(
+        name=SSH_PRIVATE_KEY_ENV_VAR,
+        value_from=k8sclient.V1EnvVarSource(
+            secret_key_ref=k8sclient.V1SecretKeySelector(
+                key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
+            )
+        ), )
+
+    mock_k8s.create_k8s_environment_variables.return_value = []
+    mock_k8s.configure_env_vars_from_secrets.return_value = []
+    mock_k8s.create_secret_env_variable.return_value = expected_result
+
+    run_workflow("git@github.com:my_new_project", config=config)
+
+    mock_k8s.configure_batch_stage_job.assert_called_with(
+        ANY,
+        ANY,
+        ANY,
+        ANY,
+        retries=ANY,
+        container_env_vars=[expected_result],
+        image=ANY,
+        cpu_request=ANY,
+        memory_request=ANY,
+    )
