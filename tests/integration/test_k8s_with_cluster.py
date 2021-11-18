@@ -329,40 +329,6 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
-def test_deployment_with_ssh_github_connectivity(
-    docker_image: str,
-    set_github_ssh_private_key_env_var: None,
-):
-    try:
-        process_one = run(
-            [
-                "bodywork",
-                "deployment",
-                "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
-                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
-        expected_output_2 = "Deployment successful"
-
-        assert expected_output_1 in process_one.stdout
-        assert expected_output_2 in process_one.stdout
-        assert process_one.returncode == 0
-
-    except Exception:
-        assert False
-    finally:
-        load_kubernetes_config()
-        if namespace_exists("bodywork-test-batch-job-project"):
-            delete_namespace("bodywork-test-batch-job-project")
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(

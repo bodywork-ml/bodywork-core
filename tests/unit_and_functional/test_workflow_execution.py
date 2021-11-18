@@ -525,7 +525,7 @@ def test_workflow_adds_ssh_secret_if_default_exists(
     mock_rmtree: MagicMock,
     project_repo_location: Path
 ):
-    config_path = Path(f"{project_repo_location}/bodywork.yaml")
+    config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
     config.project.secrets_group = None
 
@@ -541,7 +541,7 @@ def test_workflow_adds_ssh_secret_if_default_exists(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
     mock_k8s.create_secret_env_variable.return_value = expected_result
 
-    run_workflow("https://my_new_project", config=config)
+    run_workflow("git@github.com:my_new_project", config=config)
 
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,
@@ -584,7 +584,7 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
     mock_k8s.configure_env_vars_from_secrets.return_value = []
     mock_k8s.create_secret_env_variable.return_value = expected_result
 
-    run_workflow("https://my_new_project", config=config)
+    run_workflow("git@github.com:my_new_project", config=config)
 
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,

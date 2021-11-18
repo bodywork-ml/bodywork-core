@@ -83,7 +83,7 @@ def download_project_code_from_repo(
             stderr=PIPE,
         )
     except CalledProcessError as e:
-        msg = f"git clone failed - calling {e.cmd} returned {e.stderr}"
+        msg = f"Git clone failed - calling {e.cmd} returned {e.stderr}"
         raise BodyworkGitError(msg)
 
 
@@ -149,11 +149,11 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     elif ssh_key_path:
         private_key = Path(ssh_key_path)
         if not private_key.exists():
-            msg = f"failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"    # noqa
-            raise KeyError(msg)
+            msg = f"Failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"    # noqa
+            raise FileNotFoundError(msg)
     else:
-        msg = f"failed to setup SSH for {hostname} - cannot find SSH keys or {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
-        raise KeyError(msg)
+        msg = f"Failed to setup SSH for {hostname} - cannot find SSH keys or {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
+        raise RuntimeError(msg)
 
     _configure_known_hosts(hostname, ssh_dir)
     os.environ[GIT_SSH_COMMAND] = (
