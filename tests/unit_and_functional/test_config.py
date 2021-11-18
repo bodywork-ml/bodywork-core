@@ -68,20 +68,20 @@ def test_key_value_data_parser_correctly_correctly_formats_errors():
 
 def test_that_invalid_config_file_path_raises_error(project_repo_location: Path):
     bad_config_file = project_repo_location / "bodywerk.yaml"
-    with raises(BodyworkConfigFileExistsError, match="no config file found"):
+    with raises(BodyworkConfigFileExistsError, match="No config file found"):
         BodyworkConfig(bad_config_file)
 
 
 def test_that_invalid_config_format_raises_error(project_repo_location: Path):
     config_file = project_repo_location / "bodywork.ini"
-    expected_exception_msg = f"cannot parse YAML from {config_file}"
+    expected_exception_msg = f"Cannot parse YAML from {config_file}"
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 
 
 def test_that_empty_config_file_raises_error(project_repo_location: Path):
     config_file = project_repo_location / "bodywork_empty.yaml"
-    expected_exception_msg = f"cannot parse YAML from {config_file}"
+    expected_exception_msg = f"Cannot parse YAML from {config_file}"
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
         BodyworkConfig(config_file)
 

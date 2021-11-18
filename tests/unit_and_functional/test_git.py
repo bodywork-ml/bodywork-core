@@ -40,7 +40,7 @@ from bodywork.git import (
 
 
 def test_that_git_project_clone_raises_exceptions():
-    with raises(BodyworkGitError, match="git clone failed"):
+    with raises(BodyworkGitError, match="Git clone failed"):
         download_project_code_from_repo("file:///bad_url")
 
 
@@ -75,7 +75,7 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
     with patch.object(Path, "exists") as mock_exists:
         mock_exists.return_value = False
-        with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
+        with raises(RuntimeError, match=f"Failed to setup SSH for {hostname}"):
             setup_ssh_for_git_host(hostname)
 
 
