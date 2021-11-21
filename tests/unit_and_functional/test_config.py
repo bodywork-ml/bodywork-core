@@ -34,6 +34,7 @@ from bodywork.config import (
 )
 from bodywork.constants import BODYWORK_CONFIG_VERSION, BODYWORK_VERSION
 from bodywork.exceptions import (
+    BodyworkConfigFileExistsError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
     BodyworkConfigValidationError,
@@ -67,7 +68,7 @@ def test_key_value_data_parser_correctly_correctly_formats_errors():
 
 def test_that_invalid_config_file_path_raises_error(project_repo_location: Path):
     bad_config_file = project_repo_location / "bodywerk.yaml"
-    with raises(FileExistsError, match="no config file found"):
+    with raises(BodyworkConfigFileExistsError, match="no config file found"):
         BodyworkConfig(bad_config_file)
 
 

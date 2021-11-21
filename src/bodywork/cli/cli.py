@@ -55,6 +55,7 @@ from .setup_namespace import (
     setup_namespace_with_service_accounts_and_roles,
 )
 from ..exceptions import (
+    BodyworkConfigFileExistsError,
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
@@ -558,7 +559,7 @@ def validate_config(args: Namespace) -> None:
         print_info(f"--> {file_path} is a valid Bodywork config file.")
         sys.exit(0)
     except (
-        FileExistsError,
+        BodyworkConfigFileExistsError,
         BodyworkConfigParsingError,
         BodyworkConfigMissingSectionError,
     ) as e:

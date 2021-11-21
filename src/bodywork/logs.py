@@ -41,6 +41,7 @@ from .constants import (
     PROJECT_CONFIG_FILENAME,
 )
 from .cli.terminal import console
+from .exceptions import BodyworkConfigError
 
 
 def bodywork_log_factory(
@@ -75,7 +76,7 @@ def bodywork_log_factory(
         try:
             bodywork_config = BodyworkConfig(config_file_path)
             log.setLevel(bodywork_config.logging.log_level)
-        except FileExistsError:
+        except BodyworkConfigError:
             try:
                 log_level_from_env_var = os.environ[DEFAULT_LOG_LEVEL_ENV_VAR]
                 log.setLevel(log_level_mapping[log_level_from_env_var])

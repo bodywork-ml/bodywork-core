@@ -42,6 +42,12 @@ class BodyworkConfigError(Exception):
     pass
 
 
+class BodyworkConfigFileExistsError(BodyworkConfigError):
+    def __init__(self, config_file_path: Path):
+        msg = f"no config file found at {config_file_path}"
+        super().__init__(msg)
+
+
 class BodyworkConfigParsingError(BodyworkConfigError):
     def __init__(self, config_file_path: Path):
         msg = f"cannot parse YAML from {config_file_path}"
