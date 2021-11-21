@@ -253,7 +253,7 @@ def test_deployment_create_configures_cluster_if_required(
     )
     assert msg in stdout
     mock_configure_cluster.assert_called_once_with(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+        BODYWORK_NAMESPACE
     )
 
 

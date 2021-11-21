@@ -188,12 +188,12 @@ def setup_cluster(request: FixtureRequest) -> None:
     create_namespace(TEST_NAMESPACE)
 
     def clean_up():
-        delete_namespace(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+        delete_namespace(BODYWORK_NAMESPACE)
         k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
             BODYWORK_WORKFLOW_CLUSTER_ROLE
         )
         k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
-            workflow_cluster_role_binding_name(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+            workflow_cluster_role_binding_name(BODYWORK_NAMESPACE)
         )
         delete_namespace(TEST_NAMESPACE)
 
