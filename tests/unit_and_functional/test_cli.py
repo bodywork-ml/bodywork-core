@@ -254,9 +254,7 @@ def test_deployment_create_configures_cluster_if_required(
         "running 'bodywork configure-cluster'."
     )
     assert msg in stdout
-    mock_configure_cluster.assert_called_once_with(
-        BODYWORK_NAMESPACE
-    )
+    mock_configure_cluster.assert_called_once_with(BODYWORK_NAMESPACE)
 
 
 @patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
@@ -288,7 +286,9 @@ def test_deployment_run_locally_calls_run_workflow_handler(
 
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None, ssh_key_path=None)
+    mock_workflow_cli_handler.assert_called_once_with(
+        "foo3", "foo4", docker_image_override=None, ssh_key_path=None
+    )
 
 
 def test_cli_deployment_handler_error_handling():

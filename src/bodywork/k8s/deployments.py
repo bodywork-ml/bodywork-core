@@ -25,7 +25,7 @@ from typing import Dict, Iterable, List, Optional, Any
 
 from kubernetes import client as k8s
 
-from ..constants import (BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT)
+from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
 from .utils import make_valid_k8s_name
 
 

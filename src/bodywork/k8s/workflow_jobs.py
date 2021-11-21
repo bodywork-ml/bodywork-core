@@ -162,7 +162,7 @@ def configure_workflow_cronjob(
         retries=retries,
         image=image,
         job_name=job_name,
-        container_env_vars=env_vars
+        container_env_vars=env_vars,
     )
     job_template = k8s.V1beta1JobTemplateSpec(metadata=job.metadata, spec=job.spec)
     cronjob_spec = k8s.V1beta1CronJobSpec(

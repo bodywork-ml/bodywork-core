@@ -379,9 +379,7 @@ def deployment(args: Namespace) -> None:
                 "Cluster has not been configured for Bodywork - "
                 "running 'bodywork configure-cluster'."
             )
-            setup_namespace_with_service_accounts_and_roles(
-                BODYWORK_NAMESPACE
-            )
+            setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
         if not async_workflow:
             print_info("Using local workflow controller - retries inactive.")
             try:
@@ -545,13 +543,9 @@ def secret(args: Namespace) -> None:
             sys.exit(1)
         load_kubernetes_config()
         if command == "create":
-            create_secret(
-                BODYWORK_NAMESPACE, group, name, var_names_and_values
-            )
+            create_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
         else:
-            update_secret(
-                BODYWORK_NAMESPACE, group, name, var_names_and_values
-            )
+            update_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
     elif command == "delete":
         load_kubernetes_config()
         delete_secret(BODYWORK_NAMESPACE, group, name)

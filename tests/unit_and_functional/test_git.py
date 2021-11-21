@@ -145,7 +145,7 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
     try:
         with patch.object(Path, "exists") as mock_exists:
             mock_exists.return_value = False
-            with patch.object(Path, 'open', mock_open()) as m:
+            with patch.object(Path, "open", mock_open()) as m:
                 setup_ssh_for_git_host("github.com")
 
             handle = m()
@@ -159,8 +159,12 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
 @patch("bodywork.git.known_hosts_contains_domain_key")
 @patch("bodywork.git.Path.exists")
 @patch("bodywork.git.run")
-def test_use_ssh_key_from_file(mock_run: MagicMock, mock_exists: MagicMock, mock_known_hosts: MagicMock):
+def test_use_ssh_key_from_file(
+    mock_run: MagicMock, mock_exists: MagicMock, mock_known_hosts: MagicMock
+):
 
-    download_project_code_from_repo("git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key")
+    download_project_code_from_repo(
+        "git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key"
+    )
 
     assert "SSH_key" in os.environ.get(GIT_SSH_COMMAND)

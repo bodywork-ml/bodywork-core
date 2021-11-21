@@ -132,7 +132,7 @@ def github_ssh_private_key_file(bodywork_output_dir: Path) -> str:
             raise RuntimeError("cannot locate private SSH key to use for GitHub")
         os.mkdir(bodywork_output_dir)
         filepath = f"{bodywork_output_dir}/id_bodywork"
-        with Path(filepath).open(mode='w', newline='\n') as file_handle:
+        with Path(filepath).open(mode="w", newline="\n") as file_handle:
             file_handle.write(private_key.read_text())
         yield filepath
     except Exception as e:
