@@ -18,6 +18,8 @@
 Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
+import stat
+from shutil import rmtree
 from pathlib import Path
 from random import randint
 from typing import cast
@@ -29,10 +31,10 @@ from kubernetes import client as k8s_client, config as k8s_config
 from subprocess import run
 
 from bodywork.constants import (
-    BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
     BODYWORK_DOCKERHUB_IMAGE_REPO,
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     SSH_PRIVATE_KEY_ENV_VAR,
+    BODYWORK_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
 from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
@@ -99,7 +101,11 @@ def set_github_ssh_private_key_env_var() -> None:
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        private_key = Path.home() / ".ssh/id_ed25519"
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
 
 
 @fixture(scope="function")
@@ -108,10 +114,32 @@ def set_git_ssh_private_key_env_var() -> None:
         private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
         private_key = Path.home() / ".ssh/id_rsa"
+        if not private_key.exists():
+            private_key = ".ssh/id_ed25519"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
         raise RuntimeError("cannot locate private SSH key to use")
+
+
+@fixture(scope="function")
+def github_ssh_private_key_file(bodywork_output_dir: Path) -> str:
+    try:
+        private_key = Path.home() / ".ssh/id_rsa"
+        if not private_key.exists():
+            private_key = Path.home() / ".ssh/id_ed25519"
+        if not private_key.exists():
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        os.mkdir(bodywork_output_dir)
+        filepath = f"{bodywork_output_dir}/id_bodywork"
+        with Path(filepath).open(mode='w', newline='\n') as file_handle:
+            file_handle.write(private_key.read_text())
+        yield filepath
+    except Exception as e:
+        raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
+    finally:
+        if bodywork_output_dir.exists():
+            rmtree(bodywork_output_dir, onerror=remove_readonly)
 
 
 @fixture(scope="function")
@@ -156,7 +184,7 @@ def ingress_load_balancer_url() -> str:
 @fixture(scope="session")
 def setup_cluster(request: FixtureRequest) -> None:
     load_kubernetes_config()
-    setup_namespace_with_service_accounts_and_roles(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     create_namespace(TEST_NAMESPACE)
 
     def clean_up():
@@ -180,7 +208,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "create",
             "secret",
             "generic",
-            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            f"--namespace={BODYWORK_NAMESPACE}",
             "testsecrets-bodywork-test-project-credentials",
             "--from-literal=USERNAME=alex",
             "--from-literal=PASSWORD=alex123",
@@ -192,7 +220,7 @@ def add_secrets(request: FixtureRequest) -> None:
             "kubectl",
             "label",
             "secret",
-            f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+            f"--namespace={BODYWORK_NAMESPACE}",
             "testsecrets-bodywork-test-project-credentials",
             "group=testsecrets",
         ]
@@ -204,9 +232,25 @@ def add_secrets(request: FixtureRequest) -> None:
                 "kubectl",
                 "delete",
                 "secret",
-                f"--namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE}",
+                f"--namespace={BODYWORK_NAMESPACE}",
                 "testsecrets-bodywork-test-project-credentials",
             ]
         )
 
     request.addfinalizer(delete_secrets)
+
+
+def remove_readonly(func, path, exc_info):
+    """Error handler for ``shutil.rmtree``.
+
+    If the error is due to an access error (read only file) it attempts to add write
+    permission and then retries. If the error is for another reason it re-raises the
+    error. This is primarily to fix Windows OS access issues.
+
+    Usage: ``shutil.rmtree(path, onerror=remove_readonly)``
+    """
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        raise Exception

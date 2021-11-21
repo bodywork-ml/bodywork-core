@@ -18,13 +18,17 @@
 Tests for Git repository interaction functions.
 """
 import os
-
 from pytest import raises
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from subprocess import CalledProcessError
+from pathlib import Path
 
 from bodywork.exceptions import BodyworkGitError
-from bodywork.constants import SSH_PRIVATE_KEY_ENV_VAR, DEFAULT_PROJECT_DIR
+from bodywork.constants import (
+    SSH_PRIVATE_KEY_ENV_VAR,
+    DEFAULT_PROJECT_DIR,
+    GIT_SSH_COMMAND,
+)
 from bodywork.git import (
     ConnectionProtocol,
     download_project_code_from_repo,
@@ -36,7 +40,7 @@ from bodywork.git import (
 
 
 def test_that_git_project_clone_raises_exceptions():
-    with raises(BodyworkGitError, match="git clone failed"):
+    with raises(BodyworkGitError, match="Git clone failed"):
         download_project_code_from_repo("file:///bad_url")
 
 
@@ -69,8 +73,10 @@ def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
     hostname = "github.com"
     if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
-    with raises(KeyError, match=f"failed to setup SSH for {hostname}"):
-        setup_ssh_for_git_host(hostname)
+    with patch.object(Path, "exists") as mock_exists:
+        mock_exists.return_value = False
+        with raises(RuntimeError, match=f"Failed to setup SSH for {hostname}"):
+            setup_ssh_for_git_host(hostname)
 
 
 @patch("bodywork.git.Path.read_text")
@@ -86,7 +92,7 @@ def test_setup_ssh_for_github_raises_exception_on_known_hosts_file_exception(
         RuntimeError,
         match=f"Error updating known hosts with public key from {hostname}",
     ):
-        setup_ssh_for_git_host(hostname)
+        setup_ssh_for_git_host(hostname, "test_file")
 
 
 @patch("bodywork.git.run")
@@ -120,3 +126,41 @@ def test_get_git_commit_hash_throws_bodyworkgiterror_when_invalid_path(
         f" is invalid - Invalid Path",
     ):
         get_git_commit_hash()
+
+
+@patch("bodywork.git.run")
+@patch("bodywork.git.get_ssh_public_key_from_domain")
+@patch("bodywork.git.Path.touch")
+@patch("bodywork.git.Path.mkdir")
+@patch("bodywork.git.os")
+def test_setup_ssh_for_git_host_create_known_host_and_env_var(
+    mock_os: MagicMock,
+    mock_mkdir: MagicMock,
+    mock_touch: MagicMock,
+    mock_get_ssh: MagicMock,
+    mock_run: MagicMock,
+):
+    mock_os.environ = {SSH_PRIVATE_KEY_ENV_VAR: "MY_PRIVATE_KEY"}
+    mock_get_ssh.return_value = "fingerprint"
+    try:
+        with patch.object(Path, "exists") as mock_exists:
+            mock_exists.return_value = False
+            with patch.object(Path, 'open', mock_open()) as m:
+                setup_ssh_for_git_host("github.com")
+
+            handle = m()
+            handle.write.assert_any_call("MY_PRIVATE_KEY\n")
+            mock_get_ssh.assert_called_with("github.com")
+            handle.write.assert_any_call("fingerprint")
+    except Exception:
+        assert False
+
+
+@patch("bodywork.git.known_hosts_contains_domain_key")
+@patch("bodywork.git.Path.exists")
+@patch("bodywork.git.run")
+def test_use_ssh_key_from_file(mock_run: MagicMock, mock_exists: MagicMock, mock_known_hosts: MagicMock):
+
+    download_project_code_from_repo("git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key")
+
+    assert "SSH_key" in os.environ.get(GIT_SSH_COMMAND)

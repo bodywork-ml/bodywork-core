@@ -20,10 +20,11 @@ They are targeted for use via the CLI.
 """
 import re
 from typing import Optional
+from pathlib import Path
 
 from .terminal import print_dict, print_info, print_pod_logs, print_warn
 from .. import k8s
-from ..constants import BODYWORK_DOCKER_IMAGE
+from ..constants import BODYWORK_DOCKER_IMAGE, SSH_SECRET_NAME
 
 
 def create_workflow_job(
@@ -33,6 +34,8 @@ def create_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
+    ssh_key_path: str = None,
+    secrets_group: str = None,
 ) -> None:
     """Create a new workflow job within a namespace.
 
@@ -47,6 +50,8 @@ def create_workflow_job(
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stages within,
         defaults to BODYWORK_DOCKER_IMAGE.
+    :param ssh_key_path: SSH key filepath.
+    :param secrets_group: Secrets group to use if using SSH.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -54,8 +59,34 @@ def create_workflow_job(
     if _is_existing_workflow_job(namespace, job_name):
         print_warn(f"Cannot create workflow-job={job_name} as it already exists.")
         return None
+    if ssh_key_path:
+        if not secrets_group:
+            print_warn("Please specify Secrets Group in config to use SSH.")
+            return None
+        try:
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        except FileNotFoundError:
+            print_warn(f"Could not find SSH key file at: {ssh_key_path}")
+            return None
+    if secrets_group:
+        if not k8s.secret_exists(
+            namespace, k8s.create_complete_secret_name(SSH_SECRET_NAME, secrets_group)
+        ):
+            print_warn(
+                f"Could not find SSH secret: {SSH_SECRET_NAME} in group: {secrets_group}"
+            )
+        env_vars = [k8s.create_secret_env_variable(secrets_group)]
+    else:
+        env_vars = None
+
     configured_job = k8s.configure_workflow_job(
-        namespace, project_repo_url, project_repo_branch, retries, image, job_name
+        namespace,
+        project_repo_url,
+        project_repo_branch,
+        retries,
+        image,
+        job_name,
+        container_env_vars=env_vars,
     )
     k8s.create_workflow_job(configured_job)
     print_info(f"Created workflow-job={job_name}.")
@@ -85,6 +116,8 @@ def create_workflow_cronjob(
     project_repo_branch: str = "master",
     retries: int = 2,
     workflow_job_history_limit: int = 1,
+    ssh_key_path: str = None,
+    secrets_group: str = None,
 ) -> None:
     """Create a new cronjob within a namespace.
 
@@ -100,6 +133,8 @@ def create_workflow_cronjob(
         completion (if necessary), defaults to 2.
     :param workflow_job_history_limit: Minimum number of
         historical workflow jobs, so logs can be retrieved.
+    :param ssh_key_path: SSH key filepath.
+    :param secrets_group: Secrets group to use if using SSH.
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -110,6 +145,25 @@ def create_workflow_cronjob(
     if not _is_valid_cron_schedule(schedule):
         print_warn(f"Invalid cronjob schedule: {schedule}.")
         return None
+    if ssh_key_path:
+        if not secrets_group:
+            print_warn("Please specify Secrets Group in config to use SSH.")
+            return None
+        try:
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        except FileNotFoundError:
+            print_warn(f"Could not find SSH key file at: {ssh_key_path}")
+            return None
+    if secrets_group:
+        if not k8s.secret_exists(
+            namespace, k8s.create_complete_secret_name(SSH_SECRET_NAME, secrets_group)
+        ):
+            print_warn(
+                f"Could not find SSH secret: {SSH_SECRET_NAME} in group: {secrets_group}"
+            )
+        env_vars = [k8s.create_secret_env_variable(secrets_group)]
+    else:
+        env_vars = None
     configured_job = k8s.configure_workflow_cronjob(
         schedule,
         namespace,
@@ -119,6 +173,7 @@ def create_workflow_cronjob(
         retries,
         workflow_job_history_limit,
         workflow_job_history_limit,
+        env_vars=env_vars,
     )
     k8s.create_workflow_cronjob(configured_job)
     print_info(f"Created cronjob={job_name}.")
