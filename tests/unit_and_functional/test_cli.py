@@ -242,6 +242,8 @@ def test_deployment_create_configures_cluster_if_required(
         namespace=None,
         service=None,
         bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
     )
     mock_namespace.return_value = False
     deployment(args)
