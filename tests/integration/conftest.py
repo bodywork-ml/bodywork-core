@@ -19,7 +19,6 @@ Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
 import stat
-from shutil import rmtree
 from pathlib import Path
 from random import randint
 from typing import Iterable, cast
@@ -96,7 +95,7 @@ def docker_image() -> str:
 
 
 @fixture(scope="function")
-def set_github_ssh_private_key_env_var() -> None:
+def set_github_ssh_private_key_env_var() -> Iterable[None]:
     private_key = Path.home() / ".ssh/id_rsa"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
@@ -105,11 +104,13 @@ def set_github_ssh_private_key_env_var() -> None:
         if private_key.exists():
             os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
         else:
-            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+            raise RuntimeError("Cannot locate private SSH key to use for GitHub.")
+    yield None
+    del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
 
 
 @fixture(scope="function")
-def set_git_ssh_private_key_env_var() -> None:
+def set_git_ssh_private_key_env_var() -> Iterable[None]:
     if "CIRCLECI" in os.environ:
         private_key = Path.home() / ".ssh" / "id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
@@ -119,11 +120,13 @@ def set_git_ssh_private_key_env_var() -> None:
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use")
+        raise RuntimeError("Cannot locate private SSH key to use.")
+    yield None
+    del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
 
 
 @fixture(scope="function")
-def github_ssh_private_key_file(bodywork_output_dir: Iterable[Path]) -> Iterable[Path]:
+def github_ssh_private_key_file(bodywork_output_dir: Path) -> Path:
     try:
         private_key = Path.home() / ".ssh/id_rsa"
         if not private_key.exists():
@@ -134,7 +137,7 @@ def github_ssh_private_key_file(bodywork_output_dir: Iterable[Path]) -> Iterable
         with Path(file_path).open(mode="w", newline="\n") as file_handle:
             file_handle.write(private_key.read_text())
         file_path.chmod(mode=stat.S_IREAD)
-        yield file_path
+        return file_path
     except Exception as e:
         raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
 
@@ -160,19 +163,19 @@ def ingress_load_balancer_url() -> str:
         return cast(str, url)
     except IndexError:
         msg = (
-            f"cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
-            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+            f"Cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}."
         )
         raise RuntimeError(msg)
     except AttributeError:
         msg = (
-            f"cannot find a load-balancer associated with "
+            f"Cannot find a load-balancer associated with "
             f"service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
-            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}."
         )
         raise RuntimeError(msg)
     except k8s_client.rest.ApiException as e:
-        msg = f"k8s API error - {e}"
+        msg = f"K8s API error - {e}"
         raise RuntimeError(msg)
     except Exception as e:
         raise RuntimeError() from e
@@ -235,19 +238,3 @@ def add_secrets(request: FixtureRequest) -> None:
         )
 
     request.addfinalizer(delete_secrets)
-
-
-def remove_readonly(func, path, exc_info):
-    """Error handler for ``shutil.rmtree``.
-
-    If the error is due to an access error (read only file) it attempts to add write
-    permission and then retries. If the error is for another reason it re-raises the
-    error. This is primarily to fix Windows OS access issues.
-
-    Usage: ``shutil.rmtree(path, onerror=remove_readonly)``
-    """
-    if not os.access(path, os.W_OK):
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
-    else:
-        raise Exception

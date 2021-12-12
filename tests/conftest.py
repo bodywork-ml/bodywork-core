@@ -90,7 +90,7 @@ def setup_bodywork_test_project(
         if project_repo_location.exists():
             shutil.rmtree(f"{project_repo_location}/.git", onerror=remove_readonly)
         if cloned_project_repo_location.exists():
-            shutil.rmtree(cloned_project_repo_location, onerror=remove_readonly)            
+            shutil.rmtree(cloned_project_repo_location, onerror=remove_readonly)
 
 
 def remove_readonly(func, path, exc_info):
