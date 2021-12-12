@@ -120,7 +120,9 @@ def test_delete_secrets_in_namespace(
 
 @patch("bodywork.cli.secrets.k8s.namespace_exists")
 @patch("bodywork.cli.secrets.k8s.list_secrets")
-def test_display_secrets(mock_list_secrets: MagicMock, mock_namespace: MagicMock, capsys: CaptureFixture):
+def test_display_secrets(
+    mock_list_secrets: MagicMock, mock_namespace: MagicMock, capsys: CaptureFixture
+):
     mock_list_secrets.return_value = {
         "PROD-test-credentials": Secret(
             "PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}

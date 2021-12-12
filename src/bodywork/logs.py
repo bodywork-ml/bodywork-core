@@ -40,8 +40,8 @@ from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
 )
-from .exceptions import BodyworkConfigError
 from .cli.terminal import console
+from .exceptions import BodyworkConfigError
 
 
 def bodywork_log_factory(

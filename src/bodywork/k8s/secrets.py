@@ -261,7 +261,8 @@ def create_secret_env_variable(group: str = None) -> k8s.V1EnvVar:
             secret_key_ref=k8s.V1SecretKeySelector(
                 key=SSH_PRIVATE_KEY_ENV_VAR, name=name, optional=False
             )
-        ),)
+        ),
+    )
 
 
 def create_complete_secret_name(group: str, name: str) -> str:

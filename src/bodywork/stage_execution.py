@@ -18,8 +18,8 @@
 This module contains all of the functions and classes required to
 download the project code and run stages.
 """
-from os import environ
 from enum import Enum
+from os import environ
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Sequence

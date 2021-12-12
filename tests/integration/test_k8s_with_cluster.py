@@ -21,7 +21,7 @@ demo repo at https://github.com/bodywork-ml/bodywork-test-project.
 import requests
 from re import findall
 from shutil import rmtree
-from subprocess import CalledProcessError, run
+from subprocess import CalledProcessError, CompletedProcess, run
 from time import sleep
 from pathlib import Path
 
@@ -33,21 +33,26 @@ from bodywork.constants import (
     DEFAULT_SSH_FILE,
 )
 from bodywork.k8s import (
-    cluster_role_binding_exists,
-    delete_cluster_role_binding,
     delete_namespace,
-    workflow_cluster_role_binding_name,
     load_kubernetes_config,
     namespace_exists,
 )
 
 
+def print_completed_process_info(process: CompletedProcess) -> None:
+    """Print completed prcess info to stdout to help with debugging."""
+    print(f"command = {' '.join(process.args)}")
+    print("stdout:")
+    print(process.stdout)
+
+
+@mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
 ):
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -68,16 +73,16 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         expected_output_6 = "Creating k8s deployment and service for stage = stage-4"
         expected_output_7 = "Deployment successful"
 
-        assert findall(expected_output_1, process_one.stdout)
-        assert findall(expected_output_2, process_one.stdout)
-        assert findall(expected_output_3, process_one.stdout)
-        assert findall(expected_output_4, process_one.stdout)
-        assert findall(expected_output_5, process_one.stdout)
-        assert findall(expected_output_6, process_one.stdout)
-        assert findall(expected_output_7, process_one.stdout)
-        assert process_one.returncode == 0
+        assert findall(expected_output_1, process.stdout)
+        assert findall(expected_output_2, process.stdout)
+        assert findall(expected_output_3, process.stdout)
+        assert findall(expected_output_4, process.stdout)
+        assert findall(expected_output_5, process.stdout)
+        assert findall(expected_output_6, process.stdout)
+        assert findall(expected_output_7, process.stdout)
+        assert process.returncode == 0
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -89,17 +94,17 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_two.returncode == 0
+        assert process.returncode == 0
 
-        process_three = run(
+        process = run(
             ["bodywork", "deployment", "display", "--namespace=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
 
-        assert "stage-3" in process_three.stdout
-        assert "stage-4" in process_three.stdout
-        assert process_three.returncode == 0
+        assert "stage-3" in process.stdout
+        assert "stage-4" in process.stdout
+        assert process.returncode == 0
 
         stage_3_service_external_url = (
             f"http://{ingress_load_balancer_url}/bodywork-test-project/"
@@ -116,7 +121,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         response_stage_4 = requests.get(url=stage_4_service_external_url)
         assert response_stage_4.status_code == 404
 
-        process_four = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -126,13 +131,13 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "deployment=bodywork-test-project deleted." in process_four.stdout
+        assert "deployment=bodywork-test-project deleted." in process.stdout
 
-        assert process_four.returncode == 0
+        assert process.returncode == 0
 
         sleep(5)
 
-        process_five = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -142,22 +147,21 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             encoding="utf-8",
             capture_output=True,
         )
-        assert "No deployments found" in process_five.stdout
-        assert process_five.returncode == 0
+        assert "No deployments found" in process.stdout
+        assert process.returncode == 0
 
-    except Exception as e:
+    except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-test-project")
-        workflow_sa_crb = workflow_cluster_role_binding_name("bodywork-test-project")
-        if cluster_role_binding_exists(workflow_sa_crb):
-            delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_services_from_previous_deployments_are_deleted():
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -168,12 +172,12 @@ def test_services_from_previous_deployments_are_deleted():
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_one.returncode == 0
-        assert "Deployment successful" in process_one.stdout
+        assert process.returncode == 0
+        assert "Deployment successful" in process.stdout
 
         sleep(5)
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -184,14 +188,14 @@ def test_services_from_previous_deployments_are_deleted():
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_two.returncode == 0
-        assert "Deployment successful" in process_two.stdout
+        assert process.returncode == 0
+        assert "Deployment successful" in process.stdout
         assert (
             "Removing service: stage-2 from previous deployment with git-commit-hash"
-            in process_two.stdout
+            in process.stdout
         )
 
-        process_three = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -201,20 +205,21 @@ def test_services_from_previous_deployments_are_deleted():
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_three.returncode == 0
-        assert "stage-1" in process_three.stdout
-        assert "stage-2" not in process_three.stdout
+        assert process.returncode == 0
+        assert "stage-1" in process.stdout
+        assert "stage-2" not in process.stdout
 
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-test-single-service-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
 ):
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -227,10 +232,10 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
             capture_output=True,
         )
         expected_output_0 = "Deleted k8s job for stage = stage-1"  # noqa
-        assert expected_output_0 in process_one.stdout
-        assert process_one.returncode == 0
+        assert expected_output_0 in process.stdout
+        assert process.returncode == 0
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -244,25 +249,22 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         )
         expected_output_1 = "Deployments failed to roll-out successfully"
         expected_output_2 = "Rolled-back k8s deployment for stage = stage-2"
-        assert expected_output_1 in process_two.stdout
-        assert expected_output_2 in process_two.stdout
-        assert process_two.returncode == 1
+        assert expected_output_1 in process.stdout
+        assert expected_output_2 in process.stdout
+        assert process.returncode == 1
 
     except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-rollback-deployment-test-project")
-        workflow_sa_crb = workflow_cluster_role_binding_name(
-            "bodywork-rollback-deployment-test-project"
-        )
-        if cluster_role_binding_exists(workflow_sa_crb):
-            delete_cluster_role_binding(workflow_sa_crb)
 
 
+@mark.usefixtures("setup_cluster")
 def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -278,21 +280,23 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
         expected_output_0 = "Deployment failed --> "
         expected_output_1 = "Completed k8s job for stage = on-fail-stage"
         expected_output_2 = "I have successfully been executed"
-        assert expected_output_0 in process_one.stdout
-        assert expected_output_1 in process_one.stdout
-        assert expected_output_2 in process_one.stdout
-        assert process_one.returncode == 1
+        assert expected_output_0 in process.stdout
+        assert expected_output_1 in process.stdout
+        assert expected_output_2 in process.stdout
+        assert process.returncode == 1
     except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-failing-test-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
     try:
         bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -304,10 +308,10 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
             encoding="utf-8",
             capture_output=True,
         )
-        assert f"Invalid Docker image specified: {bad_image}" in process_one.stdout
-        assert process_one.returncode == 1
+        assert f"Invalid Docker image specified: {bad_image}" in process.stdout
+        assert process.returncode == 1
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -321,14 +325,15 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         )
         assert (
             "Cannot locate bodyworkml/bodywork-not-an-image:latest on DockerHub"
-            in process_two.stdout
+            in process.stdout
         )
-        assert process_two.returncode == 1
+        assert process.returncode == 1
     finally:
         load_kubernetes_config()
         delete_namespace("bodywork-test-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
@@ -344,9 +349,10 @@ def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
         )
 
 
+@mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud():
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "cronjob",
@@ -360,10 +366,10 @@ def test_cli_cronjob_handler_crud():
             encoding="utf-8",
             capture_output=True,
         )
-        assert "Created cronjob=bodywork-test-project" in process_one.stdout
-        assert process_one.returncode == 0
+        assert "Created cronjob=bodywork-test-project" in process.stdout
+        assert process.returncode == 0
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "cronjob",
@@ -376,24 +382,24 @@ def test_cli_cronjob_handler_crud():
             encoding="utf-8",
             capture_output=True,
         )
-        assert "Updated cronjob=bodywork-test-project" in process_two.stdout
-        assert process_two.returncode == 0
+        assert "Updated cronjob=bodywork-test-project" in process.stdout
+        assert process.returncode == 0
 
-        process_three = run(
+        process = run(
             ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert "bodywork-test-project" in process_three.stdout
-        assert "0,0 1 * * *" in process_three.stdout
+        assert "bodywork-test-project" in process.stdout
+        assert "0,0 1 * * *" in process.stdout
         assert (
             "https://github.com/bodywork-ml/bodywork-test-project"
-            in process_three.stdout
+            in process.stdout
         )  # noqa
-        assert "main" in process_three.stdout
-        assert process_three.returncode == 0
+        assert "main" in process.stdout
+        assert process.returncode == 0
 
-        process_four = run(
+        process = run(
             [
                 "bodywork",
                 "cronjob",
@@ -403,16 +409,16 @@ def test_cli_cronjob_handler_crud():
             encoding="utf-8",
             capture_output=True,
         )
-        assert "Deleted cronjob=bodywork-test-project" in process_four.stdout
-        assert process_four.returncode == 0
+        assert "Deleted cronjob=bodywork-test-project" in process.stdout
+        assert process.returncode == 0
 
-        process_five = run(
+        process = run(
             ["bodywork", "cronjob", "display"],
             encoding="utf-8",
             capture_output=True,
         )
-        assert "" in process_five.stdout
-        assert process_five.returncode == 0
+        assert "" in process.stdout
+        assert process.returncode == 0
     finally:
         run(
             [
@@ -425,17 +431,18 @@ def test_cli_cronjob_handler_crud():
         )
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_with_ssh_github_connectivity_from_file(
     docker_image: str,
     github_ssh_private_key_file: str,
 ):
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
                 f"--ssh={github_ssh_private_key_file}",
@@ -445,12 +452,11 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         )
         expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
         expected_output_2 = "Deployment successful"
-
-        assert expected_output_1 in process_one.stdout
-        assert expected_output_2 in process_one.stdout
-        assert process_one.returncode == 0
-
+        assert expected_output_1 in process.stdout
+        assert expected_output_2 in process.stdout
+        assert process.returncode == 0
     except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()
@@ -459,10 +465,11 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -475,12 +482,12 @@ def test_deployment_of_remote_workflows(docker_image: str):
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_one.returncode == 0
-        assert f"Created workflow-job={job_name}" in process_one.stdout
+        assert process.returncode == 0
+        assert f"Created workflow-job={job_name}" in process.stdout
 
         sleep(20)
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -490,10 +497,10 @@ def test_deployment_of_remote_workflows(docker_image: str):
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_two.returncode == 0
-        assert "bodywork-test-single-service-project" in process_two.stdout
+        assert process.returncode == 0
+        assert "bodywork-test-single-service-project" in process.stdout
 
-        process_three = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -503,11 +510,12 @@ def test_deployment_of_remote_workflows(docker_image: str):
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_three.returncode == 0
-        assert type(process_three.stdout) is str and len(process_three.stdout) != 0
-        assert "ERROR" not in process_three.stdout
+        assert process.returncode == 0
+        assert type(process.stdout) is str and len(process.stdout) != 0
+        assert "ERROR" not in process.stdout
 
     except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()
@@ -524,19 +532,20 @@ def test_deployment_of_remote_workflows(docker_image: str):
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("setup_cluster")
 def test_remote_deployment_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
 ):
     job_name = "test-remote-ssh-workflow"
     try:
-        process_one = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
                 "create",
                 f"--name={job_name}",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
                 f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
@@ -546,12 +555,12 @@ def test_remote_deployment_with_ssh_github_connectivity(
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_one.returncode == 0
-        assert f"Created workflow-job={job_name}" in process_one.stdout
+        assert process.returncode == 0
+        assert f"Created workflow-job={job_name}" in process.stdout
 
         sleep(5)
 
-        process_two = run(
+        process = run(
             [
                 "bodywork",
                 "deployment",
@@ -561,11 +570,12 @@ def test_remote_deployment_with_ssh_github_connectivity(
             encoding="utf-8",
             capture_output=True,
         )
-        assert process_two.returncode == 0
-        assert type(process_two.stdout) is str and len(process_two.stdout) != 0
-        assert "ERROR" or "error" not in process_two.stdout
+        assert process.returncode == 0
+        assert type(process.stdout) is str and len(process.stdout) != 0
+        assert "ERROR" or "error" not in process.stdout
 
     except Exception:
+        print_completed_process_info(process)
         assert False
     finally:
         load_kubernetes_config()

@@ -219,13 +219,17 @@ def test_deployment_subcommand_exists():
     assert process.stdout.find(expected_output) != -1
 
 
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
 @patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.run_workflow")
 @patch("sys.exit")
-def test_deployment_run_locally_calls_run_workflow_handler(
+def test_deployment_create_configures_cluster_if_required(
     mock_sys_exit: MagicMock,
     mock_workflow_cli_handler: MagicMock,
     mock_load_config: MagicMock,
+    mock_namespace: MagicMock,
+    mock_configure_cluster: MagicMock,
     capsys: CaptureFixture,
 ):
     args = Namespace(
@@ -241,11 +245,50 @@ def test_deployment_run_locally_calls_run_workflow_handler(
         ssh_key_path=None,
         group=None,
     )
+    mock_namespace.return_value = False
+    deployment(args)
+
+    stdout = capsys.readouterr().out
+    msg = (
+        "Cluster has not been configured for Bodywork - "
+        "running 'bodywork configure-cluster'."
+    )
+    assert msg in stdout
+    mock_configure_cluster.assert_called_once_with(BODYWORK_NAMESPACE)
+
+
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.run_workflow")
+@patch("sys.exit")
+def test_deployment_run_locally_calls_run_workflow_handler(
+    mock_sys_exit: MagicMock,
+    mock_workflow_cli_handler: MagicMock,
+    mock_load_config: MagicMock,
+    mock_namespace: MagicMock,
+    capsys: CaptureFixture,
+):
+    args = Namespace(
+        command="create",
+        name="foo2",
+        retries=0,
+        git_url="foo3",
+        git_branch="foo4",
+        async_workflow=None,
+        namespace=None,
+        service=None,
+        bodywork_docker_image=None,
+        ssh_key_path=None,
+        group=None,
+    )
+    mock_namespace.return_value = True
     deployment(args)
 
     stdout = capsys.readouterr().out
     assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with("foo3", "foo4", docker_image_override=None, ssh_key_path=None)
+    mock_workflow_cli_handler.assert_called_once_with(
+        "foo3", "foo4", docker_image_override=None, ssh_key_path=None
+    )
 
 
 def test_cli_deployment_handler_error_handling():
@@ -293,7 +336,7 @@ def test_cli_deployment_create_async(
         ssh_key_path=None,
         group=None,
     )
-
+    mock_namespace.return_value = True
     deployment(args)
 
     mock_create_workflow.assert_called_with(

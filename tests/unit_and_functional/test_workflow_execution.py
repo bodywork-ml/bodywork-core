@@ -33,7 +33,7 @@ from bodywork.constants import (
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME
+    SSH_SECRET_NAME,
 )
 from bodywork.exceptions import (
     BodyworkWorkflowExecutionError,
@@ -479,7 +479,7 @@ def test_run_workflow_adds_ssh_key_env_var_from_file(
     mock_git_download: MagicMock,
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
-    project_repo_location: Path
+    project_repo_location: Path,
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
@@ -490,7 +490,8 @@ def test_run_workflow_adds_ssh_key_env_var_from_file(
             secret_key_ref=k8sclient.V1SecretKeySelector(
                 key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
             )
-        ),)
+        ),
+    )
 
     mock_k8s.create_k8s_environment_variables.return_value = []
     mock_k8s.configure_env_vars_from_secrets.return_value = []
@@ -523,7 +524,7 @@ def test_workflow_adds_ssh_secret_if_default_exists(
     mock_git_download: MagicMock,
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
-    project_repo_location: Path
+    project_repo_location: Path,
 ):
     config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
@@ -535,7 +536,8 @@ def test_workflow_adds_ssh_secret_if_default_exists(
             secret_key_ref=k8sclient.V1SecretKeySelector(
                 key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
             )
-        ), )
+        ),
+    )
 
     mock_k8s.create_k8s_environment_variables.return_value = []
     mock_k8s.configure_env_vars_from_secrets.return_value = []
@@ -567,7 +569,7 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
     mock_git_download: MagicMock,
     mock_session: MagicMock,
     mock_rmtree: MagicMock,
-    project_repo_location: Path
+    project_repo_location: Path,
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
@@ -578,7 +580,8 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
             secret_key_ref=k8sclient.V1SecretKeySelector(
                 key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=False
             )
-        ), )
+        ),
+    )
 
     mock_k8s.create_k8s_environment_variables.return_value = []
     mock_k8s.configure_env_vars_from_secrets.return_value = []

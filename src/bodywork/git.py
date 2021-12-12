@@ -139,7 +139,7 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
-            with Path(private_key).open(mode='w', newline='\n') as file_handle:
+            with Path(private_key).open(mode="w", newline="\n") as file_handle:
                 file_handle.write(key)
         except OSError as e:
             raise RuntimeError(
@@ -149,17 +149,14 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     elif ssh_key_path:
         private_key = Path(ssh_key_path)
         if not private_key.exists():
-            msg = f"Failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"    # noqa
+            msg = f"Failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"  # noqa
             raise FileNotFoundError(msg)
     else:
         msg = f"Failed to setup SSH for {hostname} - cannot find SSH keys or {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
         raise RuntimeError(msg)
 
     _configure_known_hosts(hostname, ssh_dir)
-    os.environ[GIT_SSH_COMMAND] = (
-        f"ssh -i '{private_key}'"
-        f" -o IdentitiesOnly=yes"
-    )
+    os.environ[GIT_SSH_COMMAND] = f"ssh -i '{private_key}'" f" -o IdentitiesOnly=yes"
 
 
 def _configure_known_hosts(hostname, ssh_dir):
