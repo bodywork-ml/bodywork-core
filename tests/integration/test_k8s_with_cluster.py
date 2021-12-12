@@ -323,6 +323,7 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
@@ -420,6 +421,7 @@ def test_cli_cronjob_handler_crud():
         )
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_with_ssh_github_connectivity_from_file(
     docker_image: str,
     github_ssh_private_key_file: str,
@@ -443,7 +445,6 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         assert expected_output_1 in process_one.stdout
         assert expected_output_2 in process_one.stdout
         assert process_one.returncode == 0
-
     except Exception:
         assert False
     finally:
@@ -453,6 +454,7 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
     job_name = "test-remote-workflows"
     try:
@@ -518,6 +520,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
+@mark.usefixtures("setup_cluster")
 def test_remote_deployment_with_ssh_github_connectivity(
     docker_image: str,
     set_github_ssh_private_key_env_var: None,
