@@ -33,10 +33,7 @@ from bodywork.constants import (
     DEFAULT_SSH_FILE,
 )
 from bodywork.k8s import (
-    cluster_role_binding_exists,
-    delete_cluster_role_binding,
     delete_namespace,
-    workflow_cluster_role_binding_name,
     load_kubernetes_config,
     namespace_exists,
 )
@@ -146,7 +143,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert "No deployments found" in process_five.stdout
         assert process_five.returncode == 0
 
-    except Exception as e:
+    except Exception as e:  # noqa
         assert False
     finally:
         load_kubernetes_config()
@@ -433,7 +430,7 @@ def test_deployment_with_ssh_github_connectivity_from_file(
                 "bodywork",
                 "deployment",
                 "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
                 f"--ssh={github_ssh_private_key_file}",
@@ -443,7 +440,6 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         )
         expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
         expected_output_2 = "Deployment successful"
-
         assert expected_output_1 in process_one.stdout
         assert expected_output_2 in process_one.stdout
         assert process_one.returncode == 0
@@ -534,7 +530,7 @@ def test_remote_deployment_with_ssh_github_connectivity(
                 "deployment",
                 "create",
                 f"--name={job_name}",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
                 "--git-branch=master",
                 f"--bodywork-docker-image={docker_image}",
                 f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",

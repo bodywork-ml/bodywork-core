@@ -22,7 +22,7 @@ import stat
 from shutil import rmtree
 from pathlib import Path
 from random import randint
-from typing import cast
+from typing import Iterable, cast
 from urllib.parse import urlparse
 
 from pytest import fixture
@@ -111,11 +111,11 @@ def set_github_ssh_private_key_env_var() -> None:
 @fixture(scope="function")
 def set_git_ssh_private_key_env_var() -> None:
     if "CIRCLECI" in os.environ:
-        private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
+        private_key = Path.home() / ".ssh" / "id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
-        private_key = Path.home() / ".ssh/id_rsa"
+        private_key = Path.home() / ".ssh" / "id_rsa"
         if not private_key.exists():
-            private_key = ".ssh/id_ed25519"
+            private_key = Path.home() / ".ssh" / "id_ed25519"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
@@ -123,18 +123,19 @@ def set_git_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
-def github_ssh_private_key_file(bodywork_output_dir: Path) -> str:
+def github_ssh_private_key_file(bodywork_output_dir: Path) -> Iterable[Path]:
     try:
         private_key = Path.home() / ".ssh/id_rsa"
         if not private_key.exists():
             private_key = Path.home() / ".ssh/id_ed25519"
         if not private_key.exists():
             raise RuntimeError("cannot locate private SSH key to use for GitHub")
-        os.mkdir(bodywork_output_dir)
-        filepath = f"{bodywork_output_dir}/id_bodywork"
-        with Path(filepath).open(mode="w", newline="\n") as file_handle:
+        bodywork_output_dir.mkdir(exist_ok=True)
+        file_path = Path().cwd() / bodywork_output_dir / "id_bodywork"
+        with Path(file_path).open(mode="w", newline="\n") as file_handle:
             file_handle.write(private_key.read_text())
-        yield filepath
+        file_path.chmod(mode=stat.S_IREAD)
+        yield file_path
     except Exception as e:
         raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
     finally:
