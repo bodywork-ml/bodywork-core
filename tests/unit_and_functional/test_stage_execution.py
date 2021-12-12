@@ -54,7 +54,7 @@ def test_that_requirements_install_errors_raise_exception(
 def test_run_stage_with_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_1", project_repo_connection_string)
@@ -74,7 +74,7 @@ def test_run_stage_with_requirements_install(
 def test_run_stage_without_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_2", project_repo_connection_string)
@@ -93,7 +93,7 @@ def test_run_stage_without_requirements_install(
 def test_run_stage_with_arguements(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_3", project_repo_connection_string)
@@ -113,7 +113,7 @@ def test_run_stage_with_arguements(
 def test_run_stage_writes_subprocess_stdout_to_process_stdout(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
     capfd: CaptureFixture,
 ):
     run_stage("stage_2", project_repo_connection_string)
@@ -124,7 +124,7 @@ def test_run_stage_writes_subprocess_stdout_to_process_stdout(
 def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_stderr(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
     capfd: CaptureFixture,
 ):
     try:
@@ -141,7 +141,7 @@ def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_std
 def test_run_stage_failure_raises_exception_for_failed_scripts(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     with raises(BodyworkStageFailure, match="CalledProcessError"):
         run_stage("stage_4", project_repo_connection_string)
@@ -150,7 +150,7 @@ def test_run_stage_failure_raises_exception_for_failed_scripts(
 def test_run_stage_failure_raises_exception_for_failed_setup(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     with raises(BodyworkStageFailure, match="KeyError"):
         run_stage("stage_5", project_repo_connection_string)
@@ -167,7 +167,7 @@ def test_infer_executable_type_type():
 def test_run_stage_with_jupyter_notebook(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_jupyter", project_repo_connection_string)

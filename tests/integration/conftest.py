@@ -123,24 +123,20 @@ def set_git_ssh_private_key_env_var() -> None:
 
 
 @fixture(scope="function")
-def github_ssh_private_key_file(bodywork_output_dir: Path) -> Iterable[Path]:
+def github_ssh_private_key_file(bodywork_output_dir: Iterable[Path]) -> Iterable[Path]:
     try:
         private_key = Path.home() / ".ssh/id_rsa"
         if not private_key.exists():
             private_key = Path.home() / ".ssh/id_ed25519"
         if not private_key.exists():
             raise RuntimeError("cannot locate private SSH key to use for GitHub")
-        bodywork_output_dir.mkdir(exist_ok=True)
-        file_path = Path().cwd() / bodywork_output_dir / "id_bodywork"
+        file_path = bodywork_output_dir / "id_bodywork"
         with Path(file_path).open(mode="w", newline="\n") as file_handle:
             file_handle.write(private_key.read_text())
         file_path.chmod(mode=stat.S_IREAD)
         yield file_path
     except Exception as e:
         raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
-    finally:
-        if bodywork_output_dir.exists():
-            rmtree(bodywork_output_dir, onerror=remove_readonly)
 
 
 @fixture(scope="function")
