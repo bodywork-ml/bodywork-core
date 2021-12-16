@@ -159,7 +159,7 @@ def setup_workflow_service_accounts(namespace: str) -> None:
                 k8s.V1PolicyRule(
                     api_groups=[""],
                     resources=["secrets"],
-                    verbs=["get", "list", "create", "update"],
+                    verbs=["get", "list", "create", "update", "patch"],
                 ),
                 k8s.V1PolicyRule(
                     api_groups=["apps", "batch"], resources=["*"], verbs=["*"]

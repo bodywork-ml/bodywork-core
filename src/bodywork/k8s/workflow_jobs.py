@@ -21,16 +21,13 @@ to create and manage cronjobs that execute Bodywork project workflows.
 import os
 import random
 from datetime import datetime
-from typing import Dict, Union, Optional
-
+from typing import Dict, Union, Optional, List
 from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME,
 )
 from .utils import make_valid_k8s_name
 
@@ -42,6 +39,7 @@ def configure_workflow_job(
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     job_name: Optional[str] = None,
+    container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
@@ -55,23 +53,15 @@ def configure_workflow_job(
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param job_name: Set the job name.
+    :param container_env_vars: List of k8s environment variables to add.
     :return: A configured k8s job object.
     """
-    vcs_env_vars = [
-        k8s.V1EnvVar(
-            name=SSH_PRIVATE_KEY_ENV_VAR,
-            value_from=k8s.V1EnvVarSource(
-                secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
-                )
-            ),
-        )
-    ]
+
     container = k8s.V1Container(
         name="bodywork",
         image=image,
         image_pull_policy="Always",
-        env=vcs_env_vars,
+        env=container_env_vars,
         command=[
             "bodywork",
             "create",
@@ -134,6 +124,7 @@ def configure_workflow_cronjob(
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,
     image: str = BODYWORK_DOCKER_IMAGE,
+    env_vars: Optional[List[k8s.V1EnvVar]] = None,
 ) -> k8s.V1beta1CronJob:
     """Configure a Bodywork workflow cronjob.
 
@@ -143,7 +134,7 @@ def configure_workflow_cronjob(
 
     :param cron_schedule: A valid cron schedule definition.
     :param job_name: The name to give the cronjob.
-    :param namespace: Namespace to create the cronjob in.
+    :param namespace: Namespace to create cronjob in.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -156,6 +147,7 @@ def configure_workflow_cronjob(
         runs (pods) to keep, defaults to 1.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
+    :param env_vars: List of k8s environment variables to add.
     :return: A configured k8s cronjob object.
     """
     job = configure_workflow_job(
@@ -165,6 +157,7 @@ def configure_workflow_cronjob(
         retries=retries,
         image=image,
         job_name=job_name,
+        container_env_vars=env_vars,
     )
     job_template = k8s.V1beta1JobTemplateSpec(metadata=job.metadata, spec=job.spec)
     cronjob_spec = k8s.V1beta1CronJobSpec(

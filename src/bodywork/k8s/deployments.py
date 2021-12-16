@@ -25,12 +25,7 @@ from typing import Dict, Iterable, List, Optional, Any
 
 from kubernetes import client as k8s
 
-from ..constants import (
-    BODYWORK_DOCKER_IMAGE,
-    BODYWORK_STAGES_SERVICE_ACCOUNT,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME,
-)
+from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
 from .utils import make_valid_k8s_name
 
 
@@ -84,19 +79,9 @@ def configure_service_stage_deployment(
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
+
     """
     service_name = make_valid_k8s_name(stage_name)
-    vcs_env_vars = [
-        k8s.V1EnvVar(
-            name=SSH_PRIVATE_KEY_ENV_VAR,
-            value_from=k8s.V1EnvVarSource(
-                secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
-                )
-            ),
-        )
-    ]
-    env_vars = vcs_env_vars + container_env_vars if container_env_vars else vcs_env_vars
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -108,7 +93,7 @@ def configure_service_stage_deployment(
         image=image,
         image_pull_policy="Always",
         resources=container_resources,
-        env=env_vars,
+        env=container_env_vars,
         command=["bodywork", "stage"],
         args=[project_repo_url, project_repo_branch, stage_name],
     )

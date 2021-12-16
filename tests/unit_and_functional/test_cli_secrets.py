@@ -118,9 +118,12 @@ def test_delete_secrets_in_namespace(
     assert "Deleted secret=test-credentials from group=xyz" in captured_three.out
 
 
-@patch("bodywork.cli.secrets.k8s")
-def test_display_secrets(mock_k8s_module: MagicMock, capsys: CaptureFixture):
-    mock_k8s_module.list_secrets.return_value = {
+@patch("bodywork.cli.secrets.k8s.namespace_exists")
+@patch("bodywork.cli.secrets.k8s.list_secrets")
+def test_display_secrets(
+    mock_list_secrets: MagicMock, mock_namespace: MagicMock, capsys: CaptureFixture
+):
+    mock_list_secrets.return_value = {
         "PROD-test-credentials": Secret(
             "PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}
         ),
@@ -129,23 +132,23 @@ def test_display_secrets(mock_k8s_module: MagicMock, capsys: CaptureFixture):
         ),
     }
 
-    mock_k8s_module.namespace_exists.return_value = False
+    mock_namespace.return_value = False
     display_secrets("the-namespace", secret_name="test-credentials")
     captured_one = capsys.readouterr()
     assert "Could not find namespace=the-namespace on k8s cluster" in captured_one.out
 
-    mock_k8s_module.namespace_exists.return_value = True
+    mock_namespace.return_value = True
     display_secrets("the-namespace", secret_name="test-credentials", group="PROD")
     captured_two = capsys.readouterr()
     assert findall(".*USERNAME.+alex", captured_two.out)
     assert findall(".*PASSWORD.+alex123", captured_two.out)
 
-    mock_k8s_module.namespace_exists.return_value = True
+    mock_namespace.return_value = True
     display_secrets("the-namespace", secret_name="test-credentialz", group="DEV")
     captured_three = capsys.readouterr()
     assert "Cannot find secret=test-credentialz" in captured_three.out
 
-    mock_k8s_module.namespace_exists.return_value = True
+    mock_namespace.return_value = True
     display_secrets("the-namespace", None)
     captured_four = capsys.readouterr()
     assert findall(".*test-credentials.+PROD", captured_four.out)

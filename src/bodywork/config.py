@@ -26,6 +26,7 @@ import yaml
 
 from .constants import BODYWORK_CONFIG_VERSION
 from .exceptions import (
+    BodyworkConfigFileExistsError,
     BodyworkConfigParsingError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigVersionMismatchError,
@@ -108,7 +109,7 @@ class BodyworkConfig:
             self._config_file_path = config_file_path
             self._root_dir = config_file_path.parent
         except (FileNotFoundError, IsADirectoryError):
-            raise FileExistsError(f"no config file found at {config_file_path}")
+            raise BodyworkConfigFileExistsError(config_file_path)
         except yaml.YAMLError as e:
             raise BodyworkConfigParsingError(config_file_path) from e
         self.check_py_modules_exist = check_py_modules_exist

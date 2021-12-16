@@ -20,6 +20,7 @@ Pytest fixtures for use with all testing modules.
 import shutil
 import os
 import stat
+from typing import Iterable
 
 from pytest import fixture
 from pathlib import Path
@@ -42,8 +43,11 @@ def cloned_project_repo_location() -> Path:
 
 
 @fixture(scope="function")
-def bodywork_output_dir() -> Path:
-    return Path("bodywork_project_output")
+def bodywork_output_dir() -> Iterable[Path]:
+    output_dir_path = Path("bodywork_project_output")
+    output_dir_path.mkdir(exist_ok=False)
+    yield output_dir_path
+    shutil.rmtree(output_dir_path, onerror=remove_readonly)
 
 
 @fixture(scope="function")
@@ -55,7 +59,7 @@ def project_repo_connection_string(project_repo_location: Path) -> str:
 def setup_bodywork_test_project(
     project_repo_location: Path,
     cloned_project_repo_location: Path,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ) -> Iterable[bool]:
     # SETUP
     try:
@@ -73,7 +77,6 @@ def setup_bodywork_test_project(
             capture_output=True,
             encoding="utf-8",
         )
-        os.mkdir(bodywork_output_dir)
         yield True
     except Exception as e:
         raise RuntimeError(f"Cannot create test project Git repo - {e}.")
@@ -88,8 +91,6 @@ def setup_bodywork_test_project(
             shutil.rmtree(f"{project_repo_location}/.git", onerror=remove_readonly)
         if cloned_project_repo_location.exists():
             shutil.rmtree(cloned_project_repo_location, onerror=remove_readonly)
-        if bodywork_output_dir.exists():
-            shutil.rmtree(bodywork_output_dir, onerror=remove_readonly)
 
 
 def remove_readonly(func, path, exc_info):

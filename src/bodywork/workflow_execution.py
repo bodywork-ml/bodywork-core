@@ -28,7 +28,7 @@ import os
 import stat
 
 from . import k8s
-from .cli.terminal import console, print_pod_logs
+from .cli.terminal import print_pod_logs
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
@@ -38,7 +38,8 @@ from .constants import (
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
-    SSH_PRIVATE_KEY_ENV_VAR,
+    BODYWORK_NAMESPACE,
+    SSH_SECRET_NAME,
 )
 from .exceptions import (
     BodyworkWorkflowExecutionError,
@@ -58,6 +59,7 @@ def run_workflow(
     repo_branch: str = "master",
     docker_image_override: Optional[str] = None,
     config: Optional[BodyworkConfig] = None,
+    ssh_key_path: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the workflow.
@@ -71,121 +73,126 @@ def run_workflow(
     :param config: Override config.
     :param cloned_repo_dir: The name of the directory into which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+    :param ssh_key_path:
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
         run for any reason.
     """
-    console.rule(
-        f"[green]deploying[/green] [bold purple]{repo_branch}[/bold purple] "
-        f"[green]branch from[/green] [bold purple]{repo_url}[/bold purple]",
-        characters="=",
-        style="green",
-    )
-    with console.status("[purple]Bodywork deploying[/purple]", spinner="aesthetic"):
-        try:
-            download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
-            if config is None:
-                config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
 
-            _log.setLevel(config.logging.log_level)
-            namespace = _setup_namespace(config, repo_url)
-            workflow_dag = config.project.workflow
-            all_stages = config.stages
-            docker_image = (
-                config.project.docker_image
-                if docker_image_override is None
-                else docker_image_override
-            )
-            image_name, image_tag = parse_dockerhub_image_string(docker_image)
-            if not image_exists_on_dockerhub(image_name, image_tag):
-                msg = f"Cannot locate {image_name}:{image_tag} on DockerHub"
-                raise BodyworkDockerImageError(msg)
-            git_commit_hash = get_git_commit_hash(cloned_repo_dir)
-            env_vars = k8s.create_k8s_environment_variables(
-                [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
-            )
-            if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
-                env_vars.append(
-                    k8s.create_k8s_environment_variables(
-                        [(SSH_PRIVATE_KEY_ENV_VAR, os.environ[SSH_PRIVATE_KEY_ENV_VAR])]
-                    )[0]
+    try:
+        download_project_code_from_repo(
+            repo_url, repo_branch, cloned_repo_dir, ssh_key_path
+        )
+        if config is None:
+            config = BodyworkConfig(cloned_repo_dir / PROJECT_CONFIG_FILENAME, True)
+
+        _log.setLevel(config.logging.log_level)
+        namespace = _setup_namespace(config, repo_url)
+        workflow_dag = config.project.workflow
+        all_stages = config.stages
+        docker_image = (
+            config.project.docker_image
+            if docker_image_override is None
+            else docker_image_override
+        )
+        image_name, image_tag = parse_dockerhub_image_string(docker_image)
+        if not image_exists_on_dockerhub(image_name, image_tag):
+            msg = f"Cannot locate {image_name}:{image_tag} on DockerHub"
+            raise BodyworkDockerImageError(msg)
+        git_commit_hash = get_git_commit_hash(cloned_repo_dir)
+        env_vars = k8s.create_k8s_environment_variables(
+            [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
+        )
+        secrets_group = config.project.secrets_group
+        if ssh_key_path:
+            if not secrets_group:
+                secrets_group = config.project.name
+            k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
+        if secrets_group:
+            if k8s.secret_exists(
+                BODYWORK_NAMESPACE,
+                k8s.create_complete_secret_name(secrets_group, SSH_SECRET_NAME),
+            ):
+                env_vars.append(k8s.create_secret_env_variable())
+            _copy_secrets_to_target_namespace(namespace, secrets_group)
+        elif k8s.secret_exists(
+            BODYWORK_NAMESPACE,
+            k8s.create_complete_secret_name(config.project.name, SSH_SECRET_NAME),
+        ):
+            env_vars.append(k8s.create_secret_env_variable())
+            _copy_secrets_to_target_namespace(namespace, config.project.name)
+
+        for step in workflow_dag:
+            _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
+            batch_stages = [
+                cast(BatchStageConfig, all_stages[stage_name])
+                for stage_name in step
+                if type(all_stages[stage_name]) is BatchStageConfig
+            ]
+            service_stages = [
+                cast(ServiceStageConfig, all_stages[stage_name])
+                for stage_name in step
+                if type(all_stages[stage_name]) is ServiceStageConfig
+            ]
+            if batch_stages:
+                _run_batch_stages(
+                    batch_stages,
+                    env_vars,
+                    namespace,
+                    repo_branch,
+                    repo_url,
+                    docker_image,
                 )
-            if config.project.secrets_group:
-                _copy_secrets_to_target_namespace(
-                    namespace, config.project.secrets_group
+            if service_stages:
+                _run_service_stages(
+                    service_stages,
+                    config.project.name,
+                    env_vars,
+                    namespace,
+                    repo_branch,
+                    repo_url,
+                    docker_image,
+                    git_commit_hash,
                 )
-            for step in workflow_dag:
-                _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
-                batch_stages = [
-                    cast(BatchStageConfig, all_stages[stage_name])
-                    for stage_name in step
-                    if type(all_stages[stage_name]) is BatchStageConfig
+            _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
+        _log.info("Deployment successful")
+        if not workflow_deploys_services(config):
+            _log.info(f"Deleting namespace = {namespace}")
+            k8s.delete_namespace(namespace)
+        else:
+            _cleanup_redundant_services(git_commit_hash, namespace)
+        if config.project.usage_stats:
+            _ping_usage_stats_server()
+    except Exception as e:
+        msg = f"Deployment failed --> {e}"
+        _log.error(msg)
+        try:
+            if (
+                type(e)
+                not in [
+                    BodyworkNamespaceError,
+                    BodyworkDockerImageError,
+                    BodyworkGitError,
+                    BodyworkConfigError,
                 ]
-                service_stages = [
-                    cast(ServiceStageConfig, all_stages[stage_name])
-                    for stage_name in step
-                    if type(all_stages[stage_name]) is ServiceStageConfig
-                ]
-                if batch_stages:
-                    _run_batch_stages(
-                        batch_stages,
-                        env_vars,
-                        namespace,
-                        repo_branch,
-                        repo_url,
-                        docker_image,
-                    )
-                if service_stages:
-                    _run_service_stages(
-                        service_stages,
-                        config.project.name,
-                        env_vars,
-                        namespace,
-                        repo_branch,
-                        repo_url,
-                        docker_image,
-                        git_commit_hash,
-                    )
-                _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
-            _log.info("Deployment successful")
-            if not workflow_deploys_services(config):
-                _log.info(f"Deleting namespace = {namespace}")
-                k8s.delete_namespace(namespace)
-            else:
-                _cleanup_redundant_services(git_commit_hash, namespace)
-            if config.project.usage_stats:
-                _ping_usage_stats_server()
-        except Exception as e:
-            msg = f"Deployment failed --> {e}"
-            _log.error(msg)
-            try:
-                if (
-                    type(e)
-                    not in [
-                        BodyworkNamespaceError,
-                        BodyworkDockerImageError,
-                        BodyworkGitError,
-                        BodyworkConfigError,
-                    ]
-                    and config
-                    and config.project.run_on_failure
-                ):
-                    if config.project.usage_stats:
-                        _ping_usage_stats_server()
-                    _run_failure_stage(
-                        config, e, namespace, repo_url, repo_branch, docker_image
-                    )
-            except Exception as ex:
-                failure_msg = (
-                    f"Error executing failure stage = {config.project.run_on_failure} "  # type: ignore  # noqa
-                    f"after failed workflow : {ex}"
+                and config
+                and config.project.run_on_failure
+            ):
+                if config.project.usage_stats:
+                    _ping_usage_stats_server()
+                _run_failure_stage(
+                    config, e, namespace, repo_url, repo_branch, docker_image
                 )
-                _log.error(failure_msg)
-                msg = f"{msg}\n{failure_msg}"
-            raise BodyworkWorkflowExecutionError(msg) from e
-        finally:
-            if cloned_repo_dir.exists():
-                rmtree(cloned_repo_dir, onerror=_remove_readonly)
-    console.rule(characters="=", style="green")
+        except Exception as ex:
+            failure_msg = (
+                f"Error executing failure stage = {config.project.run_on_failure} "  # type: ignore  # noqa
+                f"after failed workflow : {ex}"
+            )
+            _log.error(failure_msg)
+            msg = f"{msg}\n{failure_msg}"
+        raise BodyworkWorkflowExecutionError(msg) from e
+    finally:
+        if cloned_repo_dir.exists():
+            rmtree(cloned_repo_dir, onerror=_remove_readonly)
 
 
 def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
@@ -257,7 +264,7 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
 
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
-    env_vars: k8s.EnvVars,
+    env_vars: List[k8s.EnvVar],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -312,7 +319,7 @@ def _run_batch_stages(
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
-    env_vars: k8s.EnvVars,
+    env_vars: List[k8s.EnvVar],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -544,7 +551,7 @@ def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> Non
         )
         k8s.replicate_secrets_in_namespace(namespace, secrets_group)
     except ApiException as e:
-        _log.info(
+        _log.error(
             f"Unable to replicate k8s secrets from group = {secrets_group} into "
             f"namespace = {namespace}"
         )

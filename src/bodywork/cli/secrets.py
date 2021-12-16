@@ -73,7 +73,7 @@ def create_secret(
         return None
     k8s.create_secret(
         namespace,
-        _create_complete_secret_name(group, secret_name),
+        k8s.create_complete_secret_name(group, secret_name),
         group,
         keys_and_values,
     )
@@ -94,12 +94,12 @@ def update_secret(
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not k8s.secret_exists(
-        namespace, _create_complete_secret_name(group, secret_name)
+        namespace, k8s.create_complete_secret_name(group, secret_name)
     ):
         print_warn(f"Could not find secret={secret_name} in group={group}.")
         return None
     k8s.update_secret(
-        namespace, _create_complete_secret_name(group, secret_name), keys_and_values
+        namespace, k8s.create_complete_secret_name(group, secret_name), keys_and_values
     )
     print_info(f"Updated secret={secret_name} in group={group}.")
 
@@ -115,11 +115,11 @@ def delete_secret(namespace: str, group: str, secret_name: str) -> None:
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not k8s.secret_exists(
-        namespace, _create_complete_secret_name(group, secret_name)
+        namespace, k8s.create_complete_secret_name(group, secret_name)
     ):
         print_warn(f"Could not find secret={secret_name} in group={group}.")
         return None
-    k8s.delete_secret(namespace, _create_complete_secret_name(group, secret_name))
+    k8s.delete_secret(namespace, k8s.create_complete_secret_name(group, secret_name))
     print_info(f"Deleted secret={secret_name} from group={group}.")
 
 
@@ -142,7 +142,7 @@ def display_secrets(
         return None
     if secret_name:
         try:
-            complete_secret_name = _create_complete_secret_name(
+            complete_secret_name = k8s.create_complete_secret_name(
                 str(group), str(secret_name)
             )
             print_dict(
@@ -153,7 +153,7 @@ def display_secrets(
             print_warn(f"Cannot find secret={secret_name}.")
     elif group:
         for secret in secrets.items():
-            table_name = _create_table_name(secret[0].split("-")[1], group)
+            table_name = _create_table_name(secret[0].split(f"{group}-")[1], group)
             print_dict(secret[1].data, table_name)
     else:
         table_data = {
@@ -162,10 +162,6 @@ def display_secrets(
             if secret.group is not None
         }
         print_dict(table_data, "all secrets", "Secret Name", "Bodywork Secret Group")
-
-
-def _create_complete_secret_name(group: str, name: str) -> str:
-    return f"{group}-{name}"
 
 
 def _create_table_name(secret_name: str, group: str) -> str:

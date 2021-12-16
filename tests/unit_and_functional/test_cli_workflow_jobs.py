@@ -22,7 +22,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from _pytest.capture import CaptureFixture
-from bodywork.constants import BODYWORK_DEPLOYMENT_JOBS_NAMESPACE
+from bodywork.constants import BODYWORK_NAMESPACE
 
 from bodywork.cli.workflow_jobs import (
     create_workflow_job,
@@ -189,7 +189,7 @@ def test_is_valid_cron_scheule():
 def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixture):
     mock_k8s_module.namespace_exists.return_value = False
     create_workflow_cronjob(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
@@ -197,14 +197,14 @@ def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixt
     )
     captured_one = capsys.readouterr()
     assert (
-        f"Could not find namespace={BODYWORK_DEPLOYMENT_JOBS_NAMESPACE} on k8s cluster"
+        f"Could not find namespace={BODYWORK_NAMESPACE} on k8s cluster"
         in captured_one.out
     )
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_cronjobs.return_value = {"bodywork-test-project": {}}
     create_workflow_cronjob(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
@@ -220,7 +220,7 @@ def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixt
     mock_k8s_module.list_workflow_cronjobs.return_value = {"foo": {}}
     mock_k8s_module.create_workflow_cronjob.side_effect = None
     create_workflow_cronjob(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         "0 * * *",
         "bodywork-test-project",
         "project_repo_url",
@@ -233,7 +233,7 @@ def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixt
     mock_k8s_module.list_workflow_cronjobs.return_value = {"foo": {}}
     mock_k8s_module.create_workflow_cronjob.side_effect = None
     create_workflow_cronjob(
-        BODYWORK_DEPLOYMENT_JOBS_NAMESPACE,
+        BODYWORK_NAMESPACE,
         "0 * * * *",
         "bodywork-test-project",
         "project_repo_url",
