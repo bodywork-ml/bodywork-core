@@ -27,7 +27,23 @@ from unittest.mock import patch, MagicMock
 import kubernetes
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cli import deployment, handle_k8s_exceptions
+from bodywork.cli.cli import (
+    k8s_auth,
+    handle_k8s_exceptions,
+    _configure_cluster,
+    _create_deployment,
+    _get_deployment,
+    _update_deployment,
+    _delete_deployment,
+    _create_secret,
+    _get_secret,
+    _update_secret,
+    _delete_secret,
+    _create_cronjob,
+    _get_cronjob,
+    _update_cronjob,
+    _delete_cronjob,
+)
 from bodywork.constants import BODYWORK_NAMESPACE
 
 
@@ -118,94 +134,8 @@ def test_cli_commands_exist():
         encoding="utf-8",
         capture_output=True,
     )
-    assert (
-        "Please specify the secret group the secret belongs to" in process_five.stdout
-    )
-
-
-def test_deployment_subcommand_exists():
-    process = run(
-        ["bodywork", "deployment", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "usage: bodywork deployment [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
-@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.run_workflow")
-@patch("sys.exit")
-def test_deployment_create_configures_cluster_if_required(
-    mock_sys_exit: MagicMock,
-    mock_workflow_cli_handler: MagicMock,
-    mock_load_config: MagicMock,
-    mock_namespace: MagicMock,
-    mock_configure_cluster: MagicMock,
-    capsys: CaptureFixture,
-):
-    args = Namespace(
-        command="create",
-        name="foo2",
-        retries=0,
-        git_url="foo3",
-        git_branch="foo4",
-        async_workflow=None,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-    mock_namespace.return_value = False
-    deployment(args)
-
-    stdout = capsys.readouterr().out
-    msg = (
-        "Cluster has not been configured for Bodywork - "
-        "running 'bodywork configure-cluster'."
-    )
-    assert msg in stdout
-    mock_configure_cluster.assert_called_once_with(BODYWORK_NAMESPACE)
-
-
-@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.run_workflow")
-@patch("sys.exit")
-def test_deployment_run_locally_calls_run_workflow_handler(
-    mock_sys_exit: MagicMock,
-    mock_workflow_cli_handler: MagicMock,
-    mock_load_config: MagicMock,
-    mock_namespace: MagicMock,
-    capsys: CaptureFixture,
-):
-    args = Namespace(
-        command="create",
-        name="foo2",
-        retries=0,
-        git_url="foo3",
-        git_branch="foo4",
-        async_workflow=None,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-    mock_namespace.return_value = True
-    deployment(args)
-
-    stdout = capsys.readouterr().out
-    assert "Using local workflow controller - retries inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with(
-        "foo3", "foo4", docker_image_override=None, ssh_key_path=None
-    )
-
-
-def test_cli_deployment_handler_error_handling():
-    process_one = run(
-        ["bodywork", "deployment", "logs"],
+    get_deployment = run(
+        ["bodywork", "get", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -214,182 +144,8 @@ def test_cli_deployment_handler_error_handling():
         encoding="utf-8",
         capture_output=True,
     )
-    assert "Please specify Git repo URL" in process_two.stdout
-    assert process_two.returncode == 1
-
-
-@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.create_workflow_job")
-def test_cli_deployment_create_async(
-    mock_create_workflow: MagicMock,
-    mock_sys: MagicMock,
-    mock_load_config: MagicMock,
-    mock_namespace: MagicMock,
-):
-    args = Namespace(
-        command="create",
-        name="test_cli",
-        async_workflow=True,
-        git_url="http://Test",
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image="bodywork-ml:myimage",
-        ssh_key_path=None,
-        group=None,
-    )
-    mock_namespace.return_value = True
-    deployment(args)
-
-    mock_create_workflow.assert_called_with(
-        BODYWORK_NAMESPACE,
-        args.name,
-        args.git_url,
-        args.git_branch,
-        args.retries,
-        args.bodywork_docker_image,
-        None,
-        None,
-    )
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.delete_deployment")
-def test_cli_deployment_delete(
-    mock_deployments: MagicMock, mock_sys: MagicMock, mock_load_config: MagicMock
-):
-    args = Namespace(
-        command="delete",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-
-    deployment(args)
-
-    mock_deployments.assert_called_with(args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_workflow_job_logs")
-def test_cli_deployment_logs(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="logs",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.delete_workflow_job")
-def test_cli_deployment_delete_job(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="delete_job",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_workflow_job_history")
-def test_cli_deployment_job_history(
-    mock_workflow_job: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="job_history",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-
-    deployment(args)
-
-    mock_workflow_job.assert_called_with(BODYWORK_NAMESPACE, args.name)
-
-
-@patch("bodywork.cli.cli.load_kubernetes_config")
-@patch("bodywork.cli.cli.sys")
-@patch("bodywork.cli.cli.display_deployments")
-def test_cli_deployment_display(
-    mock_display_deployments: MagicMock, mock_sys: MagicMock, mock_load_config
-):
-    args = Namespace(
-        command="display",
-        name="mydeployment",
-        async_workflow=None,
-        git_url=None,
-        git_branch="master",
-        retries=2,
-        namespace=None,
-        service=None,
-        bodywork_docker_image=None,
-        ssh_key_path=None,
-        group=None,
-    )
-
-    deployment(args)
-
-    mock_display_deployments.assert_called_with(args.namespace, args.name, args.service)
-
-
-def test_cronjobs_subcommand_exists():
-    process = run(["bodywork", "cronjob", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork cronjob [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_cronjob_handler_error_handling():
-    process_one = run(
-        ["bodywork", "cronjob", "create"],
+    delete_deployment = run(
+        ["bodywork", "delete", "deployment", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
@@ -465,7 +221,7 @@ def test_validate(project_repo_location: Path):
         capture_output=True,
     )
     assert process_two.returncode == 1
-    assert "No config file found" in process_two.stdout
+    assert "no config file found" in process_two.stdout
 
     config_file_path = project_repo_location / "bodywork_empty.yaml"
     process_three = run(
@@ -474,7 +230,7 @@ def test_validate(project_repo_location: Path):
         capture_output=True,
     )
     assert process_three.returncode == 1
-    assert "Cannot parse YAML" in process_three.stdout
+    assert "cannot parse YAML" in process_three.stdout
 
     config_file_path = project_repo_location / "bodywork_missing_sections.yaml"
     process_four = run(
@@ -513,7 +269,7 @@ def test_configure_cluster_configures_cluster(
     mock_sys: MagicMock, mock_setup: MagicMock
 ):
     _configure_cluster()
-    mock_setup.assert_called_once_with(BODYWORK_DEPLOYMENT_JOBS_NAMESPACE)
+    mock_setup.assert_called_once_with(BODYWORK_NAMESPACE)
 
 
 def test_stage_command_successful_has_zero_exit_code(

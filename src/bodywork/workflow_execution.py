@@ -264,7 +264,7 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
 
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
-    env_vars: List[k8s.EnvVar],
+    env_vars: List[k8s.EnvVars],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -319,7 +319,7 @@ def _run_batch_stages(
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
-    env_vars: List[k8s.EnvVar],
+    env_vars: List[k8s.EnvVars],
     namespace: str,
     repo_branch: str,
     repo_url: str,
