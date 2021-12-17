@@ -38,6 +38,7 @@ from .setup_namespace import (
     setup_namespace_with_service_accounts_and_roles,
 )
 from ..exceptions import (
+    BodyworkConfigFileExistsError,
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
@@ -124,7 +125,7 @@ def _validate_config(
         print_info(f"--> {file_path} is a valid Bodywork config file.")
         sys.exit(0)
     except (
-        FileExistsError,
+        BodyworkConfigFileExistsError,
         BodyworkConfigParsingError,
         BodyworkConfigMissingSectionError,
     ) as e:
@@ -179,6 +180,8 @@ def _create_deployment(
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
     asynchronous_job_name: str = Option("", "--async-job-name"),
+    ssh_key_path: str = Option("", "--ssh"),
+    secrets_group: str = Option("", "--group", "--secrets-group"),
     image: Optional[str] = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
@@ -193,7 +196,12 @@ def _create_deployment(
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
-            run_workflow(git_url, git_branch, docker_image_override=image)
+            run_workflow(
+                git_url,
+                git_branch,
+                ssh_key_path=ssh_key_path,
+                docker_image_override=image
+            )
         except BodyworkWorkflowExecutionError:
             sys.exit(1)
     else:
@@ -212,6 +220,8 @@ def _create_deployment(
             git_branch,
             retries,
             image if image else BODYWORK_DOCKER_IMAGE,
+            ssh_key_path,
+            secrets_group,
         )
         sys.exit(0)
 
@@ -278,6 +288,8 @@ def _create_cronjob(
     name: str = Option(...),
     retries: int = Option(1),
     history_limit: int = Option(1),
+    ssh_key_path: str = Option("", "--ssh"),
+    secrets_group: str = Option("", "--group", "--secrets-group"),
 ):
     create_workflow_cronjob(
         BODYWORK_NAMESPACE,
@@ -287,6 +299,8 @@ def _create_cronjob(
         git_branch if git_branch else "master",
         retries,
         history_limit,
+        ssh_key_path,
+        secrets_group,
     )
     sys.exit(0)
 

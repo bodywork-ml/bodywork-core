@@ -221,7 +221,7 @@ def test_validate(project_repo_location: Path):
         capture_output=True,
     )
     assert process_two.returncode == 1
-    assert "no config file found" in process_two.stdout
+    assert "No config file found" in process_two.stdout
 
     config_file_path = project_repo_location / "bodywork_empty.yaml"
     process_three = run(
@@ -230,7 +230,7 @@ def test_validate(project_repo_location: Path):
         capture_output=True,
     )
     assert process_three.returncode == 1
-    assert "cannot parse YAML" in process_three.stdout
+    assert "Cannot parse YAML" in process_three.stdout
 
     config_file_path = project_repo_location / "bodywork_missing_sections.yaml"
     process_four = run(
