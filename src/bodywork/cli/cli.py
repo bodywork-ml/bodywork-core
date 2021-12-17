@@ -37,6 +37,7 @@ from .setup_namespace import (
     is_namespace_available_for_bodywork,
     setup_namespace_with_service_accounts_and_roles,
 )
+from .terminal import console
 from ..exceptions import (
     BodyworkConfigFileExistsError,
     BodyworkConfigValidationError,
@@ -196,12 +197,22 @@ def _create_deployment(
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
-            run_workflow(
-                git_url,
-                git_branch,
-                ssh_key_path=ssh_key_path,
-                docker_image_override=image
+            console.rule(
+                f"[green]deploying[/green] [bold purple]{git_branch}[/bold purple] "
+                f"[green]branch from[/green] [bold purple]{git_url}[/bold purple]",
+                characters="=",
+                style="green",
             )
+            with console.status(
+                "[purple]Bodywork deploying[/purple]", spinner="aesthetic"
+            ):
+                run_workflow(
+                    git_url,
+                    git_branch,
+                    ssh_key_path=ssh_key_path,
+                    docker_image_override=image
+                )
+            console.rule(characters="=", style="green")
         except BodyworkWorkflowExecutionError:
             sys.exit(1)
     else:
@@ -261,7 +272,14 @@ def _update_deployment(
     retries: int = Option(1),
 ):
     _create_deployment(
-        git_url, git_branch, asynchronous, asynchronous_job_name, image, retries
+        git_url=git_url,
+        git_branch=git_branch,
+        asynchronous=asynchronous,
+        asynchronous_job_name=asynchronous_job_name,
+        ssh_key_path="",
+        secrets_group="",
+        image=image,
+        retries=retries,
     )
 
 
