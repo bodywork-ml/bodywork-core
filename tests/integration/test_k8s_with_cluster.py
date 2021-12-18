@@ -534,7 +534,7 @@ def test_deployment_of_remote_workflows(docker_image: str):
 @mark.usefixtures("setup_cluster")
 def test_remote_deployment_with_ssh_github_connectivity(
     docker_image: str,
-    set_github_ssh_private_key_env_var: None,
+    github_ssh_private_key_file: str,
 ):
     job_name = "test-remote-ssh-workflow"
     try:
@@ -555,7 +555,7 @@ def test_remote_deployment_with_ssh_github_connectivity(
             capture_output=True,
         )
         assert process.returncode == 0
-        assert f"Created workflow-job={job_name}" in process.stdout
+        assert f"Created workflow-job=async-workflow-{job_name}" in process.stdout
 
         sleep(5)
 
