@@ -20,7 +20,7 @@ Integration testing secrets functionality with k8s.
 from re import findall
 
 from pytest import mark
-from subprocess import CalledProcessError, run
+from subprocess import run
 
 from bodywork.k8s import replicate_secrets_in_namespace, secret_exists
 
@@ -39,10 +39,10 @@ def test_update_secret():
     process_one = run(
         [
             "bodywork",
-            "secret",
             "update",
+            "secret",
+            "bodywork-test-project-credentials",
             "--group=testsecrets",
-            "--name=bodywork-test-project-credentials",
             "--data",
             "PASSWORD=updated",
         ],
@@ -63,8 +63,8 @@ def test_display_all_secrets():
     process_one = run(
         [
             "bodywork",
-            "secret",
-            "display",
+            "get",
+            "secrets",
         ],
         encoding="utf-8",
         capture_output=True,
@@ -81,12 +81,13 @@ def test_cli_secret_handler_crud():
     process_one = run(
         [
             "bodywork",
-            "secret",
             "create",
+            "secret",
+            "pytest-credentials",
             "--group=test",
-            "--name=pytest-credentials",
             "--data",
             "USERNAME=alex",
+            "--data",
             "PASSWORD=alex123",
         ],
         encoding="utf-8",
@@ -98,9 +99,9 @@ def test_cli_secret_handler_crud():
     process_two = run(
         [
             "bodywork",
+            "get",
             "secret",
-            "display",
-            "--name=pytest-credentials",
+            "pytest-credentials",
             "--group=test",
         ],
         encoding="utf-8",
@@ -113,10 +114,10 @@ def test_cli_secret_handler_crud():
     process_three = run(
         [
             "bodywork",
-            "secret",
             "delete",
+            "secret",
+            "pytest-credentials",
             "--group=test",
-            "--name=pytest-credentials",
         ],
         encoding="utf-8",
         capture_output=True,
@@ -127,10 +128,10 @@ def test_cli_secret_handler_crud():
     process_four = run(
         [
             "bodywork",
+            "get",
             "secret",
-            "display",
+            "pytest-credentials",
             "--group=test",
-            "--name=pytest-credentials",
         ],
         encoding="utf-8",
         capture_output=True,

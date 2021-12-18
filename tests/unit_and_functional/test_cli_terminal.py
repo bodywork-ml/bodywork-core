@@ -24,7 +24,7 @@ def test_print_pod_logs_renders_logs(capsys: CaptureFixture):
     )
     print_pod_logs(logs, "foo")
     stdout = capsys.readouterr().out
-    assert findall(r"─.+logs for stage = foo.+─", stdout)
+    assert findall(r"─.+foo.+─", stdout)
     assert "[09/13/21 15:02:05] INFO     Something happened" in stdout
     assert "[09/13/21 15:02:05] INFO     Something else happened" in stdout
 

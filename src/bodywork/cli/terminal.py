@@ -37,12 +37,12 @@ def print_dict(
     console.print(table)
 
 
-def print_pod_logs(logs: str, stage_name: str) -> None:
+def print_pod_logs(logs: str, header: str) -> None:
     """Render pod logs.
 
     :param logs: The logs!
-    :param stage_name: The name of the stage associated with the logs.
+    :param header: Text to associate with the logs.
     """
-    console.rule(f"[yellow]logs for stage = {stage_name}[/yellow]", style="yellow")
+    console.rule(f"[yellow]{header}[/yellow]", style="yellow")
     console.print(logs, style="grey58")
     console.rule(style="yellow")

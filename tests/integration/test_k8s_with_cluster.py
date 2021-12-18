@@ -55,11 +55,11 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -85,11 +85,11 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -97,7 +97,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         assert process.returncode == 0
 
         process = run(
-            ["bodywork", "deployment", "display", "--namespace=bodywork-test-project"],
+            ["bodywork", "get", "deployments"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -124,9 +124,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "delete",
-                "--name=bodywork-test-project",
+                "deployment",
+                "bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -140,9 +140,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process = run(
             [
                 "bodywork",
-                "deployment",
-                "display",
-                "--name=bodywork-test-project",
+                "get",
+                "deployments",
+                "bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -164,10 +164,10 @@ def test_services_from_previous_deployments_are_deleted():
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
-                "--git-branch=test-two-services",
+                "deployment",
+                "https://github.com/bodywork-ml/test-single-service-project.git",
+                "test-two-services",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -180,10 +180,10 @@ def test_services_from_previous_deployments_are_deleted():
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
-                "--git-branch=master",
+                "deployment",
+                "https://github.com/bodywork-ml/test-single-service-project.git",
+                "master",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -198,9 +198,9 @@ def test_services_from_previous_deployments_are_deleted():
         process = run(
             [
                 "bodywork",
+                "get",
                 "deployment",
-                "display",
-                "--name=bodywork-test-single-service-project",
+                "bodywork-test-single-service-project",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -222,27 +222,27 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_0 = "Deleted k8s job for stage = stage-1"  # noqa
+        expected_output_0 = "Deleted k8s job for stage = stage-1"
         assert expected_output_0 in process.stdout
         assert process.returncode == 0
 
         process = run(
             [
                 "bodywork",
+                "update",
                 "deployment",
-                "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
+                "master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -267,11 +267,11 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-failing-test-project",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-failing-test-project",
+                "master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -299,11 +299,11 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
-                "--git-branch=master",
-                f"--bodywork-docker-image={bad_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                f"--bodywork-image={bad_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -314,11 +314,11 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
-                "--git-branch=master",
-                "--bodywork-docker-image=bodyworkml/bodywork-not-an-image:latest",
+                "deployment",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
+                "--bodywork-image=bodyworkml/bodywork-not-an-image:latest",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -333,17 +333,15 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
-@mark.usefixtures("setup_cluster")
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                f"--namespace={test_namespace}",
-                "--git-url=http://bad.repo",
-                "--git-branch=master",
+                "deployment",
+                "http://bad.repo",
+                "master",
             ],
             check=True,
         )
@@ -355,11 +353,12 @@ def test_cli_cronjob_handler_crud():
         process = run(
             [
                 "bodywork",
-                "cronjob",
                 "create",
+                "cronjob",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "master",
                 "--name=bodywork-test-project",
                 "--schedule=0,30 * * * *",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
                 "--retries=2",
                 "--history-limit=1",
             ],
@@ -372,12 +371,12 @@ def test_cli_cronjob_handler_crud():
         process = run(
             [
                 "bodywork",
-                "cronjob",
                 "update",
+                "cronjob",
+                "https://github.com/bodywork-ml/bodywork-test-project",
+                "main",
                 "--name=bodywork-test-project",
                 "--schedule=0,0 1 * * *",
-                "--git-url=https://github.com/bodywork-ml/bodywork-test-project",
-                "--git-branch=main",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -386,7 +385,7 @@ def test_cli_cronjob_handler_crud():
         assert process.returncode == 0
 
         process = run(
-            ["bodywork", "cronjob", "display", "--name=bodywork-test-project"],
+            ["bodywork", "get", "cronjob", "bodywork-test-project"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -395,16 +394,16 @@ def test_cli_cronjob_handler_crud():
         assert (
             "https://github.com/bodywork-ml/bodywork-test-project"
             in process.stdout
-        )  # noqa
+        )
         assert "main" in process.stdout
         assert process.returncode == 0
 
         process = run(
             [
                 "bodywork",
-                "cronjob",
                 "delete",
-                "--name=bodywork-test-project",
+                "cronjob",
+                "bodywork-test-project",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -413,7 +412,7 @@ def test_cli_cronjob_handler_crud():
         assert process.returncode == 0
 
         process = run(
-            ["bodywork", "cronjob", "display"],
+            ["bodywork", "get", "cronjob"],
             encoding="utf-8",
             capture_output=True,
         )
@@ -424,7 +423,7 @@ def test_cli_cronjob_handler_crud():
             [
                 "kubectl",
                 "delete",
-                "cronjobs",
+                "cronjob",
                 "bodywork-test-project",
                 f"--namespace={BODYWORK_NAMESPACE}",
             ]
@@ -440,11 +439,11 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "master",
+                f"--bodywork-image={docker_image}",
                 f"--ssh={github_ssh_private_key_file}",
             ],
             encoding="utf-8",
@@ -467,45 +466,44 @@ def test_deployment_with_ssh_github_connectivity_from_file(
 
 @mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
-    job_name = "test-remote-workflows"
     try:
+        job_name = "foo"
+
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                f"--name={job_name}",
-                "--git-url=https://github.com/bodywork-ml/test-single-service-project.git",  # noqa
-                f"--bodywork-docker-image={docker_image}",
+                "deployment",
+                "https://github.com/bodywork-ml/test-single-service-project.git",
+                "master",
+                f"--bodywork-image={docker_image}",
                 "--async",
+                f"--async-job-name={job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
+
         assert process.returncode == 0
-        assert f"Created workflow-job={job_name}" in process.stdout
+        assert f"Created workflow-job=async-workflow-{job_name}" in process.stdout
 
         sleep(20)
 
         process = run(
-            [
-                "bodywork",
-                "deployment",
-                "display",
-                "--name=bodywork-test-single-service-project",
-            ],
+            ["bodywork", "get", "deployments", "--async"],
             encoding="utf-8",
             capture_output=True,
         )
         assert process.returncode == 0
-        assert "bodywork-test-single-service-project" in process.stdout
+        assert job_name in process.stdout
 
         process = run(
             [
                 "bodywork",
+                "get",
                 "deployment",
-                "logs",
-                f"--name={job_name}",
+                "--async",
+                f"--logs=async-workflow-{job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -524,48 +522,49 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "kubectl",
                 "delete",
                 "job",
-                f"{job_name}",
+                f"async-workflow-{job_name}",
                 f"--namespace={BODYWORK_NAMESPACE}",
             ]
         )
-        delete_namespace("bodywork-test-single-service-project")
+        if namespace_exists("bodywork-test-single-service-project"):
+            delete_namespace("bodywork-test-single-service-project")
         rmtree(SSH_DIR_NAME, ignore_errors=True)
 
 
 @mark.usefixtures("setup_cluster")
 def test_remote_deployment_with_ssh_github_connectivity(
     docker_image: str,
-    set_github_ssh_private_key_env_var: None,
+    github_ssh_private_key_file: str,
 ):
     job_name = "test-remote-ssh-workflow"
     try:
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
-                f"--name={job_name}",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
-                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
+                "deployment",
+                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "master",
                 "--async",
+                f"--async-job-name={job_name}",
+                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
                 "--group=bodywork-tests",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
         )
         assert process.returncode == 0
-        assert f"Created workflow-job={job_name}" in process.stdout
+        assert f"Created workflow-job=async-workflow-{job_name}" in process.stdout
 
         sleep(5)
 
         process = run(
             [
                 "bodywork",
+                "get",
                 "deployment",
-                "logs",
-                f"--name={job_name}",
+                f"{job_name}",
             ],
             encoding="utf-8",
             capture_output=True,

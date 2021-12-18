@@ -264,7 +264,7 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
 
 def _run_batch_stages(
     batch_stages: List[BatchStageConfig],
-    env_vars: List[k8s.EnvVar],
+    env_vars: List[k8s.EnvVars],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -319,7 +319,7 @@ def _run_batch_stages(
 def _run_service_stages(
     service_stages: List[ServiceStageConfig],
     project_name: str,
-    env_vars: List[k8s.EnvVar],
+    env_vars: List[k8s.EnvVars],
     namespace: str,
     repo_branch: str,
     repo_url: str,
@@ -500,7 +500,7 @@ def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
         if pod_name is not None:
             pod_logs = k8s.get_pod_logs(namespace, pod_name)
-            print_pod_logs(pod_logs, pod_name)
+            print_pod_logs(pod_logs, f"logs for stage = {pod_name}")
         else:
             _log.warning(f"Cannot get logs for {job_or_deployment_name}")
     except Exception:

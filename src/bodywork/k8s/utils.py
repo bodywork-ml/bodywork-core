@@ -25,7 +25,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes import client as k8s
 
 
-EnvVar = k8s.V1EnvVar
+EnvVars = k8s.V1EnvVar
 
 
 def api_exception_msg(e: ApiException) -> str:
@@ -48,7 +48,7 @@ def make_valid_k8s_name(name: str) -> str:
     :param name: Original intended name.
     :return: Valid Kubernetes resource name.
     """
-    return re.sub(r"(\s|_)", "-", name.strip())
+    return re.sub(r"[^a-zA-Z0-9.]+", "-", name.strip())
 
 
 def create_k8s_environment_variables(
