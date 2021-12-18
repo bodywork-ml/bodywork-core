@@ -333,39 +333,6 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
         delete_namespace("bodywork-test-project")
 
 
-def test_deployment_with_ssh_github_connectivity(
-    docker_image: str,
-    set_github_ssh_private_key_env_var: None,
-):
-    try:
-        process = run(
-            [
-                "bodywork",
-                "create",
-                "deployment",
-                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-                "master",
-                f"--bodywork-image={docker_image}",
-            ],
-            encoding="utf-8",
-            capture_output=True,
-        )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
-        expected_output_2 = "Deployment successful"
-
-        assert expected_output_1 in process.stdout
-        assert expected_output_2 in process.stdout
-        assert process.returncode == 0
-
-    except Exception:
-        print_completed_process_info(process)
-        assert False
-    finally:
-        load_kubernetes_config()
-        delete_namespace("bodywork-test-batch-job-project")
-        rmtree(SSH_DIR_NAME, ignore_errors=True)
-
-
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
     with raises(CalledProcessError):
         run(
@@ -472,11 +439,11 @@ def test_deployment_with_ssh_github_connectivity_from_file(
         process = run(
             [
                 "bodywork",
-                "deployment",
                 "create",
+                "deployment",
                 "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
                 "master",
-                f"--bodywork-docker-image={docker_image}",
+                f"--bodywork-image={docker_image}",
                 f"--ssh={github_ssh_private_key_file}",
             ],
             encoding="utf-8",
@@ -576,13 +543,13 @@ def test_remote_deployment_with_ssh_github_connectivity(
                 "bodywork",
                 "create",
                 "deployment",
-                f"--name={job_name}",
-                "--git-url=git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",  # noqa
-                "--git-branch=master",
-                f"--bodywork-docker-image={docker_image}",
-                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
+                "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
+                "master",
                 "--async",
+                f"--async-job-name={job_name}",
+                f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
                 "--group=bodywork-tests",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -595,9 +562,9 @@ def test_remote_deployment_with_ssh_github_connectivity(
         process = run(
             [
                 "bodywork",
+                "get",
                 "deployment",
-                "logs",
-                f"--name={job_name}",
+                f"{job_name}",
             ],
             encoding="utf-8",
             capture_output=True,
