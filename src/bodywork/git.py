@@ -33,14 +33,20 @@ from .constants import (
     GITHUB_SSH_FINGERPRINT,
     GITLAB_SSH_FINGERPRINT,
     BITBUCKET_SSH_FINGERPRINT,
-    GIT_SSH_COMMAND,
     AZURE_SSH_FINGERPRINT,
+    GIT_SSH_COMMAND,
+    DEFAULT_SSH_FILE,
 )
 from .logs import bodywork_log_factory
 
+_log = bodywork_log_factory()
+
 
 def download_project_code_from_repo(
-    url: str, branch: str = "master", destination: Path = DEFAULT_PROJECT_DIR
+    url: str,
+    branch: str = "master",
+    destination: Path = DEFAULT_PROJECT_DIR,
+    ssh_key_path: str = None,
 ) -> None:
     """Download Bodywork project code from Git repository,
 
@@ -48,10 +54,10 @@ def download_project_code_from_repo(
     :param branch: The Git branch to download, defaults to 'master'.
     :param destination: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+    :param ssh_key_path: SSH key filepath.
     :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
     """
-    log = bodywork_log_factory()
     try:
         run(["git", "--version"], check=True, stdout=DEVNULL)
     except CalledProcessError:
@@ -60,17 +66,13 @@ def download_project_code_from_repo(
         if get_connection_protocol(url) is ConnectionProtocol.SSH:
             hostname = urlparse(f"ssh://{url}").hostname
             if hostname:
-                setup_ssh_for_git_host(hostname)
+                setup_ssh_for_git_host(hostname, ssh_key_path)
             else:
                 raise ValueError(
                     f"Unable to derive hostname from URL {url}. Please check "
                 )
-        elif SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            log.warning("Not configured for use with private GitHub repos")
     except Exception as e:
-        msg = (
-            f"Unable to setup SSH for Github and you are trying to connect via SSH: {e}"
-        )
+        msg = f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
         raise BodyworkGitError(msg)
     try:
         run(
@@ -81,7 +83,7 @@ def download_project_code_from_repo(
             stderr=PIPE,
         )
     except CalledProcessError as e:
-        msg = f"git clone failed - calling {e.cmd} returned {e.stderr}"
+        msg = f"Git clone failed - calling {e.cmd} returned {e.stderr}"
         raise BodyworkGitError(msg)
 
 
@@ -97,7 +99,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
     """Derive connection protocol used to retrieve Git repo.
 
     :param connection_string: The string containing the connection
-        details for the remote Git repository - e.g. the GitHUb URL.
+        details for the remote Git repository - e.g. the GitHub URL.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.
     :return: The connection protocol type.
@@ -116,7 +118,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
         raise RuntimeError(msg)
 
 
-def setup_ssh_for_git_host(hostname: str) -> None:
+def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     """Setup system for SSH interaction with GitHub.
 
     Using the private key assigned to an environment variable, this
@@ -125,29 +127,39 @@ def setup_ssh_for_git_host(hostname: str) -> None:
     GIT_SSH_COMMAND environment variable.
 
     :param hostname: Hostname to SSH to.
+    :param ssh_key_path: SSH key file to use.
     """
-    ssh_dir = Path(".") / SSH_DIR_NAME
-    private_key = ssh_dir / "id_rsa"
-    if not private_key.exists():
-        if SSH_PRIVATE_KEY_ENV_VAR not in os.environ:
-            msg = (
-                f"failed to setup SSH for {hostname} - cannot find "
-                f"{SSH_PRIVATE_KEY_ENV_VAR} environment variable"
-            )
-            raise KeyError(msg)
+    ssh_dir = Path.home() / SSH_DIR_NAME
+    if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
+        _log.info("Using SSH key from environment variable.")
         try:
+            private_key = ssh_dir / DEFAULT_SSH_FILE
             ssh_dir.mkdir(mode=0o700, exist_ok=True)
-            private_key.touch(0o700, exist_ok=False)
+            private_key.touch(0o700, exist_ok=True)
             key = os.environ[SSH_PRIVATE_KEY_ENV_VAR]
             if key[-1] != "\n":
                 key = f"{key}\n"
-            private_key.write_text(key)
+            with Path(private_key).open(mode="w", newline="\n") as file_handle:
+                file_handle.write(key)
         except OSError as e:
             raise RuntimeError(
                 f"Unable to create private key {private_key} from"
-                f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable"
+                f" {SSH_PRIVATE_KEY_ENV_VAR} environment variable."
             ) from e
+    elif ssh_key_path:
+        private_key = Path(ssh_key_path)
+        if not private_key.exists():
+            msg = f"Failed to setup SSH for {hostname} - cannot find SSH key {ssh_key_path}"  # noqa
+            raise FileNotFoundError(msg)
+    else:
+        msg = f"Failed to setup SSH for {hostname} - cannot find SSH keys or {SSH_PRIVATE_KEY_ENV_VAR} environment variable."  # noqa
+        raise RuntimeError(msg)
 
+    _configure_known_hosts(hostname, ssh_dir)
+    os.environ[GIT_SSH_COMMAND] = f"ssh -i '{private_key}'" f" -o IdentitiesOnly=yes"
+
+
+def _configure_known_hosts(hostname, ssh_dir):
     try:
         known_hosts = ssh_dir / "known_hosts"
         if not known_hosts.exists():
@@ -158,13 +170,8 @@ def setup_ssh_for_git_host(hostname: str) -> None:
                 file_handle.write(get_ssh_public_key_from_domain(hostname))
     except OSError as e:
         raise RuntimeError(
-            f"Error updating known hosts with public key from {hostname}"
+            f"Error updating known hosts with public key from {hostname}."
         ) from e
-
-    os.environ[GIT_SSH_COMMAND] = (
-        f"ssh -i '{private_key}' -o UserKnownHostsFile='{known_hosts}'"
-        f" -o IdentitiesOnly=yes"
-    )
 
 
 def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -> bool:

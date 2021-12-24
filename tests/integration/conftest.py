@@ -18,20 +18,32 @@
 Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
+import stat
 from pathlib import Path
 from random import randint
-from typing import cast
+from typing import Iterable, cast
+from urllib.parse import urlparse
+
 from pytest import fixture
-from kubernetes import client as k8s, config as k8s_config
+from _pytest.fixtures import FixtureRequest
+from kubernetes import client as k8s_client, config as k8s_config
+from subprocess import run
 
 from bodywork.constants import (
     BODYWORK_DOCKERHUB_IMAGE_REPO,
+    BODYWORK_WORKFLOW_CLUSTER_ROLE,
     SSH_PRIVATE_KEY_ENV_VAR,
+    BODYWORK_NAMESPACE,
 )
 from bodywork.workflow_execution import image_exists_on_dockerhub
+from bodywork.cli.setup_namespace import setup_namespace_with_service_accounts_and_roles
+from bodywork.k8s.auth import load_kubernetes_config, workflow_cluster_role_binding_name
+from bodywork.k8s.namespaces import create_namespace, delete_namespace
+
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
+TEST_NAMESPACE = "bodywork-test"
 
 
 @fixture(scope="function")
@@ -66,7 +78,7 @@ def random_test_namespace() -> str:
 
 @fixture(scope="function")
 def test_namespace() -> str:
-    return "bodywork-dev"
+    return TEST_NAMESPACE
 
 
 @fixture(scope="function")
@@ -83,55 +95,146 @@ def docker_image() -> str:
 
 
 @fixture(scope="function")
-def set_github_ssh_private_key_env_var() -> None:
+def set_github_ssh_private_key_env_var() -> Iterable[None]:
     private_key = Path.home() / ".ssh/id_rsa"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        private_key = Path.home() / ".ssh/id_ed25519"
+        if private_key.exists():
+            os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
+        else:
+            raise RuntimeError("Cannot locate private SSH key to use for GitHub.")
+    yield None
+    del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
 
 
 @fixture(scope="function")
-def set_git_ssh_private_key_env_var() -> None:
+def set_git_ssh_private_key_env_var() -> Iterable[None]:
     if "CIRCLECI" in os.environ:
-        private_key = Path.home() / ".ssh/id_rsa_e28827a593edd69f1a58cf07a7755107"
+        private_key = Path.home() / ".ssh" / "id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
-        private_key = Path.home() / ".ssh/id_rsa"
+        private_key = Path.home() / ".ssh" / "id_rsa"
+        if not private_key.exists():
+            private_key = Path.home() / ".ssh" / "id_ed25519"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
     else:
-        raise RuntimeError("cannot locate private SSH key to use")
+        raise RuntimeError("Cannot locate private SSH key to use.")
+    yield None
+    del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
+
+
+@fixture(scope="function")
+def github_ssh_private_key_file(bodywork_output_dir: Path) -> Path:
+    try:
+        private_key = Path.home() / ".ssh/id_rsa"
+        if not private_key.exists():
+            private_key = Path.home() / ".ssh/id_ed25519"
+        if not private_key.exists():
+            raise RuntimeError("cannot locate private SSH key to use for GitHub")
+        file_path = bodywork_output_dir / "id_bodywork"
+        with Path(file_path).open(mode="w", newline="\n") as file_handle:
+            file_handle.write(private_key.read_text())
+        file_path.chmod(mode=stat.S_IREAD)
+        return file_path
+    except Exception as e:
+        raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
 
 
 @fixture(scope="function")
 def ingress_load_balancer_url() -> str:
     try:
         k8s_config.load_kube_config()
-        services_in_namespace = k8s.CoreV1Api().list_namespaced_service(
-            namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
-        )
-        nginx_service = [
-            service
-            for service in services_in_namespace.items
-            if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
-        ][0]
-        load_balancer = nginx_service.status.load_balancer.ingress[0].hostname
-        return cast(str, load_balancer)
+        contexts, active_context = k8s_config.list_kube_config_contexts()
+        if active_context["name"] == "minikube":
+            kube_config = k8s_client.configuration.Configuration.get_default_copy()
+            url = urlparse(kube_config.host).hostname
+        else:
+            services_in_namespace = k8s_client.CoreV1Api().list_namespaced_service(
+                namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
+            )
+            nginx_service = [
+                service
+                for service in services_in_namespace.items
+                if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
+            ][0]
+            url = nginx_service.status.load_balancer.ingress[0].hostname
+        return cast(str, url)
     except IndexError:
         msg = (
-            f"cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
-            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+            f"Cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}."
         )
         raise RuntimeError(msg)
     except AttributeError:
         msg = (
-            f"cannot find a load-balancer associated with "
+            f"Cannot find a load-balancer associated with "
             f"service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
-            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}"
+            f"namespace={NGINX_INGRESS_CONTROLLER_NAMESPACE}."
         )
         raise RuntimeError(msg)
-    except k8s.rest.ApiException as e:
-        msg = f"k8s API error - {e}"
+    except k8s_client.rest.ApiException as e:
+        msg = f"K8s API error - {e}"
         raise RuntimeError(msg)
     except Exception as e:
         raise RuntimeError() from e
+
+
+@fixture(scope="session")
+def setup_cluster(request: FixtureRequest) -> None:
+    load_kubernetes_config()
+    setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
+    create_namespace(TEST_NAMESPACE)
+
+    def clean_up():
+        delete_namespace(BODYWORK_NAMESPACE)
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
+            BODYWORK_WORKFLOW_CLUSTER_ROLE
+        )
+        k8s_client.RbacAuthorizationV1Api().delete_cluster_role_binding(
+            workflow_cluster_role_binding_name(BODYWORK_NAMESPACE)
+        )
+        delete_namespace(TEST_NAMESPACE)
+
+    request.addfinalizer(clean_up)
+
+
+@fixture(scope="function")
+def add_secrets(request: FixtureRequest) -> None:
+    run(
+        [
+            "kubectl",
+            "create",
+            "secret",
+            "generic",
+            f"--namespace={BODYWORK_NAMESPACE}",
+            "testsecrets-bodywork-test-project-credentials",
+            "--from-literal=USERNAME=alex",
+            "--from-literal=PASSWORD=alex123",
+        ]
+    )
+
+    run(
+        [
+            "kubectl",
+            "label",
+            "secret",
+            f"--namespace={BODYWORK_NAMESPACE}",
+            "testsecrets-bodywork-test-project-credentials",
+            "group=testsecrets",
+        ]
+    )
+
+    def delete_secrets():
+        run(
+            [
+                "kubectl",
+                "delete",
+                "secret",
+                f"--namespace={BODYWORK_NAMESPACE}",
+                "testsecrets-bodywork-test-project-credentials",
+            ]
+        )
+
+    request.addfinalizer(delete_secrets)

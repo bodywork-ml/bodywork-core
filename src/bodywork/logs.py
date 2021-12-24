@@ -18,20 +18,20 @@
 Custom logger for use accross all Bodywork modules.
 """
 import os
-import sys
 from logging import (
     CRITICAL,
     DEBUG,
     ERROR,
-    Formatter,
     getLogger,
     INFO,
     Logger,
-    StreamHandler,
     WARNING,
 )
 from pathlib import Path
 from typing import Optional
+
+from rich.logging import RichHandler
+from rich.highlighter import NullHighlighter
 
 from .config import BodyworkConfig
 from .constants import (
@@ -40,6 +40,7 @@ from .constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
 )
+from .cli.terminal import console
 from .exceptions import BodyworkConfigError
 
 
@@ -82,13 +83,12 @@ def bodywork_log_factory(
             except KeyError:
                 log.setLevel(log_level_mapping[DEFAULT_LOG_LEVEL])
     if not log.hasHandlers():
-        log_handler = StreamHandler(sys.stdout)
-        log_formatter = Formatter(
-            "%(asctime)s - "
-            "%(levelname)s - "
-            "%(module)s.%(funcName)s - "
-            "%(message)s"
+        log_handler = RichHandler(
+            console=console,
+            show_path=False,
+            highlighter=NullHighlighter(),
+            omit_repeated_times=False,
+            rich_tracebacks=True,
         )
-        log_handler.setFormatter(log_formatter)
         log.addHandler(log_handler)
     return log

@@ -18,16 +18,27 @@
 This module contains all of the functions and classes required to
 download the project code and run stages.
 """
+from enum import Enum
 from os import environ
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from typing import Sequence
+
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
 
 from .config import BodyworkConfig
 from .constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
 from .exceptions import BodyworkStageFailure
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
+
+
+class ExecutableType(Enum):
+    "Executable file type."
+
+    JUPYTER_NB = ".ipynb"
+    PY_MODULE = ".py"
 
 
 def run_stage(
@@ -48,8 +59,8 @@ def run_stage(
     """
     log = bodywork_log_factory()
     log.info(
-        f"attempting to run stage={stage_name} from {repo_branch} branch of repo"
-        f" at {repo_url}"
+        f"Attempting to run stage = {stage_name} from {repo_branch} branch of repo "
+        f"at {repo_url}"
     )
     try:
         download_project_code_from_repo(repo_url, repo_branch, cloned_repo_dir)
@@ -59,15 +70,26 @@ def run_stage(
         environ["PYTHONPATH"] = str(cloned_repo_dir.absolute())
         if stage.requirements:
             _install_python_requirements(stage.requirements)
-        run(
-            ["python", stage.executable_module, *stage.args],
-            check=True,
-            cwd=stage.executable_module_path.parent,
-            encoding="utf-8",
-        )
+        executable_type = _infer_executable_type(stage.executable_module)
+        if executable_type is ExecutableType.JUPYTER_NB:
+            notebook = nbformat.read(
+                stage.executable_module_path, as_version=nbformat.NO_CONVERT
+            )
+            nb_runner = ExecutePreprocessor()
+            nb_runner.preprocess(
+                notebook,
+                {"metadata": {"path": stage.executable_module_path.parent}},
+            )
+        else:
+            run(
+                ["python", stage.executable_module, *stage.args],
+                check=True,
+                cwd=stage.executable_module_path.parent,
+                encoding="utf-8",
+            )
         log.info(
-            f"successfully ran stage={stage_name} from {repo_branch} branch of repo"
-            f" at {repo_url}"
+            f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
+            f"at {repo_url}"
         )
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
@@ -91,3 +113,18 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     except CalledProcessError as e:
         msg = f"Cannot install stage requirements: {e.cmd} failed with {e.stderr}"
         raise RuntimeError(msg)
+
+
+def _infer_executable_type(file_name: str) -> ExecutableType:
+    """Infer the type of Python executable from the filename.
+
+    :param file_name: The name of the executable.
+    :raises ValueError: If the filename is not a valid Jupyter notebook
+        or Python module filename.
+    """
+    if file_name.endswith(".ipynb"):
+        return ExecutableType.JUPYTER_NB
+    elif file_name.endswith(".py"):
+        return ExecutableType.PY_MODULE
+    else:
+        raise ValueError(f"Bodywork cannot execute {file_name}")

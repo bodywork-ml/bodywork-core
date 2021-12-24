@@ -26,9 +26,7 @@ from kubernetes import client as k8s
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
-    BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
-    SSH_PRIVATE_KEY_ENV_VAR,
-    SSH_SECRET_NAME,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import make_valid_k8s_name
@@ -45,7 +43,6 @@ class JobStatus(Enum):
 def configure_batch_stage_job(
     namespace: str,
     stage_name: str,
-    project_name: str,
     project_repo_url: str,
     project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
@@ -59,8 +56,6 @@ def configure_batch_stage_job(
     :param namespace: The k8s namespace to target deployment.
     :param stage_name: The name of the Bodywork project stage that
         will need to be executed.
-    :param project_name: The name of the Bodywork project that the stage
-        belongs to.
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
@@ -77,18 +72,7 @@ def configure_batch_stage_job(
         as an integer number of megabytes, defaults to None.
     :return: A configured k8s job object.
     """
-    job_name = make_valid_k8s_name(f"{project_name}--{stage_name}")
-    vcs_env_vars = [
-        k8s.V1EnvVar(
-            name=SSH_PRIVATE_KEY_ENV_VAR,
-            value_from=k8s.V1EnvVarSource(
-                secret_key_ref=k8s.V1SecretKeySelector(
-                    key=SSH_PRIVATE_KEY_ENV_VAR, name=SSH_SECRET_NAME, optional=True
-                )
-            ),
-        )
-    ]
-    env_vars = vcs_env_vars + container_env_vars if container_env_vars else vcs_env_vars
+    job_name = make_valid_k8s_name(stage_name)
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -100,12 +84,12 @@ def configure_batch_stage_job(
         image=image,
         image_pull_policy="Always",
         resources=container_resources,
-        env=env_vars,
+        env=container_env_vars,
         command=["bodywork", "stage"],
         args=[project_repo_url, project_repo_branch, stage_name],
     )
     pod_spec = k8s.V1PodSpec(
-        service_account_name=BODYWORK_JOBS_DEPLOYMENTS_SERVICE_ACCOUNT,
+        service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
         containers=[container],
         restart_policy="Never",
     )
@@ -212,7 +196,7 @@ def monitor_jobs_to_completion(
                 if status != JobStatus.SUCCEEDED
             ]
             msg = (
-                f'{"; ".join(unsuccessful_jobs_msg)} have yet to reach '
+                f'{"; ".join(unsuccessful_jobs_msg)} yet to reach '
                 f"status=succeeded after {timeout_seconds}s"
             )
             raise TimeoutError(msg)

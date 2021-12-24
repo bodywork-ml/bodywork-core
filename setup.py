@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
-from urllib import request, parse, error
+from urllib import request, parse
 
 
 # get package version
@@ -35,7 +35,10 @@ with open("README.md", "r") as f:
 
 setup(
     name="bodywork",
-    description="Deploy machine learning to Kubernetes - MLOps accelerated.",
+    description=(
+        "ML pipeline orchestration and model deployments on Kubernetes, "
+        "made really easy."
+    ),
     long_description=readme,
     long_description_content_type="text/markdown",
     version=version,
@@ -54,18 +57,27 @@ setup(
     install_requires=requirements_pkg,
     extras_require={"dev": requirements_dev},
     zip_safe=True,
-    entry_points={"console_scripts": ["bodywork=bodywork.cli.cli:cli"]},
+    entry_points={
+        "console_scripts": [
+            "bodywork=bodywork.cli.cli:cli_app",
+            "bw=bodywork.cli.cli:cli_app"
+        ]
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )
 
 query_string = parse.urlencode({"type": "pip-install"})
-url = f"http://a9c1ef555dfcc4fa3897c9468920f8b7-032e5dc531a766e1.elb.eu-west-2.amazonaws.com/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"  # noqa
+url = (
+    f"http://k8s.bodyworkml-dev.com"
+    f"/bodywork-ml/usage-tracking--server/workflow-execution-counter?{query_string}"
+)
 try:
     request.urlopen(url)
-except error.HTTPError:
+except Exception:
     pass

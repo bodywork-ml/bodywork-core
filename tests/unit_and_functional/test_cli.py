@@ -18,17 +18,44 @@
 Test the Bodywork CLI.
 """
 import urllib3
-from argparse import Namespace
 from pathlib import Path
+from re import findall
 from subprocess import run, CalledProcessError
 from typing import Iterable
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, MagicMock
 
 import kubernetes
-from pytest import raises
 from _pytest.capture import CaptureFixture
 
-from bodywork.cli.cli import deployment, handle_k8s_exceptions
+from bodywork.cli.cli import (
+    k8s_auth,
+    handle_k8s_exceptions,
+    _configure_cluster,
+    _create_deployment,
+    _get_deployment,
+    _update_deployment,
+    _delete_deployment,
+    _create_secret,
+    _get_secret,
+    _update_secret,
+    _delete_secret,
+    _create_cronjob,
+    _get_cronjob,
+    _update_cronjob,
+    _delete_cronjob,
+)
+from bodywork.constants import BODYWORK_NAMESPACE
+
+
+@patch("bodywork.cli.cli.load_kubernetes_config")
+@patch("bodywork.cli.cli.print_warn")
+def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
+    k8s_auth(lambda e: None)
+    mock_load_k8s_config.assert_called_once()
+
+    mock_load_k8s_config.side_effect = Exception()
+    k8s_auth(lambda e: None)
+    mock_print_warn.assert_called_once()
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
@@ -58,7 +85,7 @@ def test_handle_k8s_exceptions_decorator_handles_max_retry_error(
 
     outer_func()
     captured_stdout = capsys.readouterr().out
-    assert "failed to connect to the Kubernetes API" in captured_stdout
+    assert "Failed to connect to the Kubernetes API" in captured_stdout
 
 
 def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
@@ -70,23 +97,179 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
 
     func()
     captured_stdout = capsys.readouterr().out
-    assert "cannot load authenticaion credentials from kubeconfig" in captured_stdout
+    assert "Cannot load authentication credentials from kubeconfig" in captured_stdout
 
 
-def test_stage_subcommand_exists():
-    process = run(["bodywork", "stage", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "bodywork stage [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_stage_command_receives_correct_args():
-    process = run(
-        ["bodywork", "stage", "http://my.project.com", "master", "train"],
+def test_cli_commands_exist():
+    validate = run(
+        ["bodywork", "validate", "--help"],
         encoding="utf-8",
         capture_output=True,
     )
-    expected_output = "stage=train from master branch of repo at http://my.project.com"
-    assert expected_output in process.stdout
+    assert validate.returncode == 0
+
+    version = run(
+        ["bodywork", "version", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert version.returncode == 0
+
+    stage = run(
+        ["bodywork", "stage", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert stage.returncode == 0
+
+    debug = run(
+        ["bodywork", "debug", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert debug.returncode == 0
+
+    create_deployment = run(
+        ["bodywork", "create", "deployment", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    get_deployment = run(
+        ["bodywork", "get", "deployment", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    update_deployment = run(
+        ["bodywork", "update", "deployment", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    delete_deployment = run(
+        ["bodywork", "delete", "deployment", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert create_deployment.returncode == 0
+    assert get_deployment.returncode == 0
+    assert update_deployment.returncode == 0
+    assert delete_deployment.returncode == 0
+
+    create_cronjob = run(
+        ["bodywork", "create", "cronjob", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    get_cronjob = run(
+        ["bodywork", "get", "cronjob", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    update_cronjob = run(
+        ["bodywork", "update", "cronjob", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    delete_cronjob = run(
+        ["bodywork", "delete", "cronjob", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert create_cronjob.returncode == 0
+    assert get_cronjob.returncode == 0
+    assert update_cronjob.returncode == 0
+    assert delete_cronjob.returncode == 0
+
+    create_secret = run(
+        ["bodywork", "create", "secret", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    get_secret = run(
+        ["bodywork", "get", "secret", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    update_secret = run(
+        ["bodywork", "update", "secret", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    delete_secret = run(
+        ["bodywork", "delete", "secret", "--help"],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert create_secret.returncode == 0
+    assert get_secret.returncode == 0
+    assert update_secret.returncode == 0
+    assert delete_secret.returncode == 0
+
+
+def test_validate(project_repo_location: Path):
+    config_file_path = project_repo_location / "bodywork.yaml"
+    process_one = run(
+        ["bodywork", "validate", "--file", config_file_path],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_one.returncode == 0
+
+    config_file_path = project_repo_location / "does_not_exist.yaml"
+    process_two = run(
+        ["bodywork", "validate", "--file", config_file_path],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_two.returncode == 1
+    assert "No config file found" in process_two.stdout
+
+    config_file_path = project_repo_location / "bodywork_empty.yaml"
+    process_three = run(
+        ["bodywork", "validate", "--file", config_file_path],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_three.returncode == 1
+    assert "Cannot parse YAML" in process_three.stdout
+
+    config_file_path = project_repo_location / "bodywork_missing_sections.yaml"
+    process_four = run(
+        ["bodywork", "validate", "--file", config_file_path],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_four.returncode == 1
+    assert "missing sections: version, project, stages, logging" in process_four.stdout
+
+    config_file_path = project_repo_location / "bodywork_bad_stages_section.yaml"
+    process_five = run(
+        ["bodywork", "validate", "--file", config_file_path],
+        encoding="utf-8",
+        capture_output=True,
+    )
+    assert process_five.returncode == 1
+    assert "Missing or invalid parameters" in process_five.stdout
+    assert "* stages._" in process_five.stdout
+
+
+def test_version_returns_version():
+    with open("VERSION") as file:
+        expected_version = findall("[0-9].[0.9].[0.9]", file.read())
+    process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
+    actual_version = findall("[0-9].[0.9].[0.9]", process.stdout)
+    if expected_version and actual_version:
+        assert actual_version[0] == expected_version[0]
+    else:
+        assert False
+
+
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.sys")
+def test_configure_cluster_configures_cluster(
+    mock_sys: MagicMock, mock_setup: MagicMock
+):
+    _configure_cluster()
+    mock_setup.assert_called_once_with(BODYWORK_NAMESPACE)
 
 
 def test_stage_command_successful_has_zero_exit_code(
@@ -111,253 +294,9 @@ def test_stage_command_successful_has_zero_exit_code(
         assert False
 
 
-def test_stage_command_unsuccessful_raises_exception():
-    with raises(CalledProcessError):
-        run(["bodywork", "stage", "http://bad.repo", "master", "train"], check=True)
-
-
-def test_workflow_subcommand_exists():
-    process = run(["bodywork", "workflow", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = (
-        "usage: bodywork workflow [-h] [--bodywork-docker-image"
-        "BODYWORK_DOCKER_IMAGE] namespace git_repo_url"
-        " git_repo_branch"
-    )
-    assert process.stdout.find(expected_output) != 0
-
-
-def test_secrets_subcommand_exists():
-    process = run(["bodywork", "secret", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "bodywork secret [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_secret_handler_error_handling():
-    process_one = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--namespace=bodywork-dev",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify a name for the secret" in process_one.stdout
-
-    process_two = run(
-        [
-            "bodywork",
-            "secret",
-            "delete",
-            "--namespace=bodywork-dev",
-            "--data",
-            "USERNAME=alex",
-            "PASSWORD=alex123",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify a name for the secret" in process_two.stdout
-
-    process_three = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--namespace=bodywork-dev",
-            "--name=pytest-credentials",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify keys and values" in process_three.stdout
-
-    process_four = run(
-        [
-            "bodywork",
-            "secret",
-            "create",
-            "--namespace=bodywork-dev",
-            "--name=pytest-credentials",
-            "--data",
-            "FOO",
-            "bar",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "could not parse secret data" in process_four.stdout
-
-
-def test_deployment_subcommand_exists():
-    process = run(
-        ["bodywork", "deployment", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "usage: bodywork deployment [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-@patch("bodywork.cli.cli.workflow")
-@patch("sys.exit")
-def test_deployment_test_locally_option_calls_run_workflow_handler(
-    mock_sys_exit: MagicMock,
-    mock_workflow_cli_handler: MagicMock,
-    capsys: CaptureFixture
-):
-    args = Namespace(
-        command="create",
-        namespace="foo1",
-        name="foo2",
-        retries=0,
-        git_repo_url="foo3",
-        git_repo_branch="foo4",
-        local_workflow_controller=True,
-    )
-    deployment(args)
-    expected_pass_through_args = Namespace(
-        namespace="foo1",
-        git_repo_url="foo3",
-        git_repo_branch="foo4",
-        bodywork_docker_image="",
-    )
-    stdout = capsys.readouterr().out
-    assert "testing with local workflow-controller - retries are inactive" in stdout
-    mock_workflow_cli_handler.assert_called_once_with(expected_pass_through_args)
-
-
-def test_cli_deployment_handler_error_handling():
-    process_one = run(
-        ["bodywork", "deployment", "create", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the deployment" in process_one.stdout
-    assert process_one.returncode == 1
-
-    process_two = run(
-        ["bodywork", "deployment", "logs", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the deployment" in process_two.stdout
-    assert process_two.returncode == 1
-
-    process_three = run(
-        [
-            "bodywork",
-            "deployment",
-            "create",
-            "--namespace=bodywork-dev",
-            "--name=the-cronjob",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify Git repo URL" in process_three.stdout
-    assert process_three.returncode == 1
-
-
-def test_cronjobs_subcommand_exists():
-    process = run(["bodywork", "cronjob", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork cronjob [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_cronjob_handler_error_handling():
-    process_one = run(
-        ["bodywork", "cronjob", "create", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the cronjob" in process_one.stdout
-    assert process_one.returncode == 1
-
-    process_two = run(
-        ["bodywork", "cronjob", "delete", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the cronjob" in process_two.stdout
-    assert process_two.returncode == 1
-
-    process_three = run(
-        ["bodywork", "cronjob", "history", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the cronjob" in process_three.stdout
-    assert process_three.returncode == 1
-
-    process_three = run(
-        ["bodywork", "cronjob", "logs", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the cronjob" in process_three.stdout
-    assert process_three.returncode == 1
-
-    process_five = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--namespace=bodywork-dev",
-            "--name=the-cronjob",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify schedule for the cronjob" in process_five.stdout
-    assert process_five.returncode == 1
-
-    process_six = run(
-        [
-            "bodywork",
-            "cronjob",
-            "create",
-            "--namespace=bodywork-dev",
-            "--name=the-cronjob",
-            "--schedule=0 * * * *",
-        ],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify Git repo URL" in process_six.stdout
-    assert process_six.returncode == 1
-
-
-def test_services_subcommand_exists():
-    process = run(["bodywork", "service", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork service [-h]"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_cli_services_handler_error_handling():
-    process_one = run(
-        ["bodywork", "service", "delete", "--namespace=bodywork-dev"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert "please specify --name for the service" in process_one.stdout
-    assert process_one.returncode == 1
-
-
-def test_setup_namespace_subcommand_exists():
-    process = run(
-        ["bodywork", "setup-namespace", "-h"], encoding="utf-8", capture_output=True
-    )
-    expected_output = "usage: bodywork setup-namespace [-h] namespace"
-    assert process.stdout.find(expected_output) != -1
-
-
-def test_debug_subcommand_exists():
-    process = run(["bodywork", "debug", "-h"], encoding="utf-8", capture_output=True)
-    expected_output = "usage: bodywork debug [-h] seconds"
-    assert process.stdout.find(expected_output) != -1
+def test_stage_command_unsuccessful_returns_non_zero_exit_code():
+    process = run(["bodywork", "stage", "http://bad.repo", "master", "train"])
+    assert process.returncode != 0
 
 
 def test_debug_subcommand_sleeps():
@@ -371,57 +310,215 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
-def test_graceful_exit_when_no_command_specified():
-    process = run(
-        ["bodywork"],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process.returncode == 0
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.run_workflow")
+@patch("bodywork.cli.cli.create_workflow_job")
+@patch("bodywork.cli.cli.sys")
+def test_create_deployments(
+    mock_sys: MagicMock,
+    mock_create_workflow_job: MagicMock,
+    mock_run_workflow: MagicMock,
+    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
+    mock_is_namespace_available_for_bodywork: MagicMock,
+):
+    mock_is_namespace_available_for_bodywork.return_value = False
+    _create_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _create_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _create_deployment("git-url", "git-branch", True)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_not_called()
+    mock_create_workflow_job.assert_called_once()
 
 
-def test_validate_subcommand(project_repo_location: Path):
-    config_file_path = project_repo_location / "bodywork.yaml"
-    process_one = run(
-        ["bodywork", "validate", "--file", config_file_path],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_one.returncode == 0
+@patch("bodywork.cli.cli.display_workflow_job_history")
+@patch("bodywork.cli.cli.display_workflow_job_logs")
+@patch("bodywork.cli.cli.display_deployments")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_get_deployments(
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_display_deployment: MagicMock,
+    mock_display_workflow_job_logs: MagicMock,
+    mock_display_workflow_job_history: MagicMock,
+):
+    _get_deployment(asynchronous=True, logs="")
+    mock_display_workflow_job_history.assert_called_once()
 
-    config_file_path = project_repo_location / "does_not_exist.yaml"
-    process_two = run(
-        ["bodywork", "validate", "--file", config_file_path],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_two.returncode == 1
-    assert "no config file found" in process_two.stdout
+    _get_deployment(asynchronous=True, logs="name-of-async-workflow-job")
+    mock_display_workflow_job_logs.assert_called_once()
 
-    config_file_path = project_repo_location / "bodywork_empty.yaml"
-    process_three = run(
-        ["bodywork", "validate", "--file", config_file_path],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_three.returncode == 1
-    assert "cannot parse YAML" in process_three.stdout
+    _get_deployment(asynchronous=False, logs="")
+    mock_display_deployment.assert_called_once()
 
-    config_file_path = project_repo_location / "bodywork_missing_sections.yaml"
-    process_four = run(
-        ["bodywork", "validate", "--file", config_file_path],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_four.returncode == 1
-    assert "missing sections: version, project, stages, logging" in process_four.stdout
 
-    config_file_path = project_repo_location / "bodywork_bad_stages_section.yaml"
-    process_five = run(
-        ["bodywork", "validate", "--file", config_file_path],
-        encoding="utf-8",
-        capture_output=True,
-    )
-    assert process_five.returncode == 1
-    assert "missing or invalid parameters" in process_five.stdout
-    assert "* stages._" in process_five.stdout
+@patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
+@patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
+@patch("bodywork.cli.cli.run_workflow")
+@patch("bodywork.cli.cli.create_workflow_job")
+@patch("bodywork.cli.cli.sys")
+def test_update_deployments(
+    mock_sys: MagicMock,
+    mock_create_workflow_job: MagicMock,
+    mock_run_workflow: MagicMock,
+    mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
+    mock_is_namespace_available_for_bodywork: MagicMock,
+):
+    mock_is_namespace_available_for_bodywork.return_value = False
+    _update_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _update_deployment("git-url", "git-branch", False)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_called_once()
+    mock_create_workflow_job.assert_not_called()
+
+    mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
+    mock_run_workflow.reset_mock()
+    mock_is_namespace_available_for_bodywork.return_value = True
+    _update_deployment("git-url", "git-branch", True)
+    mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
+    mock_run_workflow.assert_not_called()
+    mock_create_workflow_job.assert_called_once()
+
+
+@patch("bodywork.cli.cli.delete_workflow_job")
+@patch("bodywork.cli.cli.delete_deployment")
+@patch("bodywork.cli.cli.sys")
+def test_delete_deployments(
+    mock_sys: MagicMock,
+    mock_delete_deployments: MagicMock,
+    mock_delete_workflow_job: MagicMock,
+):
+    _delete_deployment("foo", asynchronous=False)
+    mock_delete_deployments.assert_called_once()
+
+    _delete_deployment("foo", asynchronous=True)
+    mock_delete_workflow_job.assert_called_once()
+
+
+@patch("bodywork.cli.cli.create_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_create_cronjob(mock_sys: MagicMock, mock_create_workflow_cronjob: MagicMock):
+    _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
+    mock_create_workflow_cronjob.assert_called_once()
+
+
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.display_workflow_job_logs")
+@patch("bodywork.cli.cli.display_workflow_job_history")
+@patch("bodywork.cli.cli.display_cronjobs")
+@patch("bodywork.cli.cli.sys")
+def test_get_cronjob(
+    mock_sys: MagicMock,
+    mock_display_cronjobs: MagicMock,
+    mock_display_workflow_job_history: MagicMock,
+    mock_display_workflow_job_logs: MagicMock,
+    mock_print_warn: MagicMock,
+):
+    _get_cronjob(name="foo", history=True, logs=False)
+    mock_display_workflow_job_history.assert_called_once()
+
+    _get_cronjob(name="foo", history=False, logs=True)
+    mock_display_workflow_job_logs.assert_called_once()
+
+    _get_cronjob(name="foo", history=True, logs=True)
+    mock_print_warn.assert_called_once()
+
+    _get_cronjob(name=None, history=False, logs=False)
+    mock_display_cronjobs.assert_called_once()
+
+
+@patch("bodywork.cli.cli.update_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_update_cronjob(mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock):
+    _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
+    mock_update_workflow_cronjob.assert_called_once()
+
+
+@patch("bodywork.cli.cli.delete_workflow_cronjob")
+@patch("bodywork.cli.cli.sys")
+def test_delete_cronjob(mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock):
+    _delete_cronjob("nightly")
+    mock_delete_workflow_cronjob.assert_called_once()
+
+
+@patch("bodywork.cli.cli.create_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_create_secrets(
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_create_secret: MagicMock
+):
+    _create_secret("foo", "prod", ["bad-secret-data"])
+    mock_print_warn.assert_called_once()
+
+    _create_secret("foo", "prod", ["FOO=BAR"])
+    mock_create_secret.assert_called_once()
+
+
+@patch("bodywork.cli.cli.display_secrets")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_get_secrets(
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_display_secrets: MagicMock
+):
+    _get_secret(name="foo", group=None)
+    mock_print_warn.assert_called_once()
+
+    _get_secret()
+    mock_display_secrets.assert_called_once()
+
+    mock_display_secrets.reset_mock()
+    mock_display_secrets.reset_mock()
+    _get_secret(name="foo", group="prod")
+    mock_display_secrets.assert_called_once()
+
+    mock_display_secrets.reset_mock()
+    _get_secret(name=None, group="prod")
+    mock_display_secrets.assert_called_once()
+
+
+@patch("bodywork.cli.cli.update_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_update_secrets(
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_update_secret: MagicMock
+):
+    _update_secret("foo", "prod", ["bad-secret-data"])
+    mock_print_warn.assert_called_once()
+
+    _update_secret("foo", "prod", ["FOO=BAR"])
+    mock_update_secret.assert_called_once()
+
+
+@patch("bodywork.cli.cli.delete_secret")
+@patch("bodywork.cli.cli.print_warn")
+@patch("bodywork.cli.cli.sys")
+def test_delete_secrets(
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock
+):
+    _delete_secret(name="foo", group=None)
+    mock_print_warn.assert_called_once()
+
+    _delete_secret(name="foo", group="prod")
+    mock_delete_secret.assert_called_once()

@@ -1,0 +1,16 @@
+version: "1.0"
+project:
+  name: bodywork-test-project
+  docker_image: bodyworkml/bodywork-core:latest
+  DAG: stage_2
+  usage_stats: false
+stages:
+  stage_2:
+    executable_module_path: stage_2/main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
+logging:
+  log_level: INFO

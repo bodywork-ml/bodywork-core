@@ -24,7 +24,12 @@ from pytest import raises
 from _pytest.capture import CaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
-from bodywork.stage_execution import _install_python_requirements, run_stage
+from bodywork.stage_execution import (
+    _infer_executable_type,
+    _install_python_requirements,
+    ExecutableType,
+    run_stage,
+)
 
 
 def test_that_requirements_can_be_installed(
@@ -49,7 +54,7 @@ def test_that_requirements_install_errors_raise_exception(
 def test_run_stage_with_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_1", project_repo_connection_string)
@@ -69,7 +74,7 @@ def test_run_stage_with_requirements_install(
 def test_run_stage_without_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_2", project_repo_connection_string)
@@ -88,7 +93,7 @@ def test_run_stage_without_requirements_install(
 def test_run_stage_with_arguements(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
     try:
         run_stage("stage_3", project_repo_connection_string)
@@ -108,44 +113,71 @@ def test_run_stage_with_arguements(
 def test_run_stage_writes_subprocess_stdout_to_process_stdout(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
-    capfd: CaptureFixture
+    bodywork_output_dir: Iterable[Path],
+    capfd: CaptureFixture,
 ):
-    run_stage('stage_2', project_repo_connection_string)
+    run_stage("stage_2", project_repo_connection_string)
     stdout = capfd.readouterr().out
-    assert 'foo' in stdout
+    assert "foo" in stdout
 
 
 def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_stderr(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
-    capfd: CaptureFixture
+    bodywork_output_dir: Iterable[Path],
+    capfd: CaptureFixture,
 ):
     try:
-        run_stage('stage_4', project_repo_connection_string)
+        run_stage("stage_4", project_repo_connection_string)
         assert False
     except BodyworkStageFailure:
         captured_output = capfd.readouterr()
         stdout = captured_output.out
         stdrr = captured_output.err
-        assert 'foo' in stdout
-        assert 'this stage has failed' in stdrr
+        assert "foo" in stdout
+        assert "this stage has failed" in stdrr
 
 
 def test_run_stage_failure_raises_exception_for_failed_scripts(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
-    with raises(BodyworkStageFailure, match='CalledProcessError'):
-        run_stage('stage_4', project_repo_connection_string)
+    with raises(BodyworkStageFailure, match="CalledProcessError"):
+        run_stage("stage_4", project_repo_connection_string)
 
 
 def test_run_stage_failure_raises_exception_for_failed_setup(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
-    bodywork_output_dir: Path,
+    bodywork_output_dir: Iterable[Path],
 ):
-    with raises(BodyworkStageFailure, match='KeyError'):
-        run_stage('stage_5', project_repo_connection_string)
+    with raises(BodyworkStageFailure, match="KeyError"):
+        run_stage("stage_5", project_repo_connection_string)
+
+
+def test_infer_executable_type_type():
+    assert _infer_executable_type("train_model.ipynb") == ExecutableType.JUPYTER_NB
+    assert _infer_executable_type("train_model.py") == ExecutableType.PY_MODULE
+
+    with raises(ValueError, match=r"cannot execute train_model.exe"):
+        _infer_executable_type("train_model.exe")
+
+
+def test_run_stage_with_jupyter_notebook(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Iterable[Path],
+):
+    try:
+        run_stage("stage_jupyter", project_repo_connection_string)
+        assert True
+    except Exception:
+        assert False
+
+    try:
+        with open(bodywork_output_dir / "stage_jupyter_test_file.txt") as f:
+            stage_output = f.read()
+        assert stage_output.find("Hello from a Jupyter notebook stage") != -1
+    except FileNotFoundError:
+        assert False

@@ -3,6 +3,7 @@ project:
   name: bodywork-test-project
   docker_image: bodyworkml/bodywork-core:latest
   DAG: stage_1 >> stage_2,stage_3 >> stage_4
+  secrets_group: test
   usage_stats: false
 stages:
   stage_1:
@@ -16,7 +17,7 @@ stages:
       FOO: foobar-secret
       BAR: foobar-secret
     requirements:
-      - numpy==1.19.1
+      - numpy>=1.21.2
   stage_2:
     executable_module_path: stage_2/main.py
     cpu_request: 0.5
@@ -41,6 +42,13 @@ stages:
       - wheel==0.34.2
   stage_4:
     executable_module_path: stage_4/main.py
+    cpu_request: 0.5
+    memory_request_mb: 250
+    batch:
+      max_completion_time_seconds: 60
+      retries: 4
+  stage_jupyter:
+    executable_module_path: stage_jupyter/main.ipynb
     cpu_request: 0.5
     memory_request_mb: 250
     batch:

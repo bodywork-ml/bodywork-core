@@ -16,11 +16,11 @@
 
 version: 2.1
 orbs:
-  aws-eks: circleci/aws-eks@1.0.3
+  aws-eks: circleci/aws-eks@1.1.0
 jobs:
   run-static-code-analysis:
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.9
     steps:
       - checkout
       - run:
@@ -28,10 +28,10 @@ jobs:
           command: pip install -r requirements_dev.txt
       - run:
           name: Running tests
-          command: tox -e py38-static_code_analysis -- -s -vv
+          command: tox -e py39-static_code_analysis -- -s -vv
   run-unit-and-functional-tests:
-    docker: 
-      - image: circleci/python:3.8
+    docker:
+      - image: cimg/python:3.9
     steps:
       - checkout
       - run:
@@ -42,9 +42,9 @@ jobs:
       - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
-      - run: 
+      - run:
           name: Running tests
-          command: tox -e py38-unit_and_functional_tests -- -s -vv --junitxml=~/tox/junit.xml
+          command: tox -e py39-unit_and_functional_tests -- -s -vv --junitxml=~/tox/junit.xml
       - store_test_results:
           path: ~/tox/
       - run:
@@ -53,10 +53,11 @@ jobs:
   run-integration-tests:
     executor:
       name: aws-eks/python
-      tag: "3.8"
+      tag: "3.9"
     steps:
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: bodywork-dev
+          install-kubectl: true
       - checkout
       - run:
           name: Configure Git
@@ -68,11 +69,14 @@ jobs:
             - "14:5e:d0:95:2e:2c:7d:d8:dc:f2:bb:f3:97:10:3e:c5"
             - "e2:88:27:a5:93:ed:d6:9f:1a:58:cf:07:a7:75:51:07"
       - run:
+          name: Remove keys from SSH Agent
+          command: ssh-add -D
+      - run:
           name: Installing Python dependencies
           command: pip install -r requirements_dev.txt
-      - run: 
+      - run:
           name: Running tests
-          command: tox -e py38-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
+          command: tox -e py39-integration_tests -- -s -vv --junitxml=~/tox_int/junit.xml
       - store_test_results:
           path: ~/tox_int/
       - run:
@@ -99,8 +103,8 @@ jobs:
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
             docker push bodyworkml/bodywork-core
   build-python-package-push-to-pypi:
-    docker: 
-      - image: circleci/python:3.8
+    docker:
+      - image: cimg/python:3.9
     steps:
       - checkout
       - run:
@@ -113,8 +117,8 @@ jobs:
           name: Push to PyPI
           command: twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD --verbose
   create-and-push-new-git-tag:
-    docker: 
-      - image: circleci/python:3.8
+    docker:
+      - image: cimg/python:3.9
     steps:
       - checkout
       - run:
@@ -124,11 +128,11 @@ jobs:
           name: Git push tag.
           command: git push origin v$(cat VERSION)
   ensure-package-version-number-incremented:
-    docker: 
-      - image: circleci/python:3.8
+    docker:
+      - image: cimg/python:3.9
     steps:
       - checkout
-      - run: 
+      - run:
           name: Check that VERSION has been bumped
           command: |
             if [ ${CIRCLE_BRANCH} != "master" ]; then

@@ -27,8 +27,8 @@ from .auth import (
     workflow_cluster_role_binding_name,
     load_kubernetes_config,
     service_account_exists,
-    setup_job_and_deployment_service_accounts,
-    setup_workflow_service_account,
+    setup_stages_service_account,
+    setup_workflow_service_accounts,
 )
 from .workflow_jobs import (
     configure_workflow_job,
@@ -38,6 +38,7 @@ from .workflow_jobs import (
     delete_workflow_cronjob,
     list_workflow_cronjobs,
     list_workflow_jobs,
+    update_workflow_cronjob,
 )
 from .batch_jobs import (
     JobStatus,
@@ -53,12 +54,19 @@ from .secrets import (
     secret_exists,
     create_secret,
     delete_secret,
-    list_secrets_in_namespace,
+    list_secrets,
+    replicate_secrets_in_namespace,
+    update_secret,
+    Secret,
+    create_complete_secret_name,
+    create_ssh_key_secret_from_file,
+    create_secret_env_variable,
 )
-from .service_deployments import (
+from .deployments import (
     DeploymentStatus,
     configure_service_stage_deployment,
     create_deployment,
+    deployment_id,
     is_existing_deployment,
     update_deployment,
     rollback_deployment,
@@ -75,7 +83,12 @@ from .service_deployments import (
     delete_deployment_ingress,
     has_ingress,
 )
-from .utils import api_exception_msg, create_k8s_environment_variables, EnvVars
+from .utils import (
+    api_exception_msg,
+    create_k8s_environment_variables,
+    EnvVars,
+    make_valid_k8s_name,
+)
 
 
 __all__ = [
@@ -85,8 +98,8 @@ __all__ = [
     "workflow_cluster_role_binding_name",
     "load_kubernetes_config",
     "service_account_exists",
-    "setup_job_and_deployment_service_accounts",
-    "setup_workflow_service_account",
+    "setup_stages_service_account",
+    "setup_workflow_service_accounts",
     "configure_workflow_cronjob",
     "create_workflow_job",
     "create_workflow_cronjob",
@@ -108,10 +121,11 @@ __all__ = [
     "secret_exists",
     "create_secret",
     "delete_secret",
-    "list_secrets_in_namespace",
+    "list_secrets",
     "DeploymentStatus",
     "configure_service_stage_deployment",
     "create_deployment",
+    "deployment_id",
     "is_existing_deployment",
     "update_deployment",
     "rollback_deployment",
@@ -130,4 +144,12 @@ __all__ = [
     "api_exception_msg",
     "create_k8s_environment_variables",
     "EnvVars",
+    "make_valid_k8s_name",
+    "replicate_secrets_in_namespace",
+    "update_secret",
+    "Secret",
+    "update_workflow_cronjob",
+    "create_complete_secret_name",
+    "create_ssh_key_secret_from_file",
+    "create_secret_env_variable",
 ]
