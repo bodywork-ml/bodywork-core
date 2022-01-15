@@ -143,6 +143,25 @@ def secret_exists(
         return False
 
 
+def secret_group_exists(namespace: str, group: str) -> bool:
+    """ Does the specified secret group exist
+
+        :param namespace: Kubernetes namespace in which to look for secrets group.
+        :param group: Name of secrets group.
+        :return: True if group exists, otherwise False.
+    """
+    return (
+        len(
+            k8s.CoreV1Api()
+            .list_namespaced_secret(
+                namespace=namespace, label_selector=f"{SECRET_GROUP_LABEL}={group}"
+            )
+            .items
+        )
+        > 0
+    )
+
+
 def create_secret(
     namespace: str, name: str, group: str, keys_and_values: Dict[str, str]
 ) -> None:
@@ -193,12 +212,23 @@ def delete_secret(namespace: str, name: str) -> None:
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
 
+def delete_secret_group(namespace: str, group: str) -> None:
+    """Delete a group of secrets in a namespace.
+
+    :param namespace: Namespace in which to look for the secret to
+    delete.
+    :param group: The name of the secrets group to be deleted.
+    """
+    k8s.CoreV1Api().delete_collection_namespaced_secret(
+        namespace=namespace, label_selector=f"{SECRET_GROUP_LABEL}={group}"
+    )
+
+
 def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secret]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.
     :param group: Group of secrets to list.
-
     """
     if group is None:
         result = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)

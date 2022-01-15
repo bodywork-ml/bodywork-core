@@ -32,6 +32,7 @@ from .secrets import (
     display_secrets,
     parse_cli_secrets_strings,
     update_secret,
+    delete_secret_group,
 )
 from .setup_namespace import (
     is_namespace_available_for_bodywork,
@@ -437,10 +438,13 @@ def _update_secret(
 @delete.command("secret")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_secret(name: str = Argument(...), group: str = Option(...)):
+def _delete_secret(name: str = Option(...), group: str = Option(...)):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
+    elif group and not name:
+        delete_secret_group(BODYWORK_NAMESPACE, group)
+        sys.exit(0)
     else:
         delete_secret(BODYWORK_NAMESPACE, group, name)
         sys.exit(0)

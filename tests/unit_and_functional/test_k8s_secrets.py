@@ -30,6 +30,8 @@ from bodywork.k8s.secrets import (
     list_secrets,
     secret_exists,
     update_secret,
+    secret_group_exists,
+    delete_secret_group,
 )
 from bodywork.constants import SECRET_GROUP_LABEL
 
@@ -163,3 +165,36 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
     assert len(secrets) == 1
     assert secrets["xyz-pytest-secret"].name == "xyz-pytest-secret"
     assert secrets["xyz-pytest-secret"].data["ALEX"] == "ioannides"
+
+
+@patch("kubernetes.client.CoreV1Api")
+def test_secret_group_exists(mock_k8s_core_api: MagicMock):
+    mock_k8s_core_api().list_namespaced_secret.return_value = (
+        kubernetes.client.V1SecretList(
+            items=[
+                kubernetes.client.V1Secret(
+                    metadata=kubernetes.client.V1ObjectMeta(
+                        name="xyz-aws-credentials", labels={"group": "dev"}
+                    ),
+                    data={"FOO": "bar"},
+                )
+            ]
+        )
+    )
+    assert secret_group_exists("bodywork-dev", "dev") is True
+
+    mock_k8s_core_api().list_namespaced_secret.return_value = (
+        kubernetes.client.V1SecretList(items=[])
+    )
+
+    assert secret_group_exists("bodywork-dev", "abc") is False
+
+
+@patch("kubernetes.client.CoreV1Api")
+def test_deleting_secret_group(
+    mock_k8s_core_api: MagicMock,
+):
+    delete_secret_group("bodywork-dev", "test")
+    mock_k8s_core_api().delete_collection_namespaced_secret.assert_called_once_with(
+        namespace="bodywork-dev", label_selector=f"{SECRET_GROUP_LABEL}=test"
+    )

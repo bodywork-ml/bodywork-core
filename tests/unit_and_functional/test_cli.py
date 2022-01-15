@@ -511,14 +511,18 @@ def test_update_secrets(
     mock_update_secret.assert_called_once()
 
 
+@patch("bodywork.cli.cli.delete_secret_group")
 @patch("bodywork.cli.cli.delete_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_delete_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock
+    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock, mock_delete_group: MagicMock
 ):
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
 
     _delete_secret(name="foo", group="prod")
     mock_delete_secret.assert_called_once()
+
+    _delete_secret(name=None, group="test")
+    mock_delete_group.assert_called_once()
