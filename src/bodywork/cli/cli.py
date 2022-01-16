@@ -192,9 +192,7 @@ def _create_deployment(
             "Cluster has not been configured for Bodywork - "
             "running 'bodywork configure-cluster'."
         )
-        setup_namespace_with_service_accounts_and_roles(
-            BODYWORK_NAMESPACE
-        )
+        setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
@@ -211,7 +209,7 @@ def _create_deployment(
                     git_url,
                     git_branch,
                     ssh_key_path=ssh_key_path,
-                    docker_image_override=image
+                    docker_image_override=image,
                 )
             console.rule(characters="=", style="green")
         except BodyworkWorkflowExecutionError:
@@ -253,9 +251,7 @@ def _get_deployment(
         if logs:
             display_workflow_job_logs(BODYWORK_NAMESPACE, logs)
         else:
-            display_workflow_job_history(
-                BODYWORK_NAMESPACE, "async-workflow"
-            )
+            display_workflow_job_history(BODYWORK_NAMESPACE, "async-workflow")
     else:
         display_deployments(namespace, name, service_name)
     sys.exit(0)
@@ -384,9 +380,7 @@ def _create_secret(
 ):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
-        create_secret(
-            BODYWORK_NAMESPACE, group, name, var_names_and_values
-        )
+        create_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
     except ValueError:
         print_warn(
             "Could not parse secret data - example format: --data USERNAME=alex "
@@ -423,9 +417,7 @@ def _update_secret(
 ):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
-        update_secret(
-            BODYWORK_NAMESPACE, group, name, var_names_and_values
-        )
+        update_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
         sys.exit(0)
     except ValueError:
         print_warn(
@@ -438,7 +430,9 @@ def _update_secret(
 @delete.command("secret")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_secret(name: Optional[str] = Argument(None), group: Optional[str] = Option(None)):
+def _delete_secret(
+    name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
+):
     if name:
         if not group:
             print_warn("Please specify which secrets group the secret belongs to.")
