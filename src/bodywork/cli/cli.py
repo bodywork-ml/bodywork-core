@@ -438,13 +438,17 @@ def _update_secret(
 @delete.command("secret")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_secret(name: str = Option(...), group: str = Option(...)):
-    if name and not group:
-        print_warn("Please specify which secrets group the secret belongs to.")
-        sys.exit(1)
-    elif group and not name:
+def _delete_secret(name: Optional[str] = Argument(None), group: Optional[str] = Option(None)):
+    if name:
+        if not group:
+            print_warn("Please specify which secrets group the secret belongs to.")
+            sys.exit(1)
+        else:
+            delete_secret(BODYWORK_NAMESPACE, group, name)
+            sys.exit(0)
+    elif group:
         delete_secret_group(BODYWORK_NAMESPACE, group)
         sys.exit(0)
     else:
-        delete_secret(BODYWORK_NAMESPACE, group, name)
-        sys.exit(0)
+        print_warn("Please specify a secret or a secrets group to delete.")
+        sys.exit(1)

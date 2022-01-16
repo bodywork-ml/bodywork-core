@@ -521,6 +521,10 @@ def test_delete_secrets(
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
 
+    mock_print_warn.reset_mock()
+    _delete_secret(name=None, group=None)
+    mock_print_warn.assert_called_once()
+
     _delete_secret(name="foo", group="prod")
     mock_delete_secret.assert_called_once()
 
