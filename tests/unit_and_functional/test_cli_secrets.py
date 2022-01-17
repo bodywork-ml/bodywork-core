@@ -30,6 +30,7 @@ from bodywork.cli.secrets import (
     display_secrets,
     parse_cli_secrets_strings,
     update_secret,
+    delete_secret_group,
 )
 
 
@@ -153,3 +154,25 @@ def test_display_secrets(
     captured_four = capsys.readouterr()
     assert findall(".*test-credentials.+PROD", captured_four.out)
     assert findall(".*more-test-credentials.+DEV", captured_four.out)
+
+
+@patch("bodywork.cli.secrets.k8s")
+def test_delete_secrets_group_in_namespace(
+    mock_k8s_module: MagicMock, capsys: CaptureFixture
+):
+    mock_k8s_module.namespace_exists.return_value = False
+    delete_secret_group("the-namespace", "xyz")
+    captured_one = capsys.readouterr()
+    assert "Could not find namespace=the-namespace" in captured_one.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.secret_group_exists.return_value = False
+    delete_secret_group("the-namespace", "xyz")
+    captured_two = capsys.readouterr()
+    assert "Could not find secret group=xyz" in captured_two.out
+
+    mock_k8s_module.namespace_exists.return_value = True
+    mock_k8s_module.secret_group_exists.return_value = True
+    delete_secret_group("the-namespace", "xyz")
+    captured_three = capsys.readouterr()
+    assert "Deleted secret group=xyz" in captured_three.out

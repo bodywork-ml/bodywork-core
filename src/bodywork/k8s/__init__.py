@@ -61,6 +61,8 @@ from .secrets import (
     create_complete_secret_name,
     create_ssh_key_secret_from_file,
     create_secret_env_variable,
+    delete_secret_group,
+    secret_group_exists
 )
 from .deployments import (
     DeploymentStatus,
@@ -152,4 +154,6 @@ __all__ = [
     "create_complete_secret_name",
     "create_ssh_key_secret_from_file",
     "create_secret_env_variable",
+    "delete_secret_group",
+    "secret_group_exists"
 ]
