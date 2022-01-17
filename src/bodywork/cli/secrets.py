@@ -133,10 +133,10 @@ def delete_secret_group(namespace: str, group: str) -> None:
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
         return None
     if not k8s.secret_group_exists(namespace, group):
-        print_warn(f"Could not find secret group={group} .")
+        print_warn(f"Could not find secret group={group}.")
         return None
     k8s.delete_secret_group(namespace, group)
-    print_info(f"Deleted secret group={group} .")
+    print_info(f"Deleted secret group={group}.")
 
 
 def display_secrets(

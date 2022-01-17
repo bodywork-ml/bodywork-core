@@ -144,22 +144,20 @@ def secret_exists(
 
 
 def secret_group_exists(namespace: str, group: str) -> bool:
-    """ Does the specified secret group exist
+    """Does the specified secret group exist.
 
-        :param namespace: Kubernetes namespace in which to look for secrets group.
-        :param group: Name of secrets group.
-        :return: True if group exists, otherwise False.
+    :param namespace: Kubernetes namespace in which to look for secrets group.
+    :param group: Name of secrets group.
+    :return: True if group exists, otherwise False.
     """
-    return (
-        len(
-            k8s.CoreV1Api()
-            .list_namespaced_secret(
-                namespace=namespace, label_selector=f"{SECRET_GROUP_LABEL}={group}"
-            )
-            .items
+    items = (
+        k8s.CoreV1Api()
+        .list_namespaced_secret(
+            namespace=namespace, label_selector=f"{SECRET_GROUP_LABEL}={group}"
         )
-        > 0
+        .items
     )
+    return len(items) > 0
 
 
 def create_secret(
@@ -205,8 +203,7 @@ def update_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) ->
 def delete_secret(namespace: str, name: str) -> None:
     """Delete a secret from within a namespace.
 
-    :param namespace: Namespace in which to look for the secret to
-        delete.
+    :param namespace: Namespace in which to look for the secret to delete.
     :param name: The name of the secret to be deleted.
     """
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
@@ -215,8 +212,7 @@ def delete_secret(namespace: str, name: str) -> None:
 def delete_secret_group(namespace: str, group: str) -> None:
     """Delete a group of secrets in a namespace.
 
-    :param namespace: Namespace in which to look for the secret to
-    delete.
+    :param namespace: Namespace in which to look for the secret to delete.
     :param group: The name of the secrets group to be deleted.
     """
     k8s.CoreV1Api().delete_collection_namespaced_secret(
