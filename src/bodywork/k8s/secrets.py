@@ -18,7 +18,7 @@
 High-level interface to the Kubernetes secrets API as used to create and
 manage secrets required by Bodywork stage containers.
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from base64 import b64decode
 from dataclasses import dataclass
 from pathlib import Path
@@ -119,7 +119,7 @@ def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None
 
 
 def secret_exists(
-    namespace: str, secret_name: str, secret_key: Optional[str] = None
+    namespace: str, secret_name: str, secret_key: str = None
 ) -> bool:
     """Does a secret and a key within a secret, exist.
 
@@ -220,7 +220,7 @@ def delete_secret_group(namespace: str, group: str) -> None:
     )
 
 
-def list_secrets(namespace: str, group: Optional[str] = None) -> Dict[str, Secret]:
+def list_secrets(namespace: str, group: str = None) -> Dict[str, Secret]:
     """Get all secrets and their (decoded) data.
 
     :param namespace: Namespace in which to list secrets.

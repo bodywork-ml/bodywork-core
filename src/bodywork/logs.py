@@ -28,7 +28,6 @@ from logging import (
     WARNING,
 )
 from pathlib import Path
-from typing import Optional
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
@@ -45,7 +44,7 @@ from .exceptions import BodyworkConfigError
 
 
 def bodywork_log_factory(
-    log_level: Optional[str] = None,
+    log_level: str = None,
     config_file_path: Path = DEFAULT_PROJECT_DIR / PROJECT_CONFIG_FILENAME,
 ) -> Logger:
     """Create a standardised Bodywork logger.

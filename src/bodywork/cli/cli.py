@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from time import sleep
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import kubernetes
 from pkg_resources import get_distribution
@@ -184,7 +184,7 @@ def _create_deployment(
     asynchronous_job_name: str = Option("", "--async-job-name"),
     ssh_key_path: str = Option("", "--ssh"),
     secrets_group: str = Option("", "--group", "--secrets-group"),
-    image: Optional[str] = Option(None, "--bodywork-image"),
+    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_NAMESPACE):
@@ -242,10 +242,10 @@ def _create_deployment(
 @k8s_auth
 def _get_deployment(
     name: str = Argument(None),
-    service_name: Optional[str] = Argument(None),
+    service_name: str = Argument(None),
     asynchronous: bool = Option(False, "--async"),
     logs: str = Option(""),
-    namespace: Optional[str] = Option(None),
+    namespace: str = Option(None),
 ):
     if asynchronous:
         if logs:
@@ -265,7 +265,7 @@ def _update_deployment(
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
     asynchronous_job_name: str = Option("", "--async-job-name"),
-    image: Optional[str] = Option(None, "--bodywork-image"),
+    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     _create_deployment(
@@ -325,7 +325,7 @@ def _create_cronjob(
 @handle_k8s_exceptions
 @k8s_auth
 def _get_cronjob(
-    name: Optional[str] = Argument(None),
+    name: str = Argument(None),
     history: bool = Option(False),
     logs: str = Option(""),
 ):
@@ -395,7 +395,7 @@ def _create_secret(
 @handle_k8s_exceptions
 @k8s_auth
 def _get_secret(
-    name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
+    name: str = Argument(None), group: str = Option(None)
 ):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
@@ -431,7 +431,7 @@ def _update_secret(
 @handle_k8s_exceptions
 @k8s_auth
 def _delete_secret(
-    name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
+    name: str = Argument(None), group: str = Option(None)
 ):
     if name:
         if not group:

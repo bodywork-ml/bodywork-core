@@ -21,7 +21,7 @@ to create and manage cronjobs that execute Bodywork project workflows.
 import os
 import random
 from datetime import datetime
-from typing import Dict, Union, Optional, List
+from typing import Dict, Union, List
 from kubernetes import client as k8s
 
 from ..constants import (
@@ -38,8 +38,8 @@ def configure_workflow_job(
     project_repo_branch: str = "master",
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
-    job_name: Optional[str] = None,
-    container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
+    job_name: str = None,
+    container_env_vars: List[k8s.V1EnvVar] = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork workflow execution job.
 
@@ -124,7 +124,7 @@ def configure_workflow_cronjob(
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,
     image: str = BODYWORK_DOCKER_IMAGE,
-    env_vars: Optional[List[k8s.V1EnvVar]] = None,
+    env_vars: List[k8s.V1EnvVar] = None,
 ) -> k8s.V1beta1CronJob:
     """Configure a Bodywork workflow cronjob.
 
@@ -183,12 +183,12 @@ def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
 def update_workflow_cronjob(
     namespace: str,
     name: str,
-    schedule: Optional[str] = None,
-    project_repo_url: Optional[str] = None,
-    project_repo_branch: Optional[str] = None,
-    retries: Optional[int] = None,
-    successful_jobs_history_limit: Optional[int] = None,
-    failed_jobs_history_limit: Optional[int] = None,
+    schedule: str = None,
+    project_repo_url: str = None,
+    project_repo_branch: str = None,
+    retries: int = None,
+    successful_jobs_history_limit: int = None,
+    failed_jobs_history_limit: int = None,
 ) -> None:
     """Update a Bodywork workflow cronjob.
 

@@ -21,7 +21,7 @@ Bodywork service deployment stages.
 from datetime import datetime
 from enum import Enum
 from time import sleep, time
-from typing import Dict, Iterable, List, Optional, Any
+from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
 
@@ -46,9 +46,9 @@ def configure_service_stage_deployment(
     image: str = BODYWORK_DOCKER_IMAGE,
     replicas: int = 1,
     port: int = 80,
-    container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
-    cpu_request: Optional[float] = None,
-    memory_request: Optional[int] = None,
+    container_env_vars: List[k8s.V1EnvVar] = None,
+    cpu_request: float = None,
+    memory_request: int = None,
     seconds_to_be_ready_before_completing: int = 30,
 ) -> k8s.V1Deployment:
     """Configure a Bodywork service stage k8s deployment.
@@ -368,8 +368,8 @@ def deployment_id(deployment_name: str, stage_name: str) -> str:
 
 
 def list_service_stage_deployments(
-    namespace: Optional[str] = None,
-    name: Optional[str] = None,
+    namespace: str = None,
+    name: str = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Get all service deployments and their high-level info.
 

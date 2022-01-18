@@ -18,12 +18,12 @@
 High-level interface to the Kubernetes APIs used to retrieve logs from
 active pods.
 """
-from typing import cast, Optional
+from typing import cast
 
 from kubernetes import client as k8s
 
 
-def get_latest_pod_name(namespace: str, pod_name_prefix: str) -> Optional[str]:
+def get_latest_pod_name(namespace: str, pod_name_prefix: str) -> str:
     """Get full name of most recently started pod with a name prefix.
 
     :param namespace: The namespace in which to look for pods.
