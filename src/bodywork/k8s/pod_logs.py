@@ -18,7 +18,7 @@
 High-level interface to the Kubernetes APIs used to retrieve logs from
 active pods.
 """
-from typing import cast, Optional
+from typing import cast
 
 from kubernetes import client as k8s
 
