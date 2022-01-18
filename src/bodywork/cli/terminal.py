@@ -18,7 +18,7 @@ def print_warn(msg: str) -> None:
 
 def print_dict(
     the_dict: Dict[str, Any],
-    table_name: Optional[str] = None,
+    table_name: str = None,
     key_col_name: str = "Field",
     val_col_name: str = "Value",
 ) -> None:

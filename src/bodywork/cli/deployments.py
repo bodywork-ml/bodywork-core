@@ -25,9 +25,9 @@ from .. import k8s
 
 
 def display_deployments(
-    namespace: Optional[str] = None,
-    name: Optional[str] = None,
-    service_name: Optional[str] = None,
+    namespace: str = None,
+    name: str = None,
+    service_name: str = None,
 ) -> None:
     """Print active deployments to stdout.
 

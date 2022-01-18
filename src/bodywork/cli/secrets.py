@@ -18,7 +18,7 @@
 This module contains functions for managing Kubernetes secrets. They are
 targeted for use via the CLI.
 """
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, Tuple
 
 from .terminal import print_dict, print_info, print_warn
 from .. import k8s
@@ -140,7 +140,7 @@ def delete_secret_group(namespace: str, group: str) -> None:
 
 
 def display_secrets(
-    namespace: str, group: Optional[str] = None, secret_name: Optional[str] = None
+    namespace: str, group: str = None, secret_name: str = None
 ) -> None:
     """Print secrets to stdout.
 

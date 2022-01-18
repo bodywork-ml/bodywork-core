@@ -182,11 +182,11 @@ def create_workflow_cronjob(
 def update_workflow_cronjob(
     namespace: str,
     job_name: str,
-    schedule: Optional[str] = None,
-    project_repo_url: Optional[str] = None,
-    project_repo_branch: Optional[str] = None,
-    retries: Optional[int] = None,
-    workflow_job_history_limit: Optional[int] = None,
+    schedule: str = None,
+    project_repo_url: str = None,
+    project_repo_branch: str = None,
+    retries: int = None,
+    workflow_job_history_limit: int = None,
 ) -> None:
     """Update a new cronjob within a namespace.
 
@@ -241,7 +241,7 @@ def delete_workflow_cronjob(namespace: str, job_name: str) -> None:
     print_info(f"Deleted cronjob={job_name}.")
 
 
-def display_cronjobs(namespace: str, job_name: Optional[str] = None) -> None:
+def display_cronjobs(namespace: str, job_name: str = None) -> None:
     """Print cronjobs to stdout.
 
     :param namespace: Namespace in which to look for cronjobs.
