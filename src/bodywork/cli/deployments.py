@@ -18,16 +18,14 @@
 This module contains functions for managing service deployments that have
 been created as part of executed workflows.
 """
-from typing import Optional
-
 from .terminal import print_dict, print_info, print_warn
 from .. import k8s
 
 
 def display_deployments(
-    namespace: Optional[str] = None,
-    name: Optional[str] = None,
-    service_name: Optional[str] = None,
+    namespace: str = None,
+    name: str = None,
+    service_name: str = None,
 ) -> None:
     """Print active deployments to stdout.
 

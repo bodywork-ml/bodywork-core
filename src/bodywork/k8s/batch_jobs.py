@@ -20,7 +20,7 @@ manage Bodywork batch stages.
 """
 from enum import Enum
 from time import sleep, time
-from typing import Iterable, List, Optional
+from typing import Iterable, List
 
 from kubernetes import client as k8s
 
@@ -47,9 +47,9 @@ def configure_batch_stage_job(
     project_repo_branch: str = "master",
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
-    container_env_vars: Optional[List[k8s.V1EnvVar]] = None,
-    cpu_request: Optional[float] = None,
-    memory_request: Optional[int] = None,
+    container_env_vars: List[k8s.V1EnvVar] = None,
+    cpu_request: float = None,
+    memory_request: int = None,
 ) -> k8s.V1Job:
     """Configure a Bodywork batch stage k8s job.
 

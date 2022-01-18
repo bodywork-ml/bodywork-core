@@ -20,7 +20,7 @@ a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Optional, Tuple, List, Any
+from typing import cast, Tuple, List, Any
 from kubernetes.client.exceptions import ApiException
 
 import requests
@@ -57,8 +57,8 @@ _log = bodywork_log_factory()
 def run_workflow(
     repo_url: str,
     repo_branch: str = "master",
-    docker_image_override: Optional[str] = None,
-    config: Optional[BodyworkConfig] = None,
+    docker_image_override: str = None,
+    config: BodyworkConfig = None,
     ssh_key_path: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:

@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from time import sleep
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import kubernetes
 from pkg_resources import get_distribution
@@ -32,6 +32,7 @@ from .secrets import (
     display_secrets,
     parse_cli_secrets_strings,
     update_secret,
+    delete_secret_group,
 )
 from .setup_namespace import (
     is_namespace_available_for_bodywork,
@@ -183,7 +184,7 @@ def _create_deployment(
     asynchronous_job_name: str = Option("", "--async-job-name"),
     ssh_key_path: str = Option("", "--ssh"),
     secrets_group: str = Option("", "--group", "--secrets-group"),
-    image: Optional[str] = Option(None, "--bodywork-image"),
+    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_NAMESPACE):
@@ -191,9 +192,7 @@ def _create_deployment(
             "Cluster has not been configured for Bodywork - "
             "running 'bodywork configure-cluster'."
         )
-        setup_namespace_with_service_accounts_and_roles(
-            BODYWORK_NAMESPACE
-        )
+        setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
@@ -210,7 +209,7 @@ def _create_deployment(
                     git_url,
                     git_branch,
                     ssh_key_path=ssh_key_path,
-                    docker_image_override=image
+                    docker_image_override=image,
                 )
             console.rule(characters="=", style="green")
         except BodyworkWorkflowExecutionError:
@@ -243,18 +242,16 @@ def _create_deployment(
 @k8s_auth
 def _get_deployment(
     name: str = Argument(None),
-    service_name: Optional[str] = Argument(None),
+    service_name: str = Argument(None),
     asynchronous: bool = Option(False, "--async"),
     logs: str = Option(""),
-    namespace: Optional[str] = Option(None),
+    namespace: str = Option(None),
 ):
     if asynchronous:
         if logs:
             display_workflow_job_logs(BODYWORK_NAMESPACE, logs)
         else:
-            display_workflow_job_history(
-                BODYWORK_NAMESPACE, "async-workflow"
-            )
+            display_workflow_job_history(BODYWORK_NAMESPACE, "async-workflow")
     else:
         display_deployments(namespace, name, service_name)
     sys.exit(0)
@@ -268,7 +265,7 @@ def _update_deployment(
     git_branch: str = Argument(...),
     asynchronous: bool = Option(False, "--async"),
     asynchronous_job_name: str = Option("", "--async-job-name"),
-    image: Optional[str] = Option(None, "--bodywork-image"),
+    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     _create_deployment(
@@ -328,7 +325,7 @@ def _create_cronjob(
 @handle_k8s_exceptions
 @k8s_auth
 def _get_cronjob(
-    name: Optional[str] = Argument(None),
+    name: str = Argument(None),
     history: bool = Option(False),
     logs: str = Option(""),
 ):
@@ -383,9 +380,7 @@ def _create_secret(
 ):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
-        create_secret(
-            BODYWORK_NAMESPACE, group, name, var_names_and_values
-        )
+        create_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
     except ValueError:
         print_warn(
             "Could not parse secret data - example format: --data USERNAME=alex "
@@ -400,7 +395,7 @@ def _create_secret(
 @handle_k8s_exceptions
 @k8s_auth
 def _get_secret(
-    name: Optional[str] = Argument(None), group: Optional[str] = Option(None)
+    name: str = Argument(None), group: str = Option(None)
 ):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
@@ -422,9 +417,7 @@ def _update_secret(
 ):
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
-        update_secret(
-            BODYWORK_NAMESPACE, group, name, var_names_and_values
-        )
+        update_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
         sys.exit(0)
     except ValueError:
         print_warn(
@@ -437,10 +430,19 @@ def _update_secret(
 @delete.command("secret")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_secret(name: str = Argument(...), group: str = Option(...)):
-    if name and not group:
-        print_warn("Please specify which secrets group the secret belongs to.")
-        sys.exit(1)
-    else:
-        delete_secret(BODYWORK_NAMESPACE, group, name)
+def _delete_secret(
+    name: str = Argument(None), group: str = Option(None)
+):
+    if name:
+        if not group:
+            print_warn("Please specify which secrets group the secret belongs to.")
+            sys.exit(1)
+        else:
+            delete_secret(BODYWORK_NAMESPACE, group, name)
+            sys.exit(0)
+    elif group:
+        delete_secret_group(BODYWORK_NAMESPACE, group)
         sys.exit(0)
+    else:
+        print_warn("Please specify a secret or a secrets group to delete.")
+        sys.exit(1)
