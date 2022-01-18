@@ -28,7 +28,6 @@ from logging import (
     WARNING,
 )
 from pathlib import Path
-from typing import Optional
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter

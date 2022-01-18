@@ -18,8 +18,6 @@
 This module contains functions for managing service deployments that have
 been created as part of executed workflows.
 """
-from typing import Optional
-
 from .terminal import print_dict, print_info, print_warn
 from .. import k8s
 

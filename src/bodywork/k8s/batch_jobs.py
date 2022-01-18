@@ -20,7 +20,7 @@ manage Bodywork batch stages.
 """
 from enum import Enum
 from time import sleep, time
-from typing import Iterable, List, Optional
+from typing import Iterable, List
 
 from kubernetes import client as k8s
 

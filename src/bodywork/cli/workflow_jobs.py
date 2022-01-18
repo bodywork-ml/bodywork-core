@@ -19,7 +19,6 @@ This module contains functions for managing Kubernetes workflow jobs.
 They are targeted for use via the CLI.
 """
 import re
-from typing import Optional
 from pathlib import Path
 
 from .terminal import print_dict, print_info, print_pod_logs, print_warn
