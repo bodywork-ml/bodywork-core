@@ -203,7 +203,7 @@ def test_run_workflow_runs_failure_stage_on_failure(
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
-    config.project.run_on_failure = "on_fail_stage"
+    config.pipeline.run_on_failure = "on_fail_stage"
 
     error_message = "Test Error"
     mock_job = MagicMock(k8sclient.V1Job)
@@ -304,7 +304,7 @@ def test_failure_of_failure_stage_is_recorded_in_exception(
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
-    config.project.run_on_failure = "on_fail_stage"
+    config.pipeline.run_on_failure = "on_fail_stage"
 
     error_message = "The run-on-failure stage experienced an error"
     mock_k8s.configure_batch_stage_job.side_effect = [
@@ -332,7 +332,7 @@ def test_run_workflow_pings_usage_stats_server(
 ):
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
-    config.project.usage_stats = True
+    config.pipeline.usage_stats = True
 
     run_workflow("foo_bar_foo_993", project_repo_location, config=config)
 
@@ -528,7 +528,7 @@ def test_workflow_adds_ssh_secret_if_default_exists(
 ):
     config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
-    config.project.secrets_group = None
+    config.pipeline.secrets_group = None
 
     expected_result = k8sclient.V1EnvVar(
         name=SSH_PRIVATE_KEY_ENV_VAR,

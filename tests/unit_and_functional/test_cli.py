@@ -239,7 +239,7 @@ def test_validate(project_repo_location: Path):
         capture_output=True,
     )
     assert process_four.returncode == 1
-    assert "missing sections: version, project, stages, logging" in process_four.stdout
+    assert "missing sections: version, pipeline, stages, logging" in process_four.stdout
 
     config_file_path = project_repo_location / "bodywork_bad_stages_section.yaml"
     process_five = run(
