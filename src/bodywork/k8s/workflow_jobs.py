@@ -35,7 +35,7 @@ from .utils import make_valid_k8s_name
 def configure_workflow_job(
     namespace: str,
     project_repo_url: str,
-    project_repo_branch: str = None,
+    project_repo_branch: str,
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     job_name: str = None,
@@ -67,7 +67,7 @@ def configure_workflow_job(
             "create",
             "deployment",
         ],
-        args=[project_repo_url, project_repo_branch],
+        args=[project_repo_url, f"--branch={project_repo_branch}"],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -119,7 +119,7 @@ def configure_workflow_cronjob(
     namespace: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str = None,
+    project_repo_branch: str,
     retries: int = 2,
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,

@@ -40,7 +40,7 @@ from bodywork.k8s import (
 
 
 def print_completed_process_info(process: CompletedProcess) -> None:
-    """Print completed prcess info to stdout to help with debugging."""
+    """Print completed process info to stdout to help with debugging."""
     print(f"command = {' '.join(process.args)}")
     print("stdout:")
     print(process.stdout)
@@ -64,7 +64,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True,
         )
 
-        expected_output_1 = "deploying master branch from https://github.com/bodywork-ml/bodywork-test-project"  # noqa
+        expected_output_1 = "deploying default branch from https://github.com/bodywork-ml/bodywork-test-project"  # noqa
         expected_output_2 = "Creating k8s namespace = bodywork-test-project"
         expected_output_3 = "Creating k8s service account = bodywork-stage"
         expected_output_4 = "Replicating k8s secrets from group = testsecrets"
@@ -441,7 +441,7 @@ def test_deployment_with_ssh_github_connectivity_from_file(
             encoding="utf-8",
             capture_output=True,
         )
-        expected_output_1 = "deploying master branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
+        expected_output_1 = "deploying default branch from git@github.com:bodywork-ml/test-bodywork-batch-job-project.git"  # noqa
         expected_output_2 = "Deployment successful"
         assert expected_output_1 in process.stdout
         assert expected_output_2 in process.stdout

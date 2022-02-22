@@ -95,7 +95,7 @@ def configure_service_stage_deployment(
         resources=container_resources,
         env=container_env_vars,
         command=["bodywork", "stage"],
-        args=[project_repo_url, project_repo_branch, stage_name],
+        args=[project_repo_url, stage_name, f"--branch={project_repo_branch}"],
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
