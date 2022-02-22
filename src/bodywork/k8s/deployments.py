@@ -42,7 +42,7 @@ def configure_service_stage_deployment(
     project_name: str,
     project_repo_url: str,
     git_commit_hash: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     replicas: int = 1,
     port: int = 80,
@@ -62,7 +62,7 @@ def configure_service_stage_deployment(
         repository.
     :param git_commit_hash: The git commit hash of this Bodywork project.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param replicas: Number of containers to create as part of this

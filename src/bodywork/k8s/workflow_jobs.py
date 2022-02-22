@@ -35,7 +35,7 @@ from .utils import make_valid_k8s_name
 def configure_workflow_job(
     namespace: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     job_name: str = None,
@@ -47,7 +47,7 @@ def configure_workflow_job(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stage within,
@@ -119,7 +119,7 @@ def configure_workflow_cronjob(
     namespace: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     retries: int = 2,
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,
@@ -138,7 +138,7 @@ def configure_workflow_cronjob(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param successful_jobs_history_limit: The number of successful job
@@ -198,7 +198,7 @@ def update_workflow_cronjob(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param successful_jobs_history_limit: The number of successful job

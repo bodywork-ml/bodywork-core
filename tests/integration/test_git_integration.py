@@ -111,6 +111,18 @@ def test_that_git_project_repo_can_be_cloned(
         assert False
 
 
+def test_that_git_project_repo_with_branch_specified_can_be_cloned(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    cloned_project_repo_location: Path,
+):
+    try:
+        download_project_code_from_repo(project_repo_connection_string, "master")
+        assert cloned_project_repo_location.exists()
+    except Exception:
+        assert False
+
+
 def test_that_git_commit_hash_is_retrieved(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location,

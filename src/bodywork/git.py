@@ -44,7 +44,7 @@ _log = bodywork_log_factory()
 
 def download_project_code_from_repo(
     url: str,
-    branch: str = "master",
+    branch: str = None,
     destination: Path = DEFAULT_PROJECT_DIR,
     ssh_key_path: str = None,
 ) -> None:
@@ -75,13 +75,11 @@ def download_project_code_from_repo(
         msg = f"Unable to setup SSH for Git and you are trying to connect via SSH: {e}"
         raise BodyworkGitError(msg)
     try:
-        run(
-            ["git", "clone", "--branch", branch, "--single-branch", url, destination],
-            check=True,
-            encoding="utf-8",
-            stdout=DEVNULL,
-            stderr=PIPE,
-        )
+        if branch:
+            git_cmd = ["git", "clone", "--branch", branch, "--single-branch", url, str(destination)]
+        else:
+            git_cmd = ["git", "clone", "--single-branch", url, str(destination)]
+        run(git_cmd, check=True, encoding="utf-8", stdout=DEVNULL, stderr=PIPE)
     except CalledProcessError as e:
         msg = f"Git clone failed - calling {e.cmd} returned {e.stderr}"
         raise BodyworkGitError(msg)

@@ -44,7 +44,7 @@ def configure_batch_stage_job(
     namespace: str,
     stage_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
     container_env_vars: List[k8s.V1EnvVar] = None,
@@ -59,7 +59,7 @@ def configure_batch_stage_job(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param retries: Number of times to retry running the stage to

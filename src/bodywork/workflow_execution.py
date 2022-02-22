@@ -56,7 +56,7 @@ _log = bodywork_log_factory()
 
 def run_workflow(
     repo_url: str,
-    repo_branch: str = "master",
+    repo_branch: str = None,
     docker_image_override: str = None,
     config: BodyworkConfig = None,
     ssh_key_path: str = None,
@@ -65,7 +65,7 @@ def run_workflow(
     """Retrieve latest project code and run the workflow.
 
     :param repo_url: Git repository URL.
-    :param repo_branch: The Git branch to download, defaults to 'master'.
+    :param repo_branch: The Git branch to download, defaults to None.
     :param docker_image_override: Docker image to use for executing all
         stages, that will override the one specified in the
         project config file. Provided purely for testing purposes and

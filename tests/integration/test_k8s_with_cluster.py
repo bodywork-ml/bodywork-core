@@ -58,7 +58,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
                 f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
@@ -85,10 +84,10 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         process = run(
             [
                 "bodywork",
-                "create",
+                "update",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "--branch=master",
                 f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
@@ -167,7 +166,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/test-single-service-project.git",
-                "test-two-services",
+                "--branch=test-two-services",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -183,7 +182,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/test-single-service-project.git",
-                "master",
+                "--branch=master",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -215,7 +214,7 @@ def test_services_from_previous_deployments_are_deleted():
 
 
 @mark.usefixtures("setup_cluster")
-def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_errors(
+def test_workflow_will_clean_up_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
 ):
     try:
@@ -225,7 +224,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
                 f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
@@ -241,7 +239,6 @@ def test_workflow_will_cleanup_jobs_and_rollback_new_deployments_that_yield_erro
                 "update",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-rollback-deployment-test-project",  # noqa
-                "master",
                 f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
@@ -270,7 +267,6 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-failing-test-project",
-                "master",
                 f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
@@ -302,7 +298,6 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
                 f"--bodywork-image={bad_image}",
             ],
             encoding="utf-8",
@@ -317,7 +312,6 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
                 "--bodywork-image=bodyworkml/bodywork-not-an-image:latest",
             ],
             encoding="utf-8",
@@ -341,7 +335,6 @@ def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
                 "create",
                 "deployment",
                 "http://bad.repo",
-                "master",
             ],
             check=True,
         )
@@ -356,7 +349,7 @@ def test_cli_cronjob_handler_crud():
                 "create",
                 "cronjob",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "master",
+                "--branch=master",
                 "--name=bodywork-test-project",
                 "--schedule=0,30 * * * *",
                 "--retries=2",
@@ -374,7 +367,7 @@ def test_cli_cronjob_handler_crud():
                 "update",
                 "cronjob",
                 "https://github.com/bodywork-ml/bodywork-test-project",
-                "main",
+                "--branch=main",
                 "--name=bodywork-test-project",
                 "--schedule=0,0 1 * * *",
             ],
@@ -442,7 +435,6 @@ def test_deployment_with_ssh_github_connectivity_from_file(
                 "create",
                 "deployment",
                 "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-                "master",
                 f"--bodywork-image={docker_image}",
                 f"--ssh={github_ssh_private_key_file}",
             ],
@@ -475,7 +467,6 @@ def test_deployment_of_remote_workflows(docker_image: str):
                 "create",
                 "deployment",
                 "https://github.com/bodywork-ml/test-single-service-project.git",
-                "master",
                 f"--bodywork-image={docker_image}",
                 "--async",
                 f"--async-job-name={job_name}",
@@ -544,7 +535,7 @@ def test_remote_deployment_with_ssh_github_connectivity(
                 "create",
                 "deployment",
                 "git@github.com:bodywork-ml/test-bodywork-batch-job-project.git",
-                "master",
+                "--branch=master",
                 "--async",
                 f"--async-job-name={job_name}",
                 f"--ssh={Path.home() / f'.ssh/{DEFAULT_SSH_FILE}'}",
