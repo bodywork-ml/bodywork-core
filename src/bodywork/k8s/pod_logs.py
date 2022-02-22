@@ -38,7 +38,7 @@ def get_latest_pod_name(namespace: str, pod_name_prefix: str) -> str:
                 for pod_object in pod_list.items
                 if pod_object.metadata.name.startswith(pod_name_prefix)
             ],
-            key=lambda pod_object: pod_object.status.start_time,
+            key=lambda pod_object: str(pod_object.status.start_time),
             reverse=True,
         )
         if filtered_pod_objects:

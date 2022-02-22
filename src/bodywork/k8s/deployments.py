@@ -193,7 +193,7 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
 
     revision_ordered_replica_sets = sorted(
         associated_replica_sets.items,
-        key=lambda e: e.metadata.annotations["deployment.kubernetes.io/revision"],
+        key=lambda e: str(e.metadata.annotations["deployment.kubernetes.io/revision"]),
         reverse=True,
     )
 

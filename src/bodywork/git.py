@@ -76,7 +76,15 @@ def download_project_code_from_repo(
         raise BodyworkGitError(msg)
     try:
         if branch:
-            git_cmd = ["git", "clone", "--branch", branch, "--single-branch", url, str(destination)]
+            git_cmd = [
+                "git",
+                "clone",
+                "--branch",
+                branch,
+                "--single-branch",
+                url,
+                str(destination),
+            ]
         else:
             git_cmd = ["git", "clone", "--single-branch", url, str(destination)]
         run(git_cmd, check=True, encoding="utf-8", stdout=DEVNULL, stderr=PIPE)
