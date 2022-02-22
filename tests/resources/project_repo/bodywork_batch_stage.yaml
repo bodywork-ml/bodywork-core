@@ -1,5 +1,5 @@
-version: "1.0"
-project:
+version: "1.1"
+pipeline:
   name: bodywork-test-project
   docker_image: bodyworkml/bodywork-core:latest
   DAG: stage_2

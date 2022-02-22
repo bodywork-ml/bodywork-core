@@ -23,7 +23,7 @@ inconsistencies.
 import pkg_resources
 from pathlib import Path
 
-BODYWORK_CONFIG_VERSION = "1.0"
+BODYWORK_CONFIG_VERSION = "1.1"
 BODYWORK_DOCKERHUB_IMAGE_REPO = "bodyworkml/bodywork-core"
 BODYWORK_DOCKER_IMAGE = f"{BODYWORK_DOCKERHUB_IMAGE_REPO}:latest"
 BODYWORK_VERSION = pkg_resources.get_distribution("bodywork").version
