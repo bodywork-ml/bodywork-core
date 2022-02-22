@@ -100,7 +100,7 @@ def test_configure_workflow_job(mock_random: MagicMock):
     ]
     assert job_definition.spec.template.spec.containers[0].args == [
         "bodywork-ml/bodywork-test-project",
-        "dev",
+        "--branch=dev",
     ]
     assert (
         job_definition.spec.template.spec.containers[0].image
@@ -180,7 +180,7 @@ def test_configure_workflow_cronjob():
         0
     ].args == [
         "bodywork-ml/bodywork-test-project",
-        "dev",
+        "--branch=dev",
     ]
     assert (
         cronjob_definition.spec.job_template.spec.template.spec.containers[0].image

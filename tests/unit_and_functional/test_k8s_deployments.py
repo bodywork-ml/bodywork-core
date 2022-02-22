@@ -113,8 +113,8 @@ def test_configure_service_stage_deployment():
     assert deployment.spec.replicas == 2
     assert deployment.spec.template.spec.containers[0].args == [
         "bodywork-ml/bodywork-test-project",
-        "dev",
         "serve",
+        "--branch=dev",
     ]
     assert (
         deployment.spec.template.spec.containers[0].image
