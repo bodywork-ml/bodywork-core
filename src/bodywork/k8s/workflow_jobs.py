@@ -56,7 +56,11 @@ def configure_workflow_job(
     :param container_env_vars: List of k8s environment variables to add.
     :return: A configured k8s job object.
     """
-
+    container_args = (
+        [project_repo_url, f"--branch={project_repo_branch}"]
+        if project_repo_branch
+        else [project_repo_url]
+    )
     container = k8s.V1Container(
         name="bodywork",
         image=image,
@@ -67,7 +71,7 @@ def configure_workflow_job(
             "create",
             "deployment",
         ],
-        args=[project_repo_url, f"--branch={project_repo_branch}"],
+        args=container_args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -119,7 +123,7 @@ def configure_workflow_cronjob(
     namespace: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str,
+    project_repo_branch: str = None,
     retries: int = 2,
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,

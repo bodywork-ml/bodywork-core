@@ -82,6 +82,11 @@ def configure_service_stage_deployment(
 
     """
     service_name = make_valid_k8s_name(stage_name)
+    container_args = (
+        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
+        if project_repo_branch
+        else [project_repo_url, stage_name]
+    )
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -95,7 +100,7 @@ def configure_service_stage_deployment(
         resources=container_resources,
         env=container_env_vars,
         command=["bodywork", "stage"],
-        args=[project_repo_url, stage_name, f"--branch={project_repo_branch}"],
+        args=container_args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
