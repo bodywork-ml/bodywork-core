@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -35,7 +35,7 @@ from .utils import make_valid_k8s_name
 def configure_workflow_job(
     namespace: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str,
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     job_name: str = None,
@@ -47,7 +47,7 @@ def configure_workflow_job(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stage within,
@@ -56,7 +56,11 @@ def configure_workflow_job(
     :param container_env_vars: List of k8s environment variables to add.
     :return: A configured k8s job object.
     """
-
+    container_args = (
+        [project_repo_url, f"--branch={project_repo_branch}"]
+        if project_repo_branch
+        else [project_repo_url]
+    )
     container = k8s.V1Container(
         name="bodywork",
         image=image,
@@ -67,7 +71,7 @@ def configure_workflow_job(
             "create",
             "deployment",
         ],
-        args=[project_repo_url, project_repo_branch],
+        args=container_args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
@@ -119,7 +123,7 @@ def configure_workflow_cronjob(
     namespace: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     retries: int = 2,
     successful_jobs_history_limit: int = 1,
     failed_jobs_history_limit: int = 1,
@@ -138,7 +142,7 @@ def configure_workflow_cronjob(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param successful_jobs_history_limit: The number of successful job
@@ -198,7 +202,7 @@ def update_workflow_cronjob(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param successful_jobs_history_limit: The number of successful job

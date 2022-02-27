@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -281,8 +281,9 @@ def test_stage_command_successful_has_zero_exit_code(
                 "bodywork",
                 "stage",
                 project_repo_connection_string,
-                "master",
                 "stage_1",
+                "--branch",
+                "master",
             ],
             check=True,
             capture_output=True,

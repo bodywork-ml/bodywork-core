@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -44,14 +44,14 @@ class ExecutableType(Enum):
 def run_stage(
     stage_name: str,
     repo_url: str,
-    repo_branch: str = "master",
+    repo_branch: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
 ) -> None:
     """Retrieve latest project code and run the chosen stage.
 
     :param stage_name: The Bodywork project stage name.
     :param repo_url: Git repository URL.
-    :param repo_branch: The Git branch to download, defaults to 'master'.
+    :param repo_branch: The Git branch to download, defaults to None.
     :param cloned_repo_dir: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :raises RuntimeError: If the executable script exits with a non-zero
