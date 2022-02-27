@@ -267,7 +267,6 @@ def _update_deployment(
     asynchronous: bool = Option(False, "--async", hidden=True),
     asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
     image: str = Option(None, "--bodywork-image", hidden=True),
-    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     _create_deployment(
