@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -44,7 +44,7 @@ def configure_batch_stage_job(
     namespace: str,
     stage_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
     container_env_vars: List[k8s.V1EnvVar] = None,
@@ -59,7 +59,7 @@ def configure_batch_stage_job(
     :param project_repo_url: The URL for the Bodywork project Git
         repository.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param retries: Number of times to retry running the stage to
@@ -73,6 +73,11 @@ def configure_batch_stage_job(
     :return: A configured k8s job object.
     """
     job_name = make_valid_k8s_name(stage_name)
+    container_args = (
+        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
+        if project_repo_branch
+        else [project_repo_url, stage_name]
+    )
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -86,7 +91,7 @@ def configure_batch_stage_job(
         resources=container_resources,
         env=container_env_vars,
         command=["bodywork", "stage"],
-        args=[project_repo_url, project_repo_branch, stage_name],
+        args=container_args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,

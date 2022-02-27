@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -42,7 +42,7 @@ def configure_service_stage_deployment(
     project_name: str,
     project_repo_url: str,
     git_commit_hash: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     replicas: int = 1,
     port: int = 80,
@@ -62,7 +62,7 @@ def configure_service_stage_deployment(
         repository.
     :param git_commit_hash: The git commit hash of this Bodywork project.
     :param project_repo_branch: The Bodywork project Git repository
-        branch to use, defaults to 'master'.
+        branch to use, defaults to None.
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param replicas: Number of containers to create as part of this
@@ -82,6 +82,11 @@ def configure_service_stage_deployment(
 
     """
     service_name = make_valid_k8s_name(stage_name)
+    container_args = (
+        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
+        if project_repo_branch
+        else [project_repo_url, stage_name]
+    )
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -95,7 +100,7 @@ def configure_service_stage_deployment(
         resources=container_resources,
         env=container_env_vars,
         command=["bodywork", "stage"],
-        args=[project_repo_url, project_repo_branch, stage_name],
+        args=container_args,
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
@@ -193,7 +198,7 @@ def rollback_deployment(deployment: k8s.V1Deployment) -> None:
 
     revision_ordered_replica_sets = sorted(
         associated_replica_sets.items,
-        key=lambda e: e.metadata.annotations["deployment.kubernetes.io/revision"],
+        key=lambda e: str(e.metadata.annotations["deployment.kubernetes.io/revision"]),
         reverse=True,
     )
 

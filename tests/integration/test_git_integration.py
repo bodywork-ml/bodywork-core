@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -106,6 +106,18 @@ def test_that_git_project_repo_can_be_cloned(
 ):
     try:
         download_project_code_from_repo(project_repo_connection_string)
+        assert cloned_project_repo_location.exists()
+    except Exception:
+        assert False
+
+
+def test_that_git_project_repo_with_branch_specified_can_be_cloned(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    cloned_project_repo_location: Path,
+):
+    try:
+        download_project_code_from_repo(project_repo_connection_string, "master")
         assert cloned_project_repo_location.exists()
     except Exception:
         assert False

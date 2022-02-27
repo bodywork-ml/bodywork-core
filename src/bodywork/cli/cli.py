@@ -157,7 +157,7 @@ def _configure_cluster():
 @cli_app.command("stage", hidden=True)
 def _stage(
     git_url: str = Argument(...),
-    git_branch: str = Argument(...),
+    git_branch: str = Option("", "--branch"),
     stage_name: str = Argument(...),
 ):
     try:
@@ -179,7 +179,7 @@ def _debug(seconds: int = Argument(600)) -> None:
 @k8s_auth
 def _create_deployment(
     git_url: str = Argument(...),
-    git_branch: str = Argument(...),
+    git_branch: str = Option("", "--branch"),
     asynchronous: bool = Option(False, "--async", hidden=True),
     asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
     ssh_key_path: str = Option("", "--ssh"),
@@ -196,8 +196,9 @@ def _create_deployment(
     if not asynchronous:
         print_info("Using local workflow controller - retries inactive.")
         try:
+            git_branch_ = "default" if not git_branch else git_branch
             console.rule(
-                f"[green]deploying[/green] [bold purple]{git_branch}[/bold purple] "
+                f"[green]deploying[/green] [bold purple]{git_branch_}[/bold purple] "
                 f"[green]branch from[/green] [bold purple]{git_url}[/bold purple]",
                 characters="=",
                 style="green",
@@ -262,10 +263,11 @@ def _get_deployment(
 @k8s_auth
 def _update_deployment(
     git_url: str = Argument(...),
-    git_branch: str = Argument(...),
+    git_branch: str = Option("", "--branch"),
     asynchronous: bool = Option(False, "--async", hidden=True),
     asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
     image: str = Option(None, "--bodywork-image", hidden=True),
+    image: str = Option(None, "--bodywork-image"),
     retries: int = Option(1),
 ):
     _create_deployment(
@@ -298,7 +300,7 @@ def _delete_deployment(
 @k8s_auth
 def _create_cronjob(
     git_url: str = Argument(...),
-    git_branch: str = Argument(...),
+    git_branch: str = Option("", "--branch"),
     schedule: str = Option(...),
     name: str = Option(...),
     retries: int = Option(1),
@@ -346,7 +348,7 @@ def _get_cronjob(
 @k8s_auth
 def _update_cronjob(
     git_url: str = Argument(...),
-    git_branch: str = Argument(...),
+    git_branch: str = Option("", "--branch"),
     schedule: str = Option(...),
     name: str = Option(...),
     retries: int = Option(1),

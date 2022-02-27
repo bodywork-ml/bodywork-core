@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -30,7 +30,7 @@ def create_workflow_job(
     namespace: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     retries: int = 2,
     image: str = BODYWORK_DOCKER_IMAGE,
     ssh_key_path: str = None,
@@ -44,7 +44,7 @@ def create_workflow_job(
         repository.
     :param project_repo_branch: The branch of the Bodywork project Git
         repository that will be used as the executable codebase,
-        defaults to 'master'.
+        defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param image: Docker image to use for running the stages within,
@@ -112,7 +112,7 @@ def create_workflow_cronjob(
     schedule: str,
     job_name: str,
     project_repo_url: str,
-    project_repo_branch: str = "master",
+    project_repo_branch: str = None,
     retries: int = 2,
     workflow_job_history_limit: int = 1,
     ssh_key_path: str = None,
@@ -127,7 +127,7 @@ def create_workflow_cronjob(
         repository.
     :param project_repo_branch: The branch of the Bodywork project Git
         repository that will be used as the executable codebase,
-        defaults to 'master'.
+        defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param workflow_job_history_limit: Minimum number of
@@ -196,7 +196,7 @@ def update_workflow_cronjob(
         repository.
     :param project_repo_branch: The branch of the Bodywork project Git
         repository that will be used as the executable codebase,
-        defaults to 'master'.
+        defaults to None.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
     :param workflow_job_history_limit: Minimum number of

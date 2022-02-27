@@ -1,7 +1,7 @@
-pytest==6.2.5
+pytest==7.0.1
 pytest-cov==3.0.0
-mypy==0.782
-flake8==3.9.2
-tox==3.24.4
-twine==3.4.2
-wheel==0.37.0
+mypy==0.931
+flake8==4.0.1
+tox==3.24.5
+twine==3.8.0
+wheel>=0.37.0
