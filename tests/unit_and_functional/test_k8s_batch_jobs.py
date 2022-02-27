@@ -1,5 +1,5 @@
 # bodywork - MLOps on Kubernetes.
-# Copyright (C) 2020-2021  Bodywork Machine Learning Ltd.
+# Copyright (C) 2020-2022  Bodywork Machine Learning Ltd.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -79,8 +79,8 @@ def test_configure_batch_stage_job():
     assert job.spec.backoff_limit == 2
     assert job.spec.template.spec.containers[0].args == [
         "bodywork-ml/bodywork-test-project",
-        "dev",
         "train",
+        "--branch=dev",
     ]
     assert (
         job.spec.template.spec.containers[0].image == "bodyworkml/bodywork-core:0.0.7"
