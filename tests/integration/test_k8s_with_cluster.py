@@ -158,7 +158,7 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 
 @mark.usefixtures("setup_cluster")
-def test_services_from_previous_deployments_are_deleted():
+def test_services_from_previous_deployments_are_deleted(docker_image: str):
     try:
         process = run(
             [
@@ -167,6 +167,7 @@ def test_services_from_previous_deployments_are_deleted():
                 "deployment",
                 "https://github.com/bodywork-ml/test-single-service-project.git",
                 "--branch=test-two-services",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
@@ -179,10 +180,11 @@ def test_services_from_previous_deployments_are_deleted():
         process = run(
             [
                 "bodywork",
-                "create",
+                "update",
                 "deployment",
                 "https://github.com/bodywork-ml/test-single-service-project.git",
                 "--branch=master",
+                f"--bodywork-image={docker_image}",
             ],
             encoding="utf-8",
             capture_output=True,
