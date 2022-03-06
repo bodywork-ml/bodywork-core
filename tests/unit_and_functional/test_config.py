@@ -26,7 +26,7 @@ from bodywork.config import (
     BatchStageConfig,
     DictDataValidator,
     LoggingConfig,
-    ProjectConfig,
+    PipelineConfig,
     ServiceStageConfig,
     StageConfig,
     _parse_dag_definition,
@@ -49,20 +49,20 @@ def bodywork_config(project_repo_location: Path) -> BodyworkConfig:
 
 
 def test_key_value_data_parser_correctly_identifies_invalid_data():
-    schema = {"version": {"type": "string"}, "project": {"type": "dict"}}
+    schema = {"version": {"type": "string"}, "pipeline": {"type": "dict"}}
     validator = DictDataValidator(schema)
-    valid_data = {"version": "1.0", "project": {"name": "foo"}}
-    invalid_data = {"version": 1.0, "project": "foo"}
+    valid_data = {"version": "1.1", "pipeline": {"name": "foo"}}
+    invalid_data = {"version": 1.1, "pipeline": "foo"}
     assert len(validator.find_errors_in(valid_data)) == 0
     assert len(validator.find_errors_in(invalid_data)) == 2
 
 
 def test_key_value_data_parser_correctly_correctly_formats_errors():
-    schema = {"version": {"type": "string"}, "project": {"type": "dict"}}
+    schema = {"version": {"type": "string"}, "pipeline": {"type": "dict"}}
     validator = DictDataValidator(schema)
-    invalid_data = {"version": 1.0, "project": "foo"}
+    invalid_data = {"version": 1.1, "pipeline": "foo"}
     errors = validator.find_errors_in(invalid_data, prefix="a.b.")
-    assert errors[0] == "a.b.project -> must be of dict type"
+    assert errors[0] == "a.b.pipeline -> must be of dict type"
     assert errors[1] == "a.b.version -> must be of string type"
 
 
@@ -90,10 +90,10 @@ def test_that_config_file_with_missing_sections_raises_error(
     bodywork_config: BodyworkConfig,
 ):
     del bodywork_config._config["version"]
-    del bodywork_config._config["project"]
+    del bodywork_config._config["pipeline"]
     del bodywork_config._config["stages"]
     del bodywork_config._config["logging"]
-    expected_exception_msg = "missing sections: version, project, stages, logging"
+    expected_exception_msg = "missing sections: version, pipeline, stages, logging"
     with raises(BodyworkConfigMissingSectionError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()
 
@@ -130,10 +130,10 @@ def test_that_config_file_with_non_list_stages_raises_error(
     bodywork_config._config["stages"] = "bad"
     expected_exception_msg = (
         "missing or invalid parameters: "
-        "project.workflow -> cannot find valid stage @ stages.stage_1, "
-        "project.workflow -> cannot find valid stage @ stages.stage_2, "
-        "project.workflow -> cannot find valid stage @ stages.stage_3, "
-        "project.workflow -> cannot find valid stage @ stages.stage_4, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_1, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_2, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_3, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_4, "
         "stages._ - no stage configs provided"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
@@ -144,30 +144,30 @@ def test_bodywork_config_project_section_validation():
     config_missing_all_params = {"not_a_valid_section": None}
     expected_exception_msg = (
         "missing or invalid parameters: "
-        "project.DAG -> required field, "
-        "project.docker_image -> required field, "
-        "project.name -> required field"
+        "pipeline.DAG -> required field, "
+        "pipeline.docker_image -> required field, "
+        "pipeline.name -> required field"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
-        ProjectConfig(config_missing_all_params)
+        PipelineConfig(config_missing_all_params)
 
     config_all_invalid_params = {"name": -1, "docker_image": [], "DAG": None}
     expected_exception_msg = (
         "missing or invalid parameters: "
-        "project.DAG -> null value not allowed, "
-        "project.docker_image -> must be of string type, "
-        "project.name -> must be of string type"
+        "pipeline.DAG -> null value not allowed, "
+        "pipeline.docker_image -> must be of string type, "
+        "pipeline.name -> must be of string type"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
-        ProjectConfig(config_all_invalid_params)
+        PipelineConfig(config_all_invalid_params)
 
     config_invalid_DAG = {"name": "me", "docker_image": "my/img:1.0", "DAG": "a>>b,>>c"}
     expected_exception_msg = (
         "missing or invalid parameters: "
-        "project.DAG -> null stages found in step 2 when parsing DAG"
+        "pipeline.DAG -> null stages found in step 2 when parsing DAG"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
-        ProjectConfig(config_invalid_DAG)
+        PipelineConfig(config_invalid_DAG)
 
     config_all_valid_params = {
         "name": "me",
@@ -175,7 +175,7 @@ def test_bodywork_config_project_section_validation():
         "DAG": "a>>b",
     }
     try:
-        ProjectConfig(config_all_valid_params)
+        PipelineConfig(config_all_valid_params)
         assert True
     except Exception:
         assert False
@@ -368,8 +368,8 @@ def test_py_modules_that_cannot_be_located_raise_error(bodywork_config: Bodywork
     ] = "not_dir/main.py"  # noqa
     expected_exception_msg = (
         "missing or invalid parameters: "
-        "project.workflow -> cannot find valid stage @ stages.stage_1, "
-        "project.workflow -> cannot find valid stage @ stages.stage_2, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_1, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_2, "
         "stages.stage_3.executable_module_path -> does not exist"
     )
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
@@ -379,16 +379,16 @@ def test_py_modules_that_cannot_be_located_raise_error(bodywork_config: Bodywork
 def test_that_subsection_validation_feeds_through_to_validation_report(
     bodywork_config: BodyworkConfig,
 ):
-    del bodywork_config._config["project"]["docker_image"]
+    del bodywork_config._config["pipeline"]["docker_image"]
     del bodywork_config._config["logging"]["log_level"]
     del bodywork_config._config["stages"]["stage_1"]["batch"]
     bodywork_config._config["stages"]["stage_2"]["service"] = {"foo": "bar"}
     expected_exception_msg = (
         "missing or invalid parameters: "
         "logging.log_level -> required field, "
-        "project.docker_image -> required field, "
-        "project.workflow -> cannot find valid stage @ stages.stage_1, "
-        "project.workflow -> cannot find valid stage @ stages.stage_2, "
+        "pipeline.docker_image -> required field, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_1, "
+        "pipeline.workflow -> cannot find valid stage @ stages.stage_2, "
         "stages.stage_1.batch/service, "
         "stages.stage_2.batch/service"
     )
@@ -402,7 +402,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
     config = bodywork_config
     root_dir = bodywork_config._root_dir
 
-    assert config.project.name == "bodywork-test-project"
+    assert config.pipeline.name == "bodywork-test-project"
     assert config.logging.log_level == "INFO"
     assert len(config.stages) == 6
 
@@ -456,7 +456,7 @@ def test_check_workflow_stages_are_configured():
         workflow, configured_stages
     )
     assert missing_stage_configs == [
-        "project.workflow -> cannot find valid stage @ stages.c"
+        "pipeline.workflow -> cannot find valid stage @ stages.c"
     ]
     assert _check_workflow_stages_are_configured(["a"], ["a"]) == []
 
@@ -464,8 +464,8 @@ def test_check_workflow_stages_are_configured():
 def test_check_failure_stage_is_configured(
     bodywork_config: BodyworkConfig,
 ):
-    bodywork_config._config["project"]["run_on_failure"] = "x"
-    expected_exception_msg = f"project.run_on_failure -> cannot find valid stage: x to run on workflow failure."
+    bodywork_config._config["pipeline"]["run_on_failure"] = "x"
+    expected_exception_msg = f"pipeline.run_on_failure -> cannot find valid stage: x to run on workflow failure."
 
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
         bodywork_config._validate_parsed_config()

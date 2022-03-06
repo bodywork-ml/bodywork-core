@@ -123,7 +123,7 @@ class BodyworkConfig:
 
         :raises BodyworkConfigMissingSectionError: if config file does
             not contain all of the following sections: version,
-            project, stages and logging.
+            pipeline, stages and logging.
         :raises BodyworkConfigVersionMismatchError: if config file
             schema version does not match the schema version supported
             by the current Bodywork version.
@@ -134,8 +134,8 @@ class BodyworkConfig:
         missing_config_sections = []
         if "version" not in config:
             missing_config_sections.append("version")
-        if "project" not in config:
-            missing_config_sections.append("project")
+        if "pipeline" not in config:
+            missing_config_sections.append("pipeline")
         if "stages" not in config:
             missing_config_sections.append("stages")
         if "logging" not in config:
@@ -153,7 +153,7 @@ class BodyworkConfig:
 
         missing_or_invalid_param: List[str] = []
         try:
-            self.project = ProjectConfig(config["project"])
+            self.pipeline = PipelineConfig(config["pipeline"])
         except BodyworkConfigValidationError as e:
             missing_or_invalid_param += e.missing_params
 
@@ -186,14 +186,14 @@ class BodyworkConfig:
             missing_or_invalid_param.append("stages._ - no stage configs provided")
 
         stages_in_workflow_without_valid_config = _check_workflow_stages_are_configured(
-            self.project.workflow, self.stages.keys()
+            self.pipeline.workflow, self.stages.keys()
         )
         missing_or_invalid_param += stages_in_workflow_without_valid_config
-        if self.project.run_on_failure:
-            if self.project.run_on_failure not in self.stages.keys():
+        if self.pipeline.run_on_failure:
+            if self.pipeline.run_on_failure not in self.stages.keys():
                 missing_or_invalid_param.append(
-                    f"project.run_on_failure -> cannot find valid stage: "
-                    f"{self.project.run_on_failure} to run on workflow failure."
+                    f"pipeline.run_on_failure -> cannot find valid stage: "
+                    f"{self.pipeline.run_on_failure} to run on workflow failure."
                 )
         if self.check_py_modules_exist:
             for stage_name, stage in self.stages.items():
@@ -207,8 +207,8 @@ class BodyworkConfig:
             raise BodyworkConfigValidationError(missing_or_invalid_param)
 
 
-class ProjectConfig:
-    """High-level project configuration."""
+class PipelineConfig:
+    """High-level pipeline configuration."""
 
     SCHEMA = {
         "name": {"type": "string", "required": True, "regex": VALID_K8S_NAME_REGEX},
@@ -230,7 +230,7 @@ class ProjectConfig:
 
         data_validator = DictDataValidator(self.SCHEMA)
         missing_or_invalid_param = data_validator.find_errors_in(
-            config_section, prefix="project."
+            config_section, prefix="pipeline."
         )
         if missing_or_invalid_param:
             raise BodyworkConfigValidationError(missing_or_invalid_param)
@@ -259,7 +259,7 @@ class ProjectConfig:
             try:
                 self.workflow = _parse_dag_definition(config_section["DAG"])
             except ValueError as e:
-                raise BodyworkConfigValidationError([f"project.DAG -> {e}"])
+                raise BodyworkConfigValidationError([f"pipeline.DAG -> {e}"])
 
 
 class LoggingConfig:
@@ -321,7 +321,7 @@ class StageConfig:
 
         :param stage_name: Name of stage.
         :param config: Dictionary of configuration parameters.
-        :param root_dir: The root directory of the project containing
+        :param root_dir: The root directory of the pipeline containing
             the bodywork config file and the stage directories.
         """
         data_validator = DictDataValidator(self.SCHEMA_GENERIC)
@@ -370,7 +370,7 @@ class BatchStageConfig(StageConfig):
 
         :param stage_name: Name of parent stage config.
         :param config: Dictionary of configuration parameters.
-        :param root_dir: The root directory of the project containing
+        :param root_dir: The root directory of the pipeline containing
             the bodywork config file and the stage directories.
         :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
@@ -406,7 +406,7 @@ class ServiceStageConfig(StageConfig):
 
         :param stage_name: Name of parent stage config.
         :param config: Dictionary of configuration parameters.
-        :param root_dir: The root directory of the project containing
+        :param root_dir: The root directory of the pipeline containing
             the bodywork config file and the stage directories.
         :raises BodyworkConfigValidationError: if any
             required configuration parameters are missing or invalid.
@@ -433,7 +433,7 @@ def _parse_dag_definition(dag_definition: str) -> DAG:
     :raises ValueError: If any 'null' (zero character) stage names are
         found.
     :return: A list of steps, where each step is a list of Bodywork
-        project stage names (containing a list of stages to run in each
+        pipeline stage names (containing a list of stages to run in each
         step).
     """
     steps = dag_definition.replace(" ", "").split(">>")
@@ -458,13 +458,13 @@ def _check_workflow_stages_are_configured(
 ) -> Sequence[str]:
     """Identify stages in workflow that have not been configured.
 
-    :param workflow: A project DAG parsed into a Bodywork workflow.
+    :param workflow: A pipeline DAG parsed into a Bodywork workflow.
     :param stages: List of stages that have been configured.
     :return: List of missing stage messages.
     """
     stages_in_workflow = [stage for step in workflow for stage in step]
     missing_stages = [
-        f"project.workflow -> cannot find valid stage @ stages.{stage}"
+        f"pipeline.workflow -> cannot find valid stage @ stages.{stage}"
         for stage in stages_in_workflow
         if stage not in stages
     ]
