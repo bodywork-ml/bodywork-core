@@ -268,7 +268,7 @@ def display_workflow_job_history(namespace: str, job_name: str) -> None:
         return None
     workflow_jobs_info = k8s.list_workflow_jobs(namespace, job_name)
     for name, data in workflow_jobs_info.items():
-        print_dict(data, f"workflow job = {name}")
+        print_dict(data, f"run ID = {name}")
 
 
 def display_workflow_job_logs(namespace: str, job_name: str) -> None:
@@ -283,10 +283,10 @@ def display_workflow_job_logs(namespace: str, job_name: str) -> None:
         return None
     workflow_job_pod_name = k8s.get_latest_pod_name(namespace, job_name)
     if workflow_job_pod_name is None:
-        print_warn(f"Cannot find pod for workflow job={job_name}.")
+        print_warn(f"Cannot find k8s pod for run ID = {job_name}.")
         return None
     workflow_job_logs = k8s.get_pod_logs(namespace, workflow_job_pod_name)
-    print_pod_logs(workflow_job_logs, f"logs for workflow execution = {job_name}")
+    print_pod_logs(workflow_job_logs, f"logs for run ID = {job_name}")
 
 
 def _is_existing_workflow_job(namespace: str, job_name: str) -> bool:

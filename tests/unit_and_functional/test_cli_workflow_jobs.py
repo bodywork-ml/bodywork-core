@@ -380,7 +380,7 @@ def test_display_cronjob_workflow_job_logs(
     mock_k8s_module.get_latest_pod_name.return_value = None
     display_workflow_job_logs("bodywork-dev", "bodywork-test-project-12345")
     captured_two = capsys.readouterr()
-    assert "find pod for workflow job=bodywork-test-project-12345" in captured_two.out
+    assert "find k8s pod for run ID = bodywork-test-project-12345" in captured_two.out
 
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.get_latest_pod_name.return_value = (

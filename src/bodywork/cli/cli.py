@@ -180,11 +180,11 @@ def _debug(seconds: int = Argument(600)) -> None:
 def _create_deployment(
     git_url: str = Argument(...),
     git_branch: str = Option("", "--branch"),
-    asynchronous: bool = Option(False, "--async"),
-    asynchronous_job_name: str = Option("", "--async-job-name"),
+    asynchronous: bool = Option(False, "--async", hidden=True),
+    asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
     ssh_key_path: str = Option("", "--ssh"),
     secrets_group: str = Option("", "--group", "--secrets-group"),
-    image: str = Option(None, "--bodywork-image"),
+    image: str = Option(None, "--bodywork-image", hidden=True),
     retries: int = Option(1),
 ):
     if not is_namespace_available_for_bodywork(BODYWORK_NAMESPACE):
@@ -244,7 +244,7 @@ def _create_deployment(
 def _get_deployment(
     name: str = Argument(None),
     service_name: str = Argument(None),
-    asynchronous: bool = Option(False, "--async"),
+    asynchronous: bool = Option(False, "--async", hidden=True),
     logs: str = Option(""),
     namespace: str = Option(None),
 ):
@@ -264,9 +264,9 @@ def _get_deployment(
 def _update_deployment(
     git_url: str = Argument(...),
     git_branch: str = Option("", "--branch"),
-    asynchronous: bool = Option(False, "--async"),
-    asynchronous_job_name: str = Option("", "--async-job-name"),
-    image: str = Option(None, "--bodywork-image"),
+    asynchronous: bool = Option(False, "--async", hidden=True),
+    asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
+    image: str = Option(None, "--bodywork-image", hidden=True),
     retries: int = Option(1),
 ):
     _create_deployment(
@@ -285,7 +285,7 @@ def _update_deployment(
 @handle_k8s_exceptions
 @k8s_auth
 def _delete_deployment(
-    name: str = Argument(...), asynchronous: bool = Option(False, "--async")
+    name: str = Argument(...), asynchronous: bool = Option(False, "--async", hidden=True)
 ):
     if asynchronous:
         delete_workflow_job(BODYWORK_NAMESPACE, name)
