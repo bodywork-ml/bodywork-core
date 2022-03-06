@@ -87,10 +87,10 @@ def run_workflow(
 
         _log.setLevel(config.logging.log_level)
         namespace = _setup_namespace(config, repo_url)
-        workflow_dag = config.project.workflow
+        workflow_dag = config.pipeline.workflow
         all_stages = config.stages
         docker_image = (
-            config.project.docker_image
+            config.pipeline.docker_image
             if docker_image_override is None
             else docker_image_override
         )
@@ -102,10 +102,10 @@ def run_workflow(
         env_vars = k8s.create_k8s_environment_variables(
             [(GIT_COMMIT_HASH_K8S_ENV_VAR, git_commit_hash)]
         )
-        secrets_group = config.project.secrets_group
+        secrets_group = config.pipeline.secrets_group
         if ssh_key_path:
             if not secrets_group:
-                secrets_group = config.project.name
+                secrets_group = config.pipeline.name
             k8s.create_ssh_key_secret_from_file(secrets_group, Path(ssh_key_path))
         if secrets_group:
             if k8s.secret_exists(
@@ -116,10 +116,10 @@ def run_workflow(
             _copy_secrets_to_target_namespace(namespace, secrets_group)
         elif k8s.secret_exists(
             BODYWORK_NAMESPACE,
-            k8s.create_complete_secret_name(config.project.name, SSH_SECRET_NAME),
+            k8s.create_complete_secret_name(config.pipeline.name, SSH_SECRET_NAME),
         ):
             env_vars.append(k8s.create_secret_env_variable())
-            _copy_secrets_to_target_namespace(namespace, config.project.name)
+            _copy_secrets_to_target_namespace(namespace, config.pipeline.name)
 
         for step in workflow_dag:
             _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
@@ -145,7 +145,7 @@ def run_workflow(
             if service_stages:
                 _run_service_stages(
                     service_stages,
-                    config.project.name,
+                    config.pipeline.name,
                     env_vars,
                     namespace,
                     repo_branch,
@@ -160,7 +160,7 @@ def run_workflow(
             k8s.delete_namespace(namespace)
         else:
             _cleanup_redundant_services(git_commit_hash, namespace)
-        if config.project.usage_stats:
+        if config.pipeline.usage_stats:
             _ping_usage_stats_server()
     except Exception as e:
         msg = f"Deployment failed --> {e}"
@@ -175,16 +175,16 @@ def run_workflow(
                     BodyworkConfigError,
                 ]
                 and config
-                and config.project.run_on_failure
+                and config.pipeline.run_on_failure
             ):
-                if config.project.usage_stats:
+                if config.pipeline.usage_stats:
                     _ping_usage_stats_server()
                 _run_failure_stage(
                     config, e, namespace, repo_url, repo_branch, docker_image
                 )
         except Exception as ex:
             failure_msg = (
-                f"Error executing failure stage = {config.project.run_on_failure} "  # type: ignore  # noqa
+                f"Error executing failure stage = {config.pipeline.run_on_failure} "  # type: ignore  # noqa
                 f"after failed workflow : {ex}"
             )
             _log.error(failure_msg)
@@ -221,7 +221,7 @@ def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
     :return: Name of namespace.
     """
     namespace = str(
-        config.project.namespace if config.project.namespace else config.project.name
+        config.pipeline.namespace if config.pipeline.namespace else config.pipeline.name
     )
     try:
         if not k8s.namespace_exists(namespace):
@@ -258,7 +258,7 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
     return any(
         True
         for stage_name, stage in config.stages.items()
-        if isinstance(stage, ServiceStageConfig) and stage_name in config.project.DAG
+        if isinstance(stage, ServiceStageConfig) and stage_name in config.pipeline.DAG
     )
 
 
@@ -425,7 +425,7 @@ def _run_failure_stage(
     :param repo_branch: The Git branch to download.
     :param docker_image: Docker Image to use.
     """
-    stage_name = config.project.run_on_failure
+    stage_name = config.pipeline.run_on_failure
     _log.info(f"Executing stage = {stage_name}")
     stage = [cast(BatchStageConfig, config.stages[stage_name])]
     env_vars = k8s.create_k8s_environment_variables(
