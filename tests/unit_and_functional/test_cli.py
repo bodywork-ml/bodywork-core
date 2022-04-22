@@ -260,6 +260,7 @@ def test_version_returns_version():
     if expected_version and actual_version:
         assert actual_version[0] == expected_version[0]
     else:
+        print(process.stderr)
         assert False
 
 
