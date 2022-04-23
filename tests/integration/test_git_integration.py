@@ -17,12 +17,18 @@
 """
 Integration tests for interactions with hosted Git repositories.
 """
+import os
 from pathlib import Path
 from typing import Iterable
 
+from pytest import mark
+
 from bodywork.git import download_project_code_from_repo, get_git_commit_hash
 
+CICD_ENV_VAR = "CIRCLECI"
 
+
+@mark.skipif(os.environ.get(CICD_ENV_VAR) is None, reason="only required for CICD")
 def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     setup_bodywork_test_project: Iterable[bool],
     github_repo_connection_string: str,
@@ -42,6 +48,7 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
         assert False
 
 
+@mark.skipif(os.environ.get(CICD_ENV_VAR) is None, reason="only required for CICD")
 def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
     setup_bodywork_test_project: Iterable[bool],
     gitlab_repo_connection_string: str,
@@ -61,6 +68,7 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
         assert False
 
 
+@mark.skipif(os.environ.get(CICD_ENV_VAR) is None, reason="only required for CICD")
 def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
     setup_bodywork_test_project: Iterable[bool],
     bitbucket_repo_connection_string: str,
@@ -80,6 +88,7 @@ def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
         assert False
 
 
+@mark.skipif(os.environ.get(CICD_ENV_VAR) is None, reason="only required for CICD")
 def test_that_git_project_repo_can_be_cloned_from_azure_using_ssh(
     setup_bodywork_test_project: Iterable[bool],
     azure_repo_connection_string: str,
