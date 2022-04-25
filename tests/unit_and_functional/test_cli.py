@@ -19,7 +19,7 @@ Test the Bodywork CLI.
 """
 import urllib3
 from pathlib import Path
-from re import findall
+from re import match
 from subprocess import run, CalledProcessError
 from typing import Iterable
 from unittest.mock import patch, MagicMock
@@ -252,15 +252,17 @@ def test_validate(project_repo_location: Path):
     assert "* stages._" in process_five.stdout
 
 
-def test_version_returns_version():
+def test_version_returns_valid_pkg_version():
+    pkg_version_regex = r"\d.\d.\d($|\\n|a\d+|b\d+||rc\d+|.dev\d+|.post\d+)"
     with open("VERSION") as file:
-        expected_version = findall("[0-9].[0.9].[0.9]", file.read())
+        expected_version = match(pkg_version_regex, file.read())
     process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
-    actual_version = findall("[0-9].[0.9].[0.9]", process.stdout)
+    actual_version = match(pkg_version_regex, process.stdout)
     if expected_version and actual_version:
         assert actual_version[0] == expected_version[0]
     else:
-        print(process.stderr)
+        if process.stderr:
+            print(process.stderr)
         assert False
 
 
@@ -518,7 +520,10 @@ def test_update_secrets(
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_delete_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock, mock_delete_group: MagicMock
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_delete_secret: MagicMock,
+    mock_delete_group: MagicMock,
 ):
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
