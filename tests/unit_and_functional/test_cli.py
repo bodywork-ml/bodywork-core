@@ -19,7 +19,7 @@ Test the Bodywork CLI.
 """
 import urllib3
 from pathlib import Path
-from re import match
+from re import search
 from subprocess import run, CalledProcessError
 from typing import Iterable
 from unittest.mock import patch, MagicMock
@@ -255,9 +255,9 @@ def test_validate(project_repo_location: Path):
 def test_version_returns_valid_pkg_version():
     pkg_version_regex = r"\d.\d.\d($|\\n|a\d+|b\d+|rc\d+|.dev\d+|.post\d+)"
     with open("VERSION") as file:
-        expected_version = match(pkg_version_regex, file.read())
+        expected_version = search(pkg_version_regex, file.read())
     process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
-    actual_version = match(pkg_version_regex, process.stdout)
+    actual_version = search(pkg_version_regex, process.stdout)
     if expected_version and actual_version:
         assert actual_version[0] == expected_version[0]
     else:
