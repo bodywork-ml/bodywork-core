@@ -253,7 +253,7 @@ def test_validate(project_repo_location: Path):
 
 
 def test_version_returns_valid_pkg_version():
-    pkg_version_regex = r"\d.\d.\d($|\\n|a\d+|b\d+||rc\d+|.dev\d+|.post\d+)"
+    pkg_version_regex = r"\d.\d.\d($|\\n|a\d+|b\d+|rc\d+|.dev\d+|.post\d+)"
     with open("VERSION") as file:
         expected_version = match(pkg_version_regex, file.read())
     process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
