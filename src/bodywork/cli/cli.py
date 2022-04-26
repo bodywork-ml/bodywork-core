@@ -75,11 +75,16 @@ def k8s_auth(func: Callable[..., None]) -> Callable[..., None]:
     :return: The original function wrapped by a function that handles
         k8s API exceptions.
     """
-    try:
-        load_kubernetes_config()
-    except Exception as e:
-        print_warn(f"Could not authenticate with active Kubernetes context. \n--> {e}")
-    return func
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> None:
+        try:
+            load_kubernetes_config()
+            return func(*args, **kwargs)
+        except Exception as e:
+            print_warn(f"Could not authenticate with active Kubernetes context. \n--> {e}")
+
+    return wrapper
 
 
 def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:

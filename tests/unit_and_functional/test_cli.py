@@ -50,11 +50,15 @@ from bodywork.constants import BODYWORK_NAMESPACE
 @patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.print_warn")
 def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
-    k8s_auth(lambda e: None)
+    f = k8s_auth(lambda e: None)
+    mock_load_k8s_config.assert_not_called()
+    y = f("foo")
     mock_load_k8s_config.assert_called_once()
+    mock_print_warn.assert_not_called()
+    assert y is None
 
     mock_load_k8s_config.side_effect = Exception()
-    k8s_auth(lambda e: None)
+    f("foo")
     mock_print_warn.assert_called_once()
 
 
