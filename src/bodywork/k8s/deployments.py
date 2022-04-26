@@ -428,7 +428,6 @@ def list_service_stage_deployments(
                 if deployment.status.unavailable_replicas is None
                 else deployment.status.unavailable_replicas
             ),
-            "stage": deployment.metadata.labels.get("stage", "NA"),
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.metadata.labels.get("git-branch", "NA"),
             "git_commit_hash": deployment.metadata.labels.get("git-commit-hash", "NA"),

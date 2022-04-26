@@ -489,7 +489,6 @@ def test_list_service_stage_deployments_returns_service_stage_info(
                 assert deployment_info[deployment_id]["service_exposed"] is True
                 assert deployment_info[deployment_id]["available_replicas"] == 1
                 assert deployment_info[deployment_id]["unavailable_replicas"] == 0
-                assert deployment_info[deployment_id]["stage"] == service_name
                 assert (
                     deployment_info[deployment_id]["git_branch"]
                     == "project_repo_branch"
