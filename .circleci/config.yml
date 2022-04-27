@@ -92,7 +92,7 @@ jobs:
           command: |
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION)-dev
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            docker push bodyworkml/bodywork-core
+            docker push bodyworkml/bodywork-core:latest
   build-master-docker-image-push-to-dockerhub:
     machine:
       image: ubuntu-2004:202201-02
