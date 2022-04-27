@@ -83,7 +83,8 @@ jobs:
           name: Code Coverage upload
           command: bash <(curl -s https://codecov.io/bash)
   build-dev-docker-image-push-to-dockerhub:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
@@ -91,9 +92,10 @@ jobs:
           command: |
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION)-dev
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            docker push bodyworkml/bodywork-core
+            docker push bodyworkml/bodywork-core:$(cat VERSION)-dev
   build-master-docker-image-push-to-dockerhub:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:

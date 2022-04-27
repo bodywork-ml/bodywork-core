@@ -19,7 +19,7 @@ Test the Bodywork CLI.
 """
 import urllib3
 from pathlib import Path
-from re import findall
+from re import search
 from subprocess import run, CalledProcessError
 from typing import Iterable
 from unittest.mock import patch, MagicMock
@@ -50,11 +50,15 @@ from bodywork.constants import BODYWORK_NAMESPACE
 @patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.print_warn")
 def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
-    k8s_auth(lambda e: None)
+    f = k8s_auth(lambda e: None)
+    mock_load_k8s_config.assert_not_called()
+    y = f("foo")
     mock_load_k8s_config.assert_called_once()
+    mock_print_warn.assert_not_called()
+    assert y is None
 
     mock_load_k8s_config.side_effect = Exception()
-    k8s_auth(lambda e: None)
+    f("foo")
     mock_print_warn.assert_called_once()
 
 
@@ -252,21 +256,25 @@ def test_validate(project_repo_location: Path):
     assert "* stages._" in process_five.stdout
 
 
-def test_version_returns_version():
+def test_version_returns_valid_pkg_version():
+    pkg_version_regex = r"\d.\d.\d($|\\n|a\d+|b\d+|rc\d+|.dev\d+|.post\d+)"
     with open("VERSION") as file:
-        expected_version = findall("[0-9].[0.9].[0.9]", file.read())
+        expected_version = search(pkg_version_regex, file.read())
     process = run(["bodywork", "version"], capture_output=True, encoding="utf-8")
-    actual_version = findall("[0-9].[0.9].[0.9]", process.stdout)
+    actual_version = search(pkg_version_regex, process.stdout)
     if expected_version and actual_version:
         assert actual_version[0] == expected_version[0]
     else:
+        if process.stderr:
+            print(process.stderr)
         assert False
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
 @patch("bodywork.cli.cli.sys")
 def test_configure_cluster_configures_cluster(
-    mock_sys: MagicMock, mock_setup: MagicMock
+    mock_sys: MagicMock, mock_setup: MagicMock, mock_load_kubernetes_config: MagicMock
 ):
     _configure_cluster()
     mock_setup.assert_called_once_with(BODYWORK_NAMESPACE)
@@ -311,6 +319,7 @@ def test_debug_subcommand_sleeps():
     assert process.returncode == 0
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
 @patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
 @patch("bodywork.cli.cli.run_workflow")
@@ -322,6 +331,7 @@ def test_create_deployments(
     mock_run_workflow: MagicMock,
     mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
     mock_is_namespace_available_for_bodywork: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     mock_is_namespace_available_for_bodywork.return_value = False
     _create_deployment("git-url", "git-branch", False)
@@ -346,6 +356,7 @@ def test_create_deployments(
     mock_create_workflow_job.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.display_workflow_job_history")
 @patch("bodywork.cli.cli.display_workflow_job_logs")
 @patch("bodywork.cli.cli.display_deployments")
@@ -357,6 +368,7 @@ def test_get_deployments(
     mock_display_deployment: MagicMock,
     mock_display_workflow_job_logs: MagicMock,
     mock_display_workflow_job_history: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _get_deployment(asynchronous=True, logs="")
     mock_display_workflow_job_history.assert_called_once()
@@ -368,6 +380,7 @@ def test_get_deployments(
     mock_display_deployment.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.is_namespace_available_for_bodywork")
 @patch("bodywork.cli.cli.setup_namespace_with_service_accounts_and_roles")
 @patch("bodywork.cli.cli.run_workflow")
@@ -379,6 +392,7 @@ def test_update_deployments(
     mock_run_workflow: MagicMock,
     mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
     mock_is_namespace_available_for_bodywork: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     mock_is_namespace_available_for_bodywork.return_value = False
     _update_deployment("git-url", "git-branch", False)
@@ -403,6 +417,7 @@ def test_update_deployments(
     mock_create_workflow_job.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.delete_workflow_job")
 @patch("bodywork.cli.cli.delete_deployment")
 @patch("bodywork.cli.cli.sys")
@@ -410,6 +425,7 @@ def test_delete_deployments(
     mock_sys: MagicMock,
     mock_delete_deployments: MagicMock,
     mock_delete_workflow_job: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _delete_deployment("foo", asynchronous=False)
     mock_delete_deployments.assert_called_once()
@@ -418,13 +434,19 @@ def test_delete_deployments(
     mock_delete_workflow_job.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.create_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_create_cronjob(mock_sys: MagicMock, mock_create_workflow_cronjob: MagicMock):
+def test_create_cronjob(
+    mock_sys: MagicMock,
+    mock_create_workflow_cronjob: MagicMock,
+    mock_load_k8s_config: MagicMock
+):
     _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_create_workflow_cronjob.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.display_workflow_job_logs")
 @patch("bodywork.cli.cli.display_workflow_job_history")
@@ -436,6 +458,7 @@ def test_get_cronjob(
     mock_display_workflow_job_history: MagicMock,
     mock_display_workflow_job_logs: MagicMock,
     mock_print_warn: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _get_cronjob(name="foo", history=True, logs=False)
     mock_display_workflow_job_history.assert_called_once()
@@ -450,25 +473,39 @@ def test_get_cronjob(
     mock_display_cronjobs.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.update_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_update_cronjob(mock_sys: MagicMock, mock_update_workflow_cronjob: MagicMock):
+def test_update_cronjob(
+    mock_sys: MagicMock,
+    mock_update_workflow_cronjob: MagicMock,
+    mock_load_k8s_config: MagicMock
+):
     _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_update_workflow_cronjob.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.delete_workflow_cronjob")
 @patch("bodywork.cli.cli.sys")
-def test_delete_cronjob(mock_sys: MagicMock, mock_delete_workflow_cronjob: MagicMock):
+def test_delete_cronjob(
+    mock_sys: MagicMock,
+    mock_delete_workflow_cronjob: MagicMock,
+    mock_load_k8s_config: MagicMock
+):
     _delete_cronjob("nightly")
     mock_delete_workflow_cronjob.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.create_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_create_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_create_secret: MagicMock
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_create_secret: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _create_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -477,11 +514,15 @@ def test_create_secrets(
     mock_create_secret.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.display_secrets")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_get_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_display_secrets: MagicMock
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_display_secrets: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _get_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
@@ -499,11 +540,15 @@ def test_get_secrets(
     mock_display_secrets.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.update_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_update_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_update_secret: MagicMock
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_update_secret: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _update_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -512,12 +557,17 @@ def test_update_secrets(
     mock_update_secret.assert_called_once()
 
 
+@patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.delete_secret_group")
 @patch("bodywork.cli.cli.delete_secret")
 @patch("bodywork.cli.cli.print_warn")
 @patch("bodywork.cli.cli.sys")
 def test_delete_secrets(
-    mock_sys: MagicMock, mock_print_warn: MagicMock, mock_delete_secret: MagicMock, mock_delete_group: MagicMock
+    mock_sys: MagicMock,
+    mock_print_warn: MagicMock,
+    mock_delete_secret: MagicMock,
+    mock_delete_group: MagicMock,
+    mock_load_k8s_config: MagicMock
 ):
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()

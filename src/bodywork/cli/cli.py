@@ -75,11 +75,18 @@ def k8s_auth(func: Callable[..., None]) -> Callable[..., None]:
     :return: The original function wrapped by a function that handles
         k8s API exceptions.
     """
-    try:
-        load_kubernetes_config()
-    except Exception as e:
-        print_warn(f"Could not authenticate with active Kubernetes context. \n--> {e}")
-    return func
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> None:
+        try:
+            load_kubernetes_config()
+            return func(*args, **kwargs)
+        except Exception as e:
+            print_warn(
+                f"Could not authenticate with active Kubernetes context. \n--> {e}"
+            )
+
+    return wrapper
 
 
 def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
@@ -285,7 +292,8 @@ def _update_deployment(
 @handle_k8s_exceptions
 @k8s_auth
 def _delete_deployment(
-    name: str = Argument(...), asynchronous: bool = Option(False, "--async", hidden=True)
+    name: str = Argument(...),
+    asynchronous: bool = Option(False, "--async", hidden=True),
 ):
     if asynchronous:
         delete_workflow_job(BODYWORK_NAMESPACE, name)
@@ -395,9 +403,7 @@ def _create_secret(
 @get.command("secrets")
 @handle_k8s_exceptions
 @k8s_auth
-def _get_secret(
-    name: str = Argument(None), group: str = Option(None)
-):
+def _get_secret(name: str = Argument(None), group: str = Option(None)):
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
@@ -431,9 +437,7 @@ def _update_secret(
 @delete.command("secret")
 @handle_k8s_exceptions
 @k8s_auth
-def _delete_secret(
-    name: str = Argument(None), group: str = Option(None)
-):
+def _delete_secret(name: str = Argument(None), group: str = Option(None)):
     if name:
         if not group:
             print_warn("Please specify which secrets group the secret belongs to.")

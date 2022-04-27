@@ -86,6 +86,7 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
             "stage": "myservice",
             "deployment-name": "myproject",
             "git-commit-hash": "abc123",
+            "git-branch": "project_repo_branch",
         },
     )
     deployment = kubernetes.client.V1Deployment(
