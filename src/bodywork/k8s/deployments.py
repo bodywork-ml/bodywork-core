@@ -114,6 +114,7 @@ def configure_service_stage_deployment(
                 "stage": service_name,
                 "deployment-name": project_name,
                 "git-commit-hash": git_commit_hash,
+                "git-branch": project_repo_branch,
             },
             annotations={"last-updated": datetime.now().isoformat()},
         ),
@@ -135,6 +136,7 @@ def configure_service_stage_deployment(
             "stage": service_name,
             "deployment-name": project_name,
             "git-commit-hash": git_commit_hash,
+            "git-branch": project_repo_branch,
         },
     )
     deployment = k8s.V1Deployment(metadata=deployment_metadata, spec=deployment_spec)
@@ -427,8 +429,9 @@ def list_service_stage_deployments(
                 else deployment.status.unavailable_replicas
             ),
             "git_url": deployment.spec.template.spec.containers[0].args[0],
-            "git_branch": deployment.spec.template.spec.containers[0].args[1],
+            "git_branch": deployment.metadata.labels.get("git-branch", "NA"),
             "git_commit_hash": deployment.metadata.labels.get("git-commit-hash", "NA"),
+
             "has_ingress": (
                 has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),
