@@ -6,4 +6,4 @@ nbformat==5.1.3
 PyYAML==5.4.1
 requests>=2.25.0
 rich==10.9.0
-typer==0.4.0
+typer==0.4.1
