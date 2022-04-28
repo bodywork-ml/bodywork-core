@@ -273,6 +273,7 @@ def _update_deployment(
     git_branch: str = Option("", "--branch"),
     asynchronous: bool = Option(False, "--async", hidden=True),
     asynchronous_job_name: str = Option("", "--async-job-name", hidden=True),
+    ssh_key_path: str = Option("", "--ssh"),
     image: str = Option(None, "--bodywork-image", hidden=True),
     retries: int = Option(1),
 ):
@@ -281,7 +282,7 @@ def _update_deployment(
         git_branch=git_branch,
         asynchronous=asynchronous,
         asynchronous_job_name=asynchronous_job_name,
-        ssh_key_path="",
+        ssh_key_path=ssh_key_path,
         secrets_group="",
         image=image,
         retries=retries,

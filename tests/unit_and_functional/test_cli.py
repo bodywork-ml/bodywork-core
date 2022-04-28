@@ -331,7 +331,7 @@ def test_create_deployments(
     mock_run_workflow: MagicMock,
     mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
     mock_is_namespace_available_for_bodywork: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     mock_is_namespace_available_for_bodywork.return_value = False
     _create_deployment("git-url", "git-branch", False)
@@ -368,7 +368,7 @@ def test_get_deployments(
     mock_display_deployment: MagicMock,
     mock_display_workflow_job_logs: MagicMock,
     mock_display_workflow_job_history: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _get_deployment(asynchronous=True, logs="")
     mock_display_workflow_job_history.assert_called_once()
@@ -392,7 +392,7 @@ def test_update_deployments(
     mock_run_workflow: MagicMock,
     mock_setup_namespace_with_service_accounts_and_roles: MagicMock,
     mock_is_namespace_available_for_bodywork: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     mock_is_namespace_available_for_bodywork.return_value = False
     _update_deployment("git-url", "git-branch", False)
@@ -403,9 +403,13 @@ def test_update_deployments(
     mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
     mock_run_workflow.reset_mock()
     mock_is_namespace_available_for_bodywork.return_value = True
-    _update_deployment("git-url", "git-branch", False)
+    _update_deployment(
+        "git-url", "git-branch", False, ssh_key_path="key", image="my_image"
+    )
     mock_setup_namespace_with_service_accounts_and_roles.assert_not_called()
-    mock_run_workflow.assert_called_once()
+    mock_run_workflow.assert_called_once_with(
+        "git-url", "git-branch", ssh_key_path="key", docker_image_override="my_image"
+    )
     mock_create_workflow_job.assert_not_called()
 
     mock_setup_namespace_with_service_accounts_and_roles.reset_mock()
@@ -425,7 +429,7 @@ def test_delete_deployments(
     mock_sys: MagicMock,
     mock_delete_deployments: MagicMock,
     mock_delete_workflow_job: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _delete_deployment("foo", asynchronous=False)
     mock_delete_deployments.assert_called_once()
@@ -440,7 +444,7 @@ def test_delete_deployments(
 def test_create_cronjob(
     mock_sys: MagicMock,
     mock_create_workflow_cronjob: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_create_workflow_cronjob.assert_called_once()
@@ -458,7 +462,7 @@ def test_get_cronjob(
     mock_display_workflow_job_history: MagicMock,
     mock_display_workflow_job_logs: MagicMock,
     mock_print_warn: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _get_cronjob(name="foo", history=True, logs=False)
     mock_display_workflow_job_history.assert_called_once()
@@ -479,7 +483,7 @@ def test_get_cronjob(
 def test_update_cronjob(
     mock_sys: MagicMock,
     mock_update_workflow_cronjob: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_update_workflow_cronjob.assert_called_once()
@@ -491,7 +495,7 @@ def test_update_cronjob(
 def test_delete_cronjob(
     mock_sys: MagicMock,
     mock_delete_workflow_cronjob: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _delete_cronjob("nightly")
     mock_delete_workflow_cronjob.assert_called_once()
@@ -505,7 +509,7 @@ def test_create_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_create_secret: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _create_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -522,7 +526,7 @@ def test_get_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_display_secrets: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _get_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
@@ -548,7 +552,7 @@ def test_update_secrets(
     mock_sys: MagicMock,
     mock_print_warn: MagicMock,
     mock_update_secret: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _update_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
@@ -567,7 +571,7 @@ def test_delete_secrets(
     mock_print_warn: MagicMock,
     mock_delete_secret: MagicMock,
     mock_delete_group: MagicMock,
-    mock_load_k8s_config: MagicMock
+    mock_load_k8s_config: MagicMock,
 ):
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
