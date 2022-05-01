@@ -33,6 +33,8 @@ from .exceptions import BodyworkStageFailure
 from .git import download_project_code_from_repo
 from .logs import bodywork_log_factory
 
+_log = bodywork_log_factory()
+
 
 class ExecutableType(Enum):
     "Executable file type."
@@ -57,9 +59,8 @@ def run_stage(
     :raises RuntimeError: If the executable script exits with a non-zero
         exit code (i.e. fails).
     """
-    log = bodywork_log_factory()
-    log.info(
-        f"Attempting to run stage = {stage_name} from {repo_branch} branch of repo "
+    _log.info(
+        f"Starting stage = {stage_name} from {repo_branch} branch of repo "
         f"at {repo_url}"
     )
     try:
@@ -72,6 +73,7 @@ def run_stage(
             _install_python_requirements(stage.requirements)
         executable_type = _infer_executable_type(stage.executable_module)
         if executable_type is ExecutableType.JUPYTER_NB:
+            _log.info(f"Attempting to run notebook = {stage.executable_module_path}")
             notebook = nbformat.read(
                 stage.executable_module_path, as_version=nbformat.NO_CONVERT
             )
@@ -81,19 +83,20 @@ def run_stage(
                 {"metadata": {"path": stage.executable_module_path.parent}},
             )
         else:
+            _log.info(f"Attempting to run module = {stage.executable_module_path}")
             run(
                 ["python", stage.executable_module, *stage.args],
                 check=True,
                 cwd=stage.executable_module_path.parent,
                 encoding="utf-8",
             )
-        log.info(
+        _log.info(
             f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
             f"at {repo_url}"
         )
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
-        log.error(stage_failure_exception)
+        _log.error(stage_failure_exception)
         raise stage_failure_exception from e
 
 
@@ -104,10 +107,10 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
+        _log.info(f"Installing Python packages: {', '.join(requirements)}")
         run(
             ["pip", "install", *requirements],
             check=True,
-            capture_output=True,
             encoding="utf-8",
         )
     except CalledProcessError as e:
