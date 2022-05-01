@@ -109,7 +109,7 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     try:
         _log.info(f"Installing Python packages: {', '.join(requirements)}")
         run(
-            ["pip", "install", *requirements],
+            ["pip", "install", "-v", *requirements],
             check=True,
             encoding="utf-8",
         )

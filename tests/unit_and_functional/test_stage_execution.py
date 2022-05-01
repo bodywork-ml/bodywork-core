@@ -57,6 +57,7 @@ def test_run_stage_with_requirements_install(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
     caplog: LogCaptureFixture,
+    capfd: CaptureFixture,
 ):
     try:
         run_stage("stage_1", project_repo_connection_string)
@@ -74,7 +75,9 @@ def test_run_stage_with_requirements_install(
 
     assert "Starting stage" in caplog.text
     assert "Installing Python packages" in caplog.text
+    assert "Using pip" in capfd.readouterr().out
     assert "Attempting to run" in caplog.text
+    assert "Successfully ran stage" in caplog.text
 
 
 def test_run_stage_without_requirements_install(
@@ -82,6 +85,7 @@ def test_run_stage_without_requirements_install(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
     caplog: LogCaptureFixture,
+    capfd: CaptureFixture,
 ):
     try:
         run_stage("stage_2", project_repo_connection_string)
@@ -98,7 +102,8 @@ def test_run_stage_without_requirements_install(
 
     assert "Starting stage" in caplog.text
     assert "Installing Python packages" not in caplog.text
-    assert "Attempting to run" in caplog.text
+    assert "Using pip" not in capfd.readouterr().out
+    assert "Successfully ran stage" in caplog.text
 
 
 def test_run_stage_with_arguements(
