@@ -38,7 +38,7 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
     key = kv_string[:equals_sign]
     if len(key) == 0:
         raise ValueError(error_msg)
-    value = kv_string[(equals_sign + 1):]
+    value = kv_string[(equals_sign + 1) :]
     if len(value) == 0:
         raise ValueError(error_msg)
     return key, value
@@ -139,9 +139,7 @@ def delete_secret_group(namespace: str, group: str) -> None:
     print_info(f"Deleted secret group={group}.")
 
 
-def display_secrets(
-    namespace: str, group: str = None, secret_name: str = None
-) -> None:
+def display_secrets(namespace: str, group: str = None, secret_name: str = None) -> None:
     """Print secrets to stdout.
 
     :param namespace: Namespace in which to look for secrets.

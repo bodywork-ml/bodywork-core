@@ -431,7 +431,6 @@ def list_service_stage_deployments(
             "git_url": deployment.spec.template.spec.containers[0].args[0],
             "git_branch": deployment.metadata.labels.get("git-branch", "NA"),
             "git_commit_hash": deployment.metadata.labels.get("git-commit-hash", "NA"),
-
             "has_ingress": (
                 has_ingress(deployment.metadata.namespace, deployment.metadata.name)
             ),

@@ -124,6 +124,7 @@ def test_run_stage_with_arguements(
     assert "Starting stage" in caplog.text
     assert "Attempting to run" in caplog.text
 
+
 def test_run_stage_writes_subprocess_stdout_to_process_stdout(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
