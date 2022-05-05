@@ -386,10 +386,7 @@ def test_cli_cronjob_handler_crud():
         )
         assert "bodywork-test-project" in process.stdout
         assert "0,0 1 * * *" in process.stdout
-        assert (
-            "https://github.com/bodywork-ml/bodywork-test-project"
-            in process.stdout
-        )
+        assert "https://github.com/bodywork-ml/bodywork-test-project" in process.stdout
         assert "main" in process.stdout
         assert process.returncode == 0
 

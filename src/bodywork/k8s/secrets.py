@@ -118,9 +118,7 @@ def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None
             )
 
 
-def secret_exists(
-    namespace: str, secret_name: str, secret_key: str = None
-) -> bool:
+def secret_exists(namespace: str, secret_name: str, secret_key: str = None) -> bool:
     """Does a secret and a key within a secret, exist.
 
     :param namespace: Kubernetes namespace in which to look for secrets.

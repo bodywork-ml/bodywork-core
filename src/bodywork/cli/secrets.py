@@ -139,9 +139,7 @@ def delete_secret_group(namespace: str, group: str) -> None:
     print_info(f"Deleted secret group={group}.")
 
 
-def display_secrets(
-    namespace: str, group: str = None, secret_name: str = None
-) -> None:
+def display_secrets(namespace: str, group: str = None, secret_name: str = None) -> None:
     """Print secrets to stdout.
 
     :param namespace: Namespace in which to look for secrets.

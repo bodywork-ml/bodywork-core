@@ -22,6 +22,7 @@ from typing import Iterable
 
 from pytest import raises
 from _pytest.capture import CaptureFixture
+from _pytest.logging import LogCaptureFixture
 
 from bodywork.exceptions import BodyworkStageFailure
 from bodywork.stage_execution import (
@@ -55,6 +56,8 @@ def test_run_stage_with_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
+    caplog: LogCaptureFixture,
+    capfd: CaptureFixture,
 ):
     try:
         run_stage("stage_1", project_repo_connection_string)
@@ -70,11 +73,19 @@ def test_run_stage_with_requirements_install(
     except FileNotFoundError:
         assert False
 
+    assert "Starting stage" in caplog.text
+    assert "Installing Python packages" in caplog.text
+    assert "Using pip" in capfd.readouterr().out
+    assert "Attempting to run" in caplog.text
+    assert "Successfully ran stage" in caplog.text
+
 
 def test_run_stage_without_requirements_install(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
+    caplog: LogCaptureFixture,
+    capfd: CaptureFixture,
 ):
     try:
         run_stage("stage_2", project_repo_connection_string)
@@ -89,11 +100,17 @@ def test_run_stage_without_requirements_install(
     except FileNotFoundError:
         assert False
 
+    assert "Starting stage" in caplog.text
+    assert "Installing Python packages" not in caplog.text
+    assert "Using pip" not in capfd.readouterr().out
+    assert "Successfully ran stage" in caplog.text
+
 
 def test_run_stage_with_arguements(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
+    caplog: LogCaptureFixture,
 ):
     try:
         run_stage("stage_3", project_repo_connection_string)
@@ -108,6 +125,9 @@ def test_run_stage_with_arguements(
         assert stage_output.find("arg2 = 1") != -1
     except FileNotFoundError:
         assert False
+
+    assert "Starting stage" in caplog.text
+    assert "Attempting to run" in caplog.text
 
 
 def test_run_stage_writes_subprocess_stdout_to_process_stdout(
