@@ -42,7 +42,6 @@ from .constants import (
     SSH_SECRET_NAME,
 )
 from .exceptions import (
-    BodyworkClusterResourcesError,
     BodyworkWorkflowExecutionError,
     BodyworkNamespaceError,
     BodyworkDockerImageError,
@@ -174,7 +173,6 @@ def run_workflow(
                     BodyworkDockerImageError,
                     BodyworkGitError,
                     BodyworkConfigError,
-                    BodyworkClusterResourcesError,
                 ]
                 and config
                 and config.pipeline.run_on_failure
