@@ -20,7 +20,7 @@ manage Bodywork batch stages.
 """
 from enum import Enum
 from time import sleep, time
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
 from kubernetes import client as k8s
 
@@ -202,9 +202,7 @@ def monitor_jobs_to_completion(
 
     unschedulable_pods = [has_unscheduleable_pods(job) for job in jobs]
     if any(unschedulable_pods):
-        raise BodyworkClusterResourcesError(
-            "job", [job.metadata.name for job in jobs]
-        )
+        raise BodyworkClusterResourcesError("job", [job.metadata.name for job in jobs])
 
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]

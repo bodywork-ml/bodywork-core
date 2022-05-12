@@ -67,7 +67,7 @@ def has_unscheduleable_pods(k8s_resource: Union[k8s.V1Job, k8s.V1Deployment]) ->
 
     :param k8s_resource: The Kubernetes resource managing the pods.
         For example, a Job or Deployment.
-    :raises RuntimeError: If no pods managed by the resource can be found.        
+    :raises RuntimeError: If no pods managed by the resource can be found.
     :return: Boolean flag.
     """
     namespace = k8s_resource.metadata.namespace
@@ -77,8 +77,7 @@ def has_unscheduleable_pods(k8s_resource: Union[k8s.V1Job, k8s.V1Deployment]) ->
         namespace=namespace,
     )
     k8s_pod_data = [
-        e for e in k8s_pod_query.items
-        if e.metadata.name.startswith(pod_base_name)
+        e for e in k8s_pod_query.items if e.metadata.name.startswith(pod_base_name)
     ]
     if not k8s_pod_data:
         msg = (
@@ -88,7 +87,8 @@ def has_unscheduleable_pods(k8s_resource: Union[k8s.V1Job, k8s.V1Deployment]) ->
         raise RuntimeError(msg)
     try:
         unschedulable_pods = [
-            pod.metadata.name for pod in k8s_pod_data
+            pod.metadata.name
+            for pod in k8s_pod_data
             if pod.status.conditions[0].reason == "Unschedulable"
         ]
         return True if unschedulable_pods else False
