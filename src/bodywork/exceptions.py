@@ -28,6 +28,15 @@ from kubernetes.client import V1Job
 from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 
 
+class BodyworkClusterResourcesError(Exception):
+    def __init__(self, resource_type: str, resource_names: Iterable[str]):
+        msg = (
+            f"Inadequate cluster resources when trying to start {resource_type}s: "
+            f" {','.join(resource_names)}"
+        )
+        super().__init__(msg)
+
+
 class BodyworkJobFailure(Exception):
     def __init__(self, failed_jobs: Iterable[V1Job]):
         failed_jobs_msg = [

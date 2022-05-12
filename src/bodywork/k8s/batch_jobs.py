@@ -28,7 +28,7 @@ from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
-from ..exceptions import BodyworkJobFailure
+from ..exceptions import BodyworkClusterResourcesError, BodyworkJobFailure
 from .utils import make_valid_k8s_name
 
 
@@ -36,6 +36,15 @@ class JobStatus(Enum):
     "Possible states of a k8s job."
 
     ACTIVE = "active"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class PodStatus(Enum):
+    "Possible states of a k8s pod."
+
+    PENDING = "pending"
+    RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
 
@@ -133,6 +142,54 @@ def delete_job(namespace: str, name: str) -> None:
     )
 
 
+# def _is_pod_scheduleable(namespace: str, base_name: str) -> bool:
+#     """TODO"""
+#     k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
+#         namespace=namespace,
+#     )
+#     k8s_pod_data = [
+#         e for e in k8s_pod_query.items
+#         if e.metadata.name.startswith(base_name)
+#     ][0]
+#     if not k8s_pod_data:
+#         msg = (
+#             f"cannot find pod associated with job={job.metadata.name} in "
+#             f"namespace={job.metadata.namespace}"
+#         )
+#         raise RuntimeError(msg) from e    
+
+def _get_job_pod_status(job: k8s.V1Job) -> PodStatus:
+    """TODO"""
+    try:
+        k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
+            namespace=job.metadata.namespace,
+        )
+        k8s_pod_data = [
+            e for e in k8s_pod_query.items
+            if e.metadata.name.startswith(job.metadata.name)
+        ][0]
+    except IndexError as e:
+        msg = (
+            f"cannot find pod associated with job={job.metadata.name} in "
+            f"namespace={job.metadata.namespace}"
+        )
+        raise RuntimeError(msg) from e
+    if k8s_pod_data.status.phase == "Pending":
+        return PodStatus.PENDING
+    elif k8s_pod_data.status.phase == "Running":
+        return PodStatus.RUNNING
+    elif k8s_pod_data.status.phase == "Succeeded":
+        return PodStatus.SUCCEEDED
+    elif k8s_pod_data.status.phase == "Failed":
+        return PodStatus.FAILED
+    else:
+        msg = (
+            f"cannot determine status for pod in job={job.metadata.name} in "
+            f"namespace={job.metadata.namespace}"
+        )
+        raise RuntimeError(msg)
+
+
 def _get_job_status(job: k8s.V1Job) -> JobStatus:
     """Get the latest status of a job created on a k8s cluster.
 
@@ -172,7 +229,7 @@ def monitor_jobs_to_completion(
     jobs: Iterable[k8s.V1Job],
     timeout_seconds: int = 10,
     polling_freq_seconds: int = 1,
-    wait_before_start_seconds: int = 5,
+    wait_before_start_seconds: int = 60,
 ) -> bool:
     """Monitor job status until completion or timeout.
 
@@ -190,6 +247,14 @@ def monitor_jobs_to_completion(
     :return: True if all of the jobs complete successfully.
     """
     sleep(wait_before_start_seconds)
+    unscheduled_jobs = [
+        job for job in jobs if _get_job_pod_status(job) is PodStatus.PENDING
+    ]
+    if any(unscheduled_jobs):
+        raise BodyworkClusterResourcesError(
+            "job", [job.metadata.name for job in unscheduled_jobs]
+        )
+
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]
     while any(job_status is JobStatus.ACTIVE for job_status in jobs_status):
