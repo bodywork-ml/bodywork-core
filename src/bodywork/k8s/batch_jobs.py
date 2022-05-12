@@ -20,7 +20,7 @@ manage Bodywork batch stages.
 """
 from enum import Enum
 from time import sleep, time
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from kubernetes import client as k8s
 
@@ -142,52 +142,38 @@ def delete_job(namespace: str, name: str) -> None:
     )
 
 
-# def _is_pod_scheduleable(namespace: str, base_name: str) -> bool:
-#     """TODO"""
-#     k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
-#         namespace=namespace,
-#     )
-#     k8s_pod_data = [
-#         e for e in k8s_pod_query.items
-#         if e.metadata.name.startswith(base_name)
-#     ][0]
-#     if not k8s_pod_data:
-#         msg = (
-#             f"cannot find pod associated with job={job.metadata.name} in "
-#             f"namespace={job.metadata.namespace}"
-#         )
-#         raise RuntimeError(msg) from e    
-
-def _get_job_pod_status(job: k8s.V1Job) -> PodStatus:
+def _has_unscheduleable_pods(resource: Union[k8s.V1Job, k8s.V1Deployment]) -> bool:
     """TODO"""
-    try:
-        k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
-            namespace=job.metadata.namespace,
-        )
-        k8s_pod_data = [
-            e for e in k8s_pod_query.items
-            if e.metadata.name.startswith(job.metadata.name)
-        ][0]
-    except IndexError as e:
-        msg = (
-            f"cannot find pod associated with job={job.metadata.name} in "
-            f"namespace={job.metadata.namespace}"
-        )
-        raise RuntimeError(msg) from e
-    if k8s_pod_data.status.phase == "Pending":
-        return PodStatus.PENDING
-    elif k8s_pod_data.status.phase == "Running":
-        return PodStatus.RUNNING
-    elif k8s_pod_data.status.phase == "Succeeded":
-        return PodStatus.SUCCEEDED
-    elif k8s_pod_data.status.phase == "Failed":
-        return PodStatus.FAILED
+    namespace = resource.metadata.namespace
+    pod_base_name = resource.metadata.name
+    if type(resource) is k8s.V1Job:
+        resource_type = "job"
+    elif type(resource) is k8s.V1Deployment:
+        resource_type = "unknown"
     else:
+        resource_type = str(type(resource))
+
+    k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
+        namespace=namespace,
+    )
+    k8s_pod_data = [
+        e for e in k8s_pod_query.items
+        if e.metadata.name.startswith(pod_base_name)
+    ]
+    if not k8s_pod_data:
         msg = (
-            f"cannot determine status for pod in job={job.metadata.name} in "
-            f"namespace={job.metadata.namespace}"
+            f"cannot find pods with names that start with {pod_base_name} in "
+            f"namespace={namespace}"
         )
         raise RuntimeError(msg)
+    try:
+        unschedulable_pods = [
+            pod.metadata.name for pod in k8s_pod_data
+            if pod.status.conditions[0].reason == "Unschedulable"
+        ]
+        return True if unschedulable_pods else False
+    except IndexError:
+        return False
 
 
 def _get_job_status(job: k8s.V1Job) -> JobStatus:
@@ -229,7 +215,7 @@ def monitor_jobs_to_completion(
     jobs: Iterable[k8s.V1Job],
     timeout_seconds: int = 10,
     polling_freq_seconds: int = 1,
-    wait_before_start_seconds: int = 60,
+    wait_before_start_seconds: int = 5,
 ) -> bool:
     """Monitor job status until completion or timeout.
 
@@ -247,12 +233,11 @@ def monitor_jobs_to_completion(
     :return: True if all of the jobs complete successfully.
     """
     sleep(wait_before_start_seconds)
-    unscheduled_jobs = [
-        job for job in jobs if _get_job_pod_status(job) is PodStatus.PENDING
-    ]
-    if any(unscheduled_jobs):
+
+    unschedulable_pods = [_has_unscheduleable_pods(job) for job in jobs]
+    if any(unschedulable_pods):
         raise BodyworkClusterResourcesError(
-            "job", [job.metadata.name for job in unscheduled_jobs]
+            "job", [job.metadata.name for job in jobs]
         )
 
     start_time = time()
