@@ -174,12 +174,12 @@ def test_get_job_status_raises_exception_when_job_cannot_be_found(
 @patch("bodywork.k8s.batch_jobs._get_job_status")
 @patch("bodywork.k8s.batch_jobs.has_unscheduleable_pods")
 def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
-    mock_pod_schedule_status: MagicMock,
+    mock_has_unscheduleable_pods: MagicMock,
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.return_value = JobStatus.ACTIVE
-    mock_pod_schedule_status.return_value = False
+    mock_has_unscheduleable_pods.return_value = False
     with raises(TimeoutError, match="yet to reach status=succeeded"):
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
@@ -187,35 +187,33 @@ def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
 @patch("bodywork.k8s.batch_jobs._get_job_status")
 @patch("bodywork.k8s.batch_jobs.has_unscheduleable_pods")
 def test_monitor_jobs_to_completion_raises_bodyworkjobfailures_error_if_jobs_fail(
-    mock_pod_schedule_status: MagicMock,
+    mock_has_unscheduleable_pods: MagicMock,
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.return_value = JobStatus.FAILED
-    mock_pod_schedule_status.return_value = False
+    mock_has_unscheduleable_pods.return_value = False
     with raises(BodyworkJobFailure, match="have failed"):
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
 
 @patch("bodywork.k8s.batch_jobs._get_job_status")
 @patch("bodywork.k8s.batch_jobs.has_unscheduleable_pods")
-def test_monitor_jobs_to_completion_raises_clusterresourceerror_if_pods_unschedulable(
-    mock_pod_schedule_status: MagicMock,
+def test_monitor_jobs_to_completion_raises_bwclusterresourceerror_if_pods_unschedulable(
+    mock_has_unscheduleable_pods: MagicMock,
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.return_value = JobStatus.FAILED
-    mock_pod_schedule_status.return_value = True
-    with raises(
-        BodyworkClusterResourcesError, match="Inadequate cluster cpu and/or memory"
-    ):
+    mock_has_unscheduleable_pods.return_value = True
+    with raises(BodyworkClusterResourcesError, match="Inadequate cluster cpu"):
         monitor_jobs_to_completion([batch_stage_job_object], timeout_seconds=1)
 
 
 @patch("bodywork.k8s.batch_jobs._get_job_status")
 @patch("bodywork.k8s.batch_jobs.has_unscheduleable_pods")
 def test_monitor_jobs_to_completion_identifies_successful_jobs(
-    mock_pod_schedule_status: MagicMock,
+    mock_has_unscheduleable_pods: MagicMock,
     mock_job_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job,
 ):
@@ -225,7 +223,7 @@ def test_monitor_jobs_to_completion_identifies_successful_jobs(
         JobStatus.SUCCEEDED,
         JobStatus.SUCCEEDED,
     ]
-    mock_pod_schedule_status.return_value = False
+    mock_has_unscheduleable_pods.return_value = False
     successful = monitor_jobs_to_completion(
         [batch_stage_job_object, batch_stage_job_object],
         timeout_seconds=1,
