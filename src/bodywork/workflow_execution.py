@@ -156,7 +156,13 @@ def run_workflow(
                 )
             _log.info(f"Successfully executed DAG step = [{', '.join(step)}]")
         _log.info("Deployment successful")
-
+        if not workflow_deploys_services(config):
+            _log.info(f"Deleting namespace = {namespace}")
+            k8s.delete_namespace(namespace)
+        else:
+            _cleanup_redundant_services(git_commit_hash, namespace)
+        if config.pipeline.usage_stats:
+            _ping_usage_stats_server()
     except Exception as e:
         msg = f"Deployment failed --> {e}"
         _log.error(msg)
@@ -189,13 +195,6 @@ def run_workflow(
     finally:
         if cloned_repo_dir.exists():
             rmtree(cloned_repo_dir, onerror=_remove_readonly)
-        if config.pipeline.usage_stats:
-            _ping_usage_stats_server()
-        if not workflow_deploys_services(config):
-            _log.info(f"Deleting namespace = {namespace}")
-            k8s.delete_namespace(namespace)
-        else:
-            _cleanup_redundant_services(git_commit_hash, namespace)
 
 
 def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
