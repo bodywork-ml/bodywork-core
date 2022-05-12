@@ -29,7 +29,7 @@ from ..constants import (
     BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
 from ..exceptions import BodyworkClusterResourcesError, BodyworkJobFailure
-from .utils import make_valid_k8s_name
+from .utils import has_unscheduleable_pods, make_valid_k8s_name
 
 
 class JobStatus(Enum):
@@ -142,40 +142,6 @@ def delete_job(namespace: str, name: str) -> None:
     )
 
 
-def _has_unscheduleable_pods(resource: Union[k8s.V1Job, k8s.V1Deployment]) -> bool:
-    """TODO"""
-    namespace = resource.metadata.namespace
-    pod_base_name = resource.metadata.name
-    if type(resource) is k8s.V1Job:
-        resource_type = "job"
-    elif type(resource) is k8s.V1Deployment:
-        resource_type = "unknown"
-    else:
-        resource_type = str(type(resource))
-
-    k8s_pod_query = k8s.CoreV1Api().list_namespaced_pod(
-        namespace=namespace,
-    )
-    k8s_pod_data = [
-        e for e in k8s_pod_query.items
-        if e.metadata.name.startswith(pod_base_name)
-    ]
-    if not k8s_pod_data:
-        msg = (
-            f"cannot find pods with names that start with {pod_base_name} in "
-            f"namespace={namespace}"
-        )
-        raise RuntimeError(msg)
-    try:
-        unschedulable_pods = [
-            pod.metadata.name for pod in k8s_pod_data
-            if pod.status.conditions[0].reason == "Unschedulable"
-        ]
-        return True if unschedulable_pods else False
-    except IndexError:
-        return False
-
-
 def _get_job_status(job: k8s.V1Job) -> JobStatus:
     """Get the latest status of a job created on a k8s cluster.
 
@@ -234,7 +200,7 @@ def monitor_jobs_to_completion(
     """
     sleep(wait_before_start_seconds)
 
-    unschedulable_pods = [_has_unscheduleable_pods(job) for job in jobs]
+    unschedulable_pods = [has_unscheduleable_pods(job) for job in jobs]
     if any(unschedulable_pods):
         raise BodyworkClusterResourcesError(
             "job", [job.metadata.name for job in jobs]

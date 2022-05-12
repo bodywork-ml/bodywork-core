@@ -26,7 +26,8 @@ from typing import Dict, Iterable, List, Any
 from kubernetes import client as k8s
 
 from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
-from .utils import make_valid_k8s_name
+from ..exceptions import BodyworkClusterResourcesError
+from .utils import has_unscheduleable_pods, make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
@@ -333,6 +334,15 @@ def monitor_deployments_to_completion(
     :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
+
+    unschedulable_pods = [
+        has_unscheduleable_pods(deployment) for deployment in deployments
+    ]
+    if any(unschedulable_pods):
+        raise BodyworkClusterResourcesError(
+            "deployment", [deployment.metadata.name for deployment in deployments]
+        )
+
     start_time = time()
     deployments_status = [
         _get_deployment_status(deployment) for deployment in deployments
