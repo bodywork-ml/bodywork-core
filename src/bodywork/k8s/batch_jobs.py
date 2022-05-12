@@ -40,15 +40,6 @@ class JobStatus(Enum):
     FAILED = "failed"
 
 
-class PodStatus(Enum):
-    "Possible states of a k8s pod."
-
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-
-
 def configure_batch_stage_job(
     namespace: str,
     stage_name: str,
