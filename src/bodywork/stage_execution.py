@@ -21,7 +21,7 @@ download the project code and run stages.
 from enum import Enum
 from os import environ
 from pathlib import Path
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, TimeoutExpired
 from typing import Sequence
 
 import nbformat
@@ -48,6 +48,7 @@ def run_stage(
     repo_url: str,
     repo_branch: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
+    timeout: int = None
 ) -> None:
     """Retrieve latest project code and run the chosen stage.
 
@@ -56,6 +57,8 @@ def run_stage(
     :param repo_branch: The Git branch to download, defaults to None.
     :param cloned_repo_dir: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
+    :param timeout: The time to wait (in seconds) for the stage
+        executable to complete, before terminating the process.
     :raises RuntimeError: If the executable script exits with a non-zero
         exit code (i.e. fails).
     """
@@ -89,13 +92,18 @@ def run_stage(
                 check=True,
                 cwd=stage.executable_module_path.parent,
                 encoding="utf-8",
+                timeout=timeout,
             )
         _log.info(
             f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
             f"at {repo_url}"
         )
+    except TimeoutExpired:
+        msg = f"Timout exceeded when running {stage.executable_module}"
+        stage_failure_exception = BodyworkStageFailure(stage_name, msg)
+        raise stage_failure_exception
     except Exception as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
+        stage_failure_exception = BodyworkStageFailure(stage_name, str(e))
         _log.error(stage_failure_exception)
         raise stage_failure_exception from e
 
