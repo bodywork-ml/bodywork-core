@@ -59,8 +59,8 @@ def run_stage(
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :param timeout: The time to wait (in seconds) for the stage
         executable to complete, before terminating the process.
-    :raises RuntimeError: If the executable script exits with a non-zero
-        exit code (i.e. fails).
+    :raises BodyworkStageFailure: If the executable script exits with
+        a non-zero exit code (i.e. fails).
     """
     _log.info(
         f"Starting stage = {stage_name} from {repo_branch} branch of repo "
