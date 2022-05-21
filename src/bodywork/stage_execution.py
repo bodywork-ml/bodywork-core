@@ -48,7 +48,7 @@ def run_stage(
     repo_url: str,
     repo_branch: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
-    timeout: int = None
+    timeout: int = None,
 ) -> None:
     """Retrieve latest project code and run the chosen stage.
 

@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from time import sleep
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import kubernetes
 from pkg_resources import get_distribution
@@ -169,7 +169,7 @@ def _stage(
     timeout: int = Argument(None),
 ):
     try:
-        run_stage(stage_name, git_url, git_branch, timeout)
+        run_stage(stage_name, git_url, git_branch, timeout=timeout)
         sys.exit(0)
     except Exception:
         sys.exit(1)

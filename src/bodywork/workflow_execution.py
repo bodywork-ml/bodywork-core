@@ -504,7 +504,7 @@ def _print_logs_to_stdout(
 
     :param namespace: The namespace the job/deployment is in.
     :param job_or_deployment_name: The name of the pod or deployment.
-    :param previous: Return logs from previously crashed pod. 
+    :param previous: Return logs from previously crashed pod.
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)

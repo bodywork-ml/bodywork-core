@@ -82,7 +82,7 @@ def configure_batch_stage_job(
     if project_repo_branch:
         container_args += [f"--branch={project_repo_branch}"]
     if timeout:
-        container_args += [timeout]
+        container_args += [str(timeout)]
 
     container_resources = k8s.V1ResourceRequirements(
         requests={

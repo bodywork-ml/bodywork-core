@@ -51,7 +51,7 @@ def get_pod_logs(namespace: str, pod_name: str, previous: bool = False) -> str:
 
     :param namespace: The namespace in which to look for the pods.
     :param pod_name: The name of the pod to retrieve logs from.
-    :param previous: Return logs from previously crashed pod. 
+    :param previous: Return logs from previously crashed pod.
     :return: The pod logs as a single string object.
     """
     try:
