@@ -301,16 +301,23 @@ def _run_batch_stages(
         _log.info(f"Creating k8s job for stage = {job_name}")
         k8s.create_job(job_object)
     try:
-        timeout = max(stage.max_completion_time for stage in batch_stages)
+        timeout = max(
+            stage.retries * stage.max_completion_time for stage in batch_stages
+        )
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
+        for job_object in job_objects:
+            job_name = job_object.metadata.name
+            _log.info(f"Completed k8s job for stage = {job_name}")
+            _print_logs_to_stdout(namespace, job_name, False)
     except TimeoutError as e:
         _log.error("Some (or all) k8s jobs failed to complete successfully")
+        for job_object in job_objects:
+            job_name = job_object.metadata.name
+            _print_logs_to_stdout(namespace, job_name, True)
         raise e
     finally:
         for job_object in job_objects:
             job_name = job_object.metadata.name
-            _log.info(f"Completed k8s job for stage = {job_name}")
-            _print_logs_to_stdout(namespace, job_name)
             _log.info(f"Deleting k8s job for stage = {job_name}")
             k8s.delete_job(namespace, job_name)
             _log.info(f"Deleted k8s job for stage = {job_name}")
@@ -354,7 +361,7 @@ def _run_service_stages(
             image=docker_image,
             cpu_request=stage.cpu_request,
             memory_request=stage.memory_request,
-            seconds_to_be_ready_before_completing=stage.max_startup_time,
+            startup_time_seconds=stage.max_startup_time,
         )
         for stage in service_stages
     ]
@@ -369,7 +376,7 @@ def _run_service_stages(
             )
             k8s.create_deployment(deployment_object)
     try:
-        timeout = max(stage.max_startup_time for stage in service_stages)
+        timeout = 2 * max(stage.max_startup_time for stage in service_stages)
         k8s.monitor_deployments_to_completion(
             deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
         )
@@ -377,7 +384,7 @@ def _run_service_stages(
         _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
             deployment_name = deployment_object.metadata.name
-            _print_logs_to_stdout(namespace, deployment_name)
+            _print_logs_to_stdout(namespace, deployment_name, True)
             _log.info(f"Rolling-back k8s deployment for stage = {deployment_name}")
             k8s.rollback_deployment(deployment_object)
             _log.info(f"Rolled-back k8s deployment for stage = {deployment_name}")
@@ -387,7 +394,7 @@ def _run_service_stages(
         deployment_name = deployment_object.metadata.name
         deployment_port = deployment_object.metadata.annotations["port"]
         _log.info(f"Successfully created k8s deployment for stage = {deployment_name}")
-        _print_logs_to_stdout(namespace, deployment_name)
+        _print_logs_to_stdout(namespace, deployment_name, False)
         if not k8s.is_exposed_as_cluster_service(namespace, deployment_name):
             _log.info(
                 f"Exposing stage = {deployment_name} as a k8s service at "
@@ -490,16 +497,19 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     return image_name, image_tag
 
 
-def _print_logs_to_stdout(namespace: str, job_or_deployment_name: str) -> None:
+def _print_logs_to_stdout(
+    namespace: str, job_or_deployment_name: str, previous: bool = False
+) -> None:
     """Replay pod logs from a job or deployment to stdout.
 
     :param namespace: The namespace the job/deployment is in.
     :param job_or_deployment_name: The name of the pod or deployment.
+    :param previous: Return logs from previously crashed pod. 
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
         if pod_name is not None:
-            pod_logs = k8s.get_pod_logs(namespace, pod_name)
+            pod_logs = k8s.get_pod_logs(namespace, pod_name, previous)
             print_pod_logs(pod_logs, f"logs for stage = {pod_name}")
         else:
             _log.warning(f"Cannot get logs for {job_or_deployment_name}")
