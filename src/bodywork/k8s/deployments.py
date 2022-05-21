@@ -20,6 +20,7 @@ Bodywork service deployment stages.
 """
 from datetime import datetime
 from enum import Enum
+from math import ceil
 from time import sleep, time
 from typing import Dict, Iterable, List, Any
 
@@ -49,7 +50,7 @@ def configure_service_stage_deployment(
     container_env_vars: List[k8s.V1EnvVar] = None,
     cpu_request: float = None,
     memory_request: int = None,
-    seconds_to_be_ready_before_completing: int = 30,
+    startup_time_seconds: int = 30,
 ) -> k8s.V1Deployment:
     """Configure a Bodywork service stage k8s deployment.
 
@@ -75,18 +76,21 @@ def configure_service_stage_deployment(
         as a decimal number, defaults to None.
     :param memory_request: Memory resource to request from a node, expressed
         as an integer number of megabytes, defaults to None.
-    :param seconds_to_be_ready_before_completing: Time (in seconds) that
+    :param startup_time_seconds: Time (in seconds) that
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
 
     """
     service_name = make_valid_k8s_name(stage_name)
-    container_args = (
-        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
-        if project_repo_branch
-        else [project_repo_url, stage_name]
-    )
+
+    container_args = [project_repo_url, stage_name]
+    if project_repo_branch:
+        container_args += [f"--branch={project_repo_branch}"]
+
+    probe_period_seconds = 10
+    startup_probe_failure_threshold = ceil(10 * startup_time_seconds / probe_period_seconds)
+
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -101,6 +105,15 @@ def configure_service_stage_deployment(
         env=container_env_vars,
         command=["bodywork", "stage"],
         args=container_args,
+        startup_probe=k8s.V1Probe(
+            tcp_socket=k8s.V1TCPSocketAction(port=port),
+            period_seconds=probe_period_seconds,
+            failure_threshold=startup_probe_failure_threshold
+        ),
+        liveness_probe=k8s.V1Probe(
+            tcp_socket=k8s.V1TCPSocketAction(port=port),
+            period_seconds=probe_period_seconds,
+        )
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
@@ -125,7 +138,6 @@ def configure_service_stage_deployment(
         template=pod_template_spec,
         selector={"matchLabels": {"stage": service_name}},
         revision_history_limit=0,
-        min_ready_seconds=seconds_to_be_ready_before_completing,
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
