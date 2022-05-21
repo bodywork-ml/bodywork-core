@@ -58,7 +58,8 @@ def run_stage(
     :param cloned_repo_dir: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :param timeout: The time to wait (in seconds) for the stage
-        executable to complete, before terminating the process.
+        executable to complete, before terminating the main process.
+        Defaults to None.
     :raises BodyworkStageFailure: If the executable script exits with
         a non-zero exit code (i.e. fails).
     """

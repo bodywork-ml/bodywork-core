@@ -46,7 +46,7 @@ SSH_DIR_NAME = ".ssh"
 SECRET_GROUP_LABEL = "group"
 SSH_PRIVATE_KEY_ENV_VAR = "BODYWORK_GIT_SSH_PRIVATE_KEY"
 SSH_SECRET_NAME = "ssh-git-private-key"
-TIMEOUT_GRACE_SECONDS = 90
+TIMEOUT_GRACE_SECONDS = 30
 USAGE_STATS_SERVER_URL = "http://k8s.bodyworkml-dev.com/bodywork-ml/usage-tracking--server/workflow-execution-counter"  # noqa
 
 # External SSH Fingerprints
