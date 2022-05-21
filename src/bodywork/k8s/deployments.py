@@ -89,9 +89,7 @@ def configure_service_stage_deployment(
         container_args += [f"--branch={project_repo_branch}"]
 
     probe_period_seconds = 10
-    startup_probe_failure_threshold = ceil(
-        10 * startup_time_seconds / probe_period_seconds
-    )
+    startup_probe_failure_threshold = ceil(startup_time_seconds / probe_period_seconds)
 
     container_resources = k8s.V1ResourceRequirements(
         requests={

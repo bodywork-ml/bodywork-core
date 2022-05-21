@@ -112,21 +112,20 @@ def test_configure_service_stage_deployment():
     assert deployment.metadata.namespace == "bodywork-dev"
     assert deployment.metadata.name == "serve"
     assert deployment.spec.replicas == 2
-    assert deployment.spec.template.spec.containers[0].args == [
+
+    containers = deployment.spec.template.spec.containers
+    assert containers[0].args == [
         "bodywork-ml/bodywork-test-project",
         "serve",
         "--branch=dev",
     ]
-    assert (
-        deployment.spec.template.spec.containers[0].image
-        == "bodyworkml/bodywork-core:latest"
-    )
-    assert deployment.spec.template.spec.containers[0].resources.requests["cpu"] == "1"
-    assert (
-        deployment.spec.template.spec.containers[0].resources.requests["memory"]
-        == "100M"
-    )
-    assert deployment.spec.min_ready_seconds == 5
+    assert containers[0].image == "bodyworkml/bodywork-core:latest"
+    assert containers[0].resources.requests["cpu"] == "1"
+    assert containers[0].resources.requests["memory"] == "100M"
+    assert containers[0].startup_probe.tcp_socket.port == 80
+    assert containers[0].startup_probe.period_seconds == 10
+    assert containers[0].startup_probe.failure_threshold == 1
+    assert containers[0].liveness_probe.period_seconds == 10
 
 
 @patch("kubernetes.client.AppsV1Api")

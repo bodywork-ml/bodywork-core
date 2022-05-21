@@ -104,7 +104,7 @@ def run_stage(
         stage_failure_exception = BodyworkStageFailure(stage_name, msg)
         raise stage_failure_exception
     except Exception as e:
-        stage_failure_exception = BodyworkStageFailure(stage_name, str(e))
+        stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         _log.error(stage_failure_exception)
         raise stage_failure_exception from e
 
