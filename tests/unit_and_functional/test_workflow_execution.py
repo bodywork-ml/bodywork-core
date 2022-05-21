@@ -173,7 +173,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         image=ANY,
         cpu_request=ANY,
         memory_request=ANY,
-        seconds_to_be_ready_before_completing=ANY,
+        startup_time_seconds=ANY,
     )
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,

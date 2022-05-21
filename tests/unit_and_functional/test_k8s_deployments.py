@@ -107,7 +107,7 @@ def test_configure_service_stage_deployment():
         replicas=2,
         cpu_request=1,
         memory_request=100,
-        seconds_to_be_ready_before_completing=5,
+        startup_time_seconds=5,
     )
     assert deployment.metadata.namespace == "bodywork-dev"
     assert deployment.metadata.name == "serve"
