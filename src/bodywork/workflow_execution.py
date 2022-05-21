@@ -286,6 +286,7 @@ def _run_batch_stages(
             repo_url,
             repo_branch,
             retries=stage.retries,
+            timeout=stage.max_completion_time,
             container_env_vars=k8s.configure_env_vars_from_secrets(
                 namespace, stage.env_vars_from_secrets
             )
