@@ -57,3 +57,4 @@ def test_delete_namespace_deletes_namespaces(mock_k8s_core_api: MagicMock):
     mock_k8s_core_api().delete_namespace.assert_called_once_with(
         name="bodywork-dev", propagation_policy="Background"
     )
+    mock_k8s_core_api().list_namespace.assert_called_once()
