@@ -167,13 +167,22 @@ def test_run_stage_failure_raises_exception_for_failed_scripts(
         run_stage("stage_4", project_repo_connection_string)
 
 
+def test_run_stage_timeout_raises_exception(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Iterable[Path],
+):
+    with raises(BodyworkStageFailure, match="Timout exceeded"):
+        run_stage("stage_5", project_repo_connection_string, timeout=1)
+
+
 def test_run_stage_failure_raises_exception_for_failed_setup(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
     with raises(BodyworkStageFailure, match="KeyError"):
-        run_stage("stage_5", project_repo_connection_string)
+        run_stage("stage_foo", project_repo_connection_string)
 
 
 def test_infer_executable_type_type():
