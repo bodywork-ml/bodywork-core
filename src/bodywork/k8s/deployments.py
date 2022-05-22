@@ -26,7 +26,13 @@ from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
 
-from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
+from ..constants import (
+    BODYWORK_DOCKER_IMAGE,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
+    K8S_MAX_SURGE,
+    K8S_MAX_UNAVAILABLE,
+
+)
 from .utils import make_valid_k8s_name
 
 
@@ -140,8 +146,8 @@ def configure_service_stage_deployment(
         revision_history_limit=0,
         strategy=k8s.V1DeploymentStrategy(
             rolling_update=k8s.V1RollingUpdateDeployment(
-                max_surge=1,
-                max_unavailable=1,
+                max_surge=K8S_MAX_SURGE,
+                max_unavailable=K8S_MAX_UNAVAILABLE,
             )
         )
     )

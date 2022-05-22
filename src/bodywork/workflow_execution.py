@@ -18,9 +18,10 @@
 This module contains all of the functions required to execute and manage
 a Bodywork project workflow - a sequence of stages represented as a DAG.
 """
+from math import ceil
 from pathlib import Path
 from shutil import rmtree
-from typing import cast, Tuple, List, Any
+from typing import Any, cast, List, Tuple
 from kubernetes.client.exceptions import ApiException
 
 import requests
@@ -35,6 +36,8 @@ from .constants import (
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS,
     GIT_COMMIT_HASH_K8S_ENV_VAR,
+    K8S_MAX_SURGE,
+    K8S_MAX_UNAVAILABLE,
     USAGE_STATS_SERVER_URL,
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
@@ -302,10 +305,8 @@ def _run_batch_stages(
         _log.info(f"Creating k8s job for stage = {job_name}")
         k8s.create_job(job_object)
     try:
-        timeout = max(
-            max(1, stage.retries) * stage.max_completion_time for stage in batch_stages
-        )
-        k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
+        timeout = _compute_optimal_job_timeout(batch_stages)
+        k8s.monitor_jobs_to_completion(job_objects, timeout)
         for job_object in job_objects:
             job_name = job_object.metadata.name
             _log.info(f"Completed k8s job for stage = {job_name}")
@@ -377,10 +378,8 @@ def _run_service_stages(
             )
             k8s.create_deployment(deployment_object)
     try:
-        timeout = 2 * max(stage.max_startup_time for stage in service_stages)
-        k8s.monitor_deployments_to_completion(
-            deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
-        )
+        timeout = _compute_optimal_deployment_timeout(namespace, service_stages)
+        k8s.monitor_deployments_to_completion(deployment_objects, timeout)
     except TimeoutError as e:
         _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
@@ -496,6 +495,50 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     else:
         raise BodyworkDockerImageError(err_msg)
     return image_name, image_tag
+
+
+def _compute_optimal_job_timeout(batch_stages: List[BatchStageConfig]) -> int:
+    """Compute the optimal timeout for job monitoring.
+
+    :param namesapce: The target namespace for the job.
+    :param batch_stages: The desired configuration for the jobs.
+    :param returns: The optimal timeout (in seconds).
+    """
+    job_timeouts = [
+        max(1, stage.retries) * stage.max_completion_time for stage in batch_stages
+    ]
+    return int(max(job_timeouts) + TIMEOUT_GRACE_SECONDS)
+
+
+def _compute_optimal_deployment_timeout(
+    namespace: str, service_stages: List[ServiceStageConfig]
+) -> int:
+    """Compute the optimal timeout for deployment monitoring.
+
+    If a deployment is rolling-out for the first time, then wait for
+    twice the max configured startup time. If a deployment is updating,
+    then compute how long it will take to replace all pods using the
+    rolling update strategy.
+
+    The the max configured startup time has been floored at 60s, because
+    installing just Flask alone takes this long and it would be easy to
+    incorrectly estimate this.
+
+    :param namesapce: The target namespace for the deployments.
+    :param service_stages: The desired configuration for the incoming
+        deployments.
+    :param returns: The optimal timeout (in seconds).
+    """
+    new_pod_rate = K8S_MAX_SURGE + K8S_MAX_UNAVAILABLE
+    deployment_timeouts = [
+        (
+            stage.max_startup_time
+            if not k8s.is_existing_deployment(namespace, stage.name)
+            else ceil(stage.replicas / new_pod_rate) * max(60, stage.max_startup_time)
+        )
+        for stage in service_stages
+    ]
+    return int(2 * max(deployment_timeouts) + TIMEOUT_GRACE_SECONDS)
 
 
 def _print_logs_to_stdout(
