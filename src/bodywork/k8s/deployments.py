@@ -31,7 +31,6 @@ from ..constants import (
     BODYWORK_STAGES_SERVICE_ACCOUNT,
     K8S_MAX_SURGE,
     K8S_MAX_UNAVAILABLE,
-
 )
 from .utils import make_valid_k8s_name
 
@@ -149,7 +148,7 @@ def configure_service_stage_deployment(
                 max_surge=K8S_MAX_SURGE,
                 max_unavailable=K8S_MAX_UNAVAILABLE,
             )
-        )
+        ),
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,

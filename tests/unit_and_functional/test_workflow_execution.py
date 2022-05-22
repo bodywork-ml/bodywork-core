@@ -47,7 +47,8 @@ from bodywork.workflow_execution import (
     _print_logs_to_stdout,
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
-    run_workflow,)
+    run_workflow,
+)
 from bodywork.config import BodyworkConfig
 
 

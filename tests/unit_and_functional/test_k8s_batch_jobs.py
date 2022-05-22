@@ -105,7 +105,7 @@ def test_configure_batch_stage_job_with_timeouts():
         "bodywork-ml/bodywork-test-project",
         "train",
         "--branch=dev",
-        "60"
+        "60",
     ]
 
 

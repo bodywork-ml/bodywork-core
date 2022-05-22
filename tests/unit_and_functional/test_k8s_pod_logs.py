@@ -88,19 +88,15 @@ def test_get_pod_logs_can_handle_logs_from_crashed_pods(
     mock_k8s_core_api().read_namespaced_pod_log.side_effect = [
         "the logs",
         kubernetes.client.ApiException,
-        "the logs"
+        "the logs",
     ]
 
     get_pod_logs("the-namespace", "the-pod", previous=True)
     mock_k8s_core_api().read_namespaced_pod_log.assert_called_with(
-        namespace="the-namespace",
-        name="the-pod",
-        previous=True
+        namespace="the-namespace", name="the-pod", previous=True
     )
 
     get_pod_logs("the-namespace", "the-pod", previous=True)
     mock_k8s_core_api().read_namespaced_pod_log.assert_called_with(
-        namespace="the-namespace",
-        name="the-pod",
-        previous=False
+        namespace="the-namespace", name="the-pod", previous=False
     )
