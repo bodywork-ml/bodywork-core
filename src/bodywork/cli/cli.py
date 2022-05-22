@@ -211,16 +211,13 @@ def _create_deployment(
                 characters="=",
                 style="green",
             )
-            # with console.status(
-            #     "[purple]Bodywork deploying[/purple]", spinner="aesthetic"
-            # ):
             run_workflow(
                 git_url,
                 git_branch,
                 ssh_key_path=ssh_key_path,
                 docker_image_override=image,
             )
-            # console.rule(characters="=", style="green")
+            console.rule(characters="=", style="green")
         except BodyworkWorkflowExecutionError:
             sys.exit(1)
     else:
