@@ -33,8 +33,8 @@ from .utils import make_valid_k8s_name
 class DeploymentStatus(Enum):
     """Possible states of a k8s deployment."""
 
-    COMPLETE = "complete"
     PROGRESSING = "progressing"
+    ACTIVE = "active"
 
 
 def configure_service_stage_deployment(
@@ -311,7 +311,7 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
         k8s_deployment_data.status.available_replicas is not None
         and k8s_deployment_data.status.unavailable_replicas is None
     ):
-        return DeploymentStatus.COMPLETE
+        return DeploymentStatus.ACTIVE
     elif (
         k8s_deployment_data.status.available_replicas is None
         or k8s_deployment_data.status.unavailable_replicas > 0
@@ -358,7 +358,7 @@ def monitor_deployments_to_completion(
                     f"namespace={deployment.metadata.namespace}"
                 )
                 for deployment, status in zip(deployments, deployments_status)
-                if status != DeploymentStatus.COMPLETE
+                if status != DeploymentStatus.ACTIVE
             ]
             msg = (
                 f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '

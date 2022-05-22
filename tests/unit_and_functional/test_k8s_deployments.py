@@ -356,7 +356,7 @@ def test_get_deployment_status_correctly_determines_complete_status(
     )
     assert (
         _get_deployment_status(service_stage_deployment_object)
-        == DeploymentStatus.COMPLETE
+        == DeploymentStatus.ACTIVE
     )
 
 
@@ -413,8 +413,8 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
         DeploymentStatus.PROGRESSING,
-        DeploymentStatus.COMPLETE,
-        DeploymentStatus.COMPLETE,
+        DeploymentStatus.ACTIVE,
+        DeploymentStatus.ACTIVE,
     ]
     successful = monitor_deployments_to_completion(
         [service_stage_deployment_object, service_stage_deployment_object],
