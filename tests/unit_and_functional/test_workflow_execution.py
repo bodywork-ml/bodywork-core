@@ -141,11 +141,11 @@ def test_compute_optimal_deployment_timeouts(mock_k8s: MagicMock):
 
     mock_k8s.is_existing_deployment.side_effect = [False, False]
     timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
-    assert timeout == 2 * 60 + TIMEOUT_GRACE_SECONDS
+    assert timeout == 2 * max(60, 60) + TIMEOUT_GRACE_SECONDS
 
     mock_k8s.is_existing_deployment.side_effect = [False, True]
     timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
-    assert timeout == 2 * 2 * 45 + TIMEOUT_GRACE_SECONDS
+    assert timeout == 2 * 2 * max(60, 45) + TIMEOUT_GRACE_SECONDS
 
 
 @patch("bodywork.workflow_execution.k8s")
