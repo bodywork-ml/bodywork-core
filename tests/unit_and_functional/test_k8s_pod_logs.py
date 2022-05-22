@@ -76,6 +76,31 @@ def test_get_pod_logs_returns_pod_logs(
     Cloning into 'bodywork_project'...
     Collecting flask==1.1.2
     """
-    pod_logs = get_pod_logs("the-namespace", "bodywork--stage-1-abcdefg")
+    pod_logs = get_pod_logs("the-namespace", "the-pod")
     assert "2020-10-08 10:36:49,319 - INFO" in pod_logs
     assert "Collecting flask==1.1.2" in pod_logs
+
+
+@patch("kubernetes.client.CoreV1Api")
+def test_get_pod_logs_can_handle_logs_from_crashed_pods(
+    mock_k8s_core_api: MagicMock,
+):
+    mock_k8s_core_api().read_namespaced_pod_log.side_effect = [
+        "the logs",
+        kubernetes.client.ApiException,
+        "the logs"
+    ]
+
+    get_pod_logs("the-namespace", "the-pod", previous=True)
+    mock_k8s_core_api().read_namespaced_pod_log.assert_called_with(
+        namespace="the-namespace",
+        name="the-pod",
+        previous=True
+    )
+
+    get_pod_logs("the-namespace", "the-pod", previous=True)
+    mock_k8s_core_api().read_namespaced_pod_log.assert_called_with(
+        namespace="the-namespace",
+        name="the-pod",
+        previous=False
+    )
