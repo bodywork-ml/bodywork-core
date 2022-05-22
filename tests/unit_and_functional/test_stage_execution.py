@@ -74,7 +74,7 @@ def test_run_stage_with_requirements_install(
         assert False
 
     assert "Starting stage" in caplog.text
-    assert "Installing Python packages" in caplog.text
+    assert "Installing required Python packages" in caplog.text
     assert "Using pip" in capfd.readouterr().out
     assert "Attempting to run" in caplog.text
     assert "Successfully ran stage" in caplog.text
@@ -101,7 +101,7 @@ def test_run_stage_without_requirements_install(
         assert False
 
     assert "Starting stage" in caplog.text
-    assert "Installing Python packages" not in caplog.text
+    assert "Installing required Python packages" not in caplog.text
     assert "Using pip" not in capfd.readouterr().out
     assert "Successfully ran stage" in caplog.text
 

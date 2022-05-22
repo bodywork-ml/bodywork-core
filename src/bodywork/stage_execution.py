@@ -116,14 +116,15 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        _log.info(f"Installing Python packages: {', '.join(requirements)}")
+        _log.info(f"Installing required Python packages: {', '.join(requirements)}\n")
         run(
             ["pip", "install", "-v", *requirements],
             check=True,
             encoding="utf-8",
         )
+        _log.info("\nSuccessfully installed all Python packages.")
     except CalledProcessError as e:
-        msg = f"Cannot install stage requirements: {e.cmd} failed with {e.stderr}"
+        msg = f"\nCannot install stage requirements: {e.cmd} failed with {e.stderr}"
         raise RuntimeError(msg)
 
 
