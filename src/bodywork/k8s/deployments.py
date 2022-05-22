@@ -138,6 +138,12 @@ def configure_service_stage_deployment(
         template=pod_template_spec,
         selector={"matchLabels": {"stage": service_name}},
         revision_history_limit=0,
+        strategy=k8s.V1DeploymentStrategy(
+            rolling_update=k8s.V1RollingUpdateDeployment(
+                max_surge=1,
+                max_unavailable=1,
+            )
+        )
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
