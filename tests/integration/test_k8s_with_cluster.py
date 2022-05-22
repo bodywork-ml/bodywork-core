@@ -71,7 +71,6 @@ def test_workflow_and_service_management_end_to_end_from_cli(
         expected_output_5 = "Creating k8s job for stage = stage-1"
         expected_output_6 = "Creating k8s deployment and service for stage = stage-4"
         expected_output_7 = "Deployment successful"
-
         assert findall(expected_output_1, process.stdout)
         assert findall(expected_output_2, process.stdout)
         assert findall(expected_output_3, process.stdout)
@@ -131,10 +130,9 @@ def test_workflow_and_service_management_end_to_end_from_cli(
             capture_output=True,
         )
         assert "deployment=bodywork-test-project deleted." in process.stdout
-
         assert process.returncode == 0
 
-        sleep(5)
+        sleep(15)
 
         process = run(
             [
