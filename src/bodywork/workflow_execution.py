@@ -307,10 +307,12 @@ def _run_batch_stages(
         k8s.create_job(job_object)
     try:
         timeout = _compute_optimal_job_timeout(batch_stages)
-        timeout_dt = (
-            (datetime.now() + timedelta(seconds=timeout)).strftime("%d/%m/%y %H:%M:%S")
+        timeout_dt = (datetime.now() + timedelta(seconds=timeout)).strftime(
+            "%d/%m/%y %H:%M:%S"
         )
-        _log.info(f"Monitoring k8s jobs - will timeout after {timeout}s at [{timeout_dt}]")
+        _log.info(
+            f"Monitoring k8s jobs - will timeout after {timeout}s at [{timeout_dt}]"
+        )
         k8s.monitor_jobs_to_completion(job_objects, timeout)
         for job_object in job_objects:
             job_name = job_object.metadata.name
@@ -384,10 +386,12 @@ def _run_service_stages(
             k8s.create_deployment(deployment_object)
     try:
         timeout = _compute_optimal_deployment_timeout(namespace, service_stages)
-        timeout_dt = (
-            (datetime.now() + timedelta(seconds=timeout)).strftime("%d/%m/%y %H:%M:%S")
+        timeout_dt = (datetime.now() + timedelta(seconds=timeout)).strftime(
+            "%d/%m/%y %H:%M:%S"
         )
-        _log.info(f"Monitoring k8s deployments - will timeout after {timeout}s at [{timeout_dt}]")
+        _log.info(
+            f"Monitoring k8s deployments - will timeout after {timeout}s at [{timeout_dt}]"
+        )
         k8s.monitor_deployments_to_completion(deployment_objects, timeout)
     except TimeoutError as e:
         _log.error("Deployments failed to roll-out successfully")
