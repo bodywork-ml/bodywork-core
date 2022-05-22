@@ -45,7 +45,7 @@ def batch_stage_job_object() -> kubernetes.client.V1Job:
         image_pull_policy="Always",
         resources=container_resources,
         command=["bodywork", "stage"],
-        args=["project_repo_url", "project_repo_branch", "train"],
+        args=["project_repo_url", "project_repo_branch", "train", "60"],
     )
     pod_spec = kubernetes.client.V1PodSpec(
         containers=[container], restart_policy="Never"
@@ -87,6 +87,26 @@ def test_configure_batch_stage_job():
     )
     assert job.spec.template.spec.containers[0].resources.requests["cpu"] == "1"
     assert job.spec.template.spec.containers[0].resources.requests["memory"] == "100M"
+
+
+def test_configure_batch_stage_job_with_timeouts():
+    job = configure_batch_stage_job(
+        namespace="bodywork-dev",
+        stage_name="train",
+        project_repo_url="bodywork-ml/bodywork-test-project",
+        project_repo_branch="dev",
+        image="bodyworkml/bodywork-core:0.0.7",
+        cpu_request=1,
+        memory_request=100,
+        retries=2,
+        timeout=60,
+    )
+    assert job.spec.template.spec.containers[0].args == [
+        "bodywork-ml/bodywork-test-project",
+        "train",
+        "--branch=dev",
+        "60"
+    ]
 
 
 @patch("kubernetes.client.BatchV1Api")
