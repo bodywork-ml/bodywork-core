@@ -303,7 +303,7 @@ def _run_batch_stages(
         k8s.create_job(job_object)
     try:
         timeout = max(
-            stage.retries * stage.max_completion_time for stage in batch_stages
+            max(1, stage.retries) * stage.max_completion_time for stage in batch_stages
         )
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
         for job_object in job_objects:
