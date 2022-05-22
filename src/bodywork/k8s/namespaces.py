@@ -50,14 +50,18 @@ def create_namespace(name: str) -> None:
     )
 
 
-def delete_namespace(name: str) -> None:
+def delete_namespace(name: str, print_progress: bool = False) -> None:
     """Delete a new namespace and wait until finished.
 
     :param name: Kubernetes namespace to delete.
     """
     k8s.CoreV1Api().delete_namespace(name=name, propagation_policy="Background")
-    while namespace_exists(name):
-        sleep(1)
-        print(".", end="")
-        sys.stdout.flush()
-    print("")
+    if print_progress:
+        while namespace_exists(name):
+            sleep(1)
+            print(".", end="")
+            sys.stdout.flush()
+        print("")
+    else:
+        while namespace_exists(name):
+            sleep(1)

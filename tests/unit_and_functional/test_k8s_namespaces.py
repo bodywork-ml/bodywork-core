@@ -53,7 +53,14 @@ def test_create_namespace_creates_namespaces(mock_k8s_core_api: MagicMock):
 
 @patch("kubernetes.client.CoreV1Api")
 def test_delete_namespace_deletes_namespaces(mock_k8s_core_api: MagicMock):
-    delete_namespace("bodywork-dev")
+    delete_namespace("bodywork-dev", False)
+    mock_k8s_core_api().delete_namespace.assert_called_once_with(
+        name="bodywork-dev", propagation_policy="Background"
+    )
+    mock_k8s_core_api().list_namespace.assert_called_once()
+
+    mock_k8s_core_api.reset_mock()
+    delete_namespace("bodywork-dev", True)
     mock_k8s_core_api().delete_namespace.assert_called_once_with(
         name="bodywork-dev", propagation_policy="Background"
     )
