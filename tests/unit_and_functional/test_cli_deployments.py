@@ -243,4 +243,4 @@ def test_delete_deployment(
 
     delete_deployment(deployment_name)
 
-    mock_k8s_module.delete_namespace.assert_called_with(deployment_name)
+    mock_k8s_module.delete_namespace.assert_called_with(deployment_name, True)
