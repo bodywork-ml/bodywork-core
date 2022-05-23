@@ -18,15 +18,18 @@
 High-level interface to the Kubernetes batch API as used to create and
 manage Bodywork batch stages.
 """
+from datetime import datetime
 from enum import Enum
 from time import sleep, time
 from typing import Iterable, List
 
 from kubernetes import client as k8s
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    LOG_TIME_FORMAT,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import make_valid_k8s_name
@@ -192,20 +195,43 @@ def monitor_jobs_to_completion(
     sleep(wait_before_start_seconds)
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]
-    while any(job_status is JobStatus.ACTIVE for job_status in jobs_status):
-        sleep(polling_freq_seconds)
-        if time() - start_time >= timeout_seconds:
-            unsuccessful_jobs_msg = [
-                f"job={job.metadata.name} in namespace={job.metadata.namespace}"
-                for job, status in zip(jobs, jobs_status)
-                if status != JobStatus.SUCCEEDED
-            ]
-            msg = (
-                f'{"; ".join(unsuccessful_jobs_msg)} yet to reach '
-                f"status=succeeded after {timeout_seconds}s"
-            )
-            raise TimeoutError(msg)
-        jobs_status = [_get_job_status(job) for job in jobs]
+
+    progress_bar = Progress(
+        TextColumn("{task.description}"),
+        TextColumn("[bold bright_red]WAIT    "),
+        BarColumn(),
+        TaskProgressColumn(),
+        refresh_per_second=2,
+        transient=True,
+    )
+
+    def progress_desc(time: str):
+        return f"[dim cyan]{time}"
+
+    t = datetime.now().strftime(LOG_TIME_FORMAT)
+    progress_step = timeout_seconds / polling_freq_seconds
+    progress_task = progress_bar.add_task(progress_desc(t), total=progress_step)
+
+    with progress_bar:
+
+        while any(job_status is JobStatus.ACTIVE for job_status in jobs_status):
+            sleep(polling_freq_seconds)
+            if time() - start_time >= timeout_seconds:
+                unsuccessful_jobs_msg = [
+                    f"job={job.metadata.name} in namespace={job.metadata.namespace}"
+                    for job, status in zip(jobs, jobs_status)
+                    if status != JobStatus.SUCCEEDED
+                ]
+                msg = (
+                    f'{"; ".join(unsuccessful_jobs_msg)} yet to reach '
+                    f"status=succeeded after {timeout_seconds}s"
+                )
+                raise TimeoutError(msg)
+            jobs_status = [_get_job_status(job) for job in jobs]
+
+            t = datetime.now().strftime(LOG_TIME_FORMAT)
+            progress_bar.update(progress_task, advance=1, description=progress_desc(t))
+
     if any(job_status is JobStatus.FAILED for job_status in jobs_status):
         failed_jobs = [
             job for job, status in zip(jobs, jobs_status) if status == JobStatus.FAILED

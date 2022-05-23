@@ -24,8 +24,13 @@ from time import sleep, time
 from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
-from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
+from ..constants import (
+    BODYWORK_DOCKER_IMAGE,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
+    LOG_TIME_FORMAT,
+)
 from .utils import make_valid_k8s_name
 
 
@@ -337,25 +342,50 @@ def monitor_deployments_to_completion(
     deployments_status = [
         _get_deployment_status(deployment) for deployment in deployments
     ]
-    while any(status is DeploymentStatus.PROGRESSING for status in deployments_status):
-        sleep(polling_freq_seconds)
-        if time() - start_time >= timeout_seconds:
-            unsuccessful_deployments_msg = [
-                (
-                    f"deployment={deployment.metadata.name} in "
-                    f"namespace={deployment.metadata.namespace}"
+
+    progress_bar = Progress(
+        TextColumn("{task.description}"),
+        TextColumn("[bold bright_red]WAIT    "),
+        BarColumn(),
+        TaskProgressColumn(),
+        refresh_per_second=2,
+        transient=True,
+    )
+
+    def progress_desc(time: str):
+        return f"[dim cyan]{time}"
+
+    t = datetime.now().strftime(LOG_TIME_FORMAT)
+    progress_step = timeout_seconds / polling_freq_seconds
+    progress_task = progress_bar.add_task(progress_desc(t), total=progress_step)
+
+    with progress_bar:
+
+        while any(
+            status is DeploymentStatus.PROGRESSING for status in deployments_status
+        ):
+            sleep(polling_freq_seconds)
+            if time() - start_time >= timeout_seconds:
+                unsuccessful_deployments_msg = [
+                    (
+                        f"deployment={deployment.metadata.name} in "
+                        f"namespace={deployment.metadata.namespace}"
+                    )
+                    for deployment, status in zip(deployments, deployments_status)
+                    if status != DeploymentStatus.COMPLETE
+                ]
+                msg = (
+                    f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '
+                    f"status=complete after {timeout_seconds}s"
                 )
-                for deployment, status in zip(deployments, deployments_status)
-                if status != DeploymentStatus.COMPLETE
+                raise TimeoutError(msg)
+            deployments_status = [
+                _get_deployment_status(deployment) for deployment in deployments
             ]
-            msg = (
-                f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '
-                f"status=complete after {timeout_seconds}s"
-            )
-            raise TimeoutError(msg)
-        deployments_status = [
-            _get_deployment_status(deployment) for deployment in deployments
-        ]
+
+            t = datetime.now().strftime(LOG_TIME_FORMAT)
+            progress_bar.update(progress_task, advance=1, description=progress_desc(t))
+
     return True
 
 
