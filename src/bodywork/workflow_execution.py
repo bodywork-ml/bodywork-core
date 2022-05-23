@@ -126,7 +126,7 @@ def run_workflow(
             _copy_secrets_to_target_namespace(namespace, config.pipeline.name)
 
         for step in workflow_dag:
-            _log.info(f"Attempting to execute DAG step = [{', '.join(step)}]")
+            _log.info(f"Executing DAG step = [{', '.join(step)}]")
             batch_stages = [
                 cast(BatchStageConfig, all_stages[stage_name])
                 for stage_name in step
@@ -310,9 +310,7 @@ def _run_batch_stages(
         timeout_dt = (datetime.now() + timedelta(seconds=timeout)).strftime(
             "%d/%m/%y %H:%M:%S"
         )
-        _log.info(
-            f"Monitoring k8s jobs - will timeout after {timeout}s at [{timeout_dt}]"
-        )
+        _log.info(f"Monitoring k8s jobs, timeout at [{timeout_dt}] ({timeout}s)")
         k8s.monitor_jobs_to_completion(job_objects, timeout)
         for job_object in job_objects:
             job_name = job_object.metadata.name
@@ -389,9 +387,7 @@ def _run_service_stages(
         timeout_dt = (datetime.now() + timedelta(seconds=timeout)).strftime(
             "%d/%m/%y %H:%M:%S"
         )
-        _log.info(
-            f"Monitoring k8s deployments - will timeout after {timeout}s at [{timeout_dt}]"
-        )
+        _log.info(f"Monitoring k8s deployments, timeout at [{timeout_dt}] ({timeout}s)")
         k8s.monitor_deployments_to_completion(deployment_objects, timeout)
     except TimeoutError as e:
         _log.error("Deployments failed to roll-out successfully")
