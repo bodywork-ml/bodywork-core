@@ -163,9 +163,9 @@ def ingress_load_balancer_url() -> Iterable[str]:
                 text=True,
             )
             for line in mk_service_tunnel.stdout:
-                ingress_url_match = re.search(r"http://(\d|\.)+:\d+", line)
+                ingress_url_match = re.search(r"http://((\d|\.)+:\d+)", line)
                 if ingress_url_match:
-                    ingress_url = ingress_url_match.group()
+                    ingress_url = ingress_url_match.group(1)
                     break
             yield ingress_url
             mk_service_tunnel.kill()
