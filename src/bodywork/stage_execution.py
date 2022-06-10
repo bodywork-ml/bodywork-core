@@ -101,8 +101,7 @@ def run_stage(
         )
     except TimeoutExpired:
         msg = f"Timeout exceeded when running {stage.executable_module}"
-        stage_failure_exception = BodyworkStageFailure(stage_name, msg)
-        raise stage_failure_exception
+        raise BodyworkStageFailure(stage_name, msg)
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         _log.error(stage_failure_exception)
