@@ -172,7 +172,7 @@ def test_run_stage_timeout_raises_exception(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
-    with raises(BodyworkStageFailure, match="Timout exceeded"):
+    with raises(BodyworkStageFailure, match="Timeout exceeded"):
         run_stage("stage_5", project_repo_connection_string, timeout=1)
 
 
