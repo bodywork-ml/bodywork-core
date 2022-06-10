@@ -534,7 +534,7 @@ def _compute_optimal_deployment_timeout(
     installing just Flask alone takes this long and it would be easy to
     incorrectly estimate this.
 
-    :param namesapce: The target namespace for the deployments.
+    :param namespace: The target namespace for the deployments.
     :param service_stages: The desired configuration for the incoming
         deployments.
     :param returns: The optimal timeout (in seconds).
