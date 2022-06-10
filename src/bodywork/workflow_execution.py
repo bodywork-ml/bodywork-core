@@ -42,6 +42,7 @@ from .constants import (
     SSH_SECRET_NAME,
 )
 from .exceptions import (
+    BodyworkJobFailure,
     BodyworkWorkflowExecutionError,
     BodyworkNamespaceError,
     BodyworkDockerImageError,
@@ -303,10 +304,12 @@ def _run_batch_stages(
     try:
         timeout = max(stage.max_completion_time for stage in batch_stages)
         k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
-        _print_logs_to_stdout(namespace, job_name)
-    except TimeoutError as e:
+        for job_object in job_objects:
+            _print_logs_to_stdout(namespace, job_name)
+    except (TimeoutError, BodyworkJobFailure) as e:
         _log.error("Some (or all) k8s jobs failed to complete successfully")
-        _print_logs_to_stdout(namespace, job_name)
+        for job_object in job_objects:
+            _print_logs_to_stdout(namespace, job_name)
         raise e
     finally:
         for job_object in job_objects:
