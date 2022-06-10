@@ -28,8 +28,8 @@ from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
 )
-from ..exceptions import BodyworkClusterResourcesError, BodyworkJobFailure
-from .utils import has_unscheduleable_pods, make_valid_k8s_name
+from ..exceptions import BodyworkJobFailure
+from .utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class JobStatus(Enum):
@@ -190,10 +190,7 @@ def monitor_jobs_to_completion(
     :return: True if all of the jobs complete successfully.
     """
     sleep(wait_before_start_seconds)
-
-    unschedulable_pods = [has_unscheduleable_pods(job) for job in jobs]
-    if any(unschedulable_pods):
-        raise BodyworkClusterResourcesError("job", [job.metadata.name for job in jobs])
+    check_resource_scheduling_status(jobs)
 
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]

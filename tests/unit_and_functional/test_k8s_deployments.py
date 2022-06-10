@@ -396,14 +396,13 @@ def test_get_deployment_status_raises_exception_when_deployment_cannot_be_found(
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-@patch("bodywork.k8s.deployments.has_unscheduleable_pods")
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
 def test_monitor_deployments_raises_timeout_error_if_jobs_do_not_succeed(
-    mock_has_unscheduleable_pods: MagicMock,
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
     mock_deployment_status.return_value = DeploymentStatus.PROGRESSING
-    mock_has_unscheduleable_pods.return_value = False
     with raises(TimeoutError, match="have yet to reach status=complete"):
         monitor_deployments_to_completion(
             [service_stage_deployment_object], timeout_seconds=1
@@ -411,28 +410,12 @@ def test_monitor_deployments_raises_timeout_error_if_jobs_do_not_succeed(
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-@patch("bodywork.k8s.deployments.has_unscheduleable_pods")
-def test_monitor_deployments_raises_bodyworkclusterresourceerror_if_pods_unschedulable(
-    mock_has_unscheduleable_pods: MagicMock,
-    mock_deployment_status: MagicMock,
-    service_stage_deployment_object: kubernetes.client.V1Deployment,
-):
-    mock_deployment_status.return_value = DeploymentStatus.PROGRESSING
-    mock_has_unscheduleable_pods.return_value = True
-    with raises(BodyworkClusterResourcesError, match="Inadequate cluster cpu"):
-        monitor_deployments_to_completion(
-            [service_stage_deployment_object], timeout_seconds=1
-        )
-
-
-@patch("bodywork.k8s.deployments._get_deployment_status")
-@patch("bodywork.k8s.deployments.has_unscheduleable_pods")
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
 def test_monitor_deployments_identifies_successful_deployments(
-    mock_has_unscheduleable_pods: MagicMock,
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
-    mock_has_unscheduleable_pods.return_value = False
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
         DeploymentStatus.PROGRESSING,

@@ -19,11 +19,12 @@ Helper functions for working with the Kubernetes API.
 """
 import json
 import re
-from typing import cast, List, Tuple, Union
+from typing import cast, Iterable, List, Tuple, Union
 
 from kubernetes.client.rest import ApiException
 from kubernetes import client as k8s
 
+from ..exceptions import BodyworkClusterResourcesError
 
 EnvVars = k8s.V1EnvVar
 
@@ -94,3 +95,22 @@ def has_unscheduleable_pods(k8s_resource: Union[k8s.V1Job, k8s.V1Deployment]) ->
         return True if unschedulable_pods else False
     except IndexError:
         return False
+
+
+def check_resource_scheduling_status(
+    resources: Union[Iterable[k8s.V1Job], Iterable[k8s.V1Deployment]]
+) -> None:
+    """Check job or deployment cluster scheduling status.
+
+    :param resources: List of jobs or deployments to check.
+    :raises BodyworkClusterResourcesError: if any resources cannot be
+        scheduled onto a k8s cluster node.
+    """
+    unschedulable_pods = [has_unscheduleable_pods(resource) for resource in resources]
+    if any(unschedulable_pods):
+        resource_type = (
+            "job" if isinstance(list(resources)[0], k8s.V1Job) else "deployment"
+        )
+        raise BodyworkClusterResourcesError(
+            resource_type, [resource.metadata.name for resource in resources]
+        )
