@@ -30,7 +30,7 @@ from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
-    DEFAULT_K8S_POLLING_FREQ
+    DEFAULT_K8S_POLLING_FREQ,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import make_valid_k8s_name

@@ -30,7 +30,7 @@ from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
-    DEFAULT_K8S_POLLING_FREQ
+    DEFAULT_K8S_POLLING_FREQ,
 )
 from .utils import make_valid_k8s_name
 
@@ -347,9 +347,7 @@ def monitor_deployments_to_completion(
         _get_deployment_status(deployment) for deployment in deployments
     ]
 
-    while any(
-        status is DeploymentStatus.PROGRESSING for status in deployments_status
-    ):
+    while any(status is DeploymentStatus.PROGRESSING for status in deployments_status):
         if progress_bar:
             update_progress_bar(progress_bar)
 

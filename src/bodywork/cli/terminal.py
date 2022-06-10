@@ -56,7 +56,7 @@ def make_progress_bar(
     timeout_seconds: int, polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ
 ) -> Progress:
     """Configure progress bar for monitoring stage execution on CLI.
-    
+
     :param timeout_seconds: The duration after which all stages in a
         step will be deleted.
     :param polling_freq_seconds: The frequency with which the progress
@@ -79,7 +79,7 @@ def make_progress_bar(
 def update_progress_bar(progress_bar: Progress) -> None:
     """Update progress bar by advancing all tasks one step.
 
-    :param progress_bar: The progress bar whose tasks need advancing. 
+    :param progress_bar: The progress bar whose tasks need advancing.
     """
     progress_info = _get_progress_description()
     for task_id in progress_bar.task_ids:
