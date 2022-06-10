@@ -100,7 +100,7 @@ def run_stage(
             f"at {repo_url}"
         )
     except TimeoutExpired:
-        msg = f"Timout exceeded when running {stage.executable_module}"
+        msg = f"Timeout exceeded when running {stage.executable_module}"
         stage_failure_exception = BodyworkStageFailure(stage_name, msg)
         raise stage_failure_exception
     except Exception as e:
