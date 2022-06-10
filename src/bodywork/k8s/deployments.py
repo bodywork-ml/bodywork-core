@@ -31,6 +31,7 @@ from ..constants import (
     BODYWORK_STAGES_SERVICE_ACCOUNT,
     K8S_MAX_SURGE,
     K8S_MAX_UNAVAILABLE,
+    K8S_PROBE_PERIOD_SECONDS,
 )
 from .utils import make_valid_k8s_name
 
@@ -93,8 +94,7 @@ def configure_service_stage_deployment(
     if project_repo_branch:
         container_args += [f"--branch={project_repo_branch}"]
 
-    probe_period_seconds = 10
-    startup_probe_failure_threshold = ceil(startup_time_seconds / probe_period_seconds)
+    startup_probe_failure_thold = ceil(startup_time_seconds / K8S_PROBE_PERIOD_SECONDS)
 
     container_resources = k8s.V1ResourceRequirements(
         requests={
@@ -112,12 +112,12 @@ def configure_service_stage_deployment(
         args=container_args,
         startup_probe=k8s.V1Probe(
             tcp_socket=k8s.V1TCPSocketAction(port=port),
-            period_seconds=probe_period_seconds,
-            failure_threshold=startup_probe_failure_threshold,
+            period_seconds=K8S_PROBE_PERIOD_SECONDS,
+            failure_threshold=startup_probe_failure_thold,
         ),
         liveness_probe=k8s.V1Probe(
             tcp_socket=k8s.V1TCPSocketAction(port=port),
-            period_seconds=probe_period_seconds,
+            period_seconds=K8S_PROBE_PERIOD_SECONDS,
         ),
     )
     pod_spec = k8s.V1PodSpec(
