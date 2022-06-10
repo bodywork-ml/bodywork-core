@@ -20,7 +20,7 @@ orchestrate the execution of service deployment stages.
 """
 from copy import deepcopy
 from datetime import datetime
-from unittest.mock import call, MagicMock, patch
+from unittest.mock import call, MagicMock, Mock, patch
 
 import kubernetes
 import copy
@@ -423,6 +423,33 @@ def test_monitor_deployments_to_completion_identifies_successful_deployments(
         polling_freq_seconds=0.5,
     )
     assert successful is True
+
+
+@patch("bodywork.k8s.deployments.update_progress_bar")
+@patch("bodywork.k8s.deployments._get_deployment_status")
+def test_monitor_deployments_to_completion_updates_progress_bar(
+    mock_deployment_status: MagicMock,
+    mock_update_progress_bar: MagicMock,
+    service_stage_deployment_object: kubernetes.client.V1Deployment,
+):
+    mock_deployment_status.side_effect = [
+        DeploymentStatus.PROGRESSING,
+        DeploymentStatus.COMPLETE,
+    ]
+    monitor_deployments_to_completion(
+        [service_stage_deployment_object], 1, 0.5, progress_bar=None
+    )
+    mock_update_progress_bar.assert_not_called()
+
+    mock_deployment_status.side_effect = [
+        DeploymentStatus.PROGRESSING,
+        DeploymentStatus.COMPLETE,
+    ]
+    mock_progress_bar = Mock()
+    monitor_deployments_to_completion(
+        [service_stage_deployment_object], 1, 0.5, progress_bar=mock_progress_bar
+    )
+    mock_update_progress_bar.assert_called()
 
 
 def test_deployment_id_creates_valid_deployed_service_identifiers():

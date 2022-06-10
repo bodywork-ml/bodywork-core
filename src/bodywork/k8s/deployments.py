@@ -24,12 +24,13 @@ from time import sleep, time
 from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
-from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
+from rich.progress import Progress
 
+from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
-    LOG_TIME_FORMAT,
+    DEFAULT_K8S_POLLING_FREQ
 )
 from .utils import make_valid_k8s_name
 
@@ -321,18 +322,21 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
 def monitor_deployments_to_completion(
     deployments: Iterable[k8s.V1Deployment],
     timeout_seconds: int = 10,
-    polling_freq_seconds: int = 1,
+    polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ,
     wait_before_start_seconds: int = 5,
+    progress_bar: Progress = None,
 ) -> bool:
-    """Monitor deployment status until completion or timeout.
+    """Monitor deployment stat5us until completion or timeout.
 
     :param deployments: The deployments to monitor.
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time (in seconds) between status
-        polling, defaults to 1.
+        polling, defaults to DEFAULT_K8S_POLLING_FREQ.
     :param wait_before_start_seconds: Time to wait before starting to
         monitor deployments - e.g. to allow deployments to be created.
+    :param progress_bar: Progress bar to update after every
+        polling cycle, defaults to None.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
     :return: True if all of the deployments are successful.
@@ -343,48 +347,31 @@ def monitor_deployments_to_completion(
         _get_deployment_status(deployment) for deployment in deployments
     ]
 
-    progress_bar = Progress(
-        TextColumn("{task.description}"),
-        TextColumn("[bold bright_red]WAIT    "),
-        BarColumn(),
-        TaskProgressColumn(),
-        refresh_per_second=2,
-        transient=True,
-    )
+    while any(
+        status is DeploymentStatus.PROGRESSING for status in deployments_status
+    ):
+        if progress_bar:
+            update_progress_bar(progress_bar)
 
-    def progress_desc(time: str):
-        return f"[dim cyan]{time}"
+        sleep(polling_freq_seconds)
 
-    t = datetime.now().strftime(LOG_TIME_FORMAT)
-    progress_step = timeout_seconds / polling_freq_seconds
-    progress_task = progress_bar.add_task(progress_desc(t), total=progress_step)
-
-    with progress_bar:
-
-        while any(
-            status is DeploymentStatus.PROGRESSING for status in deployments_status
-        ):
-            sleep(polling_freq_seconds)
-            if time() - start_time >= timeout_seconds:
-                unsuccessful_deployments_msg = [
-                    (
-                        f"deployment={deployment.metadata.name} in "
-                        f"namespace={deployment.metadata.namespace}"
-                    )
-                    for deployment, status in zip(deployments, deployments_status)
-                    if status != DeploymentStatus.COMPLETE
-                ]
-                msg = (
-                    f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '
-                    f"status=complete after {timeout_seconds}s"
+        if time() - start_time >= timeout_seconds:
+            unsuccessful_deployments_msg = [
+                (
+                    f"deployment={deployment.metadata.name} in "
+                    f"namespace={deployment.metadata.namespace}"
                 )
-                raise TimeoutError(msg)
-            deployments_status = [
-                _get_deployment_status(deployment) for deployment in deployments
+                for deployment, status in zip(deployments, deployments_status)
+                if status != DeploymentStatus.COMPLETE
             ]
-
-            t = datetime.now().strftime(LOG_TIME_FORMAT)
-            progress_bar.update(progress_task, advance=1, description=progress_desc(t))
+            msg = (
+                f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '
+                f"status=complete after {timeout_seconds}s"
+            )
+            raise TimeoutError(msg)
+        deployments_status = [
+            _get_deployment_status(deployment) for deployment in deployments
+        ]
 
     return True
 

@@ -28,7 +28,7 @@ import os
 import stat
 
 from . import k8s
-from .cli.terminal import print_pod_logs
+from .cli.terminal import make_progress_bar, print_pod_logs
 from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
 from .constants import (
     DEFAULT_PROJECT_DIR,
@@ -301,8 +301,14 @@ def _run_batch_stages(
         _log.info(f"Creating k8s job for stage = {job_name}")
         k8s.create_job(job_object)
     try:
-        timeout = max(stage.max_completion_time for stage in batch_stages)
-        k8s.monitor_jobs_to_completion(job_objects, timeout + TIMEOUT_GRACE_SECONDS)
+        timeout = (
+            max(stage.max_completion_time for stage in batch_stages)
+            + TIMEOUT_GRACE_SECONDS
+        )
+        with make_progress_bar(timeout) as progress_bar:
+            k8s.monitor_jobs_to_completion(
+                job_objects, timeout, progress_bar=progress_bar
+            )
     except TimeoutError as e:
         _log.error("Some (or all) k8s jobs failed to complete successfully")
         raise e
@@ -369,10 +375,14 @@ def _run_service_stages(
             )
             k8s.create_deployment(deployment_object)
     try:
-        timeout = max(stage.max_startup_time for stage in service_stages)
-        k8s.monitor_deployments_to_completion(
-            deployment_objects, timeout + TIMEOUT_GRACE_SECONDS
+        timeout = (
+            max(stage.max_startup_time for stage in service_stages)
+            + TIMEOUT_GRACE_SECONDS
         )
+        with make_progress_bar(timeout) as progress_bar:
+            k8s.monitor_deployments_to_completion(
+                deployment_objects, timeout, progress_bar=progress_bar
+            )
     except TimeoutError as e:
         _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:

@@ -18,7 +18,7 @@
 Unit tests for the high-level Kubernetes jobs interface, used to
 orchestrate the execution of batch stages.
 """
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import kubernetes
 from pytest import fixture, raises
@@ -205,3 +205,28 @@ def test_monitor_jobs_to_completion_identifies_successful_jobs(
         polling_freq_seconds=0.5,
     )
     assert successful is True
+
+
+@patch("bodywork.k8s.batch_jobs.update_progress_bar")
+@patch("bodywork.k8s.batch_jobs._get_job_status")
+def test_monitor_jobs_to_completion_updates_progress_bar(
+    mock_job_status: MagicMock,
+    mock_update_progress_bar: MagicMock,
+    batch_stage_job_object: kubernetes.client.V1Job,
+):
+    mock_job_status.side_effect = [
+        JobStatus.ACTIVE,
+        JobStatus.SUCCEEDED,
+    ]
+    monitor_jobs_to_completion([batch_stage_job_object], 1, 0.5, progress_bar=None)
+    mock_update_progress_bar.assert_not_called()
+
+    mock_job_status.side_effect = [
+        JobStatus.ACTIVE,
+        JobStatus.SUCCEEDED,
+    ]
+    mock_progress_bar = Mock()
+    monitor_jobs_to_completion(
+        [batch_stage_job_object], 1, 0.5, progress_bar=mock_progress_bar
+    )
+    mock_update_progress_bar.assert_called()
