@@ -18,7 +18,6 @@
 High-level interface to the Kubernetes batch API as used to create and
 manage Bodywork batch stages.
 """
-from datetime import datetime
 from enum import Enum
 from time import sleep, time
 from typing import Iterable, List
