@@ -166,9 +166,10 @@ def _stage(
     git_url: str = Argument(...),
     git_branch: str = Option("", "--branch"),
     stage_name: str = Argument(...),
+    timeout: int = Argument(None),
 ):
     try:
-        run_stage(stage_name, git_url, git_branch)
+        run_stage(stage_name, git_url, git_branch, timeout=timeout)
         sys.exit(0)
     except Exception:
         sys.exit(1)
@@ -210,15 +211,12 @@ def _create_deployment(
                 characters="=",
                 style="green",
             )
-            with console.status(
-                "[purple]Bodywork deploying[/purple]", spinner="aesthetic"
-            ):
-                run_workflow(
-                    git_url,
-                    git_branch,
-                    ssh_key_path=ssh_key_path,
-                    docker_image_override=image,
-                )
+            run_workflow(
+                git_url,
+                git_branch,
+                ssh_key_path=ssh_key_path,
+                docker_image_override=image,
+            )
             console.rule(characters="=", style="green")
         except BodyworkWorkflowExecutionError:
             sys.exit(1)

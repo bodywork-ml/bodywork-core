@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, Mock, patch
 import kubernetes
 from pytest import fixture, raises
 
-from bodywork.exceptions import BodyworkJobFailure
+from bodywork.exceptions import BodyworkClusterResourcesError, BodyworkJobFailure
 from bodywork.k8s.batch_jobs import (
     configure_batch_stage_job,
     create_job,
@@ -45,7 +45,7 @@ def batch_stage_job_object() -> kubernetes.client.V1Job:
         image_pull_policy="Always",
         resources=container_resources,
         command=["bodywork", "stage"],
-        args=["project_repo_url", "project_repo_branch", "train"],
+        args=["project_repo_url", "project_repo_branch", "train", "60"],
     )
     pod_spec = kubernetes.client.V1PodSpec(
         containers=[container], restart_policy="Never"
@@ -87,6 +87,26 @@ def test_configure_batch_stage_job():
     )
     assert job.spec.template.spec.containers[0].resources.requests["cpu"] == "1"
     assert job.spec.template.spec.containers[0].resources.requests["memory"] == "100M"
+
+
+def test_configure_batch_stage_job_with_timeouts():
+    job = configure_batch_stage_job(
+        namespace="bodywork-dev",
+        stage_name="train",
+        project_repo_url="bodywork-ml/bodywork-test-project",
+        project_repo_branch="dev",
+        image="bodyworkml/bodywork-core:0.0.7",
+        cpu_request=1,
+        memory_request=100,
+        retries=2,
+        timeout=60,
+    )
+    assert job.spec.template.spec.containers[0].args == [
+        "bodywork-ml/bodywork-test-project",
+        "train",
+        "--branch=dev",
+        "60",
+    ]
 
 
 @patch("kubernetes.client.BatchV1Api")
@@ -172,8 +192,11 @@ def test_get_job_status_raises_exception_when_job_cannot_be_found(
 
 
 @patch("bodywork.k8s.batch_jobs._get_job_status")
+@patch("bodywork.k8s.batch_jobs.check_resource_scheduling_status")
 def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
-    mock_job_status: MagicMock, batch_stage_job_object: kubernetes.client.V1Job
+    mock_check_resource_scheduling_status: MagicMock,
+    mock_job_status: MagicMock,
+    batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.return_value = JobStatus.ACTIVE
     with raises(TimeoutError, match="yet to reach status=succeeded"):
@@ -181,8 +204,11 @@ def test_monitor_jobs_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
 
 
 @patch("bodywork.k8s.batch_jobs._get_job_status")
+@patch("bodywork.k8s.batch_jobs.check_resource_scheduling_status")
 def test_monitor_jobs_to_completion_raises_bodyworkjobfailures_error_if_jobs_fail(
-    mock_job_status: MagicMock, batch_stage_job_object: kubernetes.client.V1Job
+    mock_check_resource_scheduling_status: MagicMock,
+    mock_job_status: MagicMock,
+    batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.return_value = JobStatus.FAILED
     with raises(BodyworkJobFailure, match="have failed"):
@@ -190,8 +216,11 @@ def test_monitor_jobs_to_completion_raises_bodyworkjobfailures_error_if_jobs_fai
 
 
 @patch("bodywork.k8s.batch_jobs._get_job_status")
+@patch("bodywork.k8s.batch_jobs.check_resource_scheduling_status")
 def test_monitor_jobs_to_completion_identifies_successful_jobs(
-    mock_job_status: MagicMock, batch_stage_job_object: kubernetes.client.V1Job
+    mock_check_resource_scheduling_status: MagicMock,
+    mock_job_status: MagicMock,
+    batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.side_effect = [
         JobStatus.ACTIVE,

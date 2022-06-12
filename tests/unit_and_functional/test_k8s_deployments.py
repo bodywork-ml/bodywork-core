@@ -26,6 +26,7 @@ import kubernetes
 import copy
 from pytest import fixture, raises
 
+from bodywork.exceptions import BodyworkClusterResourcesError
 from bodywork.k8s.deployments import (
     cluster_service_url,
     configure_service_stage_deployment,
@@ -107,26 +108,25 @@ def test_configure_service_stage_deployment():
         replicas=2,
         cpu_request=1,
         memory_request=100,
-        seconds_to_be_ready_before_completing=5,
+        startup_time_seconds=5,
     )
     assert deployment.metadata.namespace == "bodywork-dev"
     assert deployment.metadata.name == "serve"
     assert deployment.spec.replicas == 2
-    assert deployment.spec.template.spec.containers[0].args == [
+
+    containers = deployment.spec.template.spec.containers
+    assert containers[0].args == [
         "bodywork-ml/bodywork-test-project",
         "serve",
         "--branch=dev",
     ]
-    assert (
-        deployment.spec.template.spec.containers[0].image
-        == "bodyworkml/bodywork-core:latest"
-    )
-    assert deployment.spec.template.spec.containers[0].resources.requests["cpu"] == "1"
-    assert (
-        deployment.spec.template.spec.containers[0].resources.requests["memory"]
-        == "100M"
-    )
-    assert deployment.spec.min_ready_seconds == 5
+    assert containers[0].image == "bodyworkml/bodywork-core:latest"
+    assert containers[0].resources.requests["cpu"] == "1"
+    assert containers[0].resources.requests["memory"] == "100M"
+    assert containers[0].startup_probe.tcp_socket.port == 80
+    assert containers[0].startup_probe.period_seconds == 10
+    assert containers[0].startup_probe.failure_threshold == 1
+    assert containers[0].liveness_probe.period_seconds == 10
 
 
 @patch("kubernetes.client.AppsV1Api")
@@ -357,7 +357,7 @@ def test_get_deployment_status_correctly_determines_complete_status(
     )
     assert (
         _get_deployment_status(service_stage_deployment_object)
-        == DeploymentStatus.COMPLETE
+        == DeploymentStatus.ACTIVE
     )
 
 
@@ -395,7 +395,9 @@ def test_get_deployment_status_raises_exception_when_deployment_cannot_be_found(
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
+def test_monitor_deployments_raises_timeout_error_if_jobs_do_not_succeed(
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
@@ -407,15 +409,17 @@ def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_s
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-def test_monitor_deployments_to_completion_identifies_successful_deployments(
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
+def test_monitor_deployments_identifies_successful_deployments(
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
         DeploymentStatus.PROGRESSING,
-        DeploymentStatus.COMPLETE,
-        DeploymentStatus.COMPLETE,
+        DeploymentStatus.ACTIVE,
+        DeploymentStatus.ACTIVE,
     ]
     successful = monitor_deployments_to_completion(
         [service_stage_deployment_object, service_stage_deployment_object],

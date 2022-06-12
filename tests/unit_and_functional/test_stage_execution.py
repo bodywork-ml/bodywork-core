@@ -74,7 +74,7 @@ def test_run_stage_with_requirements_install(
         assert False
 
     assert "Starting stage" in caplog.text
-    assert "Installing Python packages" in caplog.text
+    assert "Installing required Python packages" in caplog.text
     assert "Using pip" in capfd.readouterr().out
     assert "Attempting to run" in caplog.text
     assert "Successfully ran stage" in caplog.text
@@ -101,7 +101,7 @@ def test_run_stage_without_requirements_install(
         assert False
 
     assert "Starting stage" in caplog.text
-    assert "Installing Python packages" not in caplog.text
+    assert "Installing required Python packages" not in caplog.text
     assert "Using pip" not in capfd.readouterr().out
     assert "Successfully ran stage" in caplog.text
 
@@ -167,13 +167,22 @@ def test_run_stage_failure_raises_exception_for_failed_scripts(
         run_stage("stage_4", project_repo_connection_string)
 
 
+def test_run_stage_timeout_raises_exception(
+    setup_bodywork_test_project: Iterable[bool],
+    project_repo_connection_string: str,
+    bodywork_output_dir: Iterable[Path],
+):
+    with raises(BodyworkStageFailure, match="Timeout exceeded"):
+        run_stage("stage_5", project_repo_connection_string, timeout=1)
+
+
 def test_run_stage_failure_raises_exception_for_failed_setup(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
     with raises(BodyworkStageFailure, match="KeyError"):
-        run_stage("stage_5", project_repo_connection_string)
+        run_stage("stage_foo", project_repo_connection_string)
 
 
 def test_infer_executable_type_type():
