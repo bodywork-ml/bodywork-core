@@ -89,6 +89,7 @@ from .utils import (
     api_exception_msg,
     create_k8s_environment_variables,
     EnvVars,
+    has_unscheduleable_pods,
     make_valid_k8s_name,
 )
 
@@ -146,6 +147,7 @@ __all__ = [
     "api_exception_msg",
     "create_k8s_environment_variables",
     "EnvVars",
+    "has_unscheduleable_pods",
     "make_valid_k8s_name",
     "replicate_secrets_in_namespace",
     "update_secret",

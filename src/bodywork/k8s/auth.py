@@ -133,6 +133,11 @@ def setup_workflow_service_accounts(namespace: str) -> None:
             rules=[
                 k8s.V1PolicyRule(
                     api_groups=[""],
+                    resources=["pods"],
+                    verbs=["get", "list"],
+                ),
+                k8s.V1PolicyRule(
+                    api_groups=[""],
                     resources=["namespaces", "services"],
                     verbs=["get", "list", "create", "delete"],
                 ),

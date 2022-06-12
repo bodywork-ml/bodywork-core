@@ -26,6 +26,7 @@ import kubernetes
 import copy
 from pytest import fixture, raises
 
+from bodywork.exceptions import BodyworkClusterResourcesError
 from bodywork.k8s.deployments import (
     cluster_service_url,
     configure_service_stage_deployment,
@@ -395,7 +396,9 @@ def test_get_deployment_status_raises_exception_when_deployment_cannot_be_found(
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_succeed(
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
+def test_monitor_deployments_raises_timeout_error_if_jobs_do_not_succeed(
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
@@ -407,7 +410,9 @@ def test_monitor_deployments_to_completion_raises_timeout_error_if_jobs_do_not_s
 
 
 @patch("bodywork.k8s.deployments._get_deployment_status")
-def test_monitor_deployments_to_completion_identifies_successful_deployments(
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
+def test_monitor_deployments_identifies_successful_deployments(
+    mock_check_resource_scheduling_status: MagicMock,
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):

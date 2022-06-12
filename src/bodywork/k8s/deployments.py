@@ -26,7 +26,7 @@ from typing import Dict, Iterable, List, Any
 from kubernetes import client as k8s
 
 from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
-from .utils import make_valid_k8s_name
+from .utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
@@ -333,6 +333,8 @@ def monitor_deployments_to_completion(
     :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
+    check_resource_scheduling_status(deployments)
+
     start_time = time()
     deployments_status = [
         _get_deployment_status(deployment) for deployment in deployments
