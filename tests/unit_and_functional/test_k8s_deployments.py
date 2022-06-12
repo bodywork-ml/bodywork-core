@@ -429,16 +429,18 @@ def test_monitor_deployments_identifies_successful_deployments(
     assert successful is True
 
 
+@patch("bodywork.k8s.deployments.check_resource_scheduling_status")
 @patch("bodywork.k8s.deployments.update_progress_bar")
 @patch("bodywork.k8s.deployments._get_deployment_status")
 def test_monitor_deployments_to_completion_updates_progress_bar(
     mock_deployment_status: MagicMock,
     mock_update_progress_bar: MagicMock,
+    mock_update_check_resource_scheduling_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
-        DeploymentStatus.COMPLETE,
+        DeploymentStatus.ACTIVE,
     ]
     monitor_deployments_to_completion(
         [service_stage_deployment_object], 1, 0.5, progress_bar=None
@@ -447,7 +449,7 @@ def test_monitor_deployments_to_completion_updates_progress_bar(
 
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
-        DeploymentStatus.COMPLETE,
+        DeploymentStatus.ACTIVE,
     ]
     mock_progress_bar = Mock()
     monitor_deployments_to_completion(

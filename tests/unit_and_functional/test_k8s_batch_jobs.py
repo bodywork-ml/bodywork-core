@@ -236,11 +236,13 @@ def test_monitor_jobs_to_completion_identifies_successful_jobs(
     assert successful is True
 
 
+@patch("bodywork.k8s.batch_jobs.check_resource_scheduling_status")
 @patch("bodywork.k8s.batch_jobs.update_progress_bar")
 @patch("bodywork.k8s.batch_jobs._get_job_status")
 def test_monitor_jobs_to_completion_updates_progress_bar(
     mock_job_status: MagicMock,
     mock_update_progress_bar: MagicMock,
+    mock_check_resource_scheduling_status: MagicMock,
     batch_stage_job_object: kubernetes.client.V1Job,
 ):
     mock_job_status.side_effect = [
