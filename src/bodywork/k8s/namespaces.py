@@ -18,6 +18,9 @@
 High-level interface to the Kubernetes core API as used to manage
 Kubernetes namespaces for Bodywork projects.
 """
+import sys
+from time import sleep
+
 from kubernetes import client as k8s
 
 from .utils import make_valid_k8s_name
@@ -47,9 +50,18 @@ def create_namespace(name: str) -> None:
     )
 
 
-def delete_namespace(name: str) -> None:
-    """Delete a new namespace.
+def delete_namespace(name: str, print_progress: bool = False) -> None:
+    """Delete a new namespace and wait until finished.
 
     :param name: Kubernetes namespace to delete.
     """
     k8s.CoreV1Api().delete_namespace(name=name, propagation_policy="Background")
+    if print_progress:
+        while namespace_exists(name):
+            sleep(1)
+            print(".", end="")
+            sys.stdout.flush()
+        print("")
+    else:
+        while namespace_exists(name):
+            sleep(1)

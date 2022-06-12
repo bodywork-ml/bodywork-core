@@ -47,6 +47,7 @@ def configure_batch_stage_job(
     project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
+    timeout: int = None,
     container_env_vars: List[k8s.V1EnvVar] = None,
     cpu_request: float = None,
     memory_request: int = None,
@@ -64,6 +65,9 @@ def configure_batch_stage_job(
         defaults to BODYWORK_DOCKER_IMAGE.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param timeout: The time to wait (in seconds) for the stage
+        executable to complete, before terminating the main process.
+        Defaults to None.
     :param container_env_vars: Optional list of environment variables
         (e.g. secrets) to set in the container, defaults to None.
     :param cpu_request: CPU resource to request from a node, expressed
@@ -73,11 +77,13 @@ def configure_batch_stage_job(
     :return: A configured k8s job object.
     """
     job_name = make_valid_k8s_name(stage_name)
-    container_args = (
-        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
-        if project_repo_branch
-        else [project_repo_url, stage_name]
-    )
+
+    container_args = [project_repo_url, stage_name]
+    if project_repo_branch:
+        container_args += [f"--branch={project_repo_branch}"]
+    if timeout:
+        container_args += [str(timeout)]
+
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,

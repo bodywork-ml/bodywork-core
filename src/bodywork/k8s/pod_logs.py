@@ -46,14 +46,20 @@ def get_latest_pod_name(namespace: str, pod_name_prefix: str) -> str:
     return None
 
 
-def get_pod_logs(namespace: str, pod_name: str) -> str:
+def get_pod_logs(namespace: str, pod_name: str, previous: bool = False) -> str:
     """Retrieve the logs from the named pod.
 
     :param namespace: The namespace in which to look for the pods.
     :param pod_name: The name of the pod to retrieve logs from.
+    :param previous: Return logs from previously crashed pod.
     :return: The pod logs as a single string object.
     """
-    pod_logs = k8s.CoreV1Api().read_namespaced_pod_log(
-        namespace=namespace, name=pod_name
-    )
+    try:
+        pod_logs = k8s.CoreV1Api().read_namespaced_pod_log(
+            namespace=namespace, name=pod_name, previous=previous
+        )
+    except k8s.ApiException:
+        pod_logs = k8s.CoreV1Api().read_namespaced_pod_log(
+            namespace=namespace, name=pod_name, previous=False
+        )
     return cast(str, pod_logs[:-1])
