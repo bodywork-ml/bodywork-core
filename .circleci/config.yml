@@ -103,7 +103,7 @@ jobs:
           command: |
             docker build . -t bodyworkml/bodywork-core:$(cat VERSION) -t bodyworkml/bodywork-core:$(cat VERSION | grep -Eo "^[0-9]+\.[0-9]+") -t bodyworkml/bodywork-core:latest
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            docker push bodyworkml/bodywork-core
+            docker push bodyworkml/bodywork-core --all-tags
   build-python-package-push-to-pypi:
     docker:
       - image: cimg/python:3.9

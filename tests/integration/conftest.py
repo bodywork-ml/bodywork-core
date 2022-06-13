@@ -18,11 +18,12 @@
 Pytest fixtures for use with all Kubernetes integration testing modules.
 """
 import os
+import re
 import stat
 from pathlib import Path
 from random import randint
-from typing import Iterable, cast
-from urllib.parse import urlparse
+from subprocess import PIPE, Popen, STDOUT
+from typing import Iterable
 
 from pytest import fixture
 from _pytest.fixtures import FixtureRequest
@@ -142,14 +143,32 @@ def github_ssh_private_key_file(bodywork_output_dir: Path) -> Path:
         raise RuntimeError(f"Cannot create Github SSH Private Key File - {e}.")
 
 
-@fixture(scope="function")
-def ingress_load_balancer_url() -> str:
+@fixture(scope="session")
+def ingress_load_balancer_url() -> Iterable[str]:
     try:
         k8s_config.load_kube_config()
-        contexts, active_context = k8s_config.list_kube_config_contexts()
+        _, active_context = k8s_config.list_kube_config_contexts()
         if active_context["name"] == "minikube":
-            kube_config = k8s_client.configuration.Configuration.get_default_copy()
-            url = urlparse(kube_config.host).hostname
+            mk_service_tunnel = Popen(
+                [
+                    "minikube",
+                    "service",
+                    "-n",
+                    NGINX_INGRESS_CONTROLLER_NAMESPACE,
+                    NGINX_INGRESS_CONTROLLER_SERVICE_NAME,
+                    "--url",
+                ],
+                stdout=PIPE,
+                stderr=STDOUT,
+                text=True,
+            )
+            for line in mk_service_tunnel.stdout:
+                ingress_url_match = re.search(r"http://((\d|\.)+:\d+)", line)
+                if ingress_url_match:
+                    ingress_url = ingress_url_match.group(1)
+                    break
+            yield ingress_url
+            mk_service_tunnel.kill()
         else:
             services_in_namespace = k8s_client.CoreV1Api().list_namespaced_service(
                 namespace=NGINX_INGRESS_CONTROLLER_NAMESPACE
@@ -159,8 +178,8 @@ def ingress_load_balancer_url() -> str:
                 for service in services_in_namespace.items
                 if service.metadata.name == NGINX_INGRESS_CONTROLLER_SERVICE_NAME
             ][0]
-            url = nginx_service.status.load_balancer.ingress[0].hostname
-        return cast(str, url)
+            ingress_url = nginx_service.status.load_balancer.ingress[0].hostname
+            yield ingress_url
     except IndexError:
         msg = (
             f"Cannot find service={NGINX_INGRESS_CONTROLLER_SERVICE_NAME} in "
