@@ -23,10 +23,13 @@ from time import sleep, time
 from typing import Iterable, List
 
 from kubernetes import client as k8s
+from rich.progress import Progress
 
+from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    DEFAULT_K8S_POLLING_FREQ,
 )
 from ..exceptions import BodyworkJobFailure
 from .utils import check_resource_scheduling_status, make_valid_k8s_name
@@ -177,8 +180,9 @@ def _get_job_status(job: k8s.V1Job) -> JobStatus:
 def monitor_jobs_to_completion(
     jobs: Iterable[k8s.V1Job],
     timeout_seconds: int = 10,
-    polling_freq_seconds: int = 1,
+    polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ,
     wait_before_start_seconds: int = 5,
+    progress_bar: Progress = None,
 ) -> bool:
     """Monitor job status until completion or timeout.
 
@@ -186,9 +190,11 @@ def monitor_jobs_to_completion(
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time between status polling, defaults
-        to 1.
+        to DEFAULT_K8S_POLLING_FREQ.
     :param wait_before_start_seconds: Time to wait before starting to
         monitor jobs - e.g. to allow jobs to be created.
+    :param progress_bar: Progress bar to update after every
+        polling cycle, defaults to None.
     :raises TimeoutError: If the timeout limit is reached and the jobs
         are still marked as active (but not failed).
     :raises BodyworkJobFailure: If any of the jobs are marked as
@@ -200,8 +206,13 @@ def monitor_jobs_to_completion(
 
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]
+
     while any(job_status is JobStatus.ACTIVE for job_status in jobs_status):
+        if progress_bar:
+            update_progress_bar(progress_bar)
+
         sleep(polling_freq_seconds)
+
         if time() - start_time >= timeout_seconds:
             unsuccessful_jobs_msg = [
                 f"job={job.metadata.name} in namespace={job.metadata.namespace}"
@@ -214,6 +225,7 @@ def monitor_jobs_to_completion(
             )
             raise TimeoutError(msg)
         jobs_status = [_get_job_status(job) for job in jobs]
+
     if any(job_status is JobStatus.FAILED for job_status in jobs_status):
         failed_jobs = [
             job for job, status in zip(jobs, jobs_status) if status == JobStatus.FAILED

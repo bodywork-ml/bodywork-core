@@ -25,10 +25,13 @@ from time import sleep, time
 from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
+from rich.progress import Progress
 
+from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    DEFAULT_K8S_POLLING_FREQ,
     K8S_MAX_SURGE,
     K8S_MAX_UNAVAILABLE,
     K8S_PROBE_PERIOD_SECONDS,
@@ -339,8 +342,9 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
 def monitor_deployments_to_completion(
     deployments: Iterable[k8s.V1Deployment],
     timeout_seconds: int = 10,
-    polling_freq_seconds: int = 1,
+    polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ,
     wait_before_start_seconds: int = 5,
+    progress_bar: Progress = None,
 ) -> bool:
     """Monitor deployment status until completion or timeout.
 
@@ -348,9 +352,11 @@ def monitor_deployments_to_completion(
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time (in seconds) between status
-        polling, defaults to 1.
+        polling, defaults to DEFAULT_K8S_POLLING_FREQ.
     :param wait_before_start_seconds: Time to wait before starting to
         monitor deployments - e.g. to allow deployments to be created.
+    :param progress_bar: Progress bar to update after every
+        polling cycle, defaults to None.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
     :return: True if all of the deployments are successful.
@@ -362,8 +368,13 @@ def monitor_deployments_to_completion(
     deployments_status = [
         _get_deployment_status(deployment) for deployment in deployments
     ]
+
     while any(status is DeploymentStatus.PROGRESSING for status in deployments_status):
+        if progress_bar:
+            update_progress_bar(progress_bar)
+
         sleep(polling_freq_seconds)
+
         if time() - start_time >= timeout_seconds:
             unsuccessful_deployments_msg = [
                 (
@@ -381,6 +392,7 @@ def monitor_deployments_to_completion(
         deployments_status = [
             _get_deployment_status(deployment) for deployment in deployments
         ]
+
     return True
 
 

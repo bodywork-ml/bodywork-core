@@ -37,6 +37,7 @@ from .constants import (
     DEFAULT_LOG_LEVEL,
     DEFAULT_LOG_LEVEL_ENV_VAR,
     DEFAULT_PROJECT_DIR,
+    LOG_TIME_FORMAT,
     PROJECT_CONFIG_FILENAME,
 )
 from .cli.terminal import console
@@ -88,6 +89,7 @@ def bodywork_log_factory(
             highlighter=NullHighlighter(),
             omit_repeated_times=False,
             rich_tracebacks=True,
+            log_time_format=LOG_TIME_FORMAT,
         )
         log.addHandler(log_handler)
     return log
