@@ -326,6 +326,12 @@ def _run_batch_stages(
             job_name = job_object.metadata.name
             _print_logs_to_stdout(namespace, job_name, True)
         raise e
+    finally:
+        for job_object in job_objects:
+            job_name = job_object.metadata.name
+            _log.info(f"Deleting k8s job for stage = {job_name}")
+            k8s.delete_job(namespace, job_name)
+            _log.info(f"Deleted k8s job for stage = {job_name}")
 
 
 def _run_service_stages(
