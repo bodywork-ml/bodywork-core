@@ -346,7 +346,7 @@ def monitor_deployments_to_completion(
     wait_before_start_seconds: int = 5,
     progress_bar: Progress = None,
 ) -> bool:
-    """Monitor deployment stat5us until completion or timeout.
+    """Monitor deployment status until completion or timeout.
 
     :param deployments: The deployments to monitor.
     :param timeout_seconds: How long to keep monitoring status before
