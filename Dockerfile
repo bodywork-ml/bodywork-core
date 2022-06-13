@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM python:3.9-slim as py39-base
+FROM python:3.9 as py39-base
 RUN apt -y update &&\
     apt-get install -y git &&\
     apt -y install build-essential &&\
