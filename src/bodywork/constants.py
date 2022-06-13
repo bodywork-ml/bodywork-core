@@ -51,7 +51,7 @@ SSH_DIR_NAME = ".ssh"
 SECRET_GROUP_LABEL = "group"
 SSH_PRIVATE_KEY_ENV_VAR = "BODYWORK_GIT_SSH_PRIVATE_KEY"
 SSH_SECRET_NAME = "ssh-git-private-key"
-TIMEOUT_GRACE_SECONDS = 30
+TIMEOUT_GRACE_SECONDS = 90  # max time required to pull image from DockerHub and start it
 USAGE_STATS_SERVER_URL = "http://k8s.bodyworkml-dev.com/bodywork-ml/usage-tracking--server/workflow-execution-counter"  # noqa
 
 # External SSH Fingerprints
