@@ -23,13 +23,16 @@ from time import sleep, time
 from typing import Iterable, List
 
 from kubernetes import client as k8s
+from rich.progress import Progress
 
+from ..cli.terminal import update_progress_bar
 from ..constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
+    DEFAULT_K8S_POLLING_FREQ,
 )
 from ..exceptions import BodyworkJobFailure
-from .utils import make_valid_k8s_name
+from .utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class JobStatus(Enum):
@@ -47,6 +50,7 @@ def configure_batch_stage_job(
     project_repo_branch: str = None,
     image: str = BODYWORK_DOCKER_IMAGE,
     retries: int = 2,
+    timeout: int = None,
     container_env_vars: List[k8s.V1EnvVar] = None,
     cpu_request: float = None,
     memory_request: int = None,
@@ -64,6 +68,9 @@ def configure_batch_stage_job(
         defaults to BODYWORK_DOCKER_IMAGE.
     :param retries: Number of times to retry running the stage to
         completion (if necessary), defaults to 2.
+    :param timeout: The time to wait (in seconds) for the stage
+        executable to complete, before terminating the main process.
+        Defaults to None.
     :param container_env_vars: Optional list of environment variables
         (e.g. secrets) to set in the container, defaults to None.
     :param cpu_request: CPU resource to request from a node, expressed
@@ -73,11 +80,13 @@ def configure_batch_stage_job(
     :return: A configured k8s job object.
     """
     job_name = make_valid_k8s_name(stage_name)
-    container_args = (
-        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
-        if project_repo_branch
-        else [project_repo_url, stage_name]
-    )
+
+    container_args = [project_repo_url, stage_name]
+    if project_repo_branch:
+        container_args += [f"--branch={project_repo_branch}"]
+    if timeout:
+        container_args += [str(timeout)]
+
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -171,8 +180,9 @@ def _get_job_status(job: k8s.V1Job) -> JobStatus:
 def monitor_jobs_to_completion(
     jobs: Iterable[k8s.V1Job],
     timeout_seconds: int = 10,
-    polling_freq_seconds: int = 1,
+    polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ,
     wait_before_start_seconds: int = 5,
+    progress_bar: Progress = None,
 ) -> bool:
     """Monitor job status until completion or timeout.
 
@@ -180,9 +190,11 @@ def monitor_jobs_to_completion(
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time between status polling, defaults
-        to 1.
+        to DEFAULT_K8S_POLLING_FREQ.
     :param wait_before_start_seconds: Time to wait before starting to
         monitor jobs - e.g. to allow jobs to be created.
+    :param progress_bar: Progress bar to update after every
+        polling cycle, defaults to None.
     :raises TimeoutError: If the timeout limit is reached and the jobs
         are still marked as active (but not failed).
     :raises BodyworkJobFailure: If any of the jobs are marked as
@@ -190,10 +202,17 @@ def monitor_jobs_to_completion(
     :return: True if all of the jobs complete successfully.
     """
     sleep(wait_before_start_seconds)
+    check_resource_scheduling_status(jobs)
+
     start_time = time()
     jobs_status = [_get_job_status(job) for job in jobs]
+
     while any(job_status is JobStatus.ACTIVE for job_status in jobs_status):
+        if progress_bar:
+            update_progress_bar(progress_bar)
+
         sleep(polling_freq_seconds)
+
         if time() - start_time >= timeout_seconds:
             unsuccessful_jobs_msg = [
                 f"job={job.metadata.name} in namespace={job.metadata.namespace}"
@@ -206,6 +225,7 @@ def monitor_jobs_to_completion(
             )
             raise TimeoutError(msg)
         jobs_status = [_get_job_status(job) for job in jobs]
+
     if any(job_status is JobStatus.FAILED for job_status in jobs_status):
         failed_jobs = [
             job for job, status in zip(jobs, jobs_status) if status == JobStatus.FAILED

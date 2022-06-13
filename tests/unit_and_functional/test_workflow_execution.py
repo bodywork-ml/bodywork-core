@@ -18,7 +18,7 @@
 Test Bodywork workflow execution.
 """
 from pathlib import Path
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import ANY, MagicMock, Mock, patch
 from typing import Iterable, Dict, Any
 
 import requests
@@ -34,6 +34,7 @@ from bodywork.constants import (
     FAILURE_EXCEPTION_K8S_ENV_VAR,
     SSH_PRIVATE_KEY_ENV_VAR,
     SSH_SECRET_NAME,
+    TIMEOUT_GRACE_SECONDS,
 )
 from bodywork.exceptions import (
     BodyworkWorkflowExecutionError,
@@ -41,10 +42,12 @@ from bodywork.exceptions import (
     BodyworkGitError,
 )
 from bodywork.workflow_execution import (
+    _compute_optimal_deployment_timeout,
+    _compute_optimal_job_timeout,
+    _print_logs_to_stdout,
     image_exists_on_dockerhub,
     parse_dockerhub_image_string,
     run_workflow,
-    _print_logs_to_stdout,
 )
 from bodywork.config import BodyworkConfig
 
@@ -110,6 +113,42 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
         run_workflow(git_url, config=mock_config)
 
 
+def test_compute_optimal_job_timeouts():
+    stage_a = Mock()
+    stage_a.retries = 1
+    stage_a.max_completion_time = 60
+
+    stage_b = Mock()
+    stage_b.retries = 3
+    stage_b.max_completion_time = 30
+
+    timeout = _compute_optimal_job_timeout([stage_a, stage_b])
+    assert timeout == 3 * 30 + TIMEOUT_GRACE_SECONDS
+
+    stage_b.retries = 0
+    timeout = _compute_optimal_job_timeout([stage_a, stage_b])
+    assert timeout == 1 * 60 + TIMEOUT_GRACE_SECONDS
+
+
+@patch("bodywork.workflow_execution.k8s")
+def test_compute_optimal_deployment_timeouts(mock_k8s: MagicMock):
+    stage_a = Mock()
+    stage_a.replicas = 2
+    stage_a.max_startup_time = 60
+
+    stage_b = Mock()
+    stage_b.replicas = 3
+    stage_b.max_startup_time = 45
+
+    mock_k8s.is_existing_deployment.side_effect = [False, False]
+    timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
+    assert timeout == 2 * max(60, 60) + TIMEOUT_GRACE_SECONDS
+
+    mock_k8s.is_existing_deployment.side_effect = [False, True]
+    timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
+    assert timeout == 2 * 2 * max(60, 45) + TIMEOUT_GRACE_SECONDS
+
+
 @patch("bodywork.workflow_execution.k8s")
 def test_print_logs_to_stdout(
     mock_k8s: MagicMock, capsys: CaptureFixture, caplog: LogCaptureFixture
@@ -173,7 +212,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         image=ANY,
         cpu_request=ANY,
         memory_request=ANY,
-        seconds_to_be_ready_before_completing=ANY,
+        startup_time_seconds=ANY,
     )
     mock_k8s.configure_batch_stage_job.assert_called_with(
         ANY,
@@ -181,6 +220,7 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
         ANY,
         ANY,
         retries=ANY,
+        timeout=ANY,
         container_env_vars=expected_result,
         image=ANY,
         cpu_request=ANY,
@@ -228,6 +268,7 @@ def test_run_workflow_runs_failure_stage_on_failure(
         ANY,
         ANY,
         retries=ANY,
+        timeout=ANY,
         container_env_vars=expected_result,
         image=ANY,
         cpu_request=ANY,
@@ -506,6 +547,7 @@ def test_run_workflow_adds_ssh_key_env_var_from_file(
         ANY,
         ANY,
         retries=ANY,
+        timeout=ANY,
         container_env_vars=[expected_result],
         image=ANY,
         cpu_request=ANY,
@@ -551,6 +593,7 @@ def test_workflow_adds_ssh_secret_if_default_exists(
         ANY,
         ANY,
         retries=ANY,
+        timeout=ANY,
         container_env_vars=[expected_result],
         image=ANY,
         cpu_request=ANY,
@@ -595,6 +638,7 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
         ANY,
         ANY,
         retries=ANY,
+        timeout=ANY,
         container_env_vars=[expected_result],
         image=ANY,
         cpu_request=ANY,

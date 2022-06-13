@@ -20,20 +20,30 @@ Bodywork service deployment stages.
 """
 from datetime import datetime
 from enum import Enum
+from math import ceil
 from time import sleep, time
 from typing import Dict, Iterable, List, Any
 
 from kubernetes import client as k8s
+from rich.progress import Progress
 
-from ..constants import BODYWORK_DOCKER_IMAGE, BODYWORK_STAGES_SERVICE_ACCOUNT
-from .utils import make_valid_k8s_name
+from ..cli.terminal import update_progress_bar
+from ..constants import (
+    BODYWORK_DOCKER_IMAGE,
+    BODYWORK_STAGES_SERVICE_ACCOUNT,
+    DEFAULT_K8S_POLLING_FREQ,
+    K8S_MAX_SURGE,
+    K8S_MAX_UNAVAILABLE,
+    K8S_PROBE_PERIOD_SECONDS,
+)
+from .utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
     """Possible states of a k8s deployment."""
 
-    COMPLETE = "complete"
     PROGRESSING = "progressing"
+    ACTIVE = "active"
 
 
 def configure_service_stage_deployment(
@@ -49,7 +59,7 @@ def configure_service_stage_deployment(
     container_env_vars: List[k8s.V1EnvVar] = None,
     cpu_request: float = None,
     memory_request: int = None,
-    seconds_to_be_ready_before_completing: int = 30,
+    startup_time_seconds: int = 30,
 ) -> k8s.V1Deployment:
     """Configure a Bodywork service stage k8s deployment.
 
@@ -75,18 +85,20 @@ def configure_service_stage_deployment(
         as a decimal number, defaults to None.
     :param memory_request: Memory resource to request from a node, expressed
         as an integer number of megabytes, defaults to None.
-    :param seconds_to_be_ready_before_completing: Time (in seconds) that
+    :param startup_time_seconds: Time (in seconds) that
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
     :return: A configured k8s deployment object.
 
     """
     service_name = make_valid_k8s_name(stage_name)
-    container_args = (
-        [project_repo_url, stage_name, f"--branch={project_repo_branch}"]
-        if project_repo_branch
-        else [project_repo_url, stage_name]
-    )
+
+    container_args = [project_repo_url, stage_name]
+    if project_repo_branch:
+        container_args += [f"--branch={project_repo_branch}"]
+
+    startup_probe_failure_thold = ceil(startup_time_seconds / K8S_PROBE_PERIOD_SECONDS)
+
     container_resources = k8s.V1ResourceRequirements(
         requests={
             "cpu": f"{cpu_request}" if cpu_request else None,
@@ -101,6 +113,15 @@ def configure_service_stage_deployment(
         env=container_env_vars,
         command=["bodywork", "stage"],
         args=container_args,
+        startup_probe=k8s.V1Probe(
+            tcp_socket=k8s.V1TCPSocketAction(port=port),
+            period_seconds=K8S_PROBE_PERIOD_SECONDS,
+            failure_threshold=startup_probe_failure_thold,
+        ),
+        liveness_probe=k8s.V1Probe(
+            tcp_socket=k8s.V1TCPSocketAction(port=port),
+            period_seconds=K8S_PROBE_PERIOD_SECONDS,
+        ),
     )
     pod_spec = k8s.V1PodSpec(
         service_account_name=BODYWORK_STAGES_SERVICE_ACCOUNT,
@@ -125,7 +146,12 @@ def configure_service_stage_deployment(
         template=pod_template_spec,
         selector={"matchLabels": {"stage": service_name}},
         revision_history_limit=0,
-        min_ready_seconds=seconds_to_be_ready_before_completing,
+        strategy=k8s.V1DeploymentStrategy(
+            rolling_update=k8s.V1RollingUpdateDeployment(
+                max_surge=K8S_MAX_SURGE,
+                max_unavailable=K8S_MAX_UNAVAILABLE,
+            )
+        ),
     )
     deployment_metadata = k8s.V1ObjectMeta(
         namespace=namespace,
@@ -299,7 +325,7 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
         k8s_deployment_data.status.available_replicas is not None
         and k8s_deployment_data.status.unavailable_replicas is None
     ):
-        return DeploymentStatus.COMPLETE
+        return DeploymentStatus.ACTIVE
     elif (
         k8s_deployment_data.status.available_replicas is None
         or k8s_deployment_data.status.unavailable_replicas > 0
@@ -316,8 +342,9 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
 def monitor_deployments_to_completion(
     deployments: Iterable[k8s.V1Deployment],
     timeout_seconds: int = 10,
-    polling_freq_seconds: int = 1,
+    polling_freq_seconds: int = DEFAULT_K8S_POLLING_FREQ,
     wait_before_start_seconds: int = 5,
+    progress_bar: Progress = None,
 ) -> bool:
     """Monitor deployment status until completion or timeout.
 
@@ -325,20 +352,29 @@ def monitor_deployments_to_completion(
     :param timeout_seconds: How long to keep monitoring status before
         calling a timeout, defaults to 10.
     :param polling_freq_seconds: Time (in seconds) between status
-        polling, defaults to 1.
+        polling, defaults to DEFAULT_K8S_POLLING_FREQ.
     :param wait_before_start_seconds: Time to wait before starting to
         monitor deployments - e.g. to allow deployments to be created.
+    :param progress_bar: Progress bar to update after every
+        polling cycle, defaults to None.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
     :return: True if all of the deployments are successful.
     """
     sleep(wait_before_start_seconds)
+    check_resource_scheduling_status(deployments)
+
     start_time = time()
     deployments_status = [
         _get_deployment_status(deployment) for deployment in deployments
     ]
+
     while any(status is DeploymentStatus.PROGRESSING for status in deployments_status):
+        if progress_bar:
+            update_progress_bar(progress_bar)
+
         sleep(polling_freq_seconds)
+
         if time() - start_time >= timeout_seconds:
             unsuccessful_deployments_msg = [
                 (
@@ -346,7 +382,7 @@ def monitor_deployments_to_completion(
                     f"namespace={deployment.metadata.namespace}"
                 )
                 for deployment, status in zip(deployments, deployments_status)
-                if status != DeploymentStatus.COMPLETE
+                if status != DeploymentStatus.ACTIVE
             ]
             msg = (
                 f'{"; ".join(unsuccessful_deployments_msg)} have yet to reach '
@@ -356,6 +392,7 @@ def monitor_deployments_to_completion(
         deployments_status = [
             _get_deployment_status(deployment) for deployment in deployments
         ]
+
     return True
 
 

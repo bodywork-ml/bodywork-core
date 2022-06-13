@@ -21,7 +21,7 @@ download the project code and run stages.
 from enum import Enum
 from os import environ
 from pathlib import Path
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, TimeoutExpired
 from typing import Sequence
 
 import nbformat
@@ -48,6 +48,7 @@ def run_stage(
     repo_url: str,
     repo_branch: str = None,
     cloned_repo_dir: Path = DEFAULT_PROJECT_DIR,
+    timeout: int = None,
 ) -> None:
     """Retrieve latest project code and run the chosen stage.
 
@@ -56,8 +57,11 @@ def run_stage(
     :param repo_branch: The Git branch to download, defaults to None.
     :param cloned_repo_dir: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
-    :raises RuntimeError: If the executable script exits with a non-zero
-        exit code (i.e. fails).
+    :param timeout: The time to wait (in seconds) for the stage
+        executable to complete, before terminating the main process.
+        Defaults to None.
+    :raises BodyworkStageFailure: If the executable script exits with
+        a non-zero exit code (i.e. fails).
     """
     _log.info(
         f"Starting stage = {stage_name} from {repo_branch} branch of repo "
@@ -89,11 +93,15 @@ def run_stage(
                 check=True,
                 cwd=stage.executable_module_path.parent,
                 encoding="utf-8",
+                timeout=timeout,
             )
         _log.info(
             f"Successfully ran stage = {stage_name} from {repo_branch} branch of repo "
             f"at {repo_url}"
         )
+    except TimeoutExpired:
+        msg = f"Timeout exceeded when running {stage.executable_module}"
+        raise BodyworkStageFailure(stage_name, msg)
     except Exception as e:
         stage_failure_exception = BodyworkStageFailure(stage_name, e.__repr__())
         _log.error(stage_failure_exception)
@@ -107,13 +115,16 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     :raises RuntimeError: If there was an error when installing requirements.
     """
     try:
-        _log.info(f"Installing Python packages: {', '.join(requirements)}")
+        _log.info(f"Installing required Python packages: {', '.join(requirements)}\n")
         run(
             ["pip", "install", "-v", *requirements],
             check=True,
             encoding="utf-8",
         )
+        print("")
+        _log.info("Successfully installed all Python packages.")
     except CalledProcessError as e:
+        print("")
         msg = f"Cannot install stage requirements: {e.cmd} failed with {e.stderr}"
         raise RuntimeError(msg)
 
