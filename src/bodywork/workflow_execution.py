@@ -516,7 +516,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
 def _compute_optimal_job_timeout(batch_stages: List[BatchStageConfig]) -> int:
     """Compute the optimal timeout for job monitoring.
 
-    The the max configured startup time has been floored at 60s, because
+    The max configured startup time has been floored at 60s, because
     installing just Pandas alone takes this long and it would be easy to
     incorrectly estimate this.
 
