@@ -44,6 +44,7 @@ from bodywork.k8s.namespaces import create_namespace, delete_namespace
 
 NGINX_INGRESS_CONTROLLER_NAMESPACE = "ingress-nginx"
 NGINX_INGRESS_CONTROLLER_SERVICE_NAME = "ingress-nginx-controller"
+NGINX_INGRESS_CONTROLLER_SERVICE_PORT = 80
 TEST_NAMESPACE = "bodywork-test"
 
 
@@ -149,24 +150,20 @@ def ingress_load_balancer_url() -> Iterable[str]:
         k8s_config.load_kube_config()
         _, active_context = k8s_config.list_kube_config_contexts()
         if active_context["name"] == "minikube":
+            localhost_port = 8080
             mk_service_tunnel = Popen(
                 [
-                    "minikube",
-                    "service",
+                    "kubectl",
                     "-n",
                     NGINX_INGRESS_CONTROLLER_NAMESPACE,
-                    NGINX_INGRESS_CONTROLLER_SERVICE_NAME,
-                    "--url",
+                    f"service/{NGINX_INGRESS_CONTROLLER_SERVICE_NAME}",
+                    f"{localhost_port}:{NGINX_INGRESS_CONTROLLER_SERVICE_PORT}",
                 ],
                 stdout=PIPE,
                 stderr=STDOUT,
                 text=True,
             )
-            for line in mk_service_tunnel.stdout:
-                ingress_url_match = re.search(r"http://((\d|\.)+:\d+)", line)
-                if ingress_url_match:
-                    ingress_url = ingress_url_match.group(1)
-                    break
+            ingress_url = f"127.0.0.1:{localhost_port}"
             yield ingress_url
             mk_service_tunnel.kill()
         else:
@@ -197,7 +194,7 @@ def ingress_load_balancer_url() -> Iterable[str]:
         msg = f"K8s API error - {e}"
         raise RuntimeError(msg)
     except Exception as e:
-        raise RuntimeError() from e
+        raise e
 
 
 @fixture(scope="session")
