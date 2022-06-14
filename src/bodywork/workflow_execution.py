@@ -516,12 +516,17 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
 def _compute_optimal_job_timeout(batch_stages: List[BatchStageConfig]) -> int:
     """Compute the optimal timeout for job monitoring.
 
+    The max configured startup time has been floored at 60s, because
+    installing just Pandas alone takes this long and it would be easy to
+    incorrectly estimate this.
+
     :param namesapce: The target namespace for the job.
     :param batch_stages: The desired configuration for the jobs.
     :param returns: The optimal timeout (in seconds).
     """
     job_timeouts = [
-        max(1, stage.retries) * stage.max_completion_time for stage in batch_stages
+        max(1, stage.retries) * max(60, stage.max_completion_time)
+        for stage in batch_stages
     ]
     return int(max(job_timeouts) + TIMEOUT_GRACE_SECONDS)
 
@@ -532,9 +537,9 @@ def _compute_optimal_deployment_timeout(
     """Compute the optimal timeout for deployment monitoring.
 
     If a deployment is rolling-out for the first time, then wait for
-    twice the max configured startup time. If a deployment is updating,
-    then compute how long it will take to replace all pods using the
-    rolling update strategy.
+    the max configured startup time. If a deployment is updating, then
+    compute how long it will take to replace all pods using the rolling
+    update strategy.
 
     The the max configured startup time has been floored at 60s, because
     installing just Flask alone takes this long and it would be easy to
@@ -548,13 +553,13 @@ def _compute_optimal_deployment_timeout(
     new_pod_rate = K8S_MAX_SURGE + K8S_MAX_UNAVAILABLE
     deployment_timeouts = [
         (
-            stage.max_startup_time
+            max(60, stage.max_startup_time)
             if not k8s.is_existing_deployment(namespace, stage.name)
             else ceil(stage.replicas / new_pod_rate) * max(60, stage.max_startup_time)
         )
         for stage in service_stages
     ]
-    return int(2 * max(deployment_timeouts) + TIMEOUT_GRACE_SECONDS)
+    return int(max(deployment_timeouts) + TIMEOUT_GRACE_SECONDS)
 
 
 def _print_logs_to_stdout(
