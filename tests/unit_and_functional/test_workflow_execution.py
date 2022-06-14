@@ -123,7 +123,7 @@ def test_compute_optimal_job_timeouts():
     stage_b.max_completion_time = 30
 
     timeout = _compute_optimal_job_timeout([stage_a, stage_b])
-    assert timeout == 3 * 30 + TIMEOUT_GRACE_SECONDS
+    assert timeout == 3 * max(60, 30) + TIMEOUT_GRACE_SECONDS
 
     stage_b.retries = 0
     timeout = _compute_optimal_job_timeout([stage_a, stage_b])
@@ -142,11 +142,11 @@ def test_compute_optimal_deployment_timeouts(mock_k8s: MagicMock):
 
     mock_k8s.is_existing_deployment.side_effect = [False, False]
     timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
-    assert timeout == 2 * max(60, 60) + TIMEOUT_GRACE_SECONDS
+    assert timeout == max(60, 45) + TIMEOUT_GRACE_SECONDS
 
     mock_k8s.is_existing_deployment.side_effect = [False, True]
     timeout = _compute_optimal_deployment_timeout("the-namespace", [stage_a, stage_b])
-    assert timeout == 2 * 2 * max(60, 45) + TIMEOUT_GRACE_SECONDS
+    assert timeout == 2 * max(60, 45) + TIMEOUT_GRACE_SECONDS
 
 
 @patch("bodywork.workflow_execution.k8s")
