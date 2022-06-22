@@ -320,7 +320,7 @@ def _run_batch_stages(
             job_name = job_object.metadata.name
             _log.info(f"Completed k8s job for stage = {job_name}")
             _print_logs_to_stdout(namespace, job_name, False)
-    except (TimeoutError, BodyworkJobFailure) as e:
+    except (TimeoutError, BodyworkJobFailure, KeyboardInterrupt) as e:
         _log.error("Some (or all) k8s jobs failed to complete successfully")
         for job_object in job_objects:
             job_name = job_object.metadata.name
@@ -396,7 +396,7 @@ def _run_service_stages(
             k8s.monitor_deployments_to_completion(
                 deployment_objects, timeout, progress_bar=progress_bar
             )
-    except TimeoutError as e:
+    except (TimeoutError, KeyboardInterrupt) as e:
         _log.error("Deployments failed to roll-out successfully")
         for deployment_object in deployment_objects:
             deployment_name = deployment_object.metadata.name
