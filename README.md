@@ -13,7 +13,9 @@
 
 ---
 
-[![asciicast](https://asciinema.org/a/505464.svg)](https://asciinema.org/a/505464)
+<div align="center">
+<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bw-v3-terminal.png"/>
+</div>
 
 ---
 
