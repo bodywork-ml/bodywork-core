@@ -11,6 +11,8 @@
 <img src="https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success"/>
 </div>
 
+---
+
 [![asciicast](https://asciinema.org/a/505464.svg)](https://asciinema.org/a/505464)
 
 ---
