@@ -87,7 +87,7 @@ The documentation for bodywork-core can be found [here](https://bodywork.readthe
 To accelerate your project's journey to production, we provide [deployment templates](https://bodywork.readthedocs.io/en/latest/template_projects/) for common use-cases:
 
 - [batch scoring data](https://github.com/bodywork-ml/bodywork-batch-job-project)
-- [deploying a predict service with a REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
+- [deploying a prediction service with a REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
 - [scheduling a continuous-training pipeline](https://github.com/bodywork-ml/bodywork-ml-pipeline-project)
 
 ## We want your Feedback
