@@ -9,8 +9,9 @@
 <img src="https://circleci.com/gh/bodywork-ml/bodywork-core.svg?style=shield"/>
 <img src="https://codecov.io/gh/bodywork-ml/bodywork-core/branch/master/graph/badge.svg?token=QGPGZHVH9H"/>
 <img src="https://img.shields.io/pypi/v/bodywork.svg?label=PyPI&logo=PyPI&logoColor=white&color=success"/>
-<script id="asciicast-505464" src="https://asciinema.org/a/505464.js" async></script>
 </div>
+
+[![asciicast](https://asciinema.org/a/505464.svg)](https://asciinema.org/a/505464)
 
 ---
 
