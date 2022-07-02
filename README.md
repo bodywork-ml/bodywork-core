@@ -14,7 +14,7 @@
 ---
 
 <div align="center">
-<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bw-v3-terminal-readme-edited.png"/>
+<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bw-v3-terminal-demo-readme.png"/>
 </div>
 
 Bodywork is a command line tool that deploys machine learning pipelines to [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes). It takes care of everything to do with containers and orchestration, so that you don't have to.
