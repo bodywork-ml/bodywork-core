@@ -13,6 +13,10 @@
 
 ---
 
+<div align="center">
+<img src="https://bodywork-media.s3.eu-west-2.amazonaws.com/bw-v3-terminal-demo-readme.png"/>
+</div>
+
 Bodywork is a command line tool that deploys machine learning pipelines to [Kubernetes](https://en.wikipedia.org/wiki/Kubernetes). It takes care of everything to do with containers and orchestration, so that you don't have to.
 
 ## Who is this for?
@@ -81,7 +85,7 @@ The documentation for bodywork-core can be found [here](https://bodywork.readthe
 To accelerate your project's journey to production, we provide [deployment templates](https://bodywork.readthedocs.io/en/latest/template_projects/) for common use-cases:
 
 - [batch scoring data](https://github.com/bodywork-ml/bodywork-batch-job-project)
-- [deploying a predict service with a REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
+- [deploying a prediction service with a REST API](https://github.com/bodywork-ml/bodywork-serve-model-project)
 - [scheduling a continuous-training pipeline](https://github.com/bodywork-ml/bodywork-ml-pipeline-project)
 
 ## We want your Feedback
