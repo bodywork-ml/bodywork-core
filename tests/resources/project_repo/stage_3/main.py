@@ -6,6 +6,7 @@ import sys
 
 
 def main() -> None:
+    """ """
     with open("../../bodywork_project_output/stage_3_test_file.txt", "w") as f:
         try:
             f.write(f"arg1 = {sys.argv[1]}\n")

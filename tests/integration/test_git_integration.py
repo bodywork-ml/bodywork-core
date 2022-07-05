@@ -36,6 +36,20 @@ def test_that_git_project_repo_can_be_cloned_from_github_using_ssh(
     set_github_ssh_private_key_env_var: None,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param github_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param set_github_ssh_private_key_env_var: None:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param github_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+    :param set_github_ssh_private_key_env_var: None: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     try:
         test_ssh_dir = bodywork_output_dir / ".ssh"
         test_ssh_dir.mkdir()
@@ -56,6 +70,20 @@ def test_that_git_project_repo_can_be_cloned_from_gitlab_using_ssh(
     set_git_ssh_private_key_env_var: None,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param gitlab_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param set_git_ssh_private_key_env_var: None:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param gitlab_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+    :param set_git_ssh_private_key_env_var: None: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     try:
         test_ssh_dir = bodywork_output_dir / ".ssh"
         test_ssh_dir.mkdir()
@@ -76,6 +104,20 @@ def test_that_git_project_repo_can_be_cloned_from_bitbucket_using_ssh(
     set_git_ssh_private_key_env_var: None,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param bitbucket_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param set_git_ssh_private_key_env_var: None:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param bitbucket_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+    :param set_git_ssh_private_key_env_var: None: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     try:
         test_ssh_dir = bodywork_output_dir / ".ssh"
         test_ssh_dir.mkdir()
@@ -96,6 +138,20 @@ def test_that_git_project_repo_can_be_cloned_from_azure_using_ssh(
     set_git_ssh_private_key_env_var: None,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param azure_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param set_git_ssh_private_key_env_var: None:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param azure_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+    :param set_git_ssh_private_key_env_var: None: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     try:
         test_ssh_dir = bodywork_output_dir / ".ssh"
         test_ssh_dir.mkdir()
@@ -113,6 +169,16 @@ def test_that_git_project_repo_can_be_cloned(
     project_repo_connection_string: str,
     cloned_project_repo_location: Path,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+
+    """
     try:
         download_project_code_from_repo(project_repo_connection_string)
         assert cloned_project_repo_location.exists()
@@ -125,6 +191,16 @@ def test_that_git_project_repo_with_branch_specified_can_be_cloned(
     project_repo_connection_string: str,
     cloned_project_repo_location: Path,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param cloned_project_repo_location: Path:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param cloned_project_repo_location: Path: 
+
+    """
     try:
         download_project_code_from_repo(project_repo_connection_string, "master")
         assert cloned_project_repo_location.exists()
@@ -136,6 +212,13 @@ def test_that_git_commit_hash_is_retrieved(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_location: 
+    :param setup_bodywork_test_project: Iterable[bool]: 
+
+    """
     try:
         result = get_git_commit_hash(project_repo_location)
         assert len(result) == 7

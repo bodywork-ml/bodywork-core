@@ -31,13 +31,15 @@ from ..constants import (
 
 def load_kubernetes_config() -> None:
     """Attempt to load k8s config from file.
-
+    
     If running within a k8s cluster, then KUBERNETES_SERVICE_HOST will
     be present, which allows us to call a special initialization method
     for in-cluster situations. Otherwise the standard ~/.kube/config is
     read.
 
+
     :raises RuntimeError: if a kubeconfig cannot be loaded.
+
     """
     if os.getenv("KUBERNETES_SERVICE_HOST"):
         k8s_config.load_incluster_config()
@@ -50,7 +52,12 @@ def service_account_exists(namespace: str, name: str) -> bool:
 
     :param namespace: Kubernetes namespace to check.
     :param name: The name of the service-account to check.
-    :return: True if the service-account was found, otherwise False.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+    :returns: True if the service-account was found, otherwise False.
+
     """
     service_account_objects = (
         k8s.CoreV1Api().list_namespaced_service_account(namespace=namespace).items
@@ -66,7 +73,10 @@ def cluster_role_exists(name: str) -> bool:
     """Does the cluster-role exist.
 
     :param name: The name of the cluster-role to check.
-    :return: True if the cluster-role was found, otherwise False.
+    :param name: str:
+    :param name: str: 
+    :returns: True if the cluster-role was found, otherwise False.
+
     """
     cluster_role_objects = k8s.RbacAuthorizationV1Api().list_cluster_role().items
     cluster_role_names = [
@@ -81,9 +91,12 @@ def workflow_cluster_role_binding_name(namespace: str) -> str:
 
     :param namespace: The namespace in which a workflow service-account
         has been deployed to.
-    :return: The name assigned to the cluster-role-binding that
+    :param namespace: str:
+    :param namespace: str: 
+    :returns: The name assigned to the cluster-role-binding that
         associates the workflow cluster-role to the workflow
         service-account, within a namespace setup for Bodywork.
+
     """
     return f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{namespace}"
 
@@ -92,7 +105,10 @@ def cluster_role_binding_exists(name: str) -> bool:
     """Does the cluster-role-binding exist.
 
     :param name: The name of the cluster-role-binding to check.
-    :return: True if the cluster-role-binding was found, otherwise False.
+    :param name: str:
+    :param name: str: 
+    :returns: True if the cluster-role-binding was found, otherwise False.
+
     """
     cluster_role_binding_objects = (
         k8s.RbacAuthorizationV1Api().list_cluster_role_binding().items
@@ -108,6 +124,9 @@ def delete_cluster_role_binding(name: str) -> None:
     """Delete a cluster-role-binding.
 
     :param name: The name assigned to the cluster-role-binding.
+    :param name: str:
+    :param name: str: 
+
     """
     k8s.RbacAuthorizationV1Api().delete_cluster_role_binding(name=name)
 
@@ -117,6 +136,9 @@ def setup_workflow_service_accounts(namespace: str) -> None:
 
     :param namespace: Namespace in which the service-account will be
         placed.
+    :param namespace: str:
+    :param namespace: str: 
+
     """
     service_account_object = k8s.V1ServiceAccount(
         metadata=k8s.V1ObjectMeta(
@@ -206,6 +228,9 @@ def setup_stages_service_account(namespace: str) -> None:
 
     :param namespace: Namespace in which the service-account will be
         placed.
+    :param namespace: str:
+    :param namespace: str: 
+
     """
     service_account_object = k8s.V1ServiceAccount(
         metadata=k8s.V1ObjectMeta(

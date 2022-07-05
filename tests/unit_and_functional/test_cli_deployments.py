@@ -36,6 +36,20 @@ def test_display_service_deployments_in_namespace(
     capsys: CaptureFixture,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     display_deployments("bodywork-dev")
     captured_one = capsys.readouterr()
@@ -62,6 +76,20 @@ def test_display_all_service_deployments(
     capsys: CaptureFixture,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     mock_k8s_module.list_service_stage_deployments.return_value = (
         service_stage_deployment_list
     )
@@ -77,6 +105,20 @@ def test_display_deployment(
     capsys: CaptureFixture,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     mock_k8s_module.list_service_stage_deployments.return_value = (
         service_stage_deployment_list
     )
@@ -104,6 +146,20 @@ def test_display_service_prints_service_info_to_stdout(
     capsys: CaptureFixture,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     mock_k8s_module.list_service_stage_deployments.return_value = (
         service_stage_deployment_list
     )
@@ -131,6 +187,14 @@ def test_display_service_prints_service_info_to_stdout(
 def test_delete_deployment_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     mock_k8s_module.list_service_stage_deployments.return_value = {"foo": {}}
     delete_service_deployment_in_namespace(
@@ -226,6 +290,20 @@ def test_delete_deployment(
     capsys: CaptureFixture,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     deployment_name = "bodywork-test-project"
     mock_k8s_module.list_service_stage_deployments.return_value = []
 

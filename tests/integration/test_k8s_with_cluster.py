@@ -40,7 +40,12 @@ from bodywork.k8s import (
 
 
 def print_completed_process_info(process: CompletedProcess) -> None:
-    """Print completed process info to stdout to help with debugging."""
+    """Print completed process info to stdout to help with debugging.
+
+    :param process: CompletedProcess:
+    :param process: CompletedProcess: 
+
+    """
     print(f"command = {' '.join(process.args)}")
     print("stdout:")
     print(process.stdout)
@@ -51,6 +56,14 @@ def print_completed_process_info(process: CompletedProcess) -> None:
 def test_workflow_and_service_management_end_to_end_from_cli(
     docker_image: str, ingress_load_balancer_url: str
 ):
+    """
+
+    :param docker_image: str:
+    :param ingress_load_balancer_url: str:
+    :param docker_image: str: 
+    :param ingress_load_balancer_url: str: 
+
+    """
     try:
         process = run(
             [
@@ -161,6 +174,12 @@ def test_workflow_and_service_management_end_to_end_from_cli(
 
 @mark.usefixtures("setup_cluster")
 def test_services_from_previous_deployments_are_deleted(docker_image: str):
+    """
+
+    :param docker_image: str:
+    :param docker_image: str: 
+
+    """
     try:
         process = run(
             [
@@ -221,6 +240,12 @@ def test_services_from_previous_deployments_are_deleted(docker_image: str):
 def test_workflow_will_clean_up_jobs_and_rollback_new_deployments_that_yield_errors(
     docker_image: str,
 ):
+    """
+
+    :param docker_image: str:
+    :param docker_image: str: 
+
+    """
     try:
         process = run(
             [
@@ -264,6 +289,12 @@ def test_workflow_will_clean_up_jobs_and_rollback_new_deployments_that_yield_err
 
 @mark.usefixtures("setup_cluster")
 def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
+    """
+
+    :param docker_image: str:
+    :param docker_image: str: 
+
+    """
     try:
         process = run(
             [
@@ -294,6 +325,7 @@ def test_deploy_will_run_failure_stage_on_workflow_failure(docker_image: str):
 
 @mark.usefixtures("setup_cluster")
 def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
+    """ """
     try:
         bad_image = "bad:bodyworkml/bodywork-core:0.0.0"
         process = run(
@@ -332,6 +364,12 @@ def test_deployment_will_not_run_if_bodywork_docker_image_cannot_be_located():
 
 
 def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
+    """
+
+    :param test_namespace: str:
+    :param test_namespace: str: 
+
+    """
     with raises(CalledProcessError):
         run(
             [
@@ -346,6 +384,7 @@ def test_deployment_command_unsuccessful_raises_exception(test_namespace: str):
 
 @mark.usefixtures("setup_cluster")
 def test_cli_cronjob_handler_crud():
+    """ """
     try:
         process = run(
             [
@@ -429,6 +468,14 @@ def test_deployment_with_ssh_github_connectivity_from_file(
     docker_image: str,
     github_ssh_private_key_file: str,
 ):
+    """
+
+    :param docker_image: str:
+    :param github_ssh_private_key_file: str:
+    :param docker_image: str: 
+    :param github_ssh_private_key_file: str: 
+
+    """
     try:
         process = run(
             [
@@ -459,6 +506,12 @@ def test_deployment_with_ssh_github_connectivity_from_file(
 
 @mark.usefixtures("setup_cluster")
 def test_deployment_of_remote_workflows(docker_image: str):
+    """
+
+    :param docker_image: str:
+    :param docker_image: str: 
+
+    """
     try:
         job_name = "foo"
 
@@ -528,6 +581,14 @@ def test_remote_deployment_with_ssh_github_connectivity(
     docker_image: str,
     github_ssh_private_key_file: str,
 ):
+    """
+
+    :param docker_image: str:
+    :param github_ssh_private_key_file: str:
+    :param docker_image: str: 
+    :param github_ssh_private_key_file: str: 
+
+    """
     job_name = "test-remote-ssh-workflow"
     try:
         process = run(

@@ -28,6 +28,12 @@ from bodywork.k8s import replicate_secrets_in_namespace, secret_exists
 @mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_replicate_secrets_in_namespace(test_namespace: str):
+    """
+
+    :param test_namespace: str:
+    :param test_namespace: str: 
+
+    """
     namespace = test_namespace
     replicate_secrets_in_namespace(namespace, "testsecrets")
     assert secret_exists(namespace, "bodywork-test-project-credentials", "USERNAME")
@@ -36,6 +42,7 @@ def test_replicate_secrets_in_namespace(test_namespace: str):
 @mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_update_secret():
+    """ """
     process_one = run(
         [
             "bodywork",
@@ -60,6 +67,7 @@ def test_update_secret():
 @mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_display_all_secrets():
+    """ """
     process_one = run(
         [
             "bodywork",
@@ -77,6 +85,7 @@ def test_display_all_secrets():
 @mark.usefixtures("setup_cluster")
 @mark.usefixtures("add_secrets")
 def test_cli_secret_handler_crud():
+    """ """
 
     process_one = run(
         [

@@ -78,9 +78,23 @@ def run_workflow(
     :param config: Override config.
     :param cloned_repo_dir: The name of the directory into which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
-    :param ssh_key_path:
+    :param ssh_key_path: raises BodyworkWorkflowExecutionError: if the workflow fails to
+        run for any reason.
+    :param repo_url: str:
+    :param repo_branch: str:  (Default value = None)
+    :param docker_image_override: str:  (Default value = None)
+    :param config: BodyworkConfig:  (Default value = None)
+    :param ssh_key_path: str:  (Default value = None)
+    :param cloned_repo_dir: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param repo_url: str: 
+    :param repo_branch: str:  (Default value = None)
+    :param docker_image_override: str:  (Default value = None)
+    :param config: BodyworkConfig:  (Default value = None)
+    :param ssh_key_path: str:  (Default value = None)
+    :param cloned_repo_dir: Path:  (Default value = DEFAULT_PROJECT_DIR)
     :raises BodyworkWorkflowExecutionError: if the workflow fails to
         run for any reason.
+
     """
 
     try:
@@ -205,6 +219,7 @@ def _cleanup_redundant_services(git_commit_hash, namespace) -> None:
 
     :param git_commit_hash: Git commit hash of current deployment.
     :param namespace: Namespace deployment is in.
+
     """
     _log.info("Searching for services from previous deployment.")
     deployments = k8s.list_service_stage_deployments(namespace)
@@ -223,7 +238,12 @@ def _setup_namespace(config: BodyworkConfig, repo_url: str) -> str:
 
     :param config: Bodywork config.
     :param config: Git repository URL.
-    :return: Name of namespace.
+    :param config: BodyworkConfig:
+    :param repo_url: str:
+    :param config: BodyworkConfig: 
+    :param repo_url: str: 
+    :returns: Name of namespace.
+
     """
     namespace = str(
         config.pipeline.namespace if config.pipeline.namespace else config.pipeline.name
@@ -258,7 +278,10 @@ def workflow_deploys_services(config: BodyworkConfig) -> bool:
     """Checks if any services are configured for deployment
 
     :param config: Bodywork config.
-    :return: True if services are configured for deployment.
+    :param config: BodyworkConfig:
+    :param config: BodyworkConfig: 
+    :returns: True if services are configured for deployment.
+
     """
     return any(
         True
@@ -283,6 +306,19 @@ def _run_batch_stages(
     :param repo_branch: The Git branch to download'.
     :param repo_url: Git repository URL.
     :param docker_image: Docker Image to use.
+    :param batch_stages: List[BatchStageConfig]:
+    :param env_vars: List[k8s.EnvVars]:
+    :param namespace: str:
+    :param repo_branch: str:
+    :param repo_url: str:
+    :param docker_image: str:
+    :param batch_stages: List[BatchStageConfig]: 
+    :param env_vars: List[k8s.EnvVars]: 
+    :param namespace: str: 
+    :param repo_branch: str: 
+    :param repo_url: str: 
+    :param docker_image: str: 
+
     """
     job_objects = [
         k8s.configure_batch_stage_job(
@@ -354,6 +390,23 @@ def _run_service_stages(
     :param repo_url: Git repository URL.
     :param docker_image: Docker Image to use.
     :param git_commit_hash: The git commit hash of this Bodywork project.
+    :param service_stages: List[ServiceStageConfig]:
+    :param project_name: str:
+    :param env_vars: List[k8s.EnvVars]:
+    :param namespace: str:
+    :param repo_branch: str:
+    :param repo_url: str:
+    :param docker_image: str:
+    :param git_commit_hash: str:
+    :param service_stages: List[ServiceStageConfig]: 
+    :param project_name: str: 
+    :param env_vars: List[k8s.EnvVars]: 
+    :param namespace: str: 
+    :param repo_branch: str: 
+    :param repo_url: str: 
+    :param docker_image: str: 
+    :param git_commit_hash: str: 
+
     """
     deployment_objects = [
         k8s.configure_service_stage_deployment(
@@ -441,12 +494,26 @@ def _run_failure_stage(
     docker_image: str,
 ) -> None:
     """Runs the configured Batch Stage if the workflow fails.
+
     :param config: Configuration data for the Bodywork deployment.
     :param workflow_exception: Exception from workflow f
     :param namespace: K8s namespace to execute the service stage in.
     :param repo_url: Git repository URL.
     :param repo_branch: The Git branch to download.
     :param docker_image: Docker Image to use.
+    :param config: BodyworkConfig:
+    :param workflow_exception: Exception:
+    :param namespace: str:
+    :param repo_url: str:
+    :param repo_branch: str:
+    :param docker_image: str:
+    :param config: BodyworkConfig: 
+    :param workflow_exception: Exception: 
+    :param namespace: str: 
+    :param repo_url: str: 
+    :param repo_branch: str: 
+    :param docker_image: str: 
+
     """
     stage_name = config.pipeline.run_on_failure
     _log.info(f"Executing stage = {stage_name}")
@@ -470,8 +537,13 @@ def image_exists_on_dockerhub(repo_name: str, tag: str) -> bool:
     :param repo_name: The name of the DockerHub repository containing
         the Bodywork images.
     :param tag: The specific image tag to check.
+    :param repo_name: str:
+    :param tag: str:
+    :param repo_name: str: 
+    :param tag: str: 
+    :returns: Boolean flag for image existence on DockerHub.
     :raises BodyworkDockerImageError: If connection to DockerHub fails.
-    :return: Boolean flag for image existence on DockerHub.
+
     """
     dockerhub_url = f"https://hub.docker.com/v2/repositories/{repo_name}/tags/{tag}"
     try:
@@ -491,9 +563,12 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
     """Split a DockerHub image string into name and tag.
 
     :param image_string: The DockerHub image string to parse.
+    :param image_string: str:
+    :param image_string: str: 
+    :returns: Image name and image tag tuple.
     :raises BodyworkDockerImageError: If the string is not in the
         DOCKERHUB_USERNAME/IMAGE_NAME:TAG format.
-    :return: Image name and image tag tuple.
+
     """
     err_msg = (
         f"Invalid Docker image specified: {image_string} - "
@@ -515,7 +590,7 @@ def parse_dockerhub_image_string(image_string: str) -> Tuple[str, str]:
 
 def _compute_optimal_job_timeout(batch_stages: List[BatchStageConfig]) -> int:
     """Compute the optimal timeout for job monitoring.
-
+    
     The max configured startup time has been floored at 60s, because
     installing just Pandas alone takes this long and it would be easy to
     incorrectly estimate this.
@@ -523,6 +598,9 @@ def _compute_optimal_job_timeout(batch_stages: List[BatchStageConfig]) -> int:
     :param namesapce: The target namespace for the job.
     :param batch_stages: The desired configuration for the jobs.
     :param returns: The optimal timeout (in seconds).
+    :param batch_stages: List[BatchStageConfig]:
+    :param batch_stages: List[BatchStageConfig]: 
+
     """
     job_timeouts = [
         max(1, stage.retries) * max(60, stage.max_completion_time)
@@ -535,12 +613,12 @@ def _compute_optimal_deployment_timeout(
     namespace: str, service_stages: List[ServiceStageConfig]
 ) -> int:
     """Compute the optimal timeout for deployment monitoring.
-
+    
     If a deployment is rolling-out for the first time, then wait for
     the max configured startup time. If a deployment is updating, then
     compute how long it will take to replace all pods using the rolling
     update strategy.
-
+    
     The the max configured startup time has been floored at 60s, because
     installing just Flask alone takes this long and it would be easy to
     incorrectly estimate this.
@@ -549,6 +627,11 @@ def _compute_optimal_deployment_timeout(
     :param service_stages: The desired configuration for the incoming
         deployments.
     :param returns: The optimal timeout (in seconds).
+    :param namespace: str:
+    :param service_stages: List[ServiceStageConfig]:
+    :param namespace: str: 
+    :param service_stages: List[ServiceStageConfig]: 
+
     """
     new_pod_rate = K8S_MAX_SURGE + K8S_MAX_UNAVAILABLE
     deployment_timeouts = [
@@ -570,6 +653,13 @@ def _print_logs_to_stdout(
     :param namespace: The namespace the job/deployment is in.
     :param job_or_deployment_name: The name of the pod or deployment.
     :param previous: Return logs from previously crashed pod.
+    :param namespace: str:
+    :param job_or_deployment_name: str:
+    :param previous: bool:  (Default value = False)
+    :param namespace: str: 
+    :param job_or_deployment_name: str: 
+    :param previous: bool:  (Default value = False)
+
     """
     try:
         pod_name = k8s.get_latest_pod_name(namespace, job_or_deployment_name)
@@ -584,13 +674,21 @@ def _print_logs_to_stdout(
 
 def _remove_readonly(func: Any, path: Any, exc_info: Any) -> None:
     """Error handler for ``shutil.rmtree``.
-
+    
     If the error is due to an access error (read only file) it
     attempts to add write permission and then retries. If the error is
     for another reason it re-raises the error. This is primarily to
     fix Windows OS access issues.
-
+    
     Usage: ``shutil.rmtree(path, onerror=_remove_readonly)``
+
+    :param func: Any:
+    :param path: Any:
+    :param exc_info: Any:
+    :param func: Any: 
+    :param path: Any: 
+    :param exc_info: Any: 
+
     """
     if not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWRITE)
@@ -615,9 +713,15 @@ def _ping_usage_stats_server() -> None:
 
 def _copy_secrets_to_target_namespace(namespace: str, secrets_group: str) -> None:
     """Copies secrets from a specific group to the specified namespace.
-
+    
     param namespace: Namespace to copy secrets to.
     param secrets_group: Group of secrets to copy.
+
+    :param namespace: str:
+    :param secrets_group: str:
+    :param namespace: str: 
+    :param secrets_group: str: 
+
     """
     try:
         _log.info(

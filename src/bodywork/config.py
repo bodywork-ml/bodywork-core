@@ -39,10 +39,12 @@ VALID_K8S_NAME_REGEX = r"[a-zA-Z0-9-\.]+"
 
 class DictDataValidator:
     """Data validator for dictionaries.
-
+    
     This class is designed to validate key-value data against a schema.
     It uses Cerberus - https://docs.python-cerberus.org/en/stable/ - and
     its in-built schema definition language.
+
+
     """
 
     def __init__(self, schema: Dict[str, Dict[str, Any]]):
@@ -58,7 +60,13 @@ class DictDataValidator:
         :param data: Data to validate against the schema.
         :param prefix: Prefix to add to all data keys that map to an
             error, defaults to ''.
-        :return: List of data validation errors.
+        :param data: Dict[str:
+        :param Any: param prefix: str:  (Default value = "")
+        :param data: Dict[str: 
+        :param Any]: 
+        :param prefix: str:  (Default value = "")
+        :returns: List of data validation errors.
+
         """
         is_valid = self._data_validator.validate(data)
         if is_valid:
@@ -74,10 +82,24 @@ class DictDataValidator:
         :param errors: Raw error output from data validation.
         :param prefix: Prefix to add to all data keys that map to an
             error, defaults to ''.
-        :return: List of formatted errors.
+        :param errors: Dict[str:
+        :param Any: param prefix: str:  (Default value = "")
+        :param errors: Dict[str: 
+        :param Any]: 
+        :param prefix: str:  (Default value = "")
+        :returns: List of formatted errors.
+
         """
 
         def format_error(k: str, v: Any) -> str:
+            """
+
+            :param k: str:
+            :param v: Any:
+            :param k: str: 
+            :param v: Any: 
+
+            """
             try:
                 err_msg = f'{prefix}{k} -> {", ".join(v)}'
             except TypeError:
@@ -117,9 +139,10 @@ class BodyworkConfig:
 
     def _validate_parsed_config(self) -> None:
         """Validate configuration parameters.
-
+        
         This function exists separately to the class constructor purely
         to facilitate easier testing.
+
 
         :raises BodyworkConfigMissingSectionError: if config file does
             not contain all of the following sections: version,
@@ -129,6 +152,7 @@ class BodyworkConfig:
             by the current Bodywork version.
         :raises BodyworkConfigValidationError: if a config
             parameter is missing or has been set to an invalid value.
+
         """
         config = self._config
         missing_config_sections = []
@@ -430,11 +454,14 @@ def _parse_dag_definition(dag_definition: str) -> DAG:
     """Parse DAG definition string.
 
     :param dag_definition: A DAG definition in string format.
-    :raises ValueError: If any 'null' (zero character) stage names are
-        found.
-    :return: A list of steps, where each step is a list of Bodywork
+    :param dag_definition: str:
+    :param dag_definition: str: 
+    :returns: A list of steps, where each step is a list of Bodywork
         pipeline stage names (containing a list of stages to run in each
         step).
+    :raises ValueError: If any 'null' (zero character) stage names are
+        found.
+
     """
     steps = dag_definition.replace(" ", "").split(">>")
     stages_in_steps = [step.split(",") for step in steps]
@@ -460,7 +487,12 @@ def _check_workflow_stages_are_configured(
 
     :param workflow: A pipeline DAG parsed into a Bodywork workflow.
     :param stages: List of stages that have been configured.
-    :return: List of missing stage messages.
+    :param workflow: Iterable[Iterable[str]]:
+    :param stages: Iterable[str]:
+    :param workflow: Iterable[Iterable[str]]: 
+    :param stages: Iterable[str]: 
+    :returns: List of missing stage messages.
+
     """
     stages_in_workflow = [stage for step in workflow for stage in step]
     missing_stages = [

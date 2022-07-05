@@ -31,8 +31,11 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
     """Is the namespace available for use by Bodywork.
 
     :param namespace: The namespace to check.
-    :return: Boolean flag indicating the namespace's availability for
+    :param namespace: str:
+    :param namespace: str: 
+    :returns: Boolean flag indicating the namespace's availability for
         running Bodywork projects.
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -71,16 +74,19 @@ def is_namespace_available_for_bodywork(namespace: str) -> bool:
 
 def setup_namespace_with_service_accounts_and_roles(namespace: str) -> None:
     """Setup kubernetes namespace for Bodywork Workflow accounts.
-
+    
     If the namespace does not already exist, then it will be created
     first. Then the cluster/service accounts required by bodywork to
     run workflows will be created.
-
+    
     Note, that to use this function the Kubernetes user running the
     command must be authorised to create namespaces, service accounts,
     roles and cluster-roles.
 
     :param namespace: Name of namespace.
+    :param namespace: str:
+    :param namespace: str: 
+
     """
     if k8s.namespace_exists(namespace):
         print_warn(f"namespace={namespace} already exists.")

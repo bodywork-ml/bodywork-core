@@ -35,6 +35,7 @@ from bodywork.cli.secrets import (
 
 
 def test_parse_cli_secrets_strings_parses_valid_inputs():
+    """ """
     input_1 = ["KEY1=value1"]
     assert parse_cli_secrets_strings(input_1) == {"KEY1": "value1"}
 
@@ -43,6 +44,7 @@ def test_parse_cli_secrets_strings_parses_valid_inputs():
 
 
 def test_parse_cli_secrets_strings_raises_exception_invalid_inputs():
+    """ """
     input_1 = ["KEY1value1"]
     with raises(ValueError, match="secret key-value pair not in KEY=VALUE format"):
         parse_cli_secrets_strings(input_1)
@@ -64,6 +66,14 @@ def test_parse_cli_secrets_strings_raises_exception_invalid_inputs():
 def test_create_secrets_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     create_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
     captured_one = capsys.readouterr()
@@ -78,6 +88,14 @@ def test_create_secrets_in_namespace(
 
 @patch("bodywork.cli.secrets.k8s")
 def test_can_update_secret(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     update_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
     captured_one = capsys.readouterr()
 
@@ -88,6 +106,14 @@ def test_can_update_secret(mock_k8s_module: MagicMock, capsys: CaptureFixture):
 def test_update_secret_prints_message_secret_does_not_exist(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.secret_exists.return_value = False
 
     update_secret("bodywork-dev", "xyz", "test-credentials", {"A": "b"})
@@ -100,6 +126,14 @@ def test_update_secret_prints_message_secret_does_not_exist(
 def test_delete_secrets_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     delete_secret("the-namespace", "xyz", "test-credentials")
     captured_one = capsys.readouterr()
@@ -124,6 +158,16 @@ def test_delete_secrets_in_namespace(
 def test_display_secrets(
     mock_list_secrets: MagicMock, mock_namespace: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_list_secrets: MagicMock:
+    :param mock_namespace: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_list_secrets: MagicMock: 
+    :param mock_namespace: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_list_secrets.return_value = {
         "PROD-test-credentials": Secret(
             "PROD-test-credentials", "PROD", {"USERNAME": "alex", "PASSWORD": "alex123"}
@@ -160,6 +204,14 @@ def test_display_secrets(
 def test_delete_secrets_group_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     delete_secret_group("the-namespace", "xyz")
     captured_one = capsys.readouterr()

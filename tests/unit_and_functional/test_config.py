@@ -44,11 +44,18 @@ from bodywork.exceptions import (
 
 @fixture(scope="function")
 def bodywork_config(project_repo_location: Path) -> BodyworkConfig:
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     config_file = project_repo_location / "bodywork.yaml"
     return BodyworkConfig(config_file)
 
 
 def test_key_value_data_parser_correctly_identifies_invalid_data():
+    """ """
     schema = {"version": {"type": "string"}, "pipeline": {"type": "dict"}}
     validator = DictDataValidator(schema)
     valid_data = {"version": "1.1", "pipeline": {"name": "foo"}}
@@ -58,6 +65,7 @@ def test_key_value_data_parser_correctly_identifies_invalid_data():
 
 
 def test_key_value_data_parser_correctly_correctly_formats_errors():
+    """ """
     schema = {"version": {"type": "string"}, "pipeline": {"type": "dict"}}
     validator = DictDataValidator(schema)
     invalid_data = {"version": 1.1, "pipeline": "foo"}
@@ -67,12 +75,24 @@ def test_key_value_data_parser_correctly_correctly_formats_errors():
 
 
 def test_that_invalid_config_file_path_raises_error(project_repo_location: Path):
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     bad_config_file = project_repo_location / "bodywerk.yaml"
     with raises(BodyworkConfigFileExistsError, match="No config file found"):
         BodyworkConfig(bad_config_file)
 
 
 def test_that_invalid_config_format_raises_error(project_repo_location: Path):
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     config_file = project_repo_location / "bodywork.ini"
     expected_exception_msg = f"Cannot parse YAML from {config_file}"
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
@@ -80,6 +100,12 @@ def test_that_invalid_config_format_raises_error(project_repo_location: Path):
 
 
 def test_that_empty_config_file_raises_error(project_repo_location: Path):
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     config_file = project_repo_location / "bodywork_empty.yaml"
     expected_exception_msg = f"Cannot parse YAML from {config_file}"
     with raises(BodyworkConfigParsingError, match=expected_exception_msg):
@@ -89,6 +115,12 @@ def test_that_empty_config_file_raises_error(project_repo_location: Path):
 def test_that_config_file_with_missing_sections_raises_error(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     del bodywork_config._config["version"]
     del bodywork_config._config["pipeline"]
     del bodywork_config._config["stages"]
@@ -101,6 +133,12 @@ def test_that_config_file_with_missing_sections_raises_error(
 def test_that_config_file_with_invalid_schema_version_raises_error(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     bodywork_config._config["version"] = "not the version"
     expected_exception_msg = "missing or invalid parameters: version"
     with raises(BodyworkConfigValidationError, match=expected_exception_msg):
@@ -114,6 +152,12 @@ def test_that_config_file_with_invalid_schema_version_raises_error(
 def test_that_config_file_with_mismatched_schema_version_raises_error(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     bodywork_config._config["version"] = "0.1"
     expected_exception_msg = (
         f"config file has schema version 0.1, when Bodywork "
@@ -127,6 +171,12 @@ def test_that_config_file_with_mismatched_schema_version_raises_error(
 def test_that_config_file_with_non_list_stages_raises_error(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     bodywork_config._config["stages"] = "bad"
     expected_exception_msg = (
         "missing or invalid parameters: "
@@ -141,6 +191,7 @@ def test_that_config_file_with_non_list_stages_raises_error(
 
 
 def test_bodywork_config_project_section_validation():
+    """ """
     config_missing_all_params = {"not_a_valid_section": None}
     expected_exception_msg = (
         "missing or invalid parameters: "
@@ -182,6 +233,7 @@ def test_bodywork_config_project_section_validation():
 
 
 def test_bodywork_config_logging_section_validation():
+    """ """
     config_missing_all_params = {"not_a_valid_section": None}
     expected_exception_msg = (
         "missing or invalid parameters: " "logging.log_level -> required field"
@@ -198,6 +250,7 @@ def test_bodywork_config_logging_section_validation():
 
 
 def test_bodywork_config_generic_stage_validation():
+    """ """
     stage_name = "my_stage"
     root_dir = Path(".")
 
@@ -272,6 +325,7 @@ def test_bodywork_config_generic_stage_validation():
 
 
 def test_stage_equality_operations():
+    """ """
     root_dir = Path(".")
     generic_stage_config = {
         "executable_module_path": "stage_dir/main.py",
@@ -287,6 +341,7 @@ def test_stage_equality_operations():
 
 
 def test_bodywork_config_batch_stage_validation():
+    """ """
     root_dir = Path(".")
     stage_name = "my_stage"
 
@@ -315,6 +370,7 @@ def test_bodywork_config_batch_stage_validation():
 
 
 def test_bodywork_config_service_stage_validation():
+    """ """
     root_dir = Path(".")
     stage_name = "my_stage"
 
@@ -350,6 +406,12 @@ def test_bodywork_config_service_stage_validation():
 
 
 def test_py_modules_that_cannot_be_located_raise_error(bodywork_config: BodyworkConfig):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     bodywork_config.check_py_modules_exist = True
     try:
         bodywork_config._validate_parsed_config()
@@ -379,6 +441,12 @@ def test_py_modules_that_cannot_be_located_raise_error(bodywork_config: Bodywork
 def test_that_subsection_validation_feeds_through_to_validation_report(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     del bodywork_config._config["pipeline"]["docker_image"]
     del bodywork_config._config["logging"]["log_level"]
     del bodywork_config._config["stages"]["stage_1"]["batch"]
@@ -399,6 +467,12 @@ def test_that_subsection_validation_feeds_through_to_validation_report(
 def test_that_config_values_can_be_retreived_from_valid_config(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     config = bodywork_config
     root_dir = bodywork_config._root_dir
 
@@ -430,6 +504,7 @@ def test_that_config_values_can_be_retreived_from_valid_config(
 
 
 def test_parse_dag_definition_parses_multi_stage_dags():
+    """ """
     dag_definition = "stage_1 >> stage_2,stage_3 >> stage_4"
     parsed_dag_structure = _parse_dag_definition(dag_definition)
     expected_dag_structure = [["stage_1"], ["stage_2", "stage_3"], ["stage_4"]]
@@ -437,6 +512,7 @@ def test_parse_dag_definition_parses_multi_stage_dags():
 
 
 def test_parse_dag_definition_parses_single_stage_dags():
+    """ """
     dag_definition = "stage_1"
     parsed_dag_structure = _parse_dag_definition(dag_definition)
     expected_dag_structure = [["stage_1"]]
@@ -444,12 +520,14 @@ def test_parse_dag_definition_parses_single_stage_dags():
 
 
 def test_parse_dag_definition_raises_invalid_dag_definition_exceptions():
+    """ """
     dag_definition = "stage_1 >> ,stage_3 >> stage_4"
     with raises(ValueError, match="null stages found in step 2"):
         _parse_dag_definition(dag_definition)
 
 
 def test_check_workflow_stages_are_configured():
+    """ """
     workflow = [["a"], ["b", "c"], ["d"]]
     configured_stages = ["a", "b", "d"]
     missing_stage_configs = _check_workflow_stages_are_configured(
@@ -464,6 +542,12 @@ def test_check_workflow_stages_are_configured():
 def test_check_failure_stage_is_configured(
     bodywork_config: BodyworkConfig,
 ):
+    """
+
+    :param bodywork_config: BodyworkConfig:
+    :param bodywork_config: BodyworkConfig: 
+
+    """
     bodywork_config._config["pipeline"]["run_on_failure"] = "x"
     expected_exception_msg = f"pipeline.run_on_failure -> cannot find valid stage: x to run on workflow failure."
 

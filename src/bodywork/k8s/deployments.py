@@ -88,7 +88,33 @@ def configure_service_stage_deployment(
     :param startup_time_seconds: Time (in seconds) that
         the deployment must be observed as being 'ready', before its
         status is moved to complete. Defaults to 30s.
-    :return: A configured k8s deployment object.
+    :param namespace: str:
+    :param stage_name: str:
+    :param project_name: str:
+    :param project_repo_url: str:
+    :param git_commit_hash: str:
+    :param project_repo_branch: str:  (Default value = None)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param replicas: int:  (Default value = 1)
+    :param port: int:  (Default value = 80)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param cpu_request: float:  (Default value = None)
+    :param memory_request: int:  (Default value = None)
+    :param startup_time_seconds: int:  (Default value = 30)
+    :param namespace: str: 
+    :param stage_name: str: 
+    :param project_name: str: 
+    :param project_repo_url: str: 
+    :param git_commit_hash: str: 
+    :param project_repo_branch: str:  (Default value = None)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param replicas: int:  (Default value = 1)
+    :param port: int:  (Default value = 80)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param cpu_request: float:  (Default value = None)
+    :param memory_request: int:  (Default value = None)
+    :param startup_time_seconds: int:  (Default value = 30)
+    :returns: A configured k8s deployment object.
 
     """
     service_name = make_valid_k8s_name(stage_name)
@@ -173,6 +199,9 @@ def create_deployment(deployment: k8s.V1Deployment) -> None:
     """Create a deployment on a k8s cluster.
 
     :param deployment: A configured deployment object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+
     """
     k8s.AppsV1Api().create_namespaced_deployment(
         body=deployment, namespace=deployment.metadata.namespace
@@ -184,7 +213,12 @@ def is_existing_deployment(namespace: str, name: str) -> bool:
 
     :param namespace: Namespace in which to look for deployment.
     :param name: Name of deployment in namespace.
-    :return: Boolean flag for the deployment within the namespace.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+    :returns: Boolean flag for the deployment within the namespace.
+
     """
     existing_deployments = k8s.AppsV1Api().list_namespaced_deployment(
         namespace=namespace
@@ -199,6 +233,9 @@ def update_deployment(deployment: k8s.V1Deployment) -> None:
     """Update a deployment on a k8s cluster.
 
     :param deployment: A configured deployment object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+
     """
     k8s.AppsV1Api().patch_namespaced_deployment(
         body=deployment,
@@ -209,12 +246,15 @@ def update_deployment(deployment: k8s.V1Deployment) -> None:
 
 def rollback_deployment(deployment: k8s.V1Deployment) -> None:
     """Rollback a deployment to its previous version.
-
+    
     The Kubernetes API has no dedicated endpoint for managing rollbacks.
     This function was implemented by reverse-engineering the API calls
     made by the equivalent kubectl command,`kubectl rollout undo ...`.
 
     :param deployment: A configured deployment object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+
     """
     name = deployment.metadata.name
     namespace = deployment.metadata.namespace
@@ -271,6 +311,9 @@ def delete_all_namespace_deployments(namespace: str) -> None:
     """Delete all deployments within a k8s namespace.
 
     :param namespace: Namespace in which to look for deployments.
+    :param namespace: str:
+    :param namespace: str: 
+
     """
     existing_deployments = k8s.AppsV1Api().list_namespaced_deployment(
         namespace=namespace
@@ -287,6 +330,11 @@ def delete_deployment(namespace: str, name: str) -> None:
 
     :param namespace: Namespace in which to look for deployment.
     :param name: Name of deployment in namespace.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.AppsV1Api().delete_namespaced_deployment(
         name=name,
@@ -299,9 +347,12 @@ def _get_deployment_status(deployment: k8s.V1Deployment) -> DeploymentStatus:
     """Get the latest status of a deployment created on a k8s cluster.
 
     :param deployment: A configured job object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+    :returns: The current status of the deployment.
     :raises RuntimeError: If the deployment cannot be found or the status
         cannot be identified.
-    :return: The current status of the deployment.
+
     """
     name = deployment.metadata.name
     namespace = deployment.metadata.namespace
@@ -357,9 +408,20 @@ def monitor_deployments_to_completion(
         monitor deployments - e.g. to allow deployments to be created.
     :param progress_bar: Progress bar to update after every
         polling cycle, defaults to None.
+    :param deployments: Iterable[k8s.V1Deployment]:
+    :param timeout_seconds: int:  (Default value = 10)
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :param wait_before_start_seconds: int:  (Default value = 5)
+    :param progress_bar: Progress:  (Default value = None)
+    :param deployments: Iterable[k8s.V1Deployment]: 
+    :param timeout_seconds: int:  (Default value = 10)
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :param wait_before_start_seconds: int:  (Default value = 5)
+    :param progress_bar: Progress:  (Default value = None)
+    :returns: True if all of the deployments are successful.
     :raises TimeoutError: If the timeout limit is reached and the deployments
         are still marked as progressing.
-    :return: True if all of the deployments are successful.
+
     """
     sleep(wait_before_start_seconds)
     check_resource_scheduling_status(deployments)
@@ -399,14 +461,15 @@ def monitor_deployments_to_completion(
 def deployment_id(deployment_name: str, stage_name: str) -> str:
     """Return deployment ID implied by deployment and stage names.
 
-    Args:
-        deployment_name: The name given to the Bodywork deployment
-            project.
-        stage_name: The name of the stage that deployed a single
-            service, within the Bodywork deployment project.
+    :param deployment_name: The name given to the Bodywork deployment
+    :param project: param stage_name: The name of the stage that deployed a single
+    :param service: within the Bodywork deployment project
+    :param deployment_name: str:
+    :param stage_name: str:
+    :param deployment_name: str: 
+    :param stage_name: str: 
+    :returns: Deployment ID string to use for locating services.
 
-    Returns:
-        Deployment ID string to use for locating services.
     """
     return f"{deployment_name}/{stage_name}"
 
@@ -419,7 +482,12 @@ def list_service_stage_deployments(
 
     :param namespace: Namespace in which to list services.
     :param name: Name of service.
-    :return: Dict of deployments and their attributes.
+    :param namespace: str:  (Default value = None)
+    :param name: str:  (Default value = None)
+    :param namespace: str:  (Default value = None)
+    :param name: str:  (Default value = None)
+    :returns: Dict of deployments and their attributes.
+
     """
     label_selector = f"app=bodywork,deployment-name={name}" if name else "app=bodywork"
     if namespace:
@@ -486,8 +554,13 @@ def cluster_service_url(namespace: str, deployment_name: str) -> str:
 
     :param namespace: Namespace in which the deployment exists.
     :param deployment_name: The deployment's name.
-    :return: The internal URL to access the cluster service from within
+    :param namespace: str:
+    :param deployment_name: str:
+    :param namespace: str: 
+    :param deployment_name: str: 
+    :returns: The internal URL to access the cluster service from within
         the cluster.
+
     """
     return f"http://{deployment_name}.{namespace}.svc.cluster.local"
 
@@ -496,6 +569,9 @@ def expose_deployment_as_cluster_service(deployment: k8s.V1Deployment) -> None:
     """Expose a deployment as a Kubernetes service.
 
     :param deployment: A configured deployment object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+
     """
     namespace = deployment.metadata.namespace
     name = deployment.metadata.name
@@ -519,6 +595,11 @@ def is_exposed_as_cluster_service(namespace: str, name: str) -> bool:
 
     :param namespace: Namespace in which to look for services.
     :param name: The name of the service.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     services = k8s.CoreV1Api().list_namespaced_service(namespace=namespace)
     service_names = [service.metadata.name for service in services.items]
@@ -530,6 +611,11 @@ def stop_exposing_cluster_service(namespace: str, name: str) -> None:
 
     :param namespace: Namespace in which exists the service to delete.
     :param name: The name of the service.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.CoreV1Api().delete_namespaced_service(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -541,7 +627,12 @@ def ingress_route(namespace: str, deployment_name: str) -> str:
 
     :param namespace: Namespace in which the deployment exists.
     :param deployment_name: The deployment's name.
-    :return: A route to use for ingress to the service deployment.
+    :param namespace: str:
+    :param deployment_name: str:
+    :param namespace: str: 
+    :param deployment_name: str: 
+    :returns: A route to use for ingress to the service deployment.
+
     """
     return f"/{namespace}/{deployment_name}"
 
@@ -550,6 +641,9 @@ def create_deployment_ingress(deployment: k8s.V1Deployment) -> None:
     """Create an ingress to a service backed by a deployment.
 
     :param deployment: A configured deployment object.
+    :param deployment: k8s.V1Deployment:
+    :param deployment: k8s.V1Deployment: 
+
     """
     namespace = deployment.metadata.namespace
     name = deployment.metadata.name
@@ -598,6 +692,11 @@ def delete_deployment_ingress(namespace: str, name: str) -> None:
 
     :param namespace: Namespace in which exists the ingress to delete.
     :param name: The name of the ingress.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.NetworkingV1Api().delete_namespaced_ingress(
         namespace=namespace, name=name, propagation_policy="Background"
@@ -609,6 +708,11 @@ def has_ingress(namespace: str, name: str) -> bool:
 
     :param namespace: Namespace in which to look for ingress resources.
     :param name: The name of the ingress.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     ingresses = k8s.NetworkingV1Api().list_namespaced_ingress(
         namespace=namespace, label_selector="app=bodywork"

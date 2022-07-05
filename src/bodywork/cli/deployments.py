@@ -32,6 +32,13 @@ def display_deployments(
     :param namespace: Namespace in which to look for deployments.
     :param name: Name of the deployment to display.
     :param service_name: Name of service to display.
+    :param namespace: str:  (Default value = None)
+    :param name: str:  (Default value = None)
+    :param service_name: str:  (Default value = None)
+    :param namespace: str:  (Default value = None)
+    :param name: str:  (Default value = None)
+    :param service_name: str:  (Default value = None)
+
     """
     if namespace and not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -65,6 +72,11 @@ def delete_service_deployment_in_namespace(namespace: str, name: str) -> None:
     :param namespace: The namespace in which the service deployment
         exists.
     :param name: The name of the service deployment to delete.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -90,6 +102,9 @@ def delete_deployment(deployment_name: str) -> None:
     """Delete a deployment by deleting the namespace it's in.
 
     :param deployment_name: The name of the deployment.
+    :param deployment_name: str:
+    :param deployment_name: str: 
+
     """
     deployments = k8s.list_service_stage_deployments(name=deployment_name)
     if not deployments:

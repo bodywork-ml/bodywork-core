@@ -6,6 +6,7 @@ import time
 
 
 def main() -> None:
+    """ """
     print("sleeping")
     time.sleep(10)
 

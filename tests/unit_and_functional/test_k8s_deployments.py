@@ -53,6 +53,7 @@ from bodywork.k8s.deployments import (
 
 @fixture(scope="session")
 def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
+    """ """
     container_resources = kubernetes.client.V1ResourceRequirements(
         requests={"cpu": "0.5", "memory": "250M"}
     )
@@ -97,6 +98,7 @@ def service_stage_deployment_object() -> kubernetes.client.V1Deployment:
 
 
 def test_configure_service_stage_deployment():
+    """ """
     deployment = configure_service_stage_deployment(
         namespace="bodywork-dev",
         stage_name="serve",
@@ -134,6 +136,14 @@ def test_create_deployment_tries_to_create_deployment_with_k8s_api(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     create_deployment(service_stage_deployment_object)
     mock_k8s_apps_api().create_namespaced_deployment.assert_called_once_with(
         body=service_stage_deployment_object, namespace="bodywork-dev"
@@ -145,6 +155,14 @@ def test_is_existing_deployment_correctly_filters_deployments(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_k8s_apps_api().list_namespaced_deployment.side_effect = [
         kubernetes.client.V1DeploymentList(
             items=[
@@ -173,6 +191,14 @@ def test_update_deployment_tries_to_update_deployment_with_k8s_api(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     update_deployment(service_stage_deployment_object)
     mock_k8s_apps_api().patch_namespaced_deployment.assert_called_once_with(
         body=service_stage_deployment_object,
@@ -186,6 +212,14 @@ def test_rollback_deployment_tries_to_patch_deployment_to_force_rollback(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     template_spec_revision_one = deepcopy(service_stage_deployment_object.spec.template)
     template_spec_revision_one.metadata.annotations["last-updated"] = datetime(
         2020, 11, 6, 7
@@ -261,6 +295,16 @@ def test_rollback_deployment_tries_to_delete_new_deployments(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_delete_deployment: MagicMock:
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_delete_deployment: MagicMock: 
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     template_spec_revision_one = deepcopy(service_stage_deployment_object.spec.template)
     template_spec_revision_one.metadata.annotations["last-updated"] = datetime(
         2020, 11, 6, 7
@@ -300,6 +344,14 @@ def test_delete_deployment_tries_to_delete_deployment_with_k8s_api(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     delete_deployment(
         service_stage_deployment_object.metadata.namespace,
         service_stage_deployment_object.metadata.name,
@@ -316,6 +368,14 @@ def test_delete_all_namespace_deployments_tries_to_delete_deployments_with_k8s_a
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_k8s_apps_api().list_namespaced_deployment.return_value = (
         kubernetes.client.V1JobList(  # noqa
             items=[service_stage_deployment_object, service_stage_deployment_object]
@@ -343,6 +403,14 @@ def test_get_deployment_status_correctly_determines_complete_status(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_k8s_apps_api().list_namespaced_deployment.return_value = (
         kubernetes.client.V1DeploymentList(
             items=[
@@ -366,6 +434,14 @@ def test_get_deployment_status_raises_exception_when_status_cannot_be_determined
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_k8s_apps_api().list_namespaced_deployment.return_value = (
         kubernetes.client.V1DeploymentList(
             items=[
@@ -387,6 +463,14 @@ def test_get_deployment_status_raises_exception_when_deployment_cannot_be_found(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_k8s_apps_api().list_namespaced_deployment.return_value = (
         kubernetes.client.V1DeploymentList(items=[])
     )
@@ -401,6 +485,16 @@ def test_monitor_deployments_raises_timeout_error_if_jobs_do_not_succeed(
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_check_resource_scheduling_status: MagicMock:
+    :param mock_deployment_status: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_check_resource_scheduling_status: MagicMock: 
+    :param mock_deployment_status: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_deployment_status.return_value = DeploymentStatus.PROGRESSING
     with raises(TimeoutError, match="have yet to reach status=complete"):
         monitor_deployments_to_completion(
@@ -415,6 +509,16 @@ def test_monitor_deployments_identifies_successful_deployments(
     mock_deployment_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_check_resource_scheduling_status: MagicMock:
+    :param mock_deployment_status: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_check_resource_scheduling_status: MagicMock: 
+    :param mock_deployment_status: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
         DeploymentStatus.PROGRESSING,
@@ -438,6 +542,18 @@ def test_monitor_deployments_to_completion_updates_progress_bar(
     mock_update_check_resource_scheduling_status: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_deployment_status: MagicMock:
+    :param mock_update_progress_bar: MagicMock:
+    :param mock_update_check_resource_scheduling_status: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_deployment_status: MagicMock: 
+    :param mock_update_progress_bar: MagicMock: 
+    :param mock_update_check_resource_scheduling_status: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     mock_deployment_status.side_effect = [
         DeploymentStatus.PROGRESSING,
         DeploymentStatus.ACTIVE,
@@ -459,12 +575,19 @@ def test_monitor_deployments_to_completion_updates_progress_bar(
 
 
 def test_deployment_id_creates_valid_deployed_service_identifiers():
+    """ """
     assert deployment_id("x", "y") == "x/y"
 
 
 def test_list_service_stage_deployments_returns_service_stage_info(
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     deployment_name = service_stage_deployment_object.metadata.labels["deployment-name"]
     service_namespace = service_stage_deployment_object.metadata.namespace
     service_name = service_stage_deployment_object.metadata.name
@@ -536,6 +659,14 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
     mock_k8s_apps_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_apps_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_apps_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     service_namespace = service_stage_deployment_object.metadata.namespace
     service_name = service_stage_deployment_object.metadata.name
 
@@ -596,6 +727,12 @@ def test_list_service_stage_deployments_returns_all_services_on_cluster(
 def test_cluster_service_url(
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     namespace = service_stage_deployment_object.metadata.namespace
     name = service_stage_deployment_object.metadata.namespace
     assert (
@@ -609,6 +746,14 @@ def test_expose_deployment_as_cluster_service_tries_to_expose_deployment_as_serv
     mock_k8s_core_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_core_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     service_object = kubernetes.client.V1Service(
         metadata=kubernetes.client.V1ObjectMeta(
             namespace="bodywork-dev",
@@ -633,6 +778,12 @@ def test_expose_deployment_as_cluster_service_tries_to_expose_deployment_as_serv
 def test_is_exposed_as_cluster_service_identifies_existing_services(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_service.side_effect = [
         kubernetes.client.V1ServiceList(
             items=[
@@ -659,6 +810,12 @@ def test_is_exposed_as_cluster_service_identifies_existing_services(
 def test_stop_exposing_cluster_service_tries_to_stop_exposing_deployment_as_service(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     stop_exposing_cluster_service("bodywork-dev", "myservice")
     mock_k8s_core_api().delete_namespaced_service.assert_called_once_with(
         namespace="bodywork-dev",
@@ -668,6 +825,12 @@ def test_stop_exposing_cluster_service_tries_to_stop_exposing_deployment_as_serv
 
 
 def test_ingress_route(service_stage_deployment_object: kubernetes.client.V1Deployment):
+    """
+
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
     namespace = service_stage_deployment_object.metadata.namespace
     name = service_stage_deployment_object.metadata.namespace
     assert ingress_route(namespace, name) == f"/{namespace}/{name}"
@@ -678,6 +841,14 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
     mock_k8s_networking_api: MagicMock,
     service_stage_deployment_object: kubernetes.client.V1Deployment,
 ):
+    """
+
+    :param mock_k8s_networking_api: MagicMock:
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment:
+    :param mock_k8s_networking_api: MagicMock: 
+    :param service_stage_deployment_object: kubernetes.client.V1Deployment: 
+
+    """
 
     ingress_spec = kubernetes.client.V1IngressSpec(
         rules=[
@@ -725,6 +896,12 @@ def test_create_deployment_ingress_tries_to_create_ingress_resource(
 def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
     mock_k8s_networking_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_networking_api: MagicMock:
+    :param mock_k8s_networking_api: MagicMock: 
+
+    """
     delete_deployment_ingress("bodywork-dev", "myservice")
     mock_k8s_networking_api().delete_namespaced_ingress.assert_called_once_with(
         namespace="bodywork-dev",
@@ -737,6 +914,12 @@ def test_delete_deployment_ingress_tries_to_deletes_ingress_resource(
 def test_has_ingress_identifies_existing_ingress_resources(
     mock_k8s_networking_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_networking_api: MagicMock:
+    :param mock_k8s_networking_api: MagicMock: 
+
+    """
     mock_k8s_networking_api().list_namespaced_ingress.side_effect = [
         kubernetes.client.V1IngressList(
             items=[

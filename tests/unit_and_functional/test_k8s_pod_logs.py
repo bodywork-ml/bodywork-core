@@ -30,6 +30,12 @@ from bodywork.k8s.pod_logs import get_latest_pod_name, get_pod_logs
 def test_get_latest_pod_name_return_latest_pod_name(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_pod.return_value = kubernetes.client.V1PodList(
         items=[
             kubernetes.client.V1Pod(
@@ -70,12 +76,17 @@ def test_get_latest_pod_name_return_latest_pod_name(
 def test_get_pod_logs_returns_pod_logs(
     mock_k8s_core_api: MagicMock,
 ):
-    mock_k8s_core_api().read_namespaced_pod_log.return_value = """
+    """mock_k8s_core_api().read_namespaced_pod_log.return_value =
+
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     2020-10-08 10:36:49,319 - INFO - cli.stage - attempting to run
     git version 2.20.1
     Cloning into 'bodywork_project'...
     Collecting flask==1.1.2
-    """
+
+    :param mock_k8s_core_api: MagicMock:
     pod_logs = get_pod_logs("the-namespace", "the-pod")
     assert "2020-10-08 10:36:49,319 - INFO" in pod_logs
     assert "Collecting flask==1.1.2" in pod_logs
@@ -85,6 +96,12 @@ def test_get_pod_logs_returns_pod_logs(
 def test_get_pod_logs_can_handle_logs_from_crashed_pods(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().read_namespaced_pod_log.side_effect = [
         "the logs",
         kubernetes.client.ApiException,

@@ -49,7 +49,7 @@ def bodywork_log_factory(
     config_file_path: Path = DEFAULT_PROJECT_DIR / PROJECT_CONFIG_FILENAME,
 ) -> Logger:
     """Create a standardised Bodywork logger.
-
+    
     If a log level is specified as an argument, then it will take
     precedence overall all other methods of setting the log-level. Next
     in the waterfall of priority is the log-level set in the project
@@ -61,6 +61,11 @@ def bodywork_log_factory(
         defaults to None.
     :param config_file_path: Path to project config file, defaults
         DEFAULT_PROJECT_DIR/PROJECT_CONFIG_FILENAME.
+    :param log_level: str:  (Default value = None)
+    :param config_file_path: Path:  (Default value = DEFAULT_PROJECT_DIR / PROJECT_CONFIG_FILENAME)
+    :param log_level: str:  (Default value = None)
+    :param config_file_path: Path:  (Default value = DEFAULT_PROJECT_DIR / PROJECT_CONFIG_FILENAME)
+
     """
     log_level_mapping = {
         "DEBUG": DEBUG,

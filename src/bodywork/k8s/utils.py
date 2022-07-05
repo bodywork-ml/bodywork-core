@@ -33,7 +33,10 @@ def api_exception_msg(e: ApiException) -> str:
     """Get k8s API error message from exception object.
 
     :param e: Kubernetes API exception
-    :return: Error message returned by the k8s API.
+    :param e: ApiException:
+    :param e: ApiException: 
+    :returns: Error message returned by the k8s API.
+
     """
     try:
         body = json.loads(e.body)
@@ -47,7 +50,10 @@ def make_valid_k8s_name(name: str) -> str:
     """Remove invalid characters from k8s resource name.
 
     :param name: Original intended name.
-    :return: Valid Kubernetes resource name.
+    :param name: str:
+    :param name: str: 
+    :returns: Valid Kubernetes resource name.
+
     """
     return re.sub(r"[^a-zA-Z0-9.]+", "-", name.strip())
 
@@ -58,7 +64,12 @@ def create_k8s_environment_variables(
     """Creates K8s environment variable from key/value pairs.
 
     :param key_value_pairs: Environment variables to create.
-    :return: List of K8s environment variables.
+    :param key_value_pairs: List[Tuple[str:
+    :param str: returns: List of K8s environment variables.
+    :param key_value_pairs: List[Tuple[str: 
+    :param str]]: 
+    :returns: List of K8s environment variables.
+
     """
     return [k8s.V1EnvVar(name=name, value=value) for name, value in key_value_pairs]
 
@@ -68,8 +79,13 @@ def has_unscheduleable_pods(k8s_resource: Union[k8s.V1Job, k8s.V1Deployment]) ->
 
     :param k8s_resource: The Kubernetes resource managing the pods.
         For example, a Job or Deployment.
+    :param k8s_resource: Union[k8s.V1Job:
+    :param k8s: V1Deployment]:
+    :param k8s_resource: Union[k8s.V1Job: 
+    :param k8s.V1Deployment]: 
+    :returns: Boolean flag.
     :raises RuntimeError: If no pods managed by the resource can be found.
-    :return: Boolean flag.
+
     """
     namespace = k8s_resource.metadata.namespace
     pod_base_name = k8s_resource.metadata.name
@@ -103,8 +119,13 @@ def check_resource_scheduling_status(
     """Check job or deployment cluster scheduling status.
 
     :param resources: List of jobs or deployments to check.
+    :param resources: Union[Iterable[k8s.V1Job]:
+    :param Iterable: k8s.V1Deployment]]:
+    :param resources: Union[Iterable[k8s.V1Job]: 
+    :param Iterable[k8s.V1Deployment]]: 
     :raises BodyworkClusterResourcesError: if any resources cannot be
         scheduled onto a k8s cluster node.
+
     """
     unschedulable_pods = [has_unscheduleable_pods(resource) for resource in resources]
     if any(unschedulable_pods):

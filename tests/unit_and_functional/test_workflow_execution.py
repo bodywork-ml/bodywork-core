@@ -56,6 +56,12 @@ from bodywork.config import BodyworkConfig
 def test_image_exists_on_dockerhub_handles_connection_error(
     mock_requests_session: MagicMock,
 ):
+    """
+
+    :param mock_requests_session: MagicMock:
+    :param mock_requests_session: MagicMock: 
+
+    """
     mock_requests_session().get.side_effect = requests.exceptions.ConnectionError
     with raises(BodyworkDockerImageError, match="cannot connect to"):
         image_exists_on_dockerhub("bodywork-ml/bodywork-core", "latest")
@@ -65,6 +71,12 @@ def test_image_exists_on_dockerhub_handles_connection_error(
 def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
     mock_requests_session: MagicMock,
 ):
+    """
+
+    :param mock_requests_session: MagicMock:
+    :param mock_requests_session: MagicMock: 
+
+    """
     mock_requests_session().get.return_value = requests.Response()
 
     mock_requests_session().get.return_value.status_code = 200
@@ -75,6 +87,7 @@ def test_image_exists_on_dockerhub_handles_correctly_identifies_image_repos(
 
 
 def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
+    """ """
     with raises(
         BodyworkDockerImageError,
         match="Invalid Docker image specified: bodyworkml",
@@ -84,6 +97,7 @@ def test_parse_dockerhub_image_string_raises_exception_for_invalid_strings():
 
 
 def test_parse_dockerhub_image_string_parses_valid_strings():
+    """ """
     assert parse_dockerhub_image_string("bodyworkml/bodywork-core:0.0.1") == (
         "bodyworkml/bodywork-core",
         "0.0.1",
@@ -104,6 +118,20 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
     setup_bodywork_test_project: Iterable[bool],
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git: MagicMock:
+    :param mock_config: MagicMock:
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git: MagicMock: 
+    :param mock_config: MagicMock: 
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_location: Path: 
+
+    """
     mock_config.logging.log_level = "DEBUG"
 
     git_url = f"file://{project_repo_location.absolute()}"
@@ -114,6 +142,7 @@ def test_run_workflow_raises_exception_if_cannot_setup_namespace(
 
 
 def test_compute_optimal_job_timeouts():
+    """ """
     stage_a = Mock()
     stage_a.retries = 1
     stage_a.max_completion_time = 60
@@ -132,6 +161,12 @@ def test_compute_optimal_job_timeouts():
 
 @patch("bodywork.workflow_execution.k8s")
 def test_compute_optimal_deployment_timeouts(mock_k8s: MagicMock):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_k8s: MagicMock: 
+
+    """
     stage_a = Mock()
     stage_a.replicas = 2
     stage_a.max_startup_time = 60
@@ -153,6 +188,16 @@ def test_compute_optimal_deployment_timeouts(mock_k8s: MagicMock):
 def test_print_logs_to_stdout(
     mock_k8s: MagicMock, capsys: CaptureFixture, caplog: LogCaptureFixture
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param capsys: CaptureFixture:
+    :param caplog: LogCaptureFixture:
+    :param mock_k8s: MagicMock: 
+    :param capsys: CaptureFixture: 
+    :param caplog: LogCaptureFixture: 
+
+    """
     mock_k8s.get_latest_pod_name.return_value = "bodywork-test-project--stage-1"
     mock_k8s.get_pod_logs.return_value = "foo-bar"
     _print_logs_to_stdout("the-namespace", "bodywork-test-project--stage-1")
@@ -184,6 +229,22 @@ def test_run_workflow_adds_git_commit_to_batch_and_service_env_vars(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_requests: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_requests: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     commit_hash = "MY GIT COMMIT HASH"
     mock_git_hash.return_value = commit_hash
     expected_result = [
@@ -241,6 +302,22 @@ def test_run_workflow_runs_failure_stage_on_failure(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_requests: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_requests: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     config.pipeline.run_on_failure = "on_fail_stage"
@@ -285,6 +362,18 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
     mock_git_download: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     mock_session().get.return_value = requests.Response().status_code = 401
@@ -302,6 +391,16 @@ def test_failure_stage_does_not_run_for_docker_image_exception(
 def test_failure_stage_does_not_run_for_namespace_exception(
     mock_k8s: MagicMock, mock_git_download: MagicMock, project_repo_location: Path
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     mock_k8s.namespace_exists.return_value = False
@@ -318,6 +417,16 @@ def test_failure_stage_does_not_run_for_namespace_exception(
 def test_failure_stage_does_not_run_for_git_exception(
     mock_k8s: MagicMock, mock_git_download: MagicMock, project_repo_location: Path
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     mock_git_download.side_effect = BodyworkGitError("Test Exception")
@@ -343,6 +452,22 @@ def test_failure_of_failure_stage_is_recorded_in_exception(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_requests: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_requests: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     config.pipeline.run_on_failure = "on_fail_stage"
@@ -371,6 +496,22 @@ def test_run_workflow_pings_usage_stats_server(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
     config.pipeline.usage_stats = True
@@ -395,6 +536,22 @@ def test_usage_stats_opt_out_does_not_ping_usage_stats_server(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
 
     run_workflow(
@@ -419,6 +576,22 @@ def test_namespace_is_not_deleted_if_there_are_service_stages(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_requests: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_requests: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
 
@@ -443,6 +616,22 @@ def test_namespace_is_deleted_if_only_batch_stages(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_requests: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_requests: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork_batch_stage.yaml")
     config = BodyworkConfig(config_path)
 
@@ -468,6 +657,28 @@ def test_old_deployments_are_cleaned_up(
     project_repo_location: Path,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
@@ -497,6 +708,28 @@ def test_cannot_deploy_different_project_repo_to_same_namespace(
     project_repo_location: Path,
     service_stage_deployment_list: Dict[str, Dict[str, Any]],
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param service_stage_deployment_list: Dict[str:
+    :param Dict: str:
+    :param Any: 
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+    :param service_stage_deployment_list: Dict[str: 
+    :param Dict[str: 
+    :param Any]]: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
@@ -522,6 +755,22 @@ def test_run_workflow_adds_ssh_key_env_var_from_file(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 
@@ -568,6 +817,22 @@ def test_workflow_adds_ssh_secret_if_default_exists(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/{PROJECT_CONFIG_FILENAME}")
     config = BodyworkConfig(config_path)
     config.pipeline.secrets_group = None
@@ -614,6 +879,22 @@ def test_workflow_adds_ssh_secret_if_exists_in_group(
     mock_rmtree: MagicMock,
     project_repo_location: Path,
 ):
+    """
+
+    :param mock_k8s: MagicMock:
+    :param mock_git_hash: MagicMock:
+    :param mock_git_download: MagicMock:
+    :param mock_session: MagicMock:
+    :param mock_rmtree: MagicMock:
+    :param project_repo_location: Path:
+    :param mock_k8s: MagicMock: 
+    :param mock_git_hash: MagicMock: 
+    :param mock_git_download: MagicMock: 
+    :param mock_session: MagicMock: 
+    :param mock_rmtree: MagicMock: 
+    :param project_repo_location: Path: 
+
+    """
     config_path = Path(f"{project_repo_location}/bodywork.yaml")
     config = BodyworkConfig(config_path)
 

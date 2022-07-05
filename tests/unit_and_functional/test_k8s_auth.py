@@ -44,6 +44,14 @@ from bodywork.k8s.auth import (
 def test_load_kubernetes_config_loads_incluster_config_when_in_cluster(
     mock_k8s_load_incluster_config: MagicMock, k8s_env_vars: Iterable[bool]
 ):
+    """
+
+    :param mock_k8s_load_incluster_config: MagicMock:
+    :param k8s_env_vars: Iterable[bool]:
+    :param mock_k8s_load_incluster_config: MagicMock: 
+    :param k8s_env_vars: Iterable[bool]: 
+
+    """
     load_kubernetes_config()
     mock_k8s_load_incluster_config.assert_called_once()
 
@@ -52,6 +60,12 @@ def test_load_kubernetes_config_loads_incluster_config_when_in_cluster(
 def test_load_kubernetes_config_loads_kube_config_when_not_in_cluster(
     mock_k8s_load_kube_config: MagicMock,
 ):
+    """
+
+    :param mock_k8s_load_kube_config: MagicMock:
+    :param mock_k8s_load_kube_config: MagicMock: 
+
+    """
     load_kubernetes_config()
     mock_k8s_load_kube_config.assert_called_once()
 
@@ -60,6 +74,12 @@ def test_load_kubernetes_config_loads_kube_config_when_not_in_cluster(
 def test_service_account_exists_identifies_existing_service_accounts(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_service_account.return_value = (
         kubernetes.client.V1ServiceAccountList(
             items=[
@@ -79,6 +99,12 @@ def test_service_account_exists_identifies_existing_service_accounts(
 def test_cluster_role_exists_identifies_existing_cluster_role(
     mock_k8s_rbac_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_rbac_api: MagicMock:
+    :param mock_k8s_rbac_api: MagicMock: 
+
+    """
     mock_k8s_rbac_api().list_cluster_role.return_value = (
         kubernetes.client.V1alpha1ClusterRoleList(
             items=[
@@ -99,6 +125,12 @@ def test_cluster_role_exists_identifies_existing_cluster_role(
 def test_delete_cluster_role_binding_deletes_role_bindings(
     mock_k8s_rbac_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_rbac_api: MagicMock:
+    :param mock_k8s_rbac_api: MagicMock: 
+
+    """
     delete_cluster_role_binding("xx-the-namespace")
     mock_k8s_rbac_api().delete_cluster_role_binding.assert_called_once_with(
         name="xx-the-namespace"
@@ -109,6 +141,12 @@ def test_delete_cluster_role_binding_deletes_role_bindings(
 def test_cluster_role_binding_exists_exists_identifies_existing_cluster_role_binding(
     mock_k8s_rbac_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_rbac_api: MagicMock:
+    :param mock_k8s_rbac_api: MagicMock: 
+
+    """
     mock_k8s_rbac_api().list_cluster_role_binding.return_value = (
         kubernetes.client.V1ClusterRoleBindingList(
             items=[
@@ -142,12 +180,14 @@ def test_cluster_role_binding_exists_exists_identifies_existing_cluster_role_bin
 
 
 def test_workflow_cluster_role_binding_name():
+    """ """
     namespace = "bodywork-dev"
     expected_workflow_crb = f"{BODYWORK_WORKFLOW_CLUSTER_ROLE}--{namespace}"
     assert workflow_cluster_role_binding_name(namespace) == expected_workflow_crb
 
 
 def test_setup_workflow_service_account_creates_service_accounts_and_roles():
+    """ """
     with patch("kubernetes.client.CoreV1Api") as mock_k8s_core_api:
         with patch("kubernetes.client.RbacAuthorizationV1Api") as mock_k8s_rbac_api:
             mock_k8s_rbac_api().list_cluster_role.return_value = (
@@ -181,6 +221,7 @@ def test_setup_workflow_service_account_creates_service_accounts_and_roles():
 
 
 def test_setup_job_and_deployment_service_account_creates_service_accounts_and_roles():
+    """ """
     with patch("kubernetes.client.CoreV1Api") as mock_k8s_core_api:
         with patch("kubernetes.client.RbacAuthorizationV1Api") as mock_k8s_rbac_api:
             setup_stages_service_account("bodywork-dev")

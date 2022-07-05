@@ -32,6 +32,7 @@ from bodywork.k8s.utils import (
 
 
 def test_api_exception_msg_retreives_message_str():
+    """ """
     mock_api_exception = Mock()
 
     mock_api_exception.body = '{"message": "foo"}'
@@ -45,6 +46,12 @@ def test_api_exception_msg_retreives_message_str():
 def test_has_unscheduleable_pods_correctly_identifies_bad_pod_condition(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_pod.return_value = kubernetes.client.V1PodList(
         items=[
             kubernetes.client.V1Pod(
@@ -71,6 +78,12 @@ def test_has_unscheduleable_pods_correctly_identifies_bad_pod_condition(
 def test_has_unscheduleable_pods_correctly_identifies_good_pod_condition(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_pod.return_value = kubernetes.client.V1PodList(
         items=[
             kubernetes.client.V1Pod(
@@ -91,6 +104,12 @@ def test_has_unscheduleable_pods_correctly_identifies_good_pod_condition(
 def test_has_unscheduleable_pods_raises_error_if_pods_not_found(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_pod.return_value = kubernetes.client.V1PodList(
         items=[]
     )
@@ -102,6 +121,7 @@ def test_has_unscheduleable_pods_raises_error_if_pods_not_found(
 
 
 def test_make_valid_k8s_name_corrects_invalid_names():
+    """ """
     assert make_valid_k8s_name("a-valid-name") == "a-valid-name"
     assert make_valid_k8s_name(" an invalid_name ") == "an-invalid-name"
 
@@ -110,6 +130,12 @@ def test_make_valid_k8s_name_corrects_invalid_names():
 def test_check_resource_scheduling_status_raises_error_if_pods_unschedulable(
     mock_has_unscheduleable_pods: MagicMock,
 ):
+    """
+
+    :param mock_has_unscheduleable_pods: MagicMock:
+    :param mock_has_unscheduleable_pods: MagicMock: 
+
+    """
     mock_resource = Mock(spec=kubernetes.client.V1Deployment)
     mock_resource.metadata.name = "foo"
     mock_has_unscheduleable_pods.return_value = True

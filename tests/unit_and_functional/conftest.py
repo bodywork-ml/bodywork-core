@@ -25,6 +25,7 @@ from pytest import fixture
 
 @fixture(scope="function")
 def k8s_env_vars() -> Iterable[bool]:
+    """ """
     try:
         os.environ["KUBERNETES_SERVICE_HOST"]
     except KeyError:
@@ -36,6 +37,7 @@ def k8s_env_vars() -> Iterable[bool]:
 
 @fixture(scope="function")
 def service_stage_deployment_list() -> Dict[str, Dict[str, Any]]:
+    """ """
     return {
         "bodywork-test-project/serve-v1": {
             "name": "serve-v1",

@@ -29,6 +29,7 @@ from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 
 
 class BodyworkClusterResourcesError(Exception):
+    """ """
     def __init__(self, resource_type: str, resource_names: Iterable[str]):
         msg = (
             f"Inadequate cluster cpu and/or memory available to start {resource_type}s "
@@ -38,6 +39,7 @@ class BodyworkClusterResourcesError(Exception):
 
 
 class BodyworkJobFailure(Exception):
+    """ """
     def __init__(self, failed_jobs: Iterable[V1Job]):
         failed_jobs_msg = [
             f"job={job.metadata.name} in namespace={job.metadata.namespace}"
@@ -48,28 +50,33 @@ class BodyworkJobFailure(Exception):
 
 
 class BodyworkConfigError(Exception):
+    """ """
     pass
 
 
 class BodyworkConfigFileExistsError(BodyworkConfigError):
+    """ """
     def __init__(self, config_file_path: Path):
         msg = f"No config file found at {config_file_path}"
         super().__init__(msg)
 
 
 class BodyworkConfigParsingError(BodyworkConfigError):
+    """ """
     def __init__(self, config_file_path: Path):
         msg = f"Cannot parse YAML from {config_file_path}"
         super().__init__(msg)
 
 
 class BodyworkConfigMissingSectionError(BodyworkConfigError):
+    """ """
     def __init__(self, missing_sections: Sequence[str]):
         msg = f'Bodywork config file missing sections: {", ".join(missing_sections)}'
         super().__init__(msg)
 
 
 class BodyworkConfigValidationError(BodyworkConfigError):
+    """ """
     def __init__(self, missing_params: Sequence[str]):
         self.missing_params = missing_params
         msg = (
@@ -80,6 +87,7 @@ class BodyworkConfigValidationError(BodyworkConfigError):
 
 
 class BodyworkConfigVersionMismatchError(BodyworkConfigError):
+    """ """
     def __init__(self, version: str):
         msg = (
             f"Bodywork config file has schema version {version}, when Bodywork "
@@ -90,26 +98,31 @@ class BodyworkConfigVersionMismatchError(BodyworkConfigError):
 
 
 class BodyworkWorkflowExecutionError(Exception):
+    """ """
     def __init__(self, msg: str) -> None:
         super().__init__(msg)
 
 
 class BodyworkStageFailure(Exception):
+    """ """
     def __init__(self, stage_name: str, info: str):
         msg = f"Stage {stage_name} failed - {info}"
         super().__init__(msg)
 
 
 class BodyworkNamespaceError(Exception):
+    """ """
     def __init__(self, msg: str) -> None:
         super().__init__(msg)
 
 
 class BodyworkDockerImageError(Exception):
+    """ """
     def __init__(self, msg: str) -> None:
         super().__init__(msg)
 
 
 class BodyworkGitError(Exception):
+    """ """
     def __init__(self, msg: str) -> None:
         super().__init__(msg)

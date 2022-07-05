@@ -11,12 +11,22 @@ console = Console(highlight=False, soft_wrap=False, width=175)
 
 
 def print_info(msg: str) -> None:
-    """Print an info message."""
+    """Print an info message.
+
+    :param msg: str:
+    :param msg: str: 
+
+    """
     console.print(msg, style="green")
 
 
 def print_warn(msg: str) -> None:
-    """Print a warning message."""
+    """Print a warning message.
+
+    :param msg: str:
+    :param msg: str: 
+
+    """
     console.print(msg, style="red")
 
 
@@ -32,6 +42,16 @@ def print_dict(
     :param table_name: Table name, defaults to None.
     :param key_col_name: Header for the keys column, defaults to 'Field'.
     :param val_col_name: Header for the values column, defaults to 'Value'.
+    :param the_dict: Dict[str:
+    :param Any: param table_name: str:  (Default value = None)
+    :param key_col_name: str:  (Default value = "Field")
+    :param val_col_name: str:  (Default value = "Value")
+    :param the_dict: Dict[str: 
+    :param Any]: 
+    :param table_name: str:  (Default value = None)
+    :param key_col_name: str:  (Default value = "Field")
+    :param val_col_name: str:  (Default value = "Value")
+
     """
     table = Table(title=f"{table_name if table_name else ''}", title_style="bold")
     table.add_column(f"[yellow]{key_col_name}[/yellow]", style="bold purple")
@@ -46,6 +66,11 @@ def print_pod_logs(logs: str, header: str) -> None:
 
     :param logs: The logs!
     :param header: Text to associate with the logs.
+    :param logs: str:
+    :param header: str:
+    :param logs: str: 
+    :param header: str: 
+
     """
     console.rule(f"[yellow]{header}[/yellow]", style="yellow")
     console.print(logs, style="grey58")
@@ -61,7 +86,12 @@ def make_progress_bar(
         step will be deleted.
     :param polling_freq_seconds: The frequency with which the progress
         bar will receive updates, defaults to DEFAULT_K8S_POLLING_FREQ.
-    :return: A configured progress bar.
+    :param timeout_seconds: int:
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :param timeout_seconds: int: 
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :returns: A configured progress bar.
+
     """
     progress_bar = Progress(
         TextColumn("{task.description}"),
@@ -80,6 +110,9 @@ def update_progress_bar(progress_bar: Progress) -> None:
     """Update progress bar by advancing all tasks one step.
 
     :param progress_bar: The progress bar whose tasks need advancing.
+    :param progress_bar: Progress:
+    :param progress_bar: Progress: 
+
     """
     progress_info = _get_progress_description()
     for task_id in progress_bar.task_ids:

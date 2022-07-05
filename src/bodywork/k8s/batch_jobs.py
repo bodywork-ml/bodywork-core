@@ -36,6 +36,7 @@ from .utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class JobStatus(Enum):
+    """ """
     "Possible states of a k8s job."
 
     ACTIVE = "active"
@@ -77,7 +78,28 @@ def configure_batch_stage_job(
         as a decimal number, defaults to None.
     :param memory_request: Memory resource to request from a node, expressed
         as an integer number of megabytes, defaults to None.
-    :return: A configured k8s job object.
+    :param namespace: str:
+    :param stage_name: str:
+    :param project_repo_url: str:
+    :param project_repo_branch: str:  (Default value = None)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param retries: int:  (Default value = 2)
+    :param timeout: int:  (Default value = None)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param cpu_request: float:  (Default value = None)
+    :param memory_request: int:  (Default value = None)
+    :param namespace: str: 
+    :param stage_name: str: 
+    :param project_repo_url: str: 
+    :param project_repo_branch: str:  (Default value = None)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param retries: int:  (Default value = 2)
+    :param timeout: int:  (Default value = None)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param cpu_request: float:  (Default value = None)
+    :param memory_request: int:  (Default value = None)
+    :returns: A configured k8s job object.
+
     """
     job_name = make_valid_k8s_name(stage_name)
 
@@ -124,6 +146,9 @@ def create_job(job: k8s.V1Job) -> None:
     """Create a job on a k8s cluster.
 
     :param job: A configured job object.
+    :param job: k8s.V1Job:
+    :param job: k8s.V1Job: 
+
     """
     k8s.BatchV1Api().create_namespaced_job(body=job, namespace=job.metadata.namespace)
 
@@ -134,6 +159,11 @@ def delete_job(namespace: str, name: str) -> None:
     :param namespace: Namespace in which to look for the job to
         delete.
     :param name: The name of the job to be deleted.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.BatchV1Api().delete_namespaced_job(
         name=name,
@@ -146,9 +176,12 @@ def _get_job_status(job: k8s.V1Job) -> JobStatus:
     """Get the latest status of a job created on a k8s cluster.
 
     :param job: A configured job object.
+    :param job: k8s.V1Job:
+    :param job: k8s.V1Job: 
+    :returns: The current status of the job.
     :raises RuntimeError: If the job cannot be found or the status
         cannot be identified.
-    :return: The current status of the job.
+
     """
     try:
         k8s_job_query = k8s.BatchV1Api().list_namespaced_job(
@@ -195,11 +228,22 @@ def monitor_jobs_to_completion(
         monitor jobs - e.g. to allow jobs to be created.
     :param progress_bar: Progress bar to update after every
         polling cycle, defaults to None.
+    :param jobs: Iterable[k8s.V1Job]:
+    :param timeout_seconds: int:  (Default value = 10)
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :param wait_before_start_seconds: int:  (Default value = 5)
+    :param progress_bar: Progress:  (Default value = None)
+    :param jobs: Iterable[k8s.V1Job]: 
+    :param timeout_seconds: int:  (Default value = 10)
+    :param polling_freq_seconds: int:  (Default value = DEFAULT_K8S_POLLING_FREQ)
+    :param wait_before_start_seconds: int:  (Default value = 5)
+    :param progress_bar: Progress:  (Default value = None)
+    :returns: True if all of the jobs complete successfully.
     :raises TimeoutError: If the timeout limit is reached and the jobs
         are still marked as active (but not failed).
     :raises BodyworkJobFailure: If any of the jobs are marked as
         failed.
-    :return: True if all of the jobs complete successfully.
+
     """
     sleep(wait_before_start_seconds)
     check_resource_scheduling_status(jobs)

@@ -51,6 +51,23 @@ def create_workflow_job(
         defaults to BODYWORK_DOCKER_IMAGE.
     :param ssh_key_path: SSH key filepath.
     :param secrets_group: Secrets group to use if using SSH.
+    :param namespace: str:
+    :param job_name: str:
+    :param project_repo_url: str:
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param ssh_key_path: str:  (Default value = None)
+    :param secrets_group: str:  (Default value = None)
+    :param namespace: str: 
+    :param job_name: str: 
+    :param project_repo_url: str: 
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param ssh_key_path: str:  (Default value = None)
+    :param secrets_group: str:  (Default value = None)
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -96,6 +113,11 @@ def delete_workflow_job(namespace: str, job_name: str) -> None:
 
     :param namespace: Namespace where the job resides.
     :param job_name: Name of the job to delete.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -134,6 +156,25 @@ def create_workflow_cronjob(
         historical workflow jobs, so logs can be retrieved.
     :param ssh_key_path: SSH key filepath.
     :param secrets_group: Secrets group to use if using SSH.
+    :param namespace: str:
+    :param schedule: str:
+    :param job_name: str:
+    :param project_repo_url: str:
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param workflow_job_history_limit: int:  (Default value = 1)
+    :param ssh_key_path: str:  (Default value = None)
+    :param secrets_group: str:  (Default value = None)
+    :param namespace: str: 
+    :param schedule: str: 
+    :param job_name: str: 
+    :param project_repo_url: str: 
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param workflow_job_history_limit: int:  (Default value = 1)
+    :param ssh_key_path: str:  (Default value = None)
+    :param secrets_group: str:  (Default value = None)
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -201,6 +242,21 @@ def update_workflow_cronjob(
         completion (if necessary), defaults to 2.
     :param workflow_job_history_limit: Minimum number of
         historical workflow jobs, so logs can be retrieved.
+    :param namespace: str:
+    :param job_name: str:
+    :param schedule: str:  (Default value = None)
+    :param project_repo_url: str:  (Default value = None)
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = None)
+    :param workflow_job_history_limit: int:  (Default value = None)
+    :param namespace: str: 
+    :param job_name: str: 
+    :param schedule: str:  (Default value = None)
+    :param project_repo_url: str:  (Default value = None)
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = None)
+    :param workflow_job_history_limit: int:  (Default value = None)
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -229,6 +285,11 @@ def delete_workflow_cronjob(namespace: str, job_name: str) -> None:
 
     :param namespace: The namespace where the cronjob resides.
     :param job_name: The name of the cronjob to be deleted.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -245,6 +306,11 @@ def display_cronjobs(namespace: str, job_name: str = None) -> None:
 
     :param namespace: Namespace in which to look for cronjobs.
     :param job_name: Name of cronjob resource, defaults to None.
+    :param namespace: str:
+    :param job_name: str:  (Default value = None)
+    :param namespace: str: 
+    :param job_name: str:  (Default value = None)
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -262,6 +328,11 @@ def display_workflow_job_history(namespace: str, job_name: str) -> None:
 
     :param namespace: Namespace in which to look for cronjobs.
     :param job_name: Name of the cronjob.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -277,6 +348,11 @@ def display_workflow_job_logs(namespace: str, job_name: str) -> None:
     :param namespace: Namespace in which the workflow job exists.
     :param job_name: The full name of the specific workflow job
         executed - e.g. NAME_OF_PROJECT-12345.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -294,7 +370,12 @@ def _is_existing_workflow_job(namespace: str, job_name: str) -> bool:
 
     :param namespace: The namespace to look in.
     :param job_name: The name of the Bodywork the job.
-    :return: A boolean flag.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+    :returns: A boolean flag.
+
     """
     jobs_in_namespace = k8s.list_workflow_jobs(namespace, job_name)
     return True if job_name in jobs_in_namespace.keys() else False
@@ -305,7 +386,12 @@ def _is_existing_workflow_cronjob(namespace: str, job_name: str) -> bool:
 
     :param namespace: The namespace to look in.
     :param job_name: The name of the Bodywork the job.
-    :return: A boolean flag.
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+    :returns: A boolean flag.
+
     """
     cronjobs_in_namespace = k8s.list_workflow_cronjobs(namespace)
     return True if job_name in cronjobs_in_namespace.keys() else False
@@ -315,7 +401,10 @@ def _is_valid_cron_schedule(schedule: str) -> bool:
     """Does a string represent a valid cron schedule.
 
     :param schedule: A string describing a cron schedule.
-    :return: A boolean flag.
+    :param schedule: str:
+    :param schedule: str: 
+    :returns: A boolean flag.
+
     """
     parsed_schedule = [e for e in schedule.split(" ")]
     if len(parsed_schedule) != 5:

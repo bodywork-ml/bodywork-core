@@ -40,6 +40,7 @@ from bodywork.git import (
 
 
 def test_that_git_project_clone_raises_exceptions():
+    """ """
     with raises(BodyworkGitError, match="Git clone failed"):
         download_project_code_from_repo("file:///bad_url")
 
@@ -48,11 +49,18 @@ def test_that_git_project_clone_raises_exceptions():
 def test_that_git_project_clone_returns_git_error_in_exception(
     mock_setup_ssh: MagicMock,
 ):
+    """
+
+    :param mock_setup_ssh: MagicMock:
+    :param mock_setup_ssh: MagicMock: 
+
+    """
     with raises(BodyworkGitError, match="fatal: Could not read from remote repository"):
         download_project_code_from_repo("git@xyz.com:test/test.git")
 
 
 def test_get_connection_protocol_identifies_connection_protocols():
+    """ """
     conn_str_1 = "https://github.com/bodywork-ml/bodywork-test-project"
     assert get_connection_protocol(conn_str_1) is ConnectionProtocol.HTTPS
 
@@ -64,12 +72,14 @@ def test_get_connection_protocol_identifies_connection_protocols():
 
 
 def test_get_connection_protocol_raises_exception_for_unknown_protocol():
+    """ """
     conn_str = "http://github.com/bodywork-ml/bodywork-test-project"
     with raises(RuntimeError, match="cannot identify connection protocol"):
         get_connection_protocol(conn_str)
 
 
 def test_setup_ssh_for_github_raises_exception_no_private_key_env_var():
+    """ """
     hostname = "github.com"
     if os.environ.get(SSH_PRIVATE_KEY_ENV_VAR):
         del os.environ[SSH_PRIVATE_KEY_ENV_VAR]
@@ -85,6 +95,14 @@ def test_setup_ssh_for_github_raises_exception_on_known_hosts_file_exception(
     mock_path: MagicMock,
     mock_path_read: MagicMock,
 ):
+    """
+
+    :param mock_path: MagicMock:
+    :param mock_path_read: MagicMock:
+    :param mock_path: MagicMock: 
+    :param mock_path_read: MagicMock: 
+
+    """
     hostname = "github.com"
     mock_path_read.side_effect = OSError("Test Exception")
 
@@ -99,6 +117,12 @@ def test_setup_ssh_for_github_raises_exception_on_known_hosts_file_exception(
 def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_not_match(
     mock_run: MagicMock,
 ):
+    """
+
+    :param mock_run: MagicMock:
+    :param mock_run: MagicMock: 
+
+    """
     hostname = "github.com"
     with raises(
         ConnectionAbortedError,
@@ -112,6 +136,12 @@ def test_get_ssh_public_key_from_domain_throws_exception_if_ssh_fingerprints_do_
 def test_get_git_commit_hash_throws_bodyworkgiterror_on_fail(
     mock_run: MagicMock,
 ):
+    """
+
+    :param mock_run: MagicMock:
+    :param mock_run: MagicMock: 
+
+    """
     with raises(BodyworkGitError, match="Unable to retrieve git commit hash:"):
         get_git_commit_hash()
 
@@ -120,6 +150,12 @@ def test_get_git_commit_hash_throws_bodyworkgiterror_on_fail(
 def test_get_git_commit_hash_throws_bodyworkgiterror_when_invalid_path(
     mock_run: MagicMock,
 ):
+    """
+
+    :param mock_run: MagicMock:
+    :param mock_run: MagicMock: 
+
+    """
     with raises(
         BodyworkGitError,
         match=f"Unable to retrieve git commit hash, path: {DEFAULT_PROJECT_DIR}"
@@ -140,6 +176,20 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
     mock_get_ssh: MagicMock,
     mock_run: MagicMock,
 ):
+    """
+
+    :param mock_os: MagicMock:
+    :param mock_mkdir: MagicMock:
+    :param mock_touch: MagicMock:
+    :param mock_get_ssh: MagicMock:
+    :param mock_run: MagicMock:
+    :param mock_os: MagicMock: 
+    :param mock_mkdir: MagicMock: 
+    :param mock_touch: MagicMock: 
+    :param mock_get_ssh: MagicMock: 
+    :param mock_run: MagicMock: 
+
+    """
     mock_os.environ = {SSH_PRIVATE_KEY_ENV_VAR: "MY_PRIVATE_KEY"}
     mock_get_ssh.return_value = "fingerprint"
     try:
@@ -162,6 +212,16 @@ def test_setup_ssh_for_git_host_create_known_host_and_env_var(
 def test_use_ssh_key_from_file(
     mock_run: MagicMock, mock_exists: MagicMock, mock_known_hosts: MagicMock
 ):
+    """
+
+    :param mock_run: MagicMock:
+    :param mock_exists: MagicMock:
+    :param mock_known_hosts: MagicMock:
+    :param mock_run: MagicMock: 
+    :param mock_exists: MagicMock: 
+    :param mock_known_hosts: MagicMock: 
+
+    """
 
     download_project_code_from_repo(
         "git@github.com:bodywork-ml/test.git", ssh_key_path="SSH_key"

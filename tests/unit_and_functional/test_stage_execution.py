@@ -36,6 +36,14 @@ from bodywork.stage_execution import (
 def test_that_requirements_can_be_installed(
     setup_bodywork_test_project: Iterable[bool], project_repo_location: Path
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_location: Path:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_location: Path: 
+
+    """
     requirements = ["wheel>=0.34.2", "six>=1.15.0"]
     try:
         _install_python_requirements(requirements)
@@ -47,6 +55,14 @@ def test_that_requirements_can_be_installed(
 def test_that_requirements_install_errors_raise_exception(
     setup_bodywork_test_project: Iterable[bool], project_repo_location: Path
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_location: Path:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_location: Path: 
+
+    """
     requirements = ["invalid-package-foo==0.1.0.0.0.1"]
     with raises(RuntimeError, match=r"requirements"):
         _install_python_requirements(requirements)
@@ -59,6 +75,20 @@ def test_run_stage_with_requirements_install(
     caplog: LogCaptureFixture,
     capfd: CaptureFixture,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param caplog: LogCaptureFixture:
+    :param capfd: CaptureFixture:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+    :param caplog: LogCaptureFixture: 
+    :param capfd: CaptureFixture: 
+
+    """
     try:
         run_stage("stage_1", project_repo_connection_string)
         assert True
@@ -87,6 +117,20 @@ def test_run_stage_without_requirements_install(
     caplog: LogCaptureFixture,
     capfd: CaptureFixture,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param caplog: LogCaptureFixture:
+    :param capfd: CaptureFixture:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+    :param caplog: LogCaptureFixture: 
+    :param capfd: CaptureFixture: 
+
+    """
     try:
         run_stage("stage_2", project_repo_connection_string)
         assert True
@@ -112,6 +156,18 @@ def test_run_stage_with_arguements(
     bodywork_output_dir: Iterable[Path],
     caplog: LogCaptureFixture,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param caplog: LogCaptureFixture:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+    :param caplog: LogCaptureFixture: 
+
+    """
     try:
         run_stage("stage_3", project_repo_connection_string)
         assert True
@@ -136,6 +192,18 @@ def test_run_stage_writes_subprocess_stdout_to_process_stdout(
     bodywork_output_dir: Iterable[Path],
     capfd: CaptureFixture,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param capfd: CaptureFixture:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+    :param capfd: CaptureFixture: 
+
+    """
     run_stage("stage_2", project_repo_connection_string)
     stdout = capfd.readouterr().out
     assert "foo" in stdout
@@ -147,6 +215,18 @@ def test_run_stage_failure_writes_subprocess_stdout_stderr_to_process_stdout_std
     bodywork_output_dir: Iterable[Path],
     capfd: CaptureFixture,
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param capfd: CaptureFixture:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+    :param capfd: CaptureFixture: 
+
+    """
     try:
         run_stage("stage_4", project_repo_connection_string)
         assert False
@@ -163,6 +243,16 @@ def test_run_stage_failure_raises_exception_for_failed_scripts(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     with raises(BodyworkStageFailure, match="CalledProcessError"):
         run_stage("stage_4", project_repo_connection_string)
 
@@ -172,6 +262,16 @@ def test_run_stage_timeout_raises_exception(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     with raises(BodyworkStageFailure, match="Timeout exceeded"):
         run_stage("stage_5", project_repo_connection_string, timeout=1)
 
@@ -181,11 +281,22 @@ def test_run_stage_failure_raises_exception_for_failed_setup(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     with raises(BodyworkStageFailure, match="KeyError"):
         run_stage("stage_foo", project_repo_connection_string)
 
 
 def test_infer_executable_type_type():
+    """ """
     assert _infer_executable_type("train_model.ipynb") == ExecutableType.JUPYTER_NB
     assert _infer_executable_type("train_model.py") == ExecutableType.PY_MODULE
 
@@ -198,6 +309,16 @@ def test_run_stage_with_jupyter_notebook(
     project_repo_connection_string: str,
     bodywork_output_dir: Iterable[Path],
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     try:
         run_stage("stage_jupyter", project_repo_connection_string)
         assert True

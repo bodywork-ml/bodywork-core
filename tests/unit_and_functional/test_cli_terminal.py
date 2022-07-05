@@ -20,6 +20,12 @@ from bodywork.cli.terminal import (
 
 
 def test_print_dict_renders_dicts(capsys: CaptureFixture):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     data = {"name": "Alex Ioannides", "age": 39}
     print_dict(data, "data", "ColA", "ColB")
     stdout = capsys.readouterr().out
@@ -29,6 +35,12 @@ def test_print_dict_renders_dicts(capsys: CaptureFixture):
 
 
 def test_print_pod_logs_renders_logs(capsys: CaptureFixture):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     logs = (
         "[09/13/21 15:02:05] INFO     Something happened"
         "[09/13/21 15:02:05] INFO     Something else happened"
@@ -43,6 +55,12 @@ def test_print_pod_logs_renders_logs(capsys: CaptureFixture):
 def test_print_info_and_warn_print_to_stdout_with_different_styles(
     capsys: CaptureFixture,
 ):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     print_info("foo")
     captured_stdout_one = capsys.readouterr().out
     assert "foo" in captured_stdout_one
@@ -53,6 +71,7 @@ def test_print_info_and_warn_print_to_stdout_with_different_styles(
 
 
 def test_make_progress_bar():
+    """ """
     progress_bar = make_progress_bar(10, 1)
     assert len(progress_bar.task_ids) == 1
     assert progress_bar.tasks[0].remaining == 10 / 1
@@ -61,6 +80,12 @@ def test_make_progress_bar():
 
 @patch("bodywork.cli.terminal.datetime")
 def test_get_progress_description(mock_dt: MagicMock):
+    """
+
+    :param mock_dt: MagicMock:
+    :param mock_dt: MagicMock: 
+
+    """
     mock_dt.now.return_value = datetime(2022, 1, 1)
     description = _get_progress_description()
     assert "[01/01/22 00:00:00]" in description
@@ -71,6 +96,14 @@ def test_get_progress_description(mock_dt: MagicMock):
 def test_get_progress_description(
     mock_get_progress_desc: MagicMock, mock_progress: MagicMock
 ):
+    """
+
+    :param mock_get_progress_desc: MagicMock:
+    :param mock_progress: MagicMock:
+    :param mock_get_progress_desc: MagicMock: 
+    :param mock_progress: MagicMock: 
+
+    """
     mock_progress.task_ids = ["foo"]
     mock_get_progress_desc.return_value = "bar"
     update_progress_bar(mock_progress)

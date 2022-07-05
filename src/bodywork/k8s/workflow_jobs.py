@@ -54,7 +54,22 @@ def configure_workflow_job(
         defaults to BODYWORK_DOCKER_IMAGE.
     :param job_name: Set the job name.
     :param container_env_vars: List of k8s environment variables to add.
-    :return: A configured k8s job object.
+    :param namespace: str:
+    :param project_repo_url: str:
+    :param project_repo_branch: str:
+    :param retries: int:  (Default value = 2)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param job_name: str:  (Default value = None)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param namespace: str: 
+    :param project_repo_url: str: 
+    :param project_repo_branch: str: 
+    :param retries: int:  (Default value = 2)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param job_name: str:  (Default value = None)
+    :param container_env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :returns: A configured k8s job object.
+
     """
     container_args = (
         [project_repo_url, f"--branch={project_repo_branch}"]
@@ -105,6 +120,11 @@ def _create_job_name(project_repo_url: str, project_repo_branch: str) -> str:
         repository.
     :param project_repo_branch: The Bodywork project Git repository
         branch being used.
+    :param project_repo_url: str:
+    :param project_repo_branch: str:
+    :param project_repo_url: str: 
+    :param project_repo_branch: str: 
+
     """
     repo_name = os.path.splitext(os.path.basename(project_repo_url))[0]
     return f"{repo_name}-{project_repo_branch}-{random.randint(0,999999)}"
@@ -114,6 +134,9 @@ def create_workflow_job(job: k8s.V1Job) -> None:
     """Create a workflow execution job.
 
     :param job: A configured job object.
+    :param job: k8s.V1Job:
+    :param job: k8s.V1Job: 
+
     """
     k8s.BatchV1Api().create_namespaced_job(body=job, namespace=job.metadata.namespace)
 
@@ -131,7 +154,7 @@ def configure_workflow_cronjob(
     env_vars: List[k8s.V1EnvVar] = None,
 ) -> k8s.V1beta1CronJob:
     """Configure a Bodywork workflow cronjob.
-
+    
     A cronjob is a k8s job that is executed on a cron-like schedule. In
     this particular instance, the job will execute the `run_workflow`
     function that will orchestrate the required jobs and deployments.
@@ -152,7 +175,28 @@ def configure_workflow_cronjob(
     :param image: Docker image to use for running the stage within,
         defaults to BODYWORK_DOCKER_IMAGE.
     :param env_vars: List of k8s environment variables to add.
-    :return: A configured k8s cronjob object.
+    :param cron_schedule: str:
+    :param namespace: str:
+    :param job_name: str:
+    :param project_repo_url: str:
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param successful_jobs_history_limit: int:  (Default value = 1)
+    :param failed_jobs_history_limit: int:  (Default value = 1)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :param cron_schedule: str: 
+    :param namespace: str: 
+    :param job_name: str: 
+    :param project_repo_url: str: 
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = 2)
+    :param successful_jobs_history_limit: int:  (Default value = 1)
+    :param failed_jobs_history_limit: int:  (Default value = 1)
+    :param image: str:  (Default value = BODYWORK_DOCKER_IMAGE)
+    :param env_vars: List[k8s.V1EnvVar]:  (Default value = None)
+    :returns: A configured k8s cronjob object.
+
     """
     job = configure_workflow_job(
         namespace=namespace,
@@ -178,6 +222,9 @@ def create_workflow_cronjob(cron_job: k8s.V1Job) -> None:
     """Create a cron-job on a k8s cluster.
 
     :param cron_job: A configured cron-job object.
+    :param cron_job: k8s.V1Job:
+    :param cron_job: k8s.V1Job: 
+
     """
     k8s.BatchV1beta1Api().create_namespaced_cron_job(
         body=cron_job, namespace=cron_job.metadata.namespace
@@ -209,6 +256,23 @@ def update_workflow_cronjob(
         runs (pods) to keep, defaults to 1.
     :param failed_jobs_history_limit: The number of unsuccessful job
         runs (pods) to keep, defaults to 1.
+    :param namespace: str:
+    :param name: str:
+    :param schedule: str:  (Default value = None)
+    :param project_repo_url: str:  (Default value = None)
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = None)
+    :param successful_jobs_history_limit: int:  (Default value = None)
+    :param failed_jobs_history_limit: int:  (Default value = None)
+    :param namespace: str: 
+    :param name: str: 
+    :param schedule: str:  (Default value = None)
+    :param project_repo_url: str:  (Default value = None)
+    :param project_repo_branch: str:  (Default value = None)
+    :param retries: int:  (Default value = None)
+    :param successful_jobs_history_limit: int:  (Default value = None)
+    :param failed_jobs_history_limit: int:  (Default value = None)
+
     """
 
     if not schedule:
@@ -260,6 +324,11 @@ def delete_workflow_cronjob(namespace: str, name: str) -> None:
     :param namespace: Namespace in which to look for the cronjob to
         delete.
     :param name: The name of the cronjob to be deleted.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.BatchV1beta1Api().delete_namespaced_cron_job(
         name=name,
@@ -272,6 +341,9 @@ def list_workflow_cronjobs(namespace: str) -> Dict[str, Dict[str, str]]:
     """Get all cronjobs and their high-level info.
 
     :param namespace: Namespace in which to list cronjobs.
+    :param namespace: str:
+    :param namespace: str: 
+
     """
     cronjobs = k8s.BatchV1beta1Api().list_namespaced_cron_job(namespace=namespace)
     cronjob_info = {
@@ -295,13 +367,18 @@ def list_workflow_jobs(
     namespace: str, job_name: str
 ) -> Dict[str, Dict[str, Union[datetime, bool]]]:
     """Get historic workflow jobs.
-
+    
     Get status information for workflow jobs owned by a job or cronjob.
 
     :param namespace: Namespace in which to list workflow jobs.
     :param job_name: Name of job that triggered workflow job.
-    :return: Dictionary of workflow jobs each mapping to a dictionary of
+    :param namespace: str:
+    :param job_name: str:
+    :param namespace: str: 
+    :param job_name: str: 
+    :returns: Dictionary of workflow jobs each mapping to a dictionary of
         status information fields for the workflow.
+
     """
     workflow_jobs_query = k8s.BatchV1Api().list_namespaced_job(namespace=namespace)
     workflow_jobs_info = {

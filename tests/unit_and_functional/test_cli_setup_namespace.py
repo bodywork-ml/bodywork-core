@@ -35,6 +35,14 @@ from bodywork.cli.setup_namespace import (
 def test_is_namespace_setup_for_bodywork(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     SA1 = BODYWORK_WORKFLOW_SERVICE_ACCOUNT
     CRB = BODYWORK_WORKFLOW_CLUSTER_ROLE
 
@@ -61,6 +69,14 @@ def test_is_namespace_setup_for_bodywork(
 def test_setup_namespace_on_k8s_cluster(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     SA1 = BODYWORK_WORKFLOW_SERVICE_ACCOUNT
 
     mock_k8s_module.namespace_exists.return_value = False

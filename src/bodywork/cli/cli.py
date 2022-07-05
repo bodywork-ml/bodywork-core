@@ -72,12 +72,24 @@ def k8s_auth(func: Callable[..., None]) -> Callable[..., None]:
     """Decorator for handling k8s authentication for CLI commands.
 
     :param func: The inner function to wrap with k8s exception handling.
-    :return: The original function wrapped by a function that handles
+    :param func: Callable[...:
+    :param None: returns: The original function wrapped by a function that handles
         k8s API exceptions.
+    :param func: Callable[...: 
+    :param None]: 
+    :returns: The original function wrapped by a function that handles
+        k8s API exceptions.
+
     """
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> None:
+        """
+
+        :param *args: Any: 
+        :param **kwargs: Any: 
+
+        """
         try:
             load_kubernetes_config()
             return func(*args, **kwargs)
@@ -93,12 +105,24 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
     """Decorator for handling k8s API exceptions on the CLI.
 
     :param func: The inner function to wrap with k8s exception handling.
-    :return: The original function wrapped by a function that handles
+    :param func: Callable[...:
+    :param None: returns: The original function wrapped by a function that handles
         k8s API exceptions.
+    :param func: Callable[...: 
+    :param None]: 
+    :returns: The original function wrapped by a function that handles
+        k8s API exceptions.
+
     """
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> None:
+        """
+
+        :param *args: Any: 
+        :param **kwargs: Any: 
+
+        """
         try:
             func(*args, **kwargs)
         except kubernetes.client.rest.ApiException:
@@ -128,6 +152,14 @@ def handle_k8s_exceptions(func: Callable[..., None]) -> Callable[..., None]:
 def _validate_config(
     file: str = Option("bodywork.yaml"), check_files: bool = Option(False)
 ):
+    """
+
+    :param file: str:  (Default value = Option("bodywork.yaml"))
+    :param check_files: bool:  (Default value = Option(False))
+    :param file: str:  (Default value = Option("bodywork.yaml"))
+    :param check_files: bool:  (Default value = Option(False))
+
+    """
     file_path = Path(file)
     try:
         BodyworkConfig(file_path, check_files)
@@ -149,6 +181,7 @@ def _validate_config(
 
 @cli_app.command("version")
 def _version():
+    """ """
     print_info(get_distribution("bodywork").version)
     sys.exit(0)
 
@@ -157,6 +190,7 @@ def _version():
 @handle_k8s_exceptions
 @k8s_auth
 def _configure_cluster():
+    """ """
     setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     sys.exit(0)
 
@@ -168,6 +202,17 @@ def _stage(
     stage_name: str = Argument(...),
     timeout: int = Argument(None),
 ):
+    """
+
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param "--branch"): 
+    :param stage_name: str:  (Default value = Argument(...))
+    :param timeout: int:  (Default value = Argument(None))
+
+    """
     try:
         run_stage(stage_name, git_url, git_branch, timeout=timeout)
         sys.exit(0)
@@ -177,6 +222,12 @@ def _stage(
 
 @cli_app.command("debug", hidden=True)
 def _debug(seconds: int = Argument(600)) -> None:
+    """
+
+    :param seconds: int:  (Default value = Argument(600))
+    :param seconds: int:  (Default value = Argument(600))
+
+    """
     print_info(f"sleeping for {seconds}s")
     sleep(seconds)
     sys.exit(0)
@@ -195,6 +246,28 @@ def _create_deployment(
     image: str = Option(None, "--bodywork-image", hidden=True),
     retries: int = Option(1),
 ):
+    """
+
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param "--branch"): 
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param "--async": 
+    :param hidden:  (Default value = True))
+    :param asynchronous_job_name: str:  (Default value = Option("")
+    :param "--async-job-name": 
+    :param ssh_key_path: str:  (Default value = Option("")
+    :param "--ssh"): 
+    :param secrets_group: str:  (Default value = Option("")
+    :param "--group": 
+    :param "--secrets-group"): 
+    :param image: str:  (Default value = Option(None)
+    :param "--bodywork-image": 
+    :param retries: int:  (Default value = Option(1))
+
+    """
     if not is_namespace_available_for_bodywork(BODYWORK_NAMESPACE):
         print_warn(
             "Cluster has not been configured for Bodywork - "
@@ -253,6 +326,20 @@ def _get_deployment(
     logs: str = Option(""),
     namespace: str = Option(None),
 ):
+    """
+
+    :param name: str:  (Default value = Argument(None))
+    :param service_name: str:  (Default value = Argument(None))
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param name: str:  (Default value = Argument(None))
+    :param service_name: str:  (Default value = Argument(None))
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param "--async": 
+    :param hidden:  (Default value = True))
+    :param logs: str:  (Default value = Option(""))
+    :param namespace: str:  (Default value = Option(None))
+
+    """
     if asynchronous:
         if logs:
             display_workflow_job_logs(BODYWORK_NAMESPACE, logs)
@@ -275,6 +362,25 @@ def _update_deployment(
     image: str = Option(None, "--bodywork-image", hidden=True),
     retries: int = Option(1),
 ):
+    """
+
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param "--branch"): 
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param "--async": 
+    :param hidden:  (Default value = True))
+    :param asynchronous_job_name: str:  (Default value = Option("")
+    :param "--async-job-name": 
+    :param ssh_key_path: str:  (Default value = Option("")
+    :param "--ssh"): 
+    :param image: str:  (Default value = Option(None)
+    :param "--bodywork-image": 
+    :param retries: int:  (Default value = Option(1))
+
+    """
     _create_deployment(
         git_url=git_url,
         git_branch=git_branch,
@@ -294,6 +400,16 @@ def _delete_deployment(
     name: str = Argument(...),
     asynchronous: bool = Option(False, "--async", hidden=True),
 ):
+    """
+
+    :param name: str:  (Default value = Argument(...))
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param name: str:  (Default value = Argument(...))
+    :param asynchronous: bool:  (Default value = Option(False)
+    :param "--async": 
+    :param hidden:  (Default value = True))
+
+    """
     if asynchronous:
         delete_workflow_job(BODYWORK_NAMESPACE, name)
     else:
@@ -314,6 +430,24 @@ def _create_cronjob(
     ssh_key_path: str = Option("", "--ssh"),
     secrets_group: str = Option("", "--group", "--secrets-group"),
 ):
+    """
+
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param "--branch"): 
+    :param schedule: str:  (Default value = Option(...))
+    :param name: str:  (Default value = Option(...))
+    :param retries: int:  (Default value = Option(1))
+    :param history_limit: int:  (Default value = Option(1))
+    :param ssh_key_path: str:  (Default value = Option("")
+    :param "--ssh"): 
+    :param secrets_group: str:  (Default value = Option("")
+    :param "--group": 
+    :param "--secrets-group"): 
+
+    """
     create_workflow_cronjob(
         BODYWORK_NAMESPACE,
         schedule,
@@ -337,6 +471,16 @@ def _get_cronjob(
     history: bool = Option(False),
     logs: str = Option(""),
 ):
+    """
+
+    :param name: str:  (Default value = Argument(None))
+    :param history: bool:  (Default value = Option(False))
+    :param logs: str:  (Default value = Option(""))
+    :param name: str:  (Default value = Argument(None))
+    :param history: bool:  (Default value = Option(False))
+    :param logs: str:  (Default value = Option(""))
+
+    """
     if name and history and not logs:
         display_workflow_job_history(BODYWORK_NAMESPACE, name)
     elif name and not history and logs:
@@ -360,6 +504,19 @@ def _update_cronjob(
     retries: int = Option(1),
     history_limit: int = Option(1),
 ):
+    """
+
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param git_url: str:  (Default value = Argument(...))
+    :param git_branch: str:  (Default value = Option("")
+    :param "--branch"): 
+    :param schedule: str:  (Default value = Option(...))
+    :param name: str:  (Default value = Option(...))
+    :param retries: int:  (Default value = Option(1))
+    :param history_limit: int:  (Default value = Option(1))
+
+    """
     update_workflow_cronjob(
         BODYWORK_NAMESPACE,
         name,
@@ -376,6 +533,12 @@ def _update_cronjob(
 @handle_k8s_exceptions
 @k8s_auth
 def _delete_cronjob(name: str = Argument(...)):
+    """
+
+    :param name: str:  (Default value = Argument(...))
+    :param name: str:  (Default value = Argument(...))
+
+    """
     delete_workflow_cronjob(BODYWORK_NAMESPACE, name)
     sys.exit(0)
 
@@ -386,6 +549,16 @@ def _delete_cronjob(name: str = Argument(...)):
 def _create_secret(
     name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
 ):
+    """
+
+    :param name: str:  (Default value = Argument(...))
+    :param group: str:  (Default value = Option(...))
+    :param data: List[str]:  (Default value = Option(...))
+    :param name: str:  (Default value = Argument(...))
+    :param group: str:  (Default value = Option(...))
+    :param data: List[str]:  (Default value = Option(...))
+
+    """
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
         create_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
@@ -403,6 +576,14 @@ def _create_secret(
 @handle_k8s_exceptions
 @k8s_auth
 def _get_secret(name: str = Argument(None), group: str = Option(None)):
+    """
+
+    :param name: str:  (Default value = Argument(None))
+    :param group: str:  (Default value = Option(None))
+    :param name: str:  (Default value = Argument(None))
+    :param group: str:  (Default value = Option(None))
+
+    """
     if name and not group:
         print_warn("Please specify which secrets group the secret belongs to.")
         sys.exit(1)
@@ -421,6 +602,16 @@ def _get_secret(name: str = Argument(None), group: str = Option(None)):
 def _update_secret(
     name: str = Argument(...), group: str = Option(...), data: List[str] = Option(...)
 ):
+    """
+
+    :param name: str:  (Default value = Argument(...))
+    :param group: str:  (Default value = Option(...))
+    :param data: List[str]:  (Default value = Option(...))
+    :param name: str:  (Default value = Argument(...))
+    :param group: str:  (Default value = Option(...))
+    :param data: List[str]:  (Default value = Option(...))
+
+    """
     try:
         var_names_and_values = parse_cli_secrets_strings(data)
         update_secret(BODYWORK_NAMESPACE, group, name, var_names_and_values)
@@ -437,6 +628,14 @@ def _update_secret(
 @handle_k8s_exceptions
 @k8s_auth
 def _delete_secret(name: str = Argument(None), group: str = Option(None)):
+    """
+
+    :param name: str:  (Default value = Argument(None))
+    :param group: str:  (Default value = Option(None))
+    :param name: str:  (Default value = Argument(None))
+    :param group: str:  (Default value = Option(None))
+
+    """
     if name:
         if not group:
             print_warn("Please specify which secrets group the secret belongs to.")

@@ -55,8 +55,17 @@ def download_project_code_from_repo(
     :param destination: The name of the directory int which the
         repository will be cloned, defaults to DEFAULT_PROJECT_DIR.
     :param ssh_key_path: SSH key filepath.
+    :param url: str:
+    :param branch: str:  (Default value = None)
+    :param destination: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param ssh_key_path: str:  (Default value = None)
+    :param url: str: 
+    :param branch: str:  (Default value = None)
+    :param destination: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param ssh_key_path: str:  (Default value = None)
     :raises BodyworkGitError: If Git is not available on the system or the
         Git repository cannot be accessed.
+
     """
     try:
         run(["git", "--version"], check=True, stdout=DEVNULL)
@@ -106,9 +115,12 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
 
     :param connection_string: The string containing the connection
         details for the remote Git repository - e.g. the GitHub URL.
+    :param connection_string: str:
+    :param connection_string: str: 
+    :returns: The connection protocol type.
     :raises RuntimeError: if the connection protocol cannot be
         identified or is not supported.
-    :return: The connection protocol type.
+
     """
     if re.match("^https://", connection_string):
         return ConnectionProtocol.HTTPS
@@ -126,7 +138,7 @@ def get_connection_protocol(connection_string: str) -> ConnectionProtocol:
 
 def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
     """Setup system for SSH interaction with GitHub.
-
+    
     Using the private key assigned to an environment variable, this
     function creates a new SSH configuration in the working directory
     and then tells Git to use it for SSH by exporting the
@@ -134,6 +146,11 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
 
     :param hostname: Hostname to SSH to.
     :param ssh_key_path: SSH key file to use.
+    :param hostname: str:
+    :param ssh_key_path: str:  (Default value = None)
+    :param hostname: str: 
+    :param ssh_key_path: str:  (Default value = None)
+
     """
     ssh_dir = Path.home() / SSH_DIR_NAME
     if SSH_PRIVATE_KEY_ENV_VAR in os.environ:
@@ -166,6 +183,12 @@ def setup_ssh_for_git_host(hostname: str, ssh_key_path: str = None) -> None:
 
 
 def _configure_known_hosts(hostname, ssh_dir):
+    """
+
+    :param hostname: param ssh_dir:
+    :param ssh_dir: 
+
+    """
     try:
         known_hosts = ssh_dir / "known_hosts"
         if not known_hosts.exists():
@@ -185,19 +208,27 @@ def known_hosts_contains_domain_key(hostname: str, known_hosts_filepath: Path) -
 
     :param known_hosts_filepath: path to known_hosts file
     :param hostname: Hostname to check for.
-    :return: bool if the hostname is in the file
+    :param hostname: str:
+    :param known_hosts_filepath: Path:
+    :param hostname: str: 
+    :param known_hosts_filepath: Path: 
+    :returns: bool if the hostname is in the file
+
     """
     return hostname in known_hosts_filepath.read_text()
 
 
 def get_ssh_public_key_from_domain(hostname: str) -> str:
     """Gets the public key from the host and checks the fingerprint.
-
+    
      Output from ssh-keyscan is piped into ssh-keygen by setting the input in
       conjunction with the trailing '-' in the command.
 
     :param hostname: Name of host to retrieve the key from e.g. Gitlab.com
-    :return: The public SSH Key of the host.
+    :param hostname: str:
+    :param hostname: str: 
+    :returns: The public SSH Key of the host.
+
     """
     fingerprints = {
         "github.com": GITHUB_SSH_FINGERPRINT,
@@ -240,7 +271,10 @@ def get_git_commit_hash(project_path: Path = DEFAULT_PROJECT_DIR) -> str:
     """Retrieves the Git commit hash.
 
     :param project_path: Git project path.
-    :return: The Git commit hash.
+    :param project_path: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param project_path: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :returns: The Git commit hash.
+
     """
     try:
         result = run(

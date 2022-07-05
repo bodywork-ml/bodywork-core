@@ -27,6 +27,12 @@ from bodywork.k8s.namespaces import create_namespace, delete_namespace, namespac
 
 @patch("kubernetes.client.CoreV1Api")
 def test_namespace_exists_identifies_existing_namespaces(mock_k8s_core_api: MagicMock):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespace.return_value = kubernetes.client.V1NamespaceList(
         items=[
             kubernetes.client.V1Namespace(
@@ -43,6 +49,12 @@ def test_namespace_exists_identifies_existing_namespaces(mock_k8s_core_api: Magi
 
 @patch("kubernetes.client.CoreV1Api")
 def test_create_namespace_creates_namespaces(mock_k8s_core_api: MagicMock):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     create_namespace("bodywork-dev")
     mock_k8s_core_api().create_namespace.assert_called_once_with(
         body=kubernetes.client.V1Namespace(
@@ -53,6 +65,12 @@ def test_create_namespace_creates_namespaces(mock_k8s_core_api: MagicMock):
 
 @patch("kubernetes.client.CoreV1Api")
 def test_delete_namespace_deletes_namespaces(mock_k8s_core_api: MagicMock):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     delete_namespace("bodywork-dev", False)
     mock_k8s_core_api().delete_namespace.assert_called_once_with(
         name="bodywork-dev", propagation_policy="Background"

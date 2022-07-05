@@ -50,26 +50,31 @@ TEST_NAMESPACE = "bodywork-test"
 
 @fixture(scope="function")
 def gitlab_repo_connection_string() -> str:
+    """ """
     return "git@gitlab.com:bodyworkml/test-project.git"
 
 
 @fixture(scope="function")
 def github_repo_connection_string() -> str:
+    """ """
     return "git@github.com:bodywork-ml/private-test-repo.git"
 
 
 @fixture(scope="function")
 def bitbucket_repo_connection_string() -> str:
+    """ """
     return "git@bitbucket.org:bodywork/private-test-repo.git"
 
 
 @fixture(scope="function")
 def azure_repo_connection_string() -> str:
+    """ """
     return "git@ssh.dev.azure.com:v3/Bodyworkml/test-repos/private-test-repos"
 
 
 @fixture(scope="function")
 def random_test_namespace() -> str:
+    """ """
     rand_test_namespace = f"bodywork-integration-tests-{randint(0, 10000)}"
     print(
         f"\n|--> Bodywork integration tests running in "
@@ -80,11 +85,13 @@ def random_test_namespace() -> str:
 
 @fixture(scope="function")
 def test_namespace() -> str:
+    """ """
     return TEST_NAMESPACE
 
 
 @fixture(scope="function")
 def docker_image() -> str:
+    """ """
     with open(Path("VERSION"), "r") as file:
         version = file.readlines()[0].replace("\n", "")
     dev_image = f"{BODYWORK_DOCKERHUB_IMAGE_REPO}:{version}-dev"
@@ -98,6 +105,7 @@ def docker_image() -> str:
 
 @fixture(scope="function")
 def set_github_ssh_private_key_env_var() -> Iterable[None]:
+    """ """
     private_key = Path.home() / ".ssh/id_rsa"
     if private_key.exists():
         os.environ[SSH_PRIVATE_KEY_ENV_VAR] = private_key.read_text()
@@ -113,6 +121,7 @@ def set_github_ssh_private_key_env_var() -> Iterable[None]:
 
 @fixture(scope="function")
 def set_git_ssh_private_key_env_var() -> Iterable[None]:
+    """ """
     if "CIRCLECI" in os.environ:
         private_key = Path.home() / ".ssh" / "id_rsa_e28827a593edd69f1a58cf07a7755107"
     else:
@@ -129,6 +138,12 @@ def set_git_ssh_private_key_env_var() -> Iterable[None]:
 
 @fixture(scope="function")
 def github_ssh_private_key_file(bodywork_output_dir: Path) -> Path:
+    """
+
+    :param bodywork_output_dir: Path:
+    :param bodywork_output_dir: Path: 
+
+    """
     try:
         private_key = Path.home() / ".ssh/id_rsa"
         if not private_key.exists():
@@ -146,6 +161,7 @@ def github_ssh_private_key_file(bodywork_output_dir: Path) -> Path:
 
 @fixture(scope="session")
 def ingress_load_balancer_url() -> Iterable[str]:
+    """ """
     try:
         k8s_config.load_kube_config()
         _, active_context = k8s_config.list_kube_config_contexts()
@@ -199,11 +215,18 @@ def ingress_load_balancer_url() -> Iterable[str]:
 
 @fixture(scope="session")
 def setup_cluster(request: FixtureRequest) -> None:
+    """
+
+    :param request: FixtureRequest:
+    :param request: FixtureRequest: 
+
+    """
     load_kubernetes_config()
     setup_namespace_with_service_accounts_and_roles(BODYWORK_NAMESPACE)
     create_namespace(TEST_NAMESPACE)
 
     def clean_up():
+        """ """
         delete_namespace(BODYWORK_NAMESPACE)
         k8s_client.RbacAuthorizationV1Api().delete_cluster_role(
             BODYWORK_WORKFLOW_CLUSTER_ROLE
@@ -218,6 +241,12 @@ def setup_cluster(request: FixtureRequest) -> None:
 
 @fixture(scope="function")
 def add_secrets(request: FixtureRequest) -> None:
+    """
+
+    :param request: FixtureRequest:
+    :param request: FixtureRequest: 
+
+    """
     run(
         [
             "kubectl",
@@ -243,6 +272,7 @@ def add_secrets(request: FixtureRequest) -> None:
     )
 
     def delete_secrets():
+        """ """
         run(
             [
                 "kubectl",

@@ -28,8 +28,11 @@ def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:
     """Parse KEY=VALUE strings used in secrets.
 
     :param kv_string: The string containing the key-value data.
+    :param kv_string: str:
+    :param kv_string: str: 
+    :returns: Separated key and value.
     :raises ValueError: if the string is malformed in any way.
-    :return: Separated key and value.
+
     """
     error_msg = "secret key-value pair not in KEY=VALUE format"
     equals_sign = kv_string.find("=")
@@ -48,7 +51,10 @@ def parse_cli_secrets_strings(key_value_strings: Iterable[str]) -> Dict[str, str
     """Parse CLI secrets string into mapping of secret keys to values.
 
     :param key_value_strings: CLI secrets string.
-    :return: Mapping of secret keys to values
+    :param key_value_strings: Iterable[str]:
+    :param key_value_strings: Iterable[str]: 
+    :returns: Mapping of secret keys to values
+
     """
     var_names_and_values = dict(
         _parse_secret_key_value_pair(key_value_string)
@@ -67,6 +73,17 @@ def create_secret(
     :param secret_name: The name to give the secret.
     :param keys_and_values: The secret keys (i.e. variable names) and
         the associated values to assign to them.
+    :param namespace: str:
+    :param group: str:
+    :param secret_name: str:
+    :param keys_and_values: Dict[str:
+    :param str: 
+    :param namespace: str: 
+    :param group: str: 
+    :param secret_name: str: 
+    :param keys_and_values: Dict[str: 
+    :param str]: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -88,7 +105,17 @@ def update_secret(
     :param namespace: Namespace in which to look for secrets.
     :param group: The group the secret belongs to.
     :param secret_name: The name of the secret to update.
-    :param keys_and_values:
+    :param keys_and_values: param namespace: str:
+    :param group: str:
+    :param secret_name: str:
+    :param keys_and_values: Dict[str:
+    :param str: 
+    :param namespace: str: 
+    :param group: str: 
+    :param secret_name: str: 
+    :param keys_and_values: Dict[str: 
+    :param str]: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -110,6 +137,13 @@ def delete_secret(namespace: str, group: str, secret_name: str) -> None:
     :param namespace: Namespace in which to look for secrets.
     :param group: The group the secret belongs to.
     :param secret_name: The name of the secret to delete.
+    :param namespace: str:
+    :param group: str:
+    :param secret_name: str:
+    :param namespace: str: 
+    :param group: str: 
+    :param secret_name: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -128,6 +162,11 @@ def delete_secret_group(namespace: str, group: str) -> None:
 
     :param namespace: Namespace in which to look for secrets group.
     :param group: The group of secrets to delete.
+    :param namespace: str:
+    :param group: str:
+    :param namespace: str: 
+    :param group: str: 
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -146,6 +185,13 @@ def display_secrets(namespace: str, group: str = None, secret_name: str = None) 
     :param group: Group the secrets to display belong to.
     :param secret_name: Display the available keys in just the secret with
         this name, defaults to None
+    :param namespace: str:
+    :param group: str:  (Default value = None)
+    :param secret_name: str:  (Default value = None)
+    :param namespace: str: 
+    :param group: str:  (Default value = None)
+    :param secret_name: str:  (Default value = None)
+
     """
     if not k8s.namespace_exists(namespace):
         print_warn(f"Could not find namespace={namespace} on k8s cluster.")
@@ -179,4 +225,12 @@ def display_secrets(namespace: str, group: str = None, secret_name: str = None) 
 
 
 def _create_table_name(secret_name: str, group: str) -> str:
+    """
+
+    :param secret_name: str:
+    :param group: str:
+    :param secret_name: str: 
+    :param group: str: 
+
+    """
     return f"{secret_name} in group {group}"

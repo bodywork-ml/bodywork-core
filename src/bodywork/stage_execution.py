@@ -37,6 +37,7 @@ _log = bodywork_log_factory()
 
 
 class ExecutableType(Enum):
+    """ """
     "Executable file type."
 
     JUPYTER_NB = ".ipynb"
@@ -60,8 +61,19 @@ def run_stage(
     :param timeout: The time to wait (in seconds) for the stage
         executable to complete, before terminating the main process.
         Defaults to None.
+    :param stage_name: str:
+    :param repo_url: str:
+    :param repo_branch: str:  (Default value = None)
+    :param cloned_repo_dir: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param timeout: int:  (Default value = None)
+    :param stage_name: str: 
+    :param repo_url: str: 
+    :param repo_branch: str:  (Default value = None)
+    :param cloned_repo_dir: Path:  (Default value = DEFAULT_PROJECT_DIR)
+    :param timeout: int:  (Default value = None)
     :raises BodyworkStageFailure: If the executable script exits with
         a non-zero exit code (i.e. fails).
+
     """
     _log.info(
         f"Starting stage = {stage_name} from {repo_branch} branch of repo "
@@ -112,7 +124,10 @@ def _install_python_requirements(requirements: Sequence[str]) -> None:
     """Install the Python dependencies for a Bodywork project stage.
 
     :param requirements: List of requirements to be installed.
+    :param requirements: Sequence[str]:
+    :param requirements: Sequence[str]: 
     :raises RuntimeError: If there was an error when installing requirements.
+
     """
     try:
         _log.info(f"Installing required Python packages: {', '.join(requirements)}\n")
@@ -133,8 +148,11 @@ def _infer_executable_type(file_name: str) -> ExecutableType:
     """Infer the type of Python executable from the filename.
 
     :param file_name: The name of the executable.
+    :param file_name: str:
+    :param file_name: str: 
     :raises ValueError: If the filename is not a valid Jupyter notebook
         or Python module filename.
+
     """
     if file_name.endswith(".ipynb"):
         return ExecutableType.JUPYTER_NB

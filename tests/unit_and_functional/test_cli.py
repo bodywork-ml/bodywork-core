@@ -50,6 +50,14 @@ from bodywork.constants import BODYWORK_NAMESPACE
 @patch("bodywork.cli.cli.load_kubernetes_config")
 @patch("bodywork.cli.cli.print_warn")
 def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
+    """
+
+    :param mock_print_warn: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_print_warn: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     f = k8s_auth(lambda e: None)
     mock_load_k8s_config.assert_not_called()
     y = f("foo")
@@ -65,9 +73,17 @@ def test_k8s_auth(mock_print_warn: MagicMock, mock_load_k8s_config: MagicMock):
 def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
     capsys: CaptureFixture,
 ):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     @handle_k8s_exceptions
     def outer_func():
+        """ """
         def inner_func():
+            """ """
             raise kubernetes.client.rest.ApiException()
 
         return inner_func()
@@ -80,9 +96,17 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_api_exceptions(
 def test_handle_k8s_exceptions_decorator_handles_max_retry_error(
     capsys: CaptureFixture,
 ):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     @handle_k8s_exceptions
     def outer_func():
+        """ """
         def inner_func():
+            """ """
             raise urllib3.exceptions.MaxRetryError("pool", "url")
 
         return inner_func()
@@ -95,8 +119,15 @@ def test_handle_k8s_exceptions_decorator_handles_max_retry_error(
 def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
     capsys: CaptureFixture,
 ):
+    """
+
+    :param capsys: CaptureFixture:
+    :param capsys: CaptureFixture: 
+
+    """
     @handle_k8s_exceptions
     def func():
+        """ """
         raise kubernetes.config.ConfigException()
 
     func()
@@ -105,6 +136,7 @@ def test_handle_k8s_exceptions_decorator_handles_k8s_config_exceptions(
 
 
 def test_cli_commands_exist():
+    """ """
     validate = run(
         ["bodywork", "validate", "--help"],
         encoding="utf-8",
@@ -210,6 +242,12 @@ def test_cli_commands_exist():
 
 
 def test_validate(project_repo_location: Path):
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     config_file_path = project_repo_location / "bodywork.yaml"
     process_one = run(
         ["bodywork", "validate", "--file", config_file_path],
@@ -257,6 +295,7 @@ def test_validate(project_repo_location: Path):
 
 
 def test_version_returns_valid_pkg_version():
+    """ """
     pkg_version_regex = r"\d.\d.($|\d+|a\d+|b\d+|rc\d+|.dev\d+|.post\d+)\n"
     with open("VERSION") as file:
         expected_version = search(pkg_version_regex, file.read())
@@ -276,6 +315,16 @@ def test_version_returns_valid_pkg_version():
 def test_configure_cluster_configures_cluster(
     mock_sys: MagicMock, mock_setup: MagicMock, mock_load_kubernetes_config: MagicMock
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_setup: MagicMock:
+    :param mock_load_kubernetes_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_setup: MagicMock: 
+    :param mock_load_kubernetes_config: MagicMock: 
+
+    """
     _configure_cluster()
     mock_setup.assert_called_once_with(BODYWORK_NAMESPACE)
 
@@ -283,6 +332,14 @@ def test_configure_cluster_configures_cluster(
 def test_stage_command_successful_has_zero_exit_code(
     setup_bodywork_test_project: Iterable[bool], project_repo_connection_string: str
 ):
+    """
+
+    :param setup_bodywork_test_project: Iterable[bool]:
+    :param project_repo_connection_string: str:
+    :param setup_bodywork_test_project: Iterable[bool]: 
+    :param project_repo_connection_string: str: 
+
+    """
     try:
         run(
             [
@@ -304,11 +361,13 @@ def test_stage_command_successful_has_zero_exit_code(
 
 
 def test_stage_command_unsuccessful_returns_non_zero_exit_code():
+    """ """
     process = run(["bodywork", "stage", "http://bad.repo", "master", "train"])
     assert process.returncode != 0
 
 
 def test_debug_subcommand_sleeps():
+    """ """
     process = run(
         ["bodywork", "debug", "1"],
         encoding="utf-8",
@@ -333,6 +392,22 @@ def test_create_deployments(
     mock_is_namespace_available_for_bodywork: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_create_workflow_job: MagicMock:
+    :param mock_run_workflow: MagicMock:
+    :param mock_setup_namespace_with_service_accounts_and_roles: MagicMock:
+    :param mock_is_namespace_available_for_bodywork: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_create_workflow_job: MagicMock: 
+    :param mock_run_workflow: MagicMock: 
+    :param mock_setup_namespace_with_service_accounts_and_roles: MagicMock: 
+    :param mock_is_namespace_available_for_bodywork: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     mock_is_namespace_available_for_bodywork.return_value = False
     _create_deployment("git-url", "git-branch", False)
     mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
@@ -370,6 +445,22 @@ def test_get_deployments(
     mock_display_workflow_job_history: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_display_deployment: MagicMock:
+    :param mock_display_workflow_job_logs: MagicMock:
+    :param mock_display_workflow_job_history: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_display_deployment: MagicMock: 
+    :param mock_display_workflow_job_logs: MagicMock: 
+    :param mock_display_workflow_job_history: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _get_deployment(asynchronous=True, logs="")
     mock_display_workflow_job_history.assert_called_once()
 
@@ -394,6 +485,22 @@ def test_update_deployments(
     mock_is_namespace_available_for_bodywork: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_create_workflow_job: MagicMock:
+    :param mock_run_workflow: MagicMock:
+    :param mock_setup_namespace_with_service_accounts_and_roles: MagicMock:
+    :param mock_is_namespace_available_for_bodywork: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_create_workflow_job: MagicMock: 
+    :param mock_run_workflow: MagicMock: 
+    :param mock_setup_namespace_with_service_accounts_and_roles: MagicMock: 
+    :param mock_is_namespace_available_for_bodywork: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     mock_is_namespace_available_for_bodywork.return_value = False
     _update_deployment("git-url", "git-branch", False)
     mock_setup_namespace_with_service_accounts_and_roles.assert_called_once()
@@ -431,6 +538,18 @@ def test_delete_deployments(
     mock_delete_workflow_job: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_delete_deployments: MagicMock:
+    :param mock_delete_workflow_job: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_delete_deployments: MagicMock: 
+    :param mock_delete_workflow_job: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _delete_deployment("foo", asynchronous=False)
     mock_delete_deployments.assert_called_once()
 
@@ -446,6 +565,16 @@ def test_create_cronjob(
     mock_create_workflow_cronjob: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_create_workflow_cronjob: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_create_workflow_cronjob: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _create_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_create_workflow_cronjob.assert_called_once()
 
@@ -464,6 +593,22 @@ def test_get_cronjob(
     mock_print_warn: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_display_cronjobs: MagicMock:
+    :param mock_display_workflow_job_history: MagicMock:
+    :param mock_display_workflow_job_logs: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_display_cronjobs: MagicMock: 
+    :param mock_display_workflow_job_history: MagicMock: 
+    :param mock_display_workflow_job_logs: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _get_cronjob(name="foo", history=True, logs=False)
     mock_display_workflow_job_history.assert_called_once()
 
@@ -485,6 +630,16 @@ def test_update_cronjob(
     mock_update_workflow_cronjob: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_update_workflow_cronjob: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_update_workflow_cronjob: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _update_cronjob("git-repo", "git-url", "0 * * * *", "nightly")
     mock_update_workflow_cronjob.assert_called_once()
 
@@ -497,6 +652,16 @@ def test_delete_cronjob(
     mock_delete_workflow_cronjob: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_delete_workflow_cronjob: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_delete_workflow_cronjob: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _delete_cronjob("nightly")
     mock_delete_workflow_cronjob.assert_called_once()
 
@@ -511,6 +676,18 @@ def test_create_secrets(
     mock_create_secret: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_create_secret: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_create_secret: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _create_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
 
@@ -528,6 +705,18 @@ def test_get_secrets(
     mock_display_secrets: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_display_secrets: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_display_secrets: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _get_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
 
@@ -554,6 +743,18 @@ def test_update_secrets(
     mock_update_secret: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_update_secret: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_update_secret: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _update_secret("foo", "prod", ["bad-secret-data"])
     mock_print_warn.assert_called_once()
 
@@ -573,6 +774,20 @@ def test_delete_secrets(
     mock_delete_group: MagicMock,
     mock_load_k8s_config: MagicMock,
 ):
+    """
+
+    :param mock_sys: MagicMock:
+    :param mock_print_warn: MagicMock:
+    :param mock_delete_secret: MagicMock:
+    :param mock_delete_group: MagicMock:
+    :param mock_load_k8s_config: MagicMock:
+    :param mock_sys: MagicMock: 
+    :param mock_print_warn: MagicMock: 
+    :param mock_delete_secret: MagicMock: 
+    :param mock_delete_group: MagicMock: 
+    :param mock_load_k8s_config: MagicMock: 
+
+    """
     _delete_secret(name="foo", group=None)
     mock_print_warn.assert_called_once()
 

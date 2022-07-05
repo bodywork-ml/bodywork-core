@@ -41,6 +41,12 @@ from bodywork.cli.workflow_jobs import (
 
 @patch("bodywork.cli.workflow_jobs.k8s")
 def test_is_existing_workflow_job(mock_k8s_module: MagicMock):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param mock_k8s_module: MagicMock: 
+
+    """
     mock_k8s_module.list_workflow_jobs.return_value = {"bodywork-test-project": {}}
     assert _is_existing_workflow_job("bodywork-dev", "bodywork-test-project") is True
     assert _is_existing_workflow_job("bodywork-dev", "not-a-real-cronjob") is False
@@ -50,6 +56,14 @@ def test_is_existing_workflow_job(mock_k8s_module: MagicMock):
 def test_create_workflow_job_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     create_workflow_job(
         "bodywork-dev",
@@ -91,6 +105,14 @@ def test_create_workflow_job_in_namespace(
 def test_delete_workflow_job_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     delete_workflow_job("bodywork-dev", "bodywork-test-project")
     captured_one = capsys.readouterr()
@@ -112,6 +134,12 @@ def test_delete_workflow_job_in_namespace(
 
 @patch("bodywork.cli.workflow_jobs.k8s")
 def test_is_existing_workflow_cronjob(mock_k8s_module: MagicMock):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param mock_k8s_module: MagicMock: 
+
+    """
     mock_k8s_module.list_workflow_cronjobs.return_value = {"bodywork-test-project": {}}
     assert (
         _is_existing_workflow_cronjob("bodywork-dev", "bodywork-test-project") is True
@@ -120,6 +148,7 @@ def test_is_existing_workflow_cronjob(mock_k8s_module: MagicMock):
 
 
 def test_is_valid_cron_scheule():
+    """ """
     assert _is_valid_cron_schedule("* * * *") is False
     assert _is_valid_cron_schedule("* * * * *") is True
 
@@ -187,6 +216,14 @@ def test_is_valid_cron_scheule():
 
 @patch("bodywork.cli.workflow_jobs.k8s")
 def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     create_workflow_cronjob(
         BODYWORK_NAMESPACE,
@@ -245,6 +282,14 @@ def test_create_workflow_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixt
 
 @patch("bodywork.cli.workflow_jobs.k8s")
 def test_update_cronjob_validation(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     update_workflow_cronjob(
         "bodywork-dev", "test", "0 0 * * *", "fg", "test-branch", 3, 1
@@ -273,6 +318,14 @@ def test_update_cronjob_validation(mock_k8s_module: MagicMock, capsys: CaptureFi
 
 @patch("bodywork.cli.workflow_jobs.k8s")
 def test_update_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixture):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = True
     mock_k8s_module.list_workflow_cronjobs.return_value = {"test": {}}
 
@@ -288,6 +341,14 @@ def test_update_cronjob(mock_k8s_module: MagicMock, capsys: CaptureFixture):
 def test_delete_workflow_cronjob_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     delete_workflow_cronjob("bodywork-dev", "bodywork-test-project")
     captured_one = capsys.readouterr()
@@ -311,6 +372,14 @@ def test_delete_workflow_cronjob_in_namespace(
 def test_display_workflow_cronjobs_in_namespace(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     display_cronjobs("bodywork-dev")
     captured_one = capsys.readouterr()
@@ -343,6 +412,14 @@ def test_display_workflow_cronjobs_in_namespace(
 def test_display_workflow_job_history(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     display_workflow_job_history("bodywork-dev", "bodywork-test-project")
     captured_one = capsys.readouterr()
@@ -371,6 +448,14 @@ def test_display_workflow_job_history(
 def test_display_cronjob_workflow_job_logs(
     mock_k8s_module: MagicMock, capsys: CaptureFixture
 ):
+    """
+
+    :param mock_k8s_module: MagicMock:
+    :param capsys: CaptureFixture:
+    :param mock_k8s_module: MagicMock: 
+    :param capsys: CaptureFixture: 
+
+    """
     mock_k8s_module.namespace_exists.return_value = False
     display_workflow_job_logs("bodywork-dev", "bodywork-test-project-12345")
     captured_one = capsys.readouterr()

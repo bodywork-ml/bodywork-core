@@ -40,6 +40,12 @@ from bodywork.constants import SECRET_GROUP_LABEL
 def test_configure_environment_variables_raises_errors_if_secrets_cannot_be_found(
     mock_bodywork_k8s_secret_exists: MagicMock,
 ):
+    """
+
+    :param mock_bodywork_k8s_secret_exists: MagicMock:
+    :param mock_bodywork_k8s_secret_exists: MagicMock: 
+
+    """
     mock_bodywork_k8s_secret_exists.side_effect = [False, True]
 
     secrets = [
@@ -52,6 +58,12 @@ def test_configure_environment_variables_raises_errors_if_secrets_cannot_be_foun
 
 @patch("bodywork.k8s.secrets.secret_exists")
 def test_configure_env_vars_from_secrets(mock_bodywork_k8s_secret_exists: MagicMock):
+    """
+
+    :param mock_bodywork_k8s_secret_exists: MagicMock:
+    :param mock_bodywork_k8s_secret_exists: MagicMock: 
+
+    """
     mock_bodywork_k8s_secret_exists.side_effect = [True, True]
 
     secrets = [
@@ -70,6 +82,12 @@ def test_configure_env_vars_from_secrets(mock_bodywork_k8s_secret_exists: MagicM
 
 @patch("kubernetes.client.CoreV1Api")
 def test_secret_exists_identifies_existing_namespaces(mock_k8s_core_api: MagicMock):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_secret.return_value = (
         kubernetes.client.V1SecretList(
             items=[
@@ -95,6 +113,12 @@ def test_secret_exists_identifies_existing_namespaces(mock_k8s_core_api: MagicMo
 def test_create_secret_tries_to_create_secret_with_k8s_api(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     create_secret("bodywork-dev", "pytest-secret", "xyz", {"KEY": "value"})
 
     mock_k8s_core_api().create_namespaced_secret.assert_called_once_with(
@@ -114,6 +138,12 @@ def test_create_secret_tries_to_create_secret_with_k8s_api(
 def test_update_secret_updates_secret_with_k8s_api(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     update_secret("bodywork-dev", "test-pytest-secret", {"KEY": "value"})
 
     mock_k8s_core_api().patch_namespaced_secret.assert_called_once_with(
@@ -133,6 +163,12 @@ def test_update_secret_updates_secret_with_k8s_api(
 def test_delete_secret_tries_to_delete_secret_with_k8s_api(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     delete_secret("bodywork-dev", "pytest-secret")
     mock_k8s_core_api().delete_namespaced_secret.assert_called_once_with(
         namespace="bodywork-dev", name="pytest-secret"
@@ -143,6 +179,12 @@ def test_delete_secret_tries_to_delete_secret_with_k8s_api(
 def test_list_secrets_in_namespace_returns_decoded_secret_data(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_secret.return_value = (
         kubernetes.client.V1SecretList(
             items=[
@@ -169,6 +211,12 @@ def test_list_secrets_in_namespace_returns_decoded_secret_data(
 
 @patch("kubernetes.client.CoreV1Api")
 def test_secret_group_exists(mock_k8s_core_api: MagicMock):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     mock_k8s_core_api().list_namespaced_secret.return_value = (
         kubernetes.client.V1SecretList(
             items=[
@@ -194,6 +242,12 @@ def test_secret_group_exists(mock_k8s_core_api: MagicMock):
 def test_deleting_secret_group(
     mock_k8s_core_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_core_api: MagicMock:
+    :param mock_k8s_core_api: MagicMock: 
+
+    """
     delete_secret_group("bodywork-dev", "test")
     mock_k8s_core_api().delete_collection_namespaced_secret.assert_called_once_with(
         namespace="bodywork-dev", label_selector=f"{SECRET_GROUP_LABEL}=test"

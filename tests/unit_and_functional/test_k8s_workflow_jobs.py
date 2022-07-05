@@ -43,6 +43,7 @@ from bodywork.k8s.workflow_jobs import (
 
 @fixture(scope="session")
 def workflow_job_object() -> k8s_client.V1Job:
+    """ """
     container = k8s_client.V1Container(
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
@@ -74,6 +75,12 @@ def workflow_job_object() -> k8s_client.V1Job:
 
 @patch("bodywork.k8s.workflow_jobs.random")
 def test_configure_workflow_job(mock_random: MagicMock):
+    """
+
+    :param mock_random: MagicMock:
+    :param mock_random: MagicMock: 
+
+    """
     mock_random.randint.return_value = 100
     job_definition = configure_workflow_job(
         namespace="bodywork-dev",
@@ -112,6 +119,14 @@ def test_configure_workflow_job(mock_random: MagicMock):
 def test_create_workflow_job_tries_to_create_workflow_job_with_k8s_api(
     mock_k8s_batchv1_api: MagicMock, workflow_job_object: k8s_client.V1Job
 ):
+    """
+
+    :param mock_k8s_batchv1_api: MagicMock:
+    :param workflow_job_object: k8s_client.V1Job:
+    :param mock_k8s_batchv1_api: MagicMock: 
+    :param workflow_job_object: k8s_client.V1Job: 
+
+    """
     create_workflow_job(workflow_job_object)
     mock_k8s_batchv1_api().create_namespaced_job.assert_called_once_with(
         body=workflow_job_object, namespace="bodywork-dev"
@@ -120,6 +135,7 @@ def test_create_workflow_job_tries_to_create_workflow_job_with_k8s_api(
 
 @fixture(scope="session")
 def workflow_cronjob_object() -> k8s_client.V1Job:
+    """ """
     container = k8s_client.V1Container(
         name="bodywork",
         image="bodyworkml/bodywork-core:latest",
@@ -152,6 +168,7 @@ def workflow_cronjob_object() -> k8s_client.V1Job:
 
 
 def test_configure_workflow_cronjob():
+    """ """
     cronjob_definition = configure_workflow_cronjob(
         cron_schedule="0,30 * * * *",
         namespace=BODYWORK_NAMESPACE,
@@ -193,6 +210,14 @@ def test_create_workflow_cronjob_tries_to_create_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
     workflow_cronjob_object: k8s_client.V1beta1CronJob,
 ):
+    """
+
+    :param mock_k8s_batchv1beta1_api: MagicMock:
+    :param workflow_cronjob_object: k8s_client.V1beta1CronJob:
+    :param mock_k8s_batchv1beta1_api: MagicMock: 
+    :param workflow_cronjob_object: k8s_client.V1beta1CronJob: 
+
+    """
     create_workflow_cronjob(workflow_cronjob_object)
     mock_k8s_batchv1beta1_api().create_namespaced_cron_job.assert_called_once_with(
         body=workflow_cronjob_object, namespace="bodywork-dev"
@@ -203,6 +228,12 @@ def test_create_workflow_cronjob_tries_to_create_job_with_k8s_api(
 def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_batchv1beta1_api: MagicMock:
+    :param mock_k8s_batchv1beta1_api: MagicMock: 
+
+    """
     pod_spec = k8s_client.V1PodSpec(
         containers=[
             k8s_client.V1Container(
@@ -245,6 +276,12 @@ def test_updates_workflow_cronjob_updates_cronjob_with_k8s_api(
 def test_delete_workflow_cronjob_tries_to_delete_job_with_k8s_api(
     mock_k8s_batchv1beta1_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_batchv1beta1_api: MagicMock:
+    :param mock_k8s_batchv1beta1_api: MagicMock: 
+
+    """
     delete_workflow_cronjob("bodywork-dev", "bodywork-test-project")
     mock_k8s_batchv1beta1_api().delete_namespaced_cron_job.assert_called_once_with(
         name="bodywork-test-project",
@@ -258,6 +295,14 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
     mock_k8s_batchv1beta1_api: MagicMock,
     workflow_cronjob_object: k8s_client.V1beta1CronJob,
 ):
+    """
+
+    :param mock_k8s_batchv1beta1_api: MagicMock:
+    :param workflow_cronjob_object: k8s_client.V1beta1CronJob:
+    :param mock_k8s_batchv1beta1_api: MagicMock: 
+    :param workflow_cronjob_object: k8s_client.V1beta1CronJob: 
+
+    """
     mock_k8s_batchv1beta1_api().list_namespaced_cron_job.return_value = (
         k8s_client.V1beta1CronJobList(items=[workflow_cronjob_object])
     )
@@ -275,6 +320,12 @@ def test_list_workflow_cronjobs_returns_cronjobs_summary_info(
 def test_list_workflow_jobs_returns_jobs_summary_info(
     mock_k8s_batchv1_api: MagicMock,
 ):
+    """
+
+    :param mock_k8s_batchv1_api: MagicMock:
+    :param mock_k8s_batchv1_api: MagicMock: 
+
+    """
     mock_k8s_batchv1_api().list_namespaced_job.return_value = k8s_client.V1JobList(
         items=[
             k8s_client.V1Job(

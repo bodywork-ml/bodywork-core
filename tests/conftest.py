@@ -34,16 +34,19 @@ from bodywork.constants import (
 
 @fixture(scope="function")
 def project_repo_location() -> Path:
+    """ """
     return Path("tests/resources/project_repo")
 
 
 @fixture(scope="function")
 def cloned_project_repo_location() -> Path:
+    """ """
     return Path("bodywork_project")
 
 
 @fixture(scope="function")
 def bodywork_output_dir() -> Iterable[Path]:
+    """ """
     output_dir_path = Path("bodywork_project_output")
     output_dir_path.mkdir(exist_ok=False)
     yield output_dir_path
@@ -52,6 +55,12 @@ def bodywork_output_dir() -> Iterable[Path]:
 
 @fixture(scope="function")
 def project_repo_connection_string(project_repo_location: Path) -> str:
+    """
+
+    :param project_repo_location: Path:
+    :param project_repo_location: Path: 
+
+    """
     return project_repo_location.absolute().as_uri()
 
 
@@ -61,6 +70,16 @@ def setup_bodywork_test_project(
     cloned_project_repo_location: Path,
     bodywork_output_dir: Iterable[Path],
 ) -> Iterable[bool]:
+    """
+
+    :param project_repo_location: Path:
+    :param cloned_project_repo_location: Path:
+    :param bodywork_output_dir: Iterable[Path]:
+    :param project_repo_location: Path: 
+    :param cloned_project_repo_location: Path: 
+    :param bodywork_output_dir: Iterable[Path]: 
+
+    """
     # SETUP
     try:
         run(["git", "init"], cwd=project_repo_location, check=True, encoding="utf-8")
@@ -95,12 +114,17 @@ def setup_bodywork_test_project(
 
 def remove_readonly(func, path, exc_info):
     """Error handler for ``shutil.rmtree``.
-
+    
     If the error is due to an access error (read only file) it attempts to add write
     permission and then retries. If the error is for another reason it re-raises the
     error. This is primarily to fix Windows OS access issues.
-
+    
     Usage: ``shutil.rmtree(path, onerror=remove_readonly)``
+
+    :param func: param path:
+    :param exc_info: 
+    :param path: 
+
     """
     if not os.access(path, os.W_OK):
         os.chmod(path, stat.S_IWRITE)

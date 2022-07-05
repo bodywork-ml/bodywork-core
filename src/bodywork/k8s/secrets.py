@@ -35,6 +35,7 @@ from ..constants import (
 
 @dataclass
 class Secret:
+    """ """
     name: str
     group: str
     data: Dict[str, str]
@@ -44,23 +45,30 @@ def configure_env_vars_from_secrets(
     namespace: str, secret_varname_pairs: List[Tuple[str, str]]
 ) -> List[k8s.V1EnvVar]:
     """Configure container environment variables from secrets.
-
+    
     Enables secret values to be mounted as environment variables in a
     Bodywork stage-runner container. For example, with a secret created
     using kubectl as follows,
-
+    
         kubectl -n bodywork-dev create secret generic foobar \
             --from-literal=FOO=bar \
             --from-literal=BAR=foo
-
+    
     This function can be used to configure the environment variables FOO
     and BAR for any batch job or service deployment.
 
     :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_varname_pairs: List of secret, variable-name pairs.
+    :param namespace: str:
+    :param secret_varname_pairs: List[Tuple[str:
+    :param str: returns: A configured list of environment variables.
+    :param namespace: str: 
+    :param secret_varname_pairs: List[Tuple[str: 
+    :param str]]: 
+    :returns: A configured list of environment variables.
     :raises RuntimeError: if any of the secrets or their keys cannot be
         found.
-    :return: A configured list of environment variables.
+
     """
     missing_secrets_info = [
         f"cannot find key={var_name} in secret={secret_name} in namespace={namespace}"
@@ -92,6 +100,9 @@ def replicate_secrets_in_namespace(target_namespace: str, secrets_group) -> None
 
     :param target_namespace: K8s namespace to copy the secrets to.
     :param secrets_group: The group of secrets to copy.
+    :param target_namespace: str:
+    :param target_namespace: str: 
+
     """
 
     secrets = k8s.CoreV1Api().list_namespaced_secret(
@@ -124,8 +135,15 @@ def secret_exists(namespace: str, secret_name: str, secret_key: str = None) -> b
     :param namespace: Kubernetes namespace in which to look for secrets.
     :param secret_name: The name of the k8s secret to look for.
     :param secret_key: The variable key within the secret to look for.
-    :return: True if the secret was found and the key within the secret
+    :param namespace: str:
+    :param secret_name: str:
+    :param secret_key: str:  (Default value = None)
+    :param namespace: str: 
+    :param secret_name: str: 
+    :param secret_key: str:  (Default value = None)
+    :returns: True if the secret was found and the key within the secret
         was also found, otherwise False.
+
     """
     existing_secrets = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
     secret_data = [
@@ -146,7 +164,12 @@ def secret_group_exists(namespace: str, group: str) -> bool:
 
     :param namespace: Kubernetes namespace in which to look for secrets group.
     :param group: Name of secrets group.
-    :return: True if group exists, otherwise False.
+    :param namespace: str:
+    :param group: str:
+    :param namespace: str: 
+    :param group: str: 
+    :returns: True if group exists, otherwise False.
+
     """
     items = (
         k8s.CoreV1Api()
@@ -168,6 +191,17 @@ def create_secret(
     :param group: The group to create the secret in.
     :param keys_and_values: Mapping of secret keys (or variable names)
         and their values.
+    :param namespace: str:
+    :param name: str:
+    :param group: str:
+    :param keys_and_values: Dict[str:
+    :param str: 
+    :param namespace: str: 
+    :param name: str: 
+    :param group: str: 
+    :param keys_and_values: Dict[str: 
+    :param str]: 
+
     """
     secret = k8s.V1Secret(
         metadata=k8s.V1ObjectMeta(
@@ -187,6 +221,15 @@ def update_secret(namespace: str, name: str, keys_and_values: Dict[str, str]) ->
     :param name: The name of the secret'.
     :param keys_and_values: Mapping of secret keys (or variable names)
         and their values.
+    :param namespace: str:
+    :param name: str:
+    :param keys_and_values: Dict[str:
+    :param str: 
+    :param namespace: str: 
+    :param name: str: 
+    :param keys_and_values: Dict[str: 
+    :param str]: 
+
     """
     secret = k8s.V1Secret(
         metadata=k8s.V1ObjectMeta(
@@ -203,6 +246,11 @@ def delete_secret(namespace: str, name: str) -> None:
 
     :param namespace: Namespace in which to look for the secret to delete.
     :param name: The name of the secret to be deleted.
+    :param namespace: str:
+    :param name: str:
+    :param namespace: str: 
+    :param name: str: 
+
     """
     k8s.CoreV1Api().delete_namespaced_secret(namespace=namespace, name=name)
 
@@ -212,6 +260,11 @@ def delete_secret_group(namespace: str, group: str) -> None:
 
     :param namespace: Namespace in which to look for the secret to delete.
     :param group: The name of the secrets group to be deleted.
+    :param namespace: str:
+    :param group: str:
+    :param namespace: str: 
+    :param group: str: 
+
     """
     k8s.CoreV1Api().delete_collection_namespaced_secret(
         namespace=namespace, label_selector=f"{SECRET_GROUP_LABEL}={group}"
@@ -223,6 +276,11 @@ def list_secrets(namespace: str, group: str = None) -> Dict[str, Secret]:
 
     :param namespace: Namespace in which to list secrets.
     :param group: Group of secrets to list.
+    :param namespace: str:
+    :param group: str:  (Default value = None)
+    :param namespace: str: 
+    :param group: str:  (Default value = None)
+
     """
     if group is None:
         result = k8s.CoreV1Api().list_namespaced_secret(namespace=namespace)
@@ -252,6 +310,11 @@ def create_ssh_key_secret_from_file(group: str, ssh_key_path: Path) -> None:
 
     :param group: Secrets group to create the key in.
     :param ssh_key_path: The filepath to the SSH key file.
+    :param group: str:
+    :param ssh_key_path: Path:
+    :param group: str: 
+    :param ssh_key_path: Path: 
+
     """
     if not ssh_key_path.exists():
         raise FileNotFoundError(f"Could not find SSH key file at: {ssh_key_path}")
@@ -273,7 +336,10 @@ def create_secret_env_variable(group: str = None) -> k8s.V1EnvVar:
     """Create SSH environment variable from SSH secret
 
     :param group: Link to secret in group.
-    :return: K8s SSH environment variable.
+    :param group: str:  (Default value = None)
+    :param group: str:  (Default value = None)
+    :returns: K8s SSH environment variable.
+
     """
     if group:
         name = f"{group}-{SSH_SECRET_NAME}"
@@ -290,4 +356,12 @@ def create_secret_env_variable(group: str = None) -> k8s.V1EnvVar:
 
 
 def create_complete_secret_name(group: str, name: str) -> str:
+    """
+
+    :param group: str:
+    :param name: str:
+    :param group: str: 
+    :param name: str: 
+
+    """
     return f"{group}-{name}"
