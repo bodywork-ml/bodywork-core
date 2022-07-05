@@ -23,7 +23,7 @@ from time import sleep
 
 from kubernetes import client as k8s
 
-from .utils import make_valid_k8s_name
+from bodywork.k8s.utils import make_valid_k8s_name
 
 
 def namespace_exists(namespace: str) -> bool:

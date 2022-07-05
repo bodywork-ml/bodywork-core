@@ -20,9 +20,9 @@ Kubernetes namespace with the necessary service accounts and roles to
 run workflows, jobs and service deployments, securely. It is target at
 being called from the CLI.
 """
-from .terminal import print_info, print_warn
-from .. import k8s
-from ..constants import (
+from bodywork.cli.terminal import print_info, print_warn
+from bodywork import k8s
+from bodywork.constants import (
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
 )
 

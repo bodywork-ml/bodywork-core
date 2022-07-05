@@ -29,10 +29,10 @@ import requests
 import os
 import stat
 
-from . import k8s
-from .cli.terminal import make_progress_bar, print_pod_logs
-from .config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
-from .constants import (
+from bodywork import k8s
+from bodywork.cli.terminal import make_progress_bar, print_pod_logs
+from bodywork.config import BodyworkConfig, BatchStageConfig, ServiceStageConfig
+from bodywork.constants import (
     DEFAULT_PROJECT_DIR,
     PROJECT_CONFIG_FILENAME,
     TIMEOUT_GRACE_SECONDS,
@@ -45,7 +45,7 @@ from .constants import (
     BODYWORK_NAMESPACE,
     SSH_SECRET_NAME,
 )
-from .exceptions import (
+from bodywork.exceptions import (
     BodyworkJobFailure,
     BodyworkWorkflowExecutionError,
     BodyworkNamespaceError,
@@ -53,8 +53,8 @@ from .exceptions import (
     BodyworkGitError,
     BodyworkConfigError,
 )
-from .git import download_project_code_from_repo, get_git_commit_hash
-from .logs import bodywork_log_factory
+from bodywork.git import download_project_code_from_repo, get_git_commit_hash
+from bodywork.logs import bodywork_log_factory
 
 _log = bodywork_log_factory()
 

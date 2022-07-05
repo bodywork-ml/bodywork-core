@@ -24,8 +24,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from kubernetes import client as k8s
 
-from .utils import make_valid_k8s_name
-from ..constants import (
+from bodywork.k8s.utils import make_valid_k8s_name
+from bodywork.constants import (
     SECRET_GROUP_LABEL,
     BODYWORK_NAMESPACE,
     SSH_PRIVATE_KEY_ENV_VAR,

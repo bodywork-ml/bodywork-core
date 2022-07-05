@@ -25,8 +25,8 @@ from pathlib import Path
 from subprocess import run, CalledProcessError, DEVNULL, PIPE
 from urllib.parse import urlparse
 
-from .exceptions import BodyworkGitError
-from .constants import (
+from bodywork.exceptions import BodyworkGitError
+from bodywork.constants import (
     DEFAULT_PROJECT_DIR,
     SSH_DIR_NAME,
     SSH_PRIVATE_KEY_ENV_VAR,
@@ -37,7 +37,7 @@ from .constants import (
     GIT_SSH_COMMAND,
     DEFAULT_SSH_FILE,
 )
-from .logs import bodywork_log_factory
+from bodywork.logs import bodywork_log_factory
 
 _log = bodywork_log_factory()
 

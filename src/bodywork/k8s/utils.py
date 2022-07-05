@@ -24,7 +24,7 @@ from typing import cast, Iterable, List, Tuple, Union
 from kubernetes.client.rest import ApiException
 from kubernetes import client as k8s
 
-from ..exceptions import BodyworkClusterResourcesError
+from bodywork.exceptions import BodyworkClusterResourcesError
 
 EnvVars = k8s.V1EnvVar
 

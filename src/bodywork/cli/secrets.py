@@ -20,8 +20,8 @@ targeted for use via the CLI.
 """
 from typing import Dict, Iterable, Tuple
 
-from .terminal import print_dict, print_info, print_warn
-from .. import k8s
+from bodywork.cli.terminal import print_dict, print_info, print_warn
+from bodywork import k8s
 
 
 def _parse_secret_key_value_pair(kv_string: str) -> Tuple[str, str]:

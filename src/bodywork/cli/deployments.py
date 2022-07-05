@@ -18,8 +18,8 @@
 This module contains functions for managing service deployments that have
 been created as part of executed workflows.
 """
-from .terminal import print_dict, print_info, print_warn
-from .. import k8s
+from bodywork.cli.terminal import print_dict, print_info, print_warn
+from bodywork import k8s
 
 
 def display_deployments(

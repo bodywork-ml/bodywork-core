@@ -32,16 +32,16 @@ from pathlib import Path
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
-from .config import BodyworkConfig
-from .constants import (
+from bodywork.config import BodyworkConfig
+from bodywork.constants import (
     DEFAULT_LOG_LEVEL,
     DEFAULT_LOG_LEVEL_ENV_VAR,
     DEFAULT_PROJECT_DIR,
     LOG_TIME_FORMAT,
     PROJECT_CONFIG_FILENAME,
 )
-from .cli.terminal import console
-from .exceptions import BodyworkConfigError
+from bodywork.cli.terminal import console
+from bodywork.exceptions import BodyworkConfigError
 
 
 def bodywork_log_factory(

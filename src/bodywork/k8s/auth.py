@@ -22,7 +22,7 @@ import os
 
 from kubernetes import client as k8s, config as k8s_config
 
-from ..constants import (
+from bodywork.constants import (
     BODYWORK_WORKFLOW_CLUSTER_ROLE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_STAGES_SERVICE_ACCOUNT,

@@ -20,7 +20,7 @@ Kubernetes API sub-module.
 This collection of functions utilise the low-level Kubernetes Python
 client to perform Bodywork-specific tasks.
 """
-from .auth import (
+from bodywork.k8s.auth import (
     cluster_role_binding_exists,
     cluster_role_exists,
     delete_cluster_role_binding,
@@ -30,7 +30,7 @@ from .auth import (
     setup_stages_service_account,
     setup_workflow_service_accounts,
 )
-from .workflow_jobs import (
+from bodywork.k8s.workflow_jobs import (
     configure_workflow_job,
     configure_workflow_cronjob,
     create_workflow_job,
@@ -40,16 +40,16 @@ from .workflow_jobs import (
     list_workflow_jobs,
     update_workflow_cronjob,
 )
-from .batch_jobs import (
+from bodywork.k8s.batch_jobs import (
     JobStatus,
     configure_batch_stage_job,
     create_job,
     delete_job,
     monitor_jobs_to_completion,
 )
-from .namespaces import namespace_exists, create_namespace, delete_namespace
-from .pod_logs import get_latest_pod_name, get_pod_logs
-from .secrets import (
+from bodywork.k8s.namespaces import namespace_exists, create_namespace, delete_namespace
+from bodywork.k8s.pod_logs import get_latest_pod_name, get_pod_logs
+from bodywork.k8s.secrets import (
     configure_env_vars_from_secrets,
     secret_exists,
     create_secret,
@@ -64,7 +64,7 @@ from .secrets import (
     delete_secret_group,
     secret_group_exists,
 )
-from .deployments import (
+from bodywork.k8s.deployments import (
     DeploymentStatus,
     configure_service_stage_deployment,
     create_deployment,
@@ -85,7 +85,7 @@ from .deployments import (
     delete_deployment_ingress,
     has_ingress,
 )
-from .utils import (
+from bodywork.k8s.utils import (
     api_exception_msg,
     create_k8s_environment_variables,
     EnvVars,

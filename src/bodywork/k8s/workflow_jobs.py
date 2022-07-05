@@ -24,12 +24,12 @@ from datetime import datetime
 from typing import Dict, Union, List
 from kubernetes import client as k8s
 
-from ..constants import (
+from bodywork.constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_WORKFLOW_SERVICE_ACCOUNT,
     BODYWORK_WORKFLOW_JOB_TIME_TO_LIVE,
 )
-from .utils import make_valid_k8s_name
+from bodywork.k8s.utils import make_valid_k8s_name
 
 
 def configure_workflow_job(

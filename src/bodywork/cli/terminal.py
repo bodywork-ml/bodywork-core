@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
-from ..constants import DEFAULT_K8S_POLLING_FREQ, LOG_TIME_FORMAT
+from bodywork.constants import DEFAULT_K8S_POLLING_FREQ, LOG_TIME_FORMAT
 
 console = Console(highlight=False, soft_wrap=False, width=175)
 

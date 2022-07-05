@@ -21,9 +21,9 @@ They are targeted for use via the CLI.
 import re
 from pathlib import Path
 
-from .terminal import print_dict, print_info, print_pod_logs, print_warn
-from .. import k8s
-from ..constants import BODYWORK_DOCKER_IMAGE, SSH_SECRET_NAME
+from bodywork.cli.terminal import print_dict, print_info, print_pod_logs, print_warn
+from bodywork import k8s
+from bodywork.constants import BODYWORK_DOCKER_IMAGE, SSH_SECRET_NAME
 
 
 def create_workflow_job(

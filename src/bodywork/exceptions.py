@@ -25,7 +25,7 @@ from typing import Iterable, Sequence
 
 from kubernetes.client import V1Job
 
-from .constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
+from bodywork.constants import BODYWORK_VERSION, BODYWORK_CONFIG_VERSION
 
 
 class BodyworkClusterResourcesError(Exception):

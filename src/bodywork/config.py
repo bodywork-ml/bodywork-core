@@ -24,8 +24,8 @@ from typing import Any, Dict, Iterable, List, Sequence
 import cerberus
 import yaml
 
-from .constants import BODYWORK_CONFIG_VERSION
-from .exceptions import (
+from bodywork.constants import BODYWORK_CONFIG_VERSION
+from bodywork.exceptions import (
     BodyworkConfigFileExistsError,
     BodyworkConfigParsingError,
     BodyworkConfigMissingSectionError,

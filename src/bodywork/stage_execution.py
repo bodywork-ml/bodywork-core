@@ -27,11 +27,11 @@ from typing import Sequence
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
 
-from .config import BodyworkConfig
-from .constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
-from .exceptions import BodyworkStageFailure
-from .git import download_project_code_from_repo
-from .logs import bodywork_log_factory
+from bodywork.config import BodyworkConfig
+from bodywork.constants import DEFAULT_PROJECT_DIR, PROJECT_CONFIG_FILENAME
+from bodywork.exceptions import BodyworkStageFailure
+from bodywork.git import download_project_code_from_repo
+from bodywork.logs import bodywork_log_factory
 
 _log = bodywork_log_factory()
 

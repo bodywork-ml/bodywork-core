@@ -13,8 +13,8 @@ from pkg_resources import get_distribution
 from typer import Argument, Option, Typer
 
 from bodywork.k8s.utils import make_valid_k8s_name
-from ..config import BodyworkConfig
-from .terminal import print_info, print_warn
+from bodywork.config import BodyworkConfig
+from bodywork.cli.terminal import print_info, print_warn
 from bodywork.cli.workflow_jobs import (
     create_workflow_job,
     create_workflow_cronjob,
@@ -25,8 +25,8 @@ from bodywork.cli.workflow_jobs import (
     delete_workflow_job,
     update_workflow_cronjob,
 )
-from .deployments import display_deployments, delete_deployment
-from .secrets import (
+from bodywork.cli.deployments import display_deployments, delete_deployment
+from bodywork.cli.secrets import (
     create_secret,
     delete_secret,
     display_secrets,
@@ -34,21 +34,21 @@ from .secrets import (
     update_secret,
     delete_secret_group,
 )
-from .setup_namespace import (
+from bodywork.cli.setup_namespace import (
     is_namespace_available_for_bodywork,
     setup_namespace_with_service_accounts_and_roles,
 )
-from .terminal import console
-from ..exceptions import (
+from bodywork.cli.terminal import console
+from bodywork.exceptions import (
     BodyworkConfigFileExistsError,
     BodyworkConfigValidationError,
     BodyworkConfigMissingSectionError,
     BodyworkConfigParsingError,
     BodyworkWorkflowExecutionError,
 )
-from ..constants import BODYWORK_NAMESPACE, BODYWORK_DOCKER_IMAGE
-from ..k8s import api_exception_msg, load_kubernetes_config
-from ..stage_execution import run_stage
+from bodywork.constants import BODYWORK_NAMESPACE, BODYWORK_DOCKER_IMAGE
+from bodywork.k8s import api_exception_msg, load_kubernetes_config
+from bodywork.stage_execution import run_stage
 from bodywork.workflow_execution import run_workflow
 
 warnings.simplefilter(action="ignore")

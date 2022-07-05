@@ -27,8 +27,8 @@ from typing import Dict, Iterable, List, Any
 from kubernetes import client as k8s
 from rich.progress import Progress
 
-from ..cli.terminal import update_progress_bar
-from ..constants import (
+from bodywork.cli.terminal import update_progress_bar
+from bodywork.constants import (
     BODYWORK_DOCKER_IMAGE,
     BODYWORK_STAGES_SERVICE_ACCOUNT,
     DEFAULT_K8S_POLLING_FREQ,
@@ -36,7 +36,7 @@ from ..constants import (
     K8S_MAX_UNAVAILABLE,
     K8S_PROBE_PERIOD_SECONDS,
 )
-from .utils import check_resource_scheduling_status, make_valid_k8s_name
+from bodywork.k8s.utils import check_resource_scheduling_status, make_valid_k8s_name
 
 
 class DeploymentStatus(Enum):
