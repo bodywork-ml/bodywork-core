@@ -53,7 +53,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     include_package_data=True,
-    python_requires=">=3.7.*",
+    python_requires=">=3.7.0",
     install_requires=requirements_pkg,
     extras_require={"dev": requirements_dev},
     zip_safe=True,
